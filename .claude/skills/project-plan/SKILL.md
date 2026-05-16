@@ -54,12 +54,11 @@ echo "planning" > docs/features/$FEATURE_SLUG/phase.md
 
 ## 3. 산출물 작성
 
-리뷰 결과를 바탕으로 세 파일을 작성한다.
+리뷰 결과를 바탕으로 두 파일을 작성한다.
 산출물 템플릿은 `${CLAUDE_SKILL_DIR}/templates/` 를 읽고 해당 구조를 그대로 사용한다. 헤더/표 컬럼/순서를 임의로 바꾸지 않고, 각 섹션의 빈 셀과 플레이스홀더만 채운다.
 
 - `docs/features/$FEATURE_SLUG/spec.md`
 - `docs/features/$FEATURE_SLUG/plan.md`
-- `docs/features/$FEATURE_SLUG/progress.md`
 
 각 파일을 작성한 직후 `ls -la docs/features/$FEATURE_SLUG/` 로 존재를 검증한다.
 
@@ -77,10 +76,9 @@ echo "planned" > docs/features/$FEATURE_SLUG/phase.md
 docs/features/$FEATURE_SLUG/
   ├── spec.md
   ├── plan.md
-  ├── progress.md
   └── phase.md
 
-문서를 검토한 후 구현을 시작하세요.
+문서를 검토하셨나요? 검토가 끝났다면 다음 단계로 진행하세요.
 구현 준비가 되면 `/clear` 로 세션을 초기화한 뒤 `/project-implement $FEATURE_SLUG` 를 실행하세요.
 ```
 

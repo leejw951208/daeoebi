@@ -16,6 +16,10 @@ description: 계획 문서를 기반으로 구현을 시작한다. docs/features
 - `$ARGUMENTS` 가 있으면 그대로 사용한다. 예: `/project-implement user-login`
 - `$ARGUMENTS` 가 없으면 사용자에게 묻는다. > 어떤 기능을 구현할까요?
 
+`$ARGUMENTS` 가 kebab-case slug 형태가 아닌 자연어/한국어/다른 표기로 보이면 의미를 파악해 후보 slug를 제안하고 사용자에게 확인을 받는다.
+
+> `$ARGUMENTS` 는 plan 단계 slug 형식이 아닌 것 같습니다. `<후보-slug>` 가 맞나요?
+
 `docs/features/$ARGUMENTS/` 경로가 존재하는지 확인한다.
 
 ```bash
@@ -25,7 +29,7 @@ ls docs/features/$ARGUMENTS/spec.md docs/features/$ARGUMENTS/plan.md 2>/dev/null
 
 `DOCS_MISSING` 이면 중단한다.
 
-> `docs/features/$ARGUMENTS/` 문서를 찾을 수 없습니다. `/project-plan` 을 먼저 실행하세요.
+> `docs/features/$ARGUMENTS/` 의 `spec.md`, `plan.md` 를 찾을 수 없습니다. `/project-plan` 을 먼저 실행하세요.
 
 확인된 slug를 `FEATURE_SLUG` 로 사용한다.
 
@@ -39,6 +43,10 @@ echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
 ```
 
 `docs/features/$FEATURE_SLUG/spec.md` 와 `plan.md` 를 읽는다.
+
+본 단계에서 `spec.md` 와 `plan.md` 는 **입력 전용**이다. 어떤 사유로도 수정·재작성하지 않는다. 요구사항 변경이 필요하면 작업을 중단하고 사용자에게 `/project-plan` 재실행을 안내한다.
+
+`docs/features/$FEATURE_SLUG/progress.md` 가 없으면 `${CLAUDE_SKILL_DIR}/templates/progress.md` 템플릿을 기반으로 생성한다. `plan.md` 의 태스크 목록을 옮겨 적고 각 항목 초기 상태를 `대기` 로 둔다. 이미 존재하면 그대로 사용한다.
 
 디자인 단계 산출물이 있으면 함께 입력 컨텍스트로 사용한다.
 
@@ -90,7 +98,7 @@ React 변환 완료 후 `.design-cache/$FEATURE_SLUG/` 는 삭제해도 된다.
 
 **Step 2 — 구현 실행**
 
-태스크 단위로 직접 구현을 진행한다(메인 세션). 병렬 작업이 가능하다고 판단되는 독립 태스크가 있으면 `superpowers:dispatching-parallel-agents` 스킬을 사용해 그 부분만 한정적으로 분리해도 된다.
+`Skill` 툴을 사용해 `superpowers:subagent-driven-development` 스킬을 호출한다. 태스크 단위로 분해해 실행한다.
 
 - 각 태스크 완료 시 `progress.md` 의 해당 태스크 상태를 업데이트한다.
 
@@ -125,6 +133,7 @@ echo "implemented" > docs/features/$FEATURE_SLUG/phase.md
 docs/features/$FEATURE_SLUG/
   └── progress.md (업데이트됨)
 
+진행한 내용을 확인하셨나요? 검토가 끝났다면 다음 단계로 진행하세요.
 검증 준비가 되면 `/clear` 로 세션을 초기화한 뒤 `/project-verify $FEATURE_SLUG` 를 실행하세요.
 ```
 

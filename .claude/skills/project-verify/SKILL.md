@@ -16,6 +16,10 @@ description: spec.md, plan.md 기반으로 코드 리뷰, 기능 검증, 보안 
 - `$ARGUMENTS` 가 있으면 그대로 사용한다. 예: `/project-verify user-login`
 - `$ARGUMENTS` 가 없으면 사용자에게 묻는다. > 어떤 기능을 검증할까요?
 
+`$ARGUMENTS` 가 kebab-case slug 형태가 아닌 자연어/한국어/다른 표기로 보이면 의미를 파악해 후보 slug를 제안하고 사용자에게 확인을 받는다.
+
+> `$ARGUMENTS` 는 plan 단계 slug 형식이 아닌 것 같습니다. `<후보-slug>` 가 맞나요?
+
 `docs/features/$ARGUMENTS/` 경로와 구현 완료 여부를 확인한다.
 
 ```bash
@@ -56,6 +60,8 @@ grep -c "| OPEN |" docs/features/$FEATURE_SLUG/review.md 2>/dev/null || echo "0"
 > 이미 완료된 리뷰가 있습니다. 재실행할까요?
 
 `docs/features/$FEATURE_SLUG/spec.md`, `plan.md` 를 읽는다.
+
+본 단계에서 `spec.md` 와 `plan.md` 는 **입력 전용**이다. 어떤 사유로도 수정·재작성하지 않는다. 본 단계에서는 새로운 기능 코드도 작성하지 않는다. 검증 도중 결함이 발견되면 `review.md` 에 OPEN 항목으로 기록만 하고, 수정은 `/project-patch` 단계에서 처리한다.
 
 디자인 산출물이 있으면 함께 읽는다.
 
@@ -121,7 +127,21 @@ PLAN_TASKS:  완료 {n} / 미완료 {n}
 UNTESTED:    {n}건
 OPEN_ITEMS:  {n}건
 
-OPEN 항목이 있으면 `/clear` 로 세션을 초기화한 뒤 `/project-patch $FEATURE_SLUG` 로 보강한 후 `/project-verify $FEATURE_SLUG` 를 재실행하세요.
+결과를 확인하셨나요? 다음 단계는 OPEN 항목 수에 따라 달라집니다.
+```
+
+OPEN 항목이 1건 이상이면 보강 안내를 출력한다.
+
+```
+🔧 OPEN 항목 {n}건이 남아 있습니다.
+`/clear` 로 세션을 초기화한 뒤 `/project-patch $FEATURE_SLUG` 로 보강하고, 이후 `/project-verify $FEATURE_SLUG` 를 재실행하세요.
+```
+
+OPEN 항목이 0건이면 다음 기능 안내를 출력한다.
+
+```
+🎉 OPEN 항목이 없습니다. 본 기능은 검증 완료 상태입니다.
+다른 기능을 계획하려면 `/clear` 로 세션을 초기화한 뒤 `/project-plan <기능 설명>` 을 실행하세요.
 ```
 
 여기서 종료한다.
