@@ -76,8 +76,6 @@ OPEN 항목을 심각도 순으로 정렬한다. (`HIGH` → `MEDIUM` → `LOW`)
 
 `Skill` 툴을 사용해 `superpowers:subagent-driven-development` 스킬을 호출한다. OPEN 항목을 보강 태스크 단위로 분해해 실행한다.
 
-- 각 항목 수정 완료 시 review.md의 해당 행 상태를 `OPEN` → `FIXED` 로 업데이트한다.
-
 **Step 2 — 테스트**
 
 `Skill` 툴을 사용해 `superpowers:test-driven-development` 스킬을 호출한다.
