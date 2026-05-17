@@ -99,10 +99,10 @@ export class VaultService {
       throw new ConflictException({ code: VAULT_ERRORS.SETUP_EXISTS, message: '마스터가 이미 설정되어 있습니다.' });
     }
     const master = normalizeMaster(rawMaster);
-    if (master.length < 12) {
+    if (master.length < 8) {
       throw new BadRequestException({
         code: VAULT_ERRORS.VALIDATION_FAILED,
-        message: '정규화 후 마스터가 12자 미만입니다.'
+        message: '정규화 후 마스터가 8자 미만입니다.'
       });
     }
 
@@ -338,10 +338,10 @@ export class VaultService {
     const currentMaster = normalizeMaster(rawCurrentMaster);
     const targetMaster = rawNewMaster !== undefined ? normalizeMaster(rawNewMaster) : currentMaster;
 
-    if (targetMaster.length < 12) {
+    if (targetMaster.length < 8) {
       throw new BadRequestException({
         code: VAULT_ERRORS.VALIDATION_FAILED,
-        message: '정규화 후 새 마스터가 12자 미만입니다.'
+        message: '정규화 후 새 마스터가 8자 미만입니다.'
       });
     }
 

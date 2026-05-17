@@ -3,13 +3,13 @@ import { IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-va
 
 export class RekeyDto {
   @IsString()
-  @MinLength(12)
+  @MinLength(8)
   @MaxLength(256)
   currentMaster!: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(12)
+  @MinLength(8)
   @MaxLength(256)
   newMaster?: string;
 

@@ -68,7 +68,7 @@ export function BackupPanel({ onImported }: Props) {
       setError('복원할 파일을 먼저 선택하세요.');
       return;
     }
-    if (pendingMaster.length < 12) {
+    if (pendingMaster.length < 8) {
       setError('컨테이너의 마스터 패스워드를 입력하세요.');
       return;
     }
@@ -125,7 +125,7 @@ export function BackupPanel({ onImported }: Props) {
           autoComplete="off"
           value={pendingMaster}
           onChange={(e) => setPendingMaster(e.target.value)}
-          minLength={12}
+          minLength={8}
           maxLength={256}
           disabled={busy}
         />

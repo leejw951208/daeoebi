@@ -22,9 +22,9 @@ export function UnlockScreen({ mode, onSuccess }: Props) {
     if (state === 'verifying' || state === 'rate-limited') return;
 
     if (mode === 'setup') {
-      if (master.length < 12) {
+      if (master.length < 8) {
         setState('failed');
-        setErrorMessage('마스터는 최소 12자 이상이어야 합니다.');
+        setErrorMessage('마스터는 최소 8자 이상이어야 합니다.');
         return;
       }
       if (master !== confirm) {
@@ -63,7 +63,7 @@ export function UnlockScreen({ mode, onSuccess }: Props) {
       <h1>{mode === 'setup' ? '마스터 패스워드 설정' : '비밀번호 보관함 잠금해제'}</h1>
       <p className="muted">
         {mode === 'setup'
-          ? '보관함 전체를 보호할 마스터 패스워드를 설정합니다. 최소 12자.'
+          ? '보관함 전체를 보호할 마스터 패스워드를 설정합니다. 최소 8자.'
           : '마스터 패스워드를 입력해 보관함을 잠금해제합니다.'}
       </p>
 
@@ -80,7 +80,7 @@ export function UnlockScreen({ mode, onSuccess }: Props) {
             setState('typing');
             setErrorMessage(null);
           }}
-          minLength={12}
+          minLength={8}
           maxLength={256}
           required
           disabled={state === 'verifying' || state === 'rate-limited'}

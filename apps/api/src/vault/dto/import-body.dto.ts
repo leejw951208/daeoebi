@@ -3,7 +3,7 @@ import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class ImportBodyDto {
   @IsString()
-  @MinLength(12)
+  @MinLength(8)
   @MaxLength(256)
   master!: string;
 
