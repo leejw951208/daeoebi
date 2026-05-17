@@ -48,19 +48,6 @@ echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
 
 `docs/features/$FEATURE_SLUG/progress.md` 가 없으면 `${CLAUDE_SKILL_DIR}/templates/progress.md` 템플릿을 기반으로 생성한다. `plan.md` 의 태스크 목록을 옮겨 적고 각 항목 초기 상태를 `대기` 로 둔다. 이미 존재하면 그대로 사용한다.
 
-디자인 단계 산출물이 있으면 함께 입력 컨텍스트로 사용한다.
-
-```bash
-ls docs/features/$FEATURE_SLUG/design.md \
-   .design-cache/$FEATURE_SLUG/ 2>/dev/null
-```
-
-존재하면 모두 읽는다.
-- `docs/features/$FEATURE_SLUG/design.md` — 디자인 토큰·선정 변형·OPEN 보완 항목·React 변환 매핑이 모두 들어 있는 단일 문서
-- `.design-cache/$FEATURE_SLUG/` — 변환할 HTML/CSS 원본. design.md §4 “React 변환 매핑” 표에 명시된 대로 `apps/web/...` 로 옮긴다
-
-React 변환 완료 후 `.design-cache/$FEATURE_SLUG/` 는 삭제해도 된다.
-
 ---
 
 ## 2. 코딩 제약
@@ -78,12 +65,6 @@ React 변환 완료 후 `.design-cache/$FEATURE_SLUG/` 는 삭제해도 된다.
 - 기존 스타일과 다르더라도 기존 스타일을 따른다.
 - 변경과 무관한 데드 코드를 발견하면 보고만 한다. 직접 삭제하지 않는다.
 - 자신의 변경으로 미사용 상태가 된 import, 변수, 함수는 제거한다.
-
-**디자인 토큰 일치 (design.md 가 존재할 때만)**
-- `design.md` §1 의 컬러/타이포/스페이싱 토큰을 그대로 사용한다. 색상 HEX 값을 코드에 직접 박지 않는다.
-- `.design-cache/$FEATURE_SLUG/` 의 마크업/클래스 구조를 React/Next 컴포넌트로 옮길 때, 시각적 결과물(여백·정렬·폰트)이 동일해야 한다.
-- `design.md` §3 의 OPEN 보완 항목 중 “HTML 단계 진입 전 반드시 반영” 으로 분류된 항목은 구현에 반드시 포함한다.
-- 변환 매핑은 `design.md` §4 “React 변환 매핑” 표를 따른다.
 
 ---
 

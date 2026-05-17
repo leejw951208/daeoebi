@@ -63,14 +63,6 @@ grep -c "| OPEN |" docs/features/$FEATURE_SLUG/review.md 2>/dev/null || echo "0"
 
 본 단계에서 `spec.md` 와 `plan.md` 는 **입력 전용**이다. 어떤 사유로도 수정·재작성하지 않는다. 본 단계에서는 새로운 기능 코드도 작성하지 않는다. 검증 도중 결함이 발견되면 `review.md` 에 OPEN 항목으로 기록만 하고, 수정은 `/project-patch` 단계에서 처리한다.
 
-디자인 산출물이 있으면 함께 읽는다.
-
-```bash
-ls docs/features/$FEATURE_SLUG/design.md 2>/dev/null
-```
-
-존재하면 “디자인 적합성” 검증 섹션을 활성화한다(아래 산출물 저장 단계 참조). 토큰 정의는 §1, 라이브 QA 결과(잔존 OPEN)는 §5 에서 인용한다.
-
 ---
 
 ## 2. 코드 리뷰
@@ -105,8 +97,6 @@ ls docs/features/$FEATURE_SLUG/design.md 2>/dev/null
 결과를 `docs/features/$FEATURE_SLUG/review.md` 에 저장한다.
 산출물 템플릿은 `${CLAUDE_SKILL_DIR}/templates/review.md` 를 읽고 해당 구조를 그대로 사용한다.
 헤더/표 컬럼/순서를 임의로 바꾸지 않고, 각 섹션의 빈 셀과 플레이스홀더만 채운다.
-
-§7 디자인 적합성은 `docs/features/$FEATURE_SLUG/design.md` 가 존재할 때만 채운다. 없으면 섹션 본문을 `없음 (디자인 단계 미실행)` 한 줄로 대체한다.
 
 ---
 
