@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Autoverify"
+  short_description: "검증과 보강을 최대 5라운드 반복합니다"
+  default_prompt: "Use $project-autoverify to verify and patch one feature, or ask before processing all features when no slug is provided."
+
+policy:
+  allow_implicit_invocation: true
