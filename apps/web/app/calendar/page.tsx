@@ -1,7 +1,7 @@
-// 결제 예정 인스턴스 캘린더 뷰.
+// 결제 예정 인스턴스 캘린더 뷰. 단일 모바일 레이아웃이므로 AgendaView 만 사용.
 import { getOccurrences } from '@/lib/api-client';
 import { formatDate, todayIso } from '@/lib/format';
-import { CalendarView } from './CalendarView';
+import { AgendaView } from './AgendaView';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,7 @@ export default async function CalendarPage({
     <section>
       <h1>캘린더</h1>
       {error && <div className="error-box">{error}</div>}
-      <CalendarView monthKey={monthKey} occurrences={occurrences} />
+      <AgendaView occurrences={occurrences} />
     </section>
   );
 }

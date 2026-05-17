@@ -53,10 +53,10 @@ export function OccurrencePanel({ occurrence, onClose, onUpdated }: Props) {
   const diff = actual !== null ? actual - expected : 0;
 
   return (
-    <div className="card" style={{ marginTop: 16 }}>
+    <div className="card inline-bottom-sheet" style={{ marginTop: 16 }}>
       <div className="toolbar" style={{ justifyContent: 'space-between' }}>
         <h3 style={{ margin: 0 }}>{occurrence.expense.name}</h3>
-        <button className="btn secondary" onClick={onClose}>닫기</button>
+        <button type="button" className="btn secondary" onClick={onClose}>닫기</button>
       </div>
       <div className="muted">{formatDate(occurrence.dueDate)} · {occurrence.expense.category}</div>
       <div style={{ marginTop: 8 }}>
@@ -75,8 +75,9 @@ export function OccurrencePanel({ occurrence, onClose, onUpdated }: Props) {
       </div>
 
       <div className="form-row" style={{ marginTop: 12 }}>
-        <label>실제 금액</label>
+        <label htmlFor="occurrence-actual">실제 금액</label>
         <input
+          id="occurrence-actual"
           type="text"
           inputMode="numeric"
           value={actualInput}
@@ -88,18 +89,23 @@ export function OccurrencePanel({ occurrence, onClose, onUpdated }: Props) {
         />
       </div>
       <div className="form-row">
-        <label>메모</label>
-        <input type="text" value={memo} onChange={(e) => setMemo(e.target.value)} />
+        <label htmlFor="occurrence-memo">메모</label>
+        <input
+          id="occurrence-memo"
+          type="text"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+        />
       </div>
 
       {error && <div className="error-box">{error}</div>}
 
       <div className="toolbar">
-        <button className="btn" disabled={busy} onClick={() => apply('PAID')}>완료</button>
-        <button className="btn secondary" disabled={busy} onClick={() => apply('SKIPPED')}>
+        <button type="button" className="btn" disabled={busy} onClick={() => apply('PAID')}>완료</button>
+        <button type="button" className="btn secondary" disabled={busy} onClick={() => apply('SKIPPED')}>
           스킵
         </button>
-        <button className="btn secondary" disabled={busy} onClick={() => apply('SCHEDULED')}>
+        <button type="button" className="btn secondary" disabled={busy} onClick={() => apply('SCHEDULED')}>
           예정으로 되돌리기
         </button>
         <span className={`status-badge status-${occurrence.status}`} style={{ marginLeft: 'auto' }}>

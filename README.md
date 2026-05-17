@@ -53,6 +53,18 @@ pnpm --filter @life-key/api exec jest --config ./test/jest-e2e.json  # e2e
 pnpm --filter @life-key/web exec next build                    # 프런트 타입체크 + 빌드 검증
 ```
 
+### 시각 회귀 + 접근성
+
+`apps/web/tests/visual/` 의 Playwright spec 으로 5개 페이지 × 3 viewport (375/768/1280) 의 스크린샷 baseline 과 axe-core WCAG AA 검사를 실행한다.
+
+```bash
+pnpm --filter @life-key/web exec playwright install            # 최초 1회 — 브라우저 다운로드
+pnpm --filter @life-key/web exec next build && pnpm --filter @life-key/web run test:visual:update  # baseline 최초 캡처
+pnpm --filter @life-key/web run test:visual                    # 회귀 검증
+```
+
+`tests/visual/accessibility.spec.ts` 는 5개 페이지에서 WCAG 2.2 AA 위반 0건을 검증한다.
+
 ## 환경 변수
 
 | 위치 | 변수 | 기본값 | 설명 |

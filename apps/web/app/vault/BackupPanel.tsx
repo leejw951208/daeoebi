@@ -111,6 +111,7 @@ export function BackupPanel({ onImported }: Props) {
           id="import-file"
           ref={inputRef}
           type="file"
+          className="field-control"
           accept=".lkvault,application/octet-stream"
           onChange={handleFileChosen}
           disabled={busy}
@@ -120,6 +121,7 @@ export function BackupPanel({ onImported }: Props) {
         <input
           id="import-master"
           type="password"
+          className="field-control"
           autoComplete="off"
           value={pendingMaster}
           onChange={(e) => setPendingMaster(e.target.value)}
@@ -131,6 +133,7 @@ export function BackupPanel({ onImported }: Props) {
         <label htmlFor="import-mode">충돌 처리</label>
         <select
           id="import-mode"
+          className="field-control"
           value={mode}
           onChange={(e) => setMode(e.target.value as ImportMode)}
           disabled={busy}

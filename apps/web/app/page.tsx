@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { getExpenses, getOccurrences } from '@/lib/api-client';
 import { formatCurrency, formatDate, todayIso, addDaysIso } from '@/lib/format';
+import { ResponsiveTable, type ResponsiveColumn } from '@/components/ResponsiveTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,13 +14,28 @@ function monthRange(today: string): { from: string; to: string } {
   return { from, to };
 }
 
+type Occurrence = Awaited<ReturnType<typeof getOccurrences>>[number];
+
+const UPCOMING_COLUMNS: ResponsiveColumn<Occurrence>[] = [
+  { key: 'date', header: '날짜', render: (o) => formatDate(o.dueDate) },
+  { key: 'name', header: '이름', render: (o) => o.expense.name, primary: true },
+  { key: 'category', header: '카테고리', render: (o) => o.expense.category },
+  {
+    key: 'expected',
+    header: '예상',
+    align: 'right',
+    render: (o) => formatCurrency(o.expectedAmount, o.expense.currency)
+  },
+  { key: 'method', header: '결제수단', render: (o) => o.expense.paymentMethod ?? '-' }
+];
+
 export default async function DashboardPage() {
   const today = todayIso();
   const { from: monthFrom, to: monthTo } = monthRange(today);
   const next7 = addDaysIso(today, 7);
 
-  let monthly = [] as Awaited<ReturnType<typeof getOccurrences>>;
-  let upcoming = [] as Awaited<ReturnType<typeof getOccurrences>>;
+  let monthly: Occurrence[] = [];
+  let upcoming: Occurrence[] = [];
   let expensesCount = 0;
   let error: string | null = null;
 
@@ -76,28 +92,11 @@ export default async function DashboardPage() {
           </div>
         </div>
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>날짜</th>
-              <th>이름</th>
-              <th>카테고리</th>
-              <th>예상</th>
-              <th>결제수단</th>
-            </tr>
-          </thead>
-          <tbody>
-            {upcoming.map((o) => (
-              <tr key={o.id}>
-                <td>{formatDate(o.dueDate)}</td>
-                <td>{o.expense.name}</td>
-                <td>{o.expense.category}</td>
-                <td className="amount">{formatCurrency(o.expectedAmount, o.expense.currency)}</td>
-                <td>{o.expense.paymentMethod ?? '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ResponsiveTable
+          rows={upcoming}
+          columns={UPCOMING_COLUMNS}
+          rowKey={(o) => o.id}
+        />
       )}
     </section>
   );

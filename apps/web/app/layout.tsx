@@ -1,28 +1,42 @@
-// 전역 레이아웃과 네비게이션, 글로벌 스타일을 정의한다.
-import type { Metadata } from 'next';
-import Link from 'next/link';
+// 전역 레이아웃. 단일 모바일 셸 + 데스크탑 phone-frame + PWA 메타.
+import type { Metadata, Viewport } from 'next';
+import { BottomTabBar } from '@/components/BottomTabBar';
+import { UpdateToast } from '@/components/UpdateToast';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Life Key — 정기 지출 관리',
-  description: '로컬 1인용 정기 지출 관리'
+  description: '로컬 1인용 정기 지출 관리',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Life Key'
+  },
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/icon-192.png'
+  }
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#2c5fef'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
       <body>
-        <header className="topbar">
-          <div className="brand">Life Key</div>
-          <nav className="nav">
-            <Link href="/">대시보드</Link>
-            <Link href="/expenses">정기 지출</Link>
-            <Link href="/calendar">캘린더</Link>
-            <Link href="/summary">합계</Link>
-            <Link href="/vault">보관함</Link>
-          </nav>
-        </header>
-        <main className="container">{children}</main>
+        <div className="phone-frame">
+          <main className="container">{children}</main>
+          <BottomTabBar />
+          <UpdateToast />
+        </div>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

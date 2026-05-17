@@ -11,6 +11,8 @@ import { CATEGORY_FIELDS, CATEGORY_LABELS } from './category-schema';
 import { CategoryForm } from './CategoryForm';
 import { CopyField } from './CopyField';
 import { BackupPanel } from './BackupPanel';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { SkeletonCard } from '@/components/Skeleton';
 
 type ListState = 'idle' | 'loading' | 'loaded' | 'error';
 
@@ -28,6 +30,7 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<VaultEntry | null | 'new'>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     setState('loading');
@@ -54,8 +57,10 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
     void reload();
   }, [reload]);
 
-  async function handleDelete(id: string) {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
     try {
       await deleteEntry(id);
       await reload();
@@ -94,9 +99,11 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
         <select
+          className="field-control"
           value={category}
           onChange={(e) => setCategory(e.target.value as VaultCategory | 'ALL')}
           aria-label="카테고리 필터"
+          style={{ width: 'auto' }}
         >
           <option value="ALL">전체</option>
           {(Object.keys(CATEGORY_LABELS) as VaultCategory[]).map((cat) => (
@@ -106,6 +113,7 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
           ))}
         </select>
         <input
+          className="field-control"
           type="search"
           placeholder="라벨 검색"
           value={query}
@@ -138,7 +146,7 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
       )}
 
       <div style={{ marginTop: 16 }}>
-        {state === 'loading' && <p className="muted">불러오는 중...</p>}
+        {state === 'loading' && <SkeletonCard lines={3} />}
         {state === 'loaded' && entries.length === 0 && (
           <div className="empty">
             {query.trim() ? '검색 결과가 없습니다.' : '등록된 항목이 없습니다.'}
@@ -169,7 +177,7 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
                       <button type="button" className="btn" onClick={() => setEditing(entry)}>
                         수정
                       </button>
-                      <button type="button" className="btn" onClick={() => handleDelete(entry.id)}>
+                      <button type="button" className="btn danger" onClick={() => setPendingDeleteId(entry.id)}>
                         삭제
                       </button>
                     </div>
@@ -202,6 +210,16 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
       </div>
 
       <BackupPanel onImported={reload} />
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="항목 삭제"
+        message="정말 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </section>
   );
 }

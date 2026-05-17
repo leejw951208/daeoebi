@@ -1,14 +1,92 @@
-/* 전역 스타일. Tailwind 없이 최소한의 CSS만 사용한다. */
+/* 전역 스타일. zinc/slate 기반 토큰 + 단일 모바일 레이아웃 + 데스크탑 phone-frame + 접근성 + 모션. */
+
 :root {
-  --bg: #f7f7f8;
-  --surface: #ffffff;
-  --text: #1f2333;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --primary: #2c5fef;
-  --warn: #d97706;
-  --danger: #dc2626;
-  --good: #059669;
+  /* Color — Surface */
+  --color-bg: #f4f4f5;
+  --color-bg-outer: #e4e4e7;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #fafafa;
+
+  /* Color — Text */
+  --color-text-primary: #18181b;
+  --color-text-secondary: #3f3f46;
+  --color-text-muted: #52525b;
+  --color-text-inverse: #ffffff;
+
+  /* Color — Border */
+  --color-border: #e4e4e7;
+  --color-border-strong: #d4d4d8;
+
+  /* Color — Accent (브랜드 단일 액센트) */
+  --color-accent: #2c5fef;
+  --color-accent-hover: #1e4ad6;
+  --color-accent-active: #1839a8;
+  --color-accent-fg: #ffffff;
+
+  /* Color — Focus ring */
+  --color-focus-ring: #2c5fef;
+
+  /* Color — States */
+  --color-success-bg: #ecfdf5;
+  --color-success-fg: #047857;
+  --color-success-border: #a7f3d0;
+
+  --color-warning-bg: #fffbeb;
+  --color-warning-fg: #92400e;
+  --color-warning-border: #fde68a;
+
+  --color-danger-bg: #fef2f2;
+  --color-danger-fg: #b91c1c;
+  --color-danger-fg-hover: #991b1b;
+  --color-danger-border: #fecaca;
+
+  --color-info-bg: #eef2ff;
+  --color-info-fg: #4338ca;
+  --color-info-border: #c7d2fe;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.06);
+  --shadow-md: 0 4px 12px rgba(24, 24, 27, 0.08);
+
+  /* Font size — body 토큰. 모바일 16px 기본, 데스크탑 분기 아래 참조 */
+  --font-xs: 12px;
+  --font-sm: 14px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 22px;
+  --font-2xl: 28px;
+  --font-base: var(--font-md);
+
+  /* Motion */
+  --motion-fast: 150ms;
+  --motion-normal: 250ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Container */
+  --container-padding: var(--space-3);
+  --container-max-width: 1100px;
+
+  /* Touch target */
+  --touch-target-min: 44px;
+
+  /* Bottom tab bar height (모바일에서 main 의 padding-bottom 계산용) */
+  --bottom-tab-height: 64px;
 }
 
 * {
@@ -18,86 +96,153 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
   font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
+  font-size: var(--font-base);
   line-height: 1.5;
 }
 
 a {
-  color: var(--primary);
+  color: var(--color-accent);
   text-decoration: none;
+  transition: color var(--motion-fast) var(--ease);
 }
 
 a:hover {
   text-decoration: underline;
 }
 
-.topbar {
+/* Focus visible — 키보드 사용 시에만 강조 */
+*:focus { outline: none; }
+*:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Bottom tab bar — 항상 표시. viewport 하단 고정, 가운데 정렬, phone-frame 폭(768px)에 맞춤. */
+.bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 768px;
+  height: var(--bottom-tab-height);
+  background: var(--color-surface-1);
+  border-top: 1px solid var(--color-border);
   display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-tab-bar a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 24px;
+  justify-content: center;
+  gap: 2px;
+  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+  min-height: var(--touch-target-min);
+  text-decoration: none;
+  transition: color var(--motion-fast) var(--ease);
 }
 
-.brand {
-  font-weight: 700;
-  font-size: 16px;
+.bottom-tab-bar a[aria-current='page'] {
+  color: var(--color-accent);
 }
 
-.nav {
-  display: flex;
-  gap: 16px;
+.bottom-tab-bar a:hover {
+  text-decoration: none;
+}
+
+/* Phone frame — 데스크탑에서 가운데 정렬, 모바일에서는 풀스크린. BottomTabBar 는 viewport fixed 라 wrapper 와 분리. */
+.phone-frame {
+  position: relative;
+  min-height: 100vh;
+  background: var(--color-bg);
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 24px;
+  padding: var(--container-padding);
+  padding-bottom: calc(var(--bottom-tab-height) + var(--space-4));
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
 }
 
 .grid {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .grid.cards {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
 }
 
-.muted { color: var(--muted); }
+.muted { color: var(--color-text-muted); }
 .amount { font-variant-numeric: tabular-nums; font-weight: 600; }
-.amount.large { font-size: 22px; }
+.amount.large { font-size: var(--font-xl); }
 
+/* Button — 44px 터치 타깃 보장 */
 .btn {
-  display: inline-block;
-  padding: 8px 14px;
-  border: 1px solid var(--primary);
-  background: var(--primary);
-  color: white;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-sm);
+  font-family: inherit;
+  transition: background-color var(--motion-fast) var(--ease),
+              border-color var(--motion-fast) var(--ease),
+              transform var(--motion-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.btn:active:not(:disabled) {
+  background: var(--color-accent-active);
+  border-color: var(--color-accent-active);
+  transform: translateY(1px);
 }
 
 .btn.secondary {
-  background: var(--surface);
-  color: var(--primary);
+  background: var(--color-surface-1);
+  color: var(--color-accent);
+}
+
+.btn.secondary:hover:not(:disabled) {
+  background: var(--color-info-bg);
 }
 
 .btn.danger {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: var(--color-danger-fg);
+  border-color: var(--color-danger-fg);
+  color: var(--color-text-inverse);
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: var(--color-danger-fg-hover);
+  border-color: var(--color-danger-fg-hover);
 }
 
 .btn:disabled {
@@ -105,24 +250,49 @@ a:hover {
   cursor: not-allowed;
 }
 
+/* Form row — 모바일은 stack, 태블릿+ 는 grid */
 .form-row {
   display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
 }
 
-.form-row label { color: var(--muted); }
+.form-row label { color: var(--color-text-secondary); font-size: var(--font-sm); }
+
 .form-row input,
 .form-row select,
-.form-row textarea {
+.form-row textarea,
+.field-control {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 14px;
-  background: var(--surface);
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md); /* 16px — iOS auto-zoom 방지 */
+  font-family: inherit;
+  background: var(--color-surface-1);
+  color: var(--color-text-primary);
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.form-row textarea,
+textarea.field-control {
+  padding: var(--space-3);
+}
+
+.form-row input:hover,
+.form-row select:hover,
+.form-row textarea:hover,
+.field-control:hover {
+  border-color: var(--color-border-strong);
+}
+
+.form-row input:focus-visible,
+.form-row select:focus-visible,
+.form-row textarea:focus-visible,
+.field-control:focus-visible {
+  border-color: var(--color-accent);
 }
 
 .table {
@@ -131,30 +301,65 @@ a:hover {
 }
 
 .table th, .table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
 }
 
 .table th {
   font-weight: 600;
-  background: #fafafa;
+  background: var(--color-surface-2);
+}
+
+/* Responsive table — 항상 카드 stack */
+.responsive-table {
+  display: block;
+}
+
+.responsive-table .table {
+  display: none;
+}
+
+.responsive-table-cards {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.responsive-table-card {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.responsive-table-card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+}
+
+.responsive-table-card-label {
+  color: var(--color-text-muted);
 }
 
 .status-badge {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
 }
 
-.status-SCHEDULED { background: #eef2ff; color: #4338ca; }
-.status-PAID { background: #ecfdf5; color: #047857; }
-.status-SKIPPED { background: #fef2f2; color: #b91c1c; }
+.status-SCHEDULED { background: var(--color-info-bg); color: var(--color-info-fg); }
+.status-PAID { background: var(--color-success-bg); color: var(--color-success-fg); }
+.status-SKIPPED { background: var(--color-danger-bg); color: var(--color-danger-fg); }
 
-.diff.over { color: var(--danger); }
-.diff.under { color: var(--good); }
+.diff.over { color: var(--color-danger-fg); }
+.diff.under { color: var(--color-success-fg); }
 
+/* Calendar — 데스크탑 그리드 */
 .calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -162,65 +367,308 @@ a:hover {
 }
 
 .calendar .dow {
-  font-size: 12px;
-  color: var(--muted);
-  padding: 4px;
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  padding: var(--space-1);
   text-align: center;
 }
 
 .calendar .cell {
   min-height: 80px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 6px;
-  background: var(--surface);
-  font-size: 12px;
+  background: var(--color-surface-1);
+  font-size: var(--font-xs);
 }
 
 .calendar .cell.muted { opacity: 0.4; }
 .calendar .chip {
-  display: block;
-  background: #eef2ff;
-  color: #4338ca;
-  border-radius: 4px;
-  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: var(--color-info-bg);
+  color: var(--color-info-fg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-1);
   margin-top: 2px;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-height: var(--touch-target-min);
+  font: inherit;
+  font-size: var(--font-xs);
+  text-align: left;
+  transition: border-color var(--motion-fast) var(--ease);
 }
 
-.calendar .chip.paid { background: #ecfdf5; color: #047857; }
-.calendar .chip.skipped { background: #fef2f2; color: #b91c1c; }
+.calendar .chip:hover {
+  border-color: var(--color-border-strong);
+}
+
+.calendar .chip.paid { background: var(--color-success-bg); color: var(--color-success-fg); }
+.calendar .chip.skipped { background: var(--color-danger-bg); color: var(--color-danger-fg); }
+
+/* Agenda view — 캘린더 단일 뷰. 데스크탑·모바일 모두 동일. */
+.agenda {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.agenda-day {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.agenda-day-header {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.agenda-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  min-height: var(--touch-target-min);
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease);
+}
+
+.agenda-item:hover {
+  border-color: var(--color-border-strong);
+}
+
+.agenda-empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+  padding: var(--space-2) 0;
+}
 
 .error-box {
-  border: 1px solid var(--danger);
-  background: #fef2f2;
-  color: var(--danger);
-  padding: 10px;
-  border-radius: 6px;
-  margin: 12px 0;
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-fg);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  margin: var(--space-3) 0;
 }
 
 .empty {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 24px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
   text-align: center;
-  color: var(--muted);
+  color: var(--color-text-muted);
 }
 
 .toolbar {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin: 12px 0;
+  margin: var(--space-3) 0;
   flex-wrap: wrap;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: var(--font-lg);
   font-weight: 600;
-  margin: 24px 0 12px;
+  margin: var(--space-5) 0 var(--space-3);
+}
+
+/* Confirm dialog (bottom-sheet on mobile, modal on desktop) */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fade-in var(--motion-fast) var(--ease);
+}
+
+.dialog {
+  background: var(--color-surface-1);
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-4);
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  animation: slide-up var(--motion-normal) var(--ease);
+}
+
+.dialog-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.dialog-message {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* Inline bottom sheet — 폼/패널을 모바일 하단에 붙여 엄지 영역에서 처리 */
+.inline-bottom-sheet {
+  position: sticky;
+  bottom: calc(var(--bottom-tab-height) + var(--space-2));
+  z-index: 40;
+  box-shadow: var(--shadow-md);
+}
+
+.inline-bottom-sheet::before {
+  content: '';
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  justify-self: center;
+}
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 0%,
+    var(--color-surface-2) 50%,
+    var(--color-border) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skeleton-line {
+  height: 14px;
+  margin: var(--space-1) 0;
+}
+
+.skeleton-card {
+  padding: var(--space-4);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* PWA install banner */
+.install-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-info-bg);
+  color: var(--color-info-fg);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin: var(--space-3) 0;
+  font-size: var(--font-sm);
+}
+
+.install-banner-dismiss {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: var(--font-md);
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+/* Update toast */
+.update-toast {
+  position: fixed;
+  bottom: calc(var(--bottom-tab-height) + var(--space-4));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-md);
+  z-index: 60;
+  animation: slide-up var(--motion-normal) var(--ease);
+}
+
+.update-toast button {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  min-height: var(--touch-target-min);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Desktop (≥480px) — 본문을 가운데 768px 폭으로 정렬. 양옆은 body 배경 zinc-100 노출. */
+@media (min-width: 480px) {
+  html, body {
+    background: var(--color-bg-outer);
+  }
+
+  .phone-frame {
+    width: 768px;
+    max-width: 100%;
+    margin: 0 auto;
+    background: var(--color-bg);
+    min-height: 100vh;
+  }
+
+  /* Dialog backdrop 은 phone-frame 안에만 표시되도록 absolute */
+  .phone-frame .dialog-backdrop {
+    position: absolute;
+  }
+}
+
+/* prefers-reduced-motion — 모션 무력화 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

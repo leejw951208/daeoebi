@@ -135,10 +135,10 @@ export function CategoryForm({ entry, onSuccess, onCancel }: Props) {
   const fields = CATEGORY_FIELDS[form.category];
 
   return (
-    <form onSubmit={handleSubmit} className="card" style={{ display: 'grid', gap: 12 }}>
+    <form onSubmit={handleSubmit} className="card inline-bottom-sheet" style={{ display: 'grid', gap: 12 }}>
       <h3 style={{ margin: 0 }}>{entry ? '항목 수정' : '항목 추가'}</h3>
 
-      <div>
+      <div className="form-row">
         <label htmlFor="entry-category">카테고리</label>
         <select
           id="entry-category"
@@ -154,7 +154,7 @@ export function CategoryForm({ entry, onSuccess, onCancel }: Props) {
         </select>
       </div>
 
-      <div>
+      <div className="form-row">
         <label htmlFor="entry-label">라벨 *</label>
         <input
           id="entry-label"
@@ -167,7 +167,7 @@ export function CategoryForm({ entry, onSuccess, onCancel }: Props) {
       </div>
 
       {fields.map((spec) => (
-        <div key={spec.name}>
+        <div className="form-row" key={spec.name}>
           <label htmlFor={`entry-${spec.name}`}>{spec.label}</label>
           <input
             id={`entry-${spec.name}`}
@@ -195,7 +195,7 @@ export function CategoryForm({ entry, onSuccess, onCancel }: Props) {
             </button>
           </div>
           {form.customFields.map((kv, idx) => (
-            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 8 }}>
+            <div className="form-row" key={idx} style={{ gridTemplateColumns: '1fr 1fr auto', gap: 8, marginTop: 8 }}>
               <input
                 aria-label={`key ${idx + 1}`}
                 value={kv.key}
@@ -218,7 +218,7 @@ export function CategoryForm({ entry, onSuccess, onCancel }: Props) {
         </div>
       )}
 
-      <div>
+      <div className="form-row">
         <label htmlFor="entry-memo">메모</label>
         <textarea
           id="entry-memo"

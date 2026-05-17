@@ -72,6 +72,7 @@ export function UnlockScreen({ mode, onSuccess }: Props) {
         <input
           id="master"
           type="password"
+          className="field-control"
           autoComplete="current-password"
           value={master}
           onChange={(e) => {
@@ -93,6 +94,7 @@ export function UnlockScreen({ mode, onSuccess }: Props) {
             <input
               id="confirm"
               type="password"
+              className="field-control"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => {

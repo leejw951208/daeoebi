@@ -4,6 +4,21 @@ import { useEffect, useState } from 'react';
 import { buildCsvDownloadUrl, getSummary } from '@/lib/api-client';
 import { formatCurrency } from '@/lib/format';
 import type { SummaryResponse } from '@/lib/types';
+import { ResponsiveTable, type ResponsiveColumn } from '@/components/ResponsiveTable';
+import { SkeletonCard } from '@/components/Skeleton';
+
+type BucketRow = { key: string; total: number; count: number };
+
+const BUCKET_COLUMNS: ResponsiveColumn<BucketRow>[] = [
+  { key: 'key', header: '항목', render: (r) => r.key, primary: true },
+  { key: 'count', header: '건수', render: (r) => r.count },
+  {
+    key: 'total',
+    header: '합계',
+    align: 'right',
+    render: (r) => formatCurrency(r.total)
+  }
+];
 
 export function SummaryView({ defaults }: { defaults: { from: string; to: string } }) {
   const [from, setFrom] = useState(defaults.from);
@@ -35,13 +50,25 @@ export function SummaryView({ defaults }: { defaults: { from: string; to: string
       <h1>합계</h1>
       <div className="card">
         <div className="toolbar">
-          <label>
+          <label htmlFor="summary-from">
             From{' '}
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <input
+              id="summary-from"
+              type="date"
+              className="field-control"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
           </label>
-          <label>
+          <label htmlFor="summary-to">
             To{' '}
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <input
+              id="summary-to"
+              type="date"
+              className="field-control"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
           </label>
           <button className="btn" onClick={fetchSummary} disabled={loading}>
             조회
@@ -51,6 +78,7 @@ export function SummaryView({ defaults }: { defaults: { from: string; to: string
           </a>
         </div>
         {error && <div className="error-box">{error}</div>}
+        {loading && !data && <SkeletonCard lines={2} />}
         {data && (
           <div style={{ marginTop: 12 }}>
             <div className="muted">기간 합계</div>
@@ -76,28 +104,9 @@ export function SummaryView({ defaults }: { defaults: { from: string; to: string
   );
 }
 
-function BucketTable({ rows }: { rows: { key: string; total: number; count: number }[] }) {
+function BucketTable({ rows }: { rows: BucketRow[] }) {
   if (rows.length === 0) {
     return <div className="empty">해당 기간에 데이터가 없습니다.</div>;
   }
-  return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>항목</th>
-          <th>건수</th>
-          <th>합계</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.key}>
-            <td>{r.key}</td>
-            <td>{r.count}</td>
-            <td className="amount">{formatCurrency(r.total)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+  return <ResponsiveTable rows={rows} columns={BUCKET_COLUMNS} rowKey={(r) => r.key} />;
 }

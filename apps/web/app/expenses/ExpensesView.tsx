@@ -9,6 +9,8 @@ import {
 } from '@/lib/api-client';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { CreateExpenseInput, RecurringExpense } from '@/lib/types';
+import { ResponsiveTable, type ResponsiveColumn } from '@/components/ResponsiveTable';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 const RECURRENCE_LABELS: Record<string, string> = {
   MONTHLY: '매월',
@@ -104,6 +106,7 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const isEditing = Boolean(form.id);
 
@@ -130,9 +133,11 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('이 정기 지출을 삭제할까요? 미래 SCHEDULED 인스턴스가 제거됩니다.')) return;
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
     setError(null);
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
     try {
       await deleteExpense(id);
       setItems((prev) => prev.filter((it) => it.id !== id));
@@ -141,6 +146,44 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
       setError((err as Error).message);
     }
   };
+
+  const columns: ResponsiveColumn<RecurringExpense>[] = [
+    { key: 'name', header: '이름', render: (it) => it.name, primary: true },
+    { key: 'category', header: '카테고리', render: (it) => it.category },
+    {
+      key: 'amount',
+      header: '예상',
+      align: 'right',
+      render: (it) => formatCurrency(it.amount, it.currency)
+    },
+    { key: 'recurrence', header: '주기', render: (it) => RECURRENCE_LABELS[it.recurrence] ?? '' },
+    {
+      key: 'day',
+      header: '결제일',
+      render: (it) =>
+        it.recurrence === 'WEEKLY'
+          ? DOW_LABELS[it.dayOfWeek ?? 0]
+          : it.recurrence === 'YEARLY'
+            ? `${it.monthOfYear}월 ${it.dayOfMonth}일`
+            : `${it.dayOfMonth}일`
+    },
+    { key: 'startDate', header: '시작일', render: (it) => formatDate(it.startDate) },
+    { key: 'paymentMethod', header: '결제수단', render: (it) => it.paymentMethod ?? '-' },
+    {
+      key: 'actions',
+      header: '액션',
+      render: (it) => (
+        <span style={{ display: 'inline-flex', gap: 6 }}>
+          <button type="button" className="btn secondary" onClick={() => setForm(toForm(it))}>
+            수정
+          </button>
+          <button type="button" className="btn danger" onClick={() => setPendingDeleteId(it.id)}>
+            삭제
+          </button>
+        </span>
+      )
+    }
+  ];
 
   return (
     <section>
@@ -152,8 +195,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
         <h2 style={{ marginTop: 0 }}>{isEditing ? '정기 지출 수정' : '새 정기 지출'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
-            <label>이름</label>
+            <label htmlFor="expense-name">이름</label>
             <input
+              id="expense-name"
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -162,8 +206,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
             />
           </div>
           <div className="form-row">
-            <label>카테고리</label>
+            <label htmlFor="expense-category">카테고리</label>
             <input
+              id="expense-category"
               type="text"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -172,8 +217,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
             />
           </div>
           <div className="form-row">
-            <label>예상 금액 (KRW)</label>
+            <label htmlFor="expense-amount">예상 금액 (KRW)</label>
             <input
+              id="expense-amount"
               type="text"
               inputMode="numeric"
               value={form.amountInput}
@@ -183,8 +229,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
             />
           </div>
           <div className="form-row">
-            <label>반복 주기</label>
+            <label htmlFor="expense-recurrence">반복 주기</label>
             <select
+              id="expense-recurrence"
               value={form.recurrence}
               onChange={(e) =>
                 setForm({
@@ -200,8 +247,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
           </div>
           {(form.recurrence === 'MONTHLY' || form.recurrence === 'YEARLY') && (
             <div className="form-row">
-              <label>결제일 (일)</label>
+              <label htmlFor="expense-day-of-month">결제일 (일)</label>
               <input
+                id="expense-day-of-month"
                 type="number"
                 min={1}
                 max={31}
@@ -213,8 +261,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
           )}
           {form.recurrence === 'WEEKLY' && (
             <div className="form-row">
-              <label>요일</label>
+              <label htmlFor="expense-day-of-week">요일</label>
               <select
+                id="expense-day-of-week"
                 value={form.dayOfWeek}
                 onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value })}
               >
@@ -226,8 +275,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
           )}
           {form.recurrence === 'YEARLY' && (
             <div className="form-row">
-              <label>월</label>
+              <label htmlFor="expense-month-of-year">월</label>
               <input
+                id="expense-month-of-year"
                 type="number"
                 min={1}
                 max={12}
@@ -238,8 +288,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
             </div>
           )}
           <div className="form-row">
-            <label>시작일</label>
+            <label htmlFor="expense-start-date">시작일</label>
             <input
+              id="expense-start-date"
               type="date"
               value={form.startDate}
               onChange={(e) => setForm({ ...form, startDate: e.target.value })}
@@ -247,16 +298,18 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
             />
           </div>
           <div className="form-row">
-            <label>종료일 (선택)</label>
+            <label htmlFor="expense-end-date">종료일 (선택)</label>
             <input
+              id="expense-end-date"
               type="date"
               value={form.endDate}
               onChange={(e) => setForm({ ...form, endDate: e.target.value })}
             />
           </div>
           <div className="form-row">
-            <label>결제 수단</label>
+            <label htmlFor="expense-payment-method">결제 수단</label>
             <input
+              id="expense-payment-method"
               type="text"
               value={form.paymentMethod}
               onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
@@ -264,8 +317,9 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
             />
           </div>
           <div className="form-row">
-            <label>메모</label>
+            <label htmlFor="expense-memo">메모</label>
             <input
+              id="expense-memo"
               type="text"
               value={form.memo}
               onChange={(e) => setForm({ ...form, memo: e.target.value })}
@@ -292,52 +346,18 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
       {items.length === 0 ? (
         <div className="empty">아직 등록된 정기 지출이 없습니다.</div>
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>이름</th>
-              <th>카테고리</th>
-              <th>예상</th>
-              <th>주기</th>
-              <th>결제일</th>
-              <th>시작일</th>
-              <th>결제수단</th>
-              <th>액션</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it) => (
-              <tr key={it.id}>
-                <td>{it.name}</td>
-                <td>{it.category}</td>
-                <td className="amount">{formatCurrency(it.amount, it.currency)}</td>
-                <td>{RECURRENCE_LABELS[it.recurrence]}</td>
-                <td>
-                  {it.recurrence === 'WEEKLY'
-                    ? DOW_LABELS[it.dayOfWeek ?? 0]
-                    : it.recurrence === 'YEARLY'
-                      ? `${it.monthOfYear}월 ${it.dayOfMonth}일`
-                      : `${it.dayOfMonth}일`}
-                </td>
-                <td>{formatDate(it.startDate)}</td>
-                <td>{it.paymentMethod ?? '-'}</td>
-                <td>
-                  <button className="btn secondary" onClick={() => setForm(toForm(it))}>
-                    수정
-                  </button>
-                  <button
-                    className="btn danger"
-                    style={{ marginLeft: 6 }}
-                    onClick={() => handleDelete(it.id)}
-                  >
-                    삭제
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ResponsiveTable rows={items} columns={columns} rowKey={(it) => it.id} />
       )}
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="정기 지출 삭제"
+        message="이 정기 지출을 삭제할까요? 미래 SCHEDULED 인스턴스가 제거됩니다."
+        confirmLabel="삭제"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </section>
   );
 }

@@ -79,8 +79,9 @@ export function CalendarView({
             <div key={i} className={`cell${isCurrent ? '' : ' muted'}`}>
               <div>{date.getUTCDate()}</div>
               {items.map((occ) => (
-                <span
+                <button
                   key={occ.id}
+                  type="button"
                   className={`chip ${
                     occ.status === 'PAID' ? 'paid' : occ.status === 'SKIPPED' ? 'skipped' : ''
                   }`}
@@ -89,7 +90,7 @@ export function CalendarView({
                 >
                   {occ.expense.name}{' '}
                   {formatCurrency(occ.actualAmount ?? occ.expectedAmount, occ.expense.currency)}
-                </span>
+                </button>
               ))}
             </div>
           );
