@@ -1,36 +1,30 @@
 'use client';
-// unlock 상태에서 노출되는 목록·검색·CRUD·잠금 메인 화면.
+// vault entries 목록 전용 화면. URL 기반 카테고리·검색 필터 + 카드 클릭 시 /vault/[id] 로 이동한다.
+// 신규는 /vault/new, 카테고리 관리는 /vault/categories, 백업·복원은 /vault/backup 라우트에서 처리한다.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  deleteEntry,
-  listEntries,
-  type VaultCategory,
-  type VaultEntry
-} from '@/lib/vault-client';
-import { CATEGORY_FIELDS, CATEGORY_LABELS } from './category-schema';
-import { CategoryForm } from './CategoryForm';
-import { CopyField } from './CopyField';
-import { BackupPanel } from './BackupPanel';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { listEntries, type VaultCategory, type VaultEntry } from '@/lib/vault-client';
+import { CATEGORY_LABELS } from './category-schema';
 import { SkeletonCard } from '@/components/Skeleton';
+import { useVault } from './vault-context';
+import { parseCategoryFilter } from './vault-filter';
 
 type ListState = 'idle' | 'loading' | 'loaded' | 'error';
 
-interface Props {
-  onLock: () => void | Promise<void>;
-  onStatusRefresh: () => Promise<void> | void;
-  idleSecondsRemaining?: number;
-}
+const CATEGORY_VALUES = Object.keys(CATEGORY_LABELS) as VaultCategory[];
 
-export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }: Props) {
+export function EntriesScreen() {
+  const router = useRouter();
+  const search = useSearchParams();
+  const { idleSecondsRemaining, onLock, onStatusRefresh } = useVault();
+
+  const category = parseCategoryFilter(search.get('cat'));
+  const query = search.get('q') ?? '';
+
   const [entries, setEntries] = useState<VaultEntry[]>([]);
   const [state, setState] = useState<ListState>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState<VaultCategory | 'ALL'>('ALL');
-  const [query, setQuery] = useState('');
-  const [editing, setEditing] = useState<VaultEntry | null | 'new'>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     setState('loading');
@@ -57,16 +51,18 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
     void reload();
   }, [reload]);
 
-  async function confirmDelete() {
-    if (!pendingDeleteId) return;
-    const id = pendingDeleteId;
-    setPendingDeleteId(null);
-    try {
-      await deleteEntry(id);
-      await reload();
-    } catch (e) {
-      setError((e as Error).message);
+  function updateFilter(next: { cat?: VaultCategory | 'ALL'; q?: string }) {
+    const params = new URLSearchParams(search.toString());
+    if (next.cat !== undefined) {
+      if (next.cat === 'ALL') params.delete('cat');
+      else params.set('cat', next.cat);
     }
+    if (next.q !== undefined) {
+      if (!next.q) params.delete('q');
+      else params.set('q', next.q);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `/vault?${qs}` : '/vault', { scroll: false });
   }
 
   const idleWarning = useMemo(() => {
@@ -79,13 +75,13 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
     <section>
       <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <h1>비밀번호 보관함</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {typeof idleSecondsRemaining === 'number' && (
             <span className="muted" aria-live="polite">
               잠금까지 {Math.max(0, idleSecondsRemaining)}초
             </span>
           )}
-          <button type="button" className="btn" onClick={onLock}>
+          <button type="button" className="btn secondary" onClick={onLock}>
             잠그기
           </button>
         </div>
@@ -97,16 +93,22 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
         </div>
       )}
 
+      <nav aria-label="보관함 관리" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
+        <Link className="btn secondary" href="/vault/categories">카테고리</Link>
+        <Link className="btn secondary" href="/vault/backup">백업·복원</Link>
+        <Link className="btn" href="/vault/new" style={{ marginLeft: 'auto' }}>+ 항목 추가</Link>
+      </nav>
+
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
         <select
           className="field-control"
           value={category}
-          onChange={(e) => setCategory(e.target.value as VaultCategory | 'ALL')}
+          onChange={(e) => updateFilter({ cat: e.target.value as VaultCategory | 'ALL' })}
           aria-label="카테고리 필터"
           style={{ width: 'auto' }}
         >
           <option value="ALL">전체</option>
-          {(Object.keys(CATEGORY_LABELS) as VaultCategory[]).map((cat) => (
+          {CATEGORY_VALUES.map((cat) => (
             <option key={cat} value={cat}>
               {CATEGORY_LABELS[cat]}
             </option>
@@ -117,31 +119,15 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
           type="search"
           placeholder="라벨 검색"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => updateFilter({ q: e.target.value })}
           style={{ flex: 1, minWidth: 200 }}
           aria-label="라벨 검색"
         />
-        <button type="button" className="btn" onClick={() => setEditing('new')}>
-          + 항목 추가
-        </button>
       </div>
 
       {error && (
         <div role="alert" className="error-box" style={{ marginTop: 12 }}>
           {error}
-        </div>
-      )}
-
-      {editing && (
-        <div style={{ marginTop: 16 }}>
-          <CategoryForm
-            entry={editing === 'new' ? null : editing}
-            onSuccess={async () => {
-              setEditing(null);
-              await reload();
-            }}
-            onCancel={() => setEditing(null)}
-          />
         </div>
       )}
 
@@ -154,72 +140,33 @@ export function EntriesScreen({ onLock, onStatusRefresh, idleSecondsRemaining }:
         )}
         {state === 'loaded' && entries.length > 0 && (
           <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 8 }}>
-            {entries.map((entry) => {
-              const isOpen = expandedId === entry.id;
-              return (
-                <li key={entry.id} className="card">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                    <div>
-                      <strong>{entry.label}</strong>
-                      <span className="muted" style={{ marginLeft: 8 }}>
-                        {CATEGORY_LABELS[entry.category]}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        type="button"
-                        className="btn"
-                        aria-expanded={isOpen}
-                        onClick={() => setExpandedId(isOpen ? null : entry.id)}
-                      >
-                        {isOpen ? '닫기' : '상세'}
-                      </button>
-                      <button type="button" className="btn" onClick={() => setEditing(entry)}>
-                        수정
-                      </button>
-                      <button type="button" className="btn danger" onClick={() => setPendingDeleteId(entry.id)}>
-                        삭제
-                      </button>
-                    </div>
-                  </div>
-                  {isOpen && (
-                    <div style={{ marginTop: 12, display: 'grid', gap: 6 }}>
-                      {(CATEGORY_FIELDS[entry.category] ?? []).map((spec) => {
-                        const v = (entry.payload?.[spec.name] as string | undefined) ?? '';
-                        if (!v) return null;
-                        return <CopyField key={spec.name} label={spec.label} value={v} sensitive={spec.sensitive} />;
-                      })}
-                      {entry.category === 'OTHER' &&
-                        Array.isArray(entry.payload?.customFields) &&
-                        (entry.payload?.customFields as Array<{ key: string; value: string }>).map((kv, idx) => (
-                          <CopyField key={`${kv.key}-${idx}`} label={kv.key} value={kv.value} sensitive />
-                        ))}
-                      {typeof entry.payload?.memo === 'string' && entry.payload.memo && (
-                        <div style={{ marginTop: 8 }}>
-                          <div className="muted">메모</div>
-                          <div style={{ whiteSpace: 'pre-wrap' }}>{entry.payload.memo}</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+            {entries.map((entry) => (
+              <li key={entry.id}>
+                <Link
+                  href={`/vault/${entry.id}`}
+                  className="card"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    color: 'inherit',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <span>
+                    <strong>{entry.label}</strong>
+                    <span className="muted" style={{ marginLeft: 8 }}>
+                      {CATEGORY_LABELS[entry.category]}
+                    </span>
+                  </span>
+                  <span className="muted" aria-hidden="true">›</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </div>
-
-      <BackupPanel onImported={reload} />
-
-      <ConfirmDialog
-        open={pendingDeleteId !== null}
-        title="항목 삭제"
-        message="정말 삭제하시겠습니까?"
-        confirmLabel="삭제"
-        destructive
-        onConfirm={confirmDelete}
-        onCancel={() => setPendingDeleteId(null)}
-      />
     </section>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
-// 상태 머신 컨테이너. setup-required / locked / unlocked 분기와 idle 카운트다운을 관리한다.
+// vault 세그먼트 레이아웃. 잠금 상태와 idle 카운트다운을 모든 vault 서브라우트에 공유한다.
 import { useCallback, useEffect, useState } from 'react';
 import { getStatus, lockVault, type VaultStatus } from '@/lib/vault-client';
 import { UnlockScreen } from './UnlockScreen';
-import { EntriesScreen } from './EntriesScreen';
+import { VaultProvider } from './vault-context';
 
-export function VaultView() {
+export default function VaultLayout({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<VaultStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ export function VaultView() {
       <section>
         <h1>비밀번호 보관함</h1>
         {error && <div className="error-box">{error}</div>}
-        {!error && <p className="muted">상태를 확인하고 있습니다...</p>}
+        {!error && <p className="muted">상태를 확인하고 있습니다.</p>}
       </section>
     );
   }
@@ -68,10 +68,14 @@ export function VaultView() {
   }
 
   return (
-    <EntriesScreen
-      onLock={handleLock}
-      onStatusRefresh={refresh}
-      idleSecondsRemaining={status.idleSecondsRemaining}
-    />
+    <VaultProvider
+      value={{
+        idleSecondsRemaining: status.idleSecondsRemaining,
+        onLock: handleLock,
+        onStatusRefresh: refresh
+      }}
+    >
+      {children}
+    </VaultProvider>
   );
 }
