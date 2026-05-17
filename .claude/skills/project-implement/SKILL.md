@@ -1,6 +1,6 @@
 ---
 name: project-implement
-description: 계획 문서를 기반으로 구현을 시작한다. docs/features/<slug>/ 의 spec.md, plan.md를 읽고 구현 태스크를 실행한다. 사용 예. /project-implement user-login
+description: 계획 문서를 기반으로 구현을 시작한다. docs/features/<slug>/ 의 spec.md, plan.md를 읽고 구현 태스크를 실행한다. --only-open이면 review.md의 구현 계열 OPEN만 부분 구현한다. 사용 예. /project-implement user-login
 ---
 
 # project-implement
@@ -11,19 +11,21 @@ description: 계획 문서를 기반으로 구현을 시작한다. docs/features
 
 ## 0. 대상 기능 확인
 
-`$ARGUMENTS` 를 feature slug로 사용한다.
+`$ARGUMENTS` 를 feature slug와 옵션으로 파싱한다.
 
-- `$ARGUMENTS` 가 있으면 그대로 사용한다. 예: `/project-implement user-login`
+- 첫 번째 공백 없는 값을 feature slug로 사용한다. 예: `/project-implement user-login`
+- `$ARGUMENTS` 뒤에 `--only-open` 이 있으면 부분 구현 모드로 실행한다. 예: `/project-implement user-login --only-open`
 - `$ARGUMENTS` 가 없으면 사용자에게 묻는다. > 어떤 기능을 구현할까요?
 
 `$ARGUMENTS` 가 kebab-case slug 형태가 아닌 자연어/한국어/다른 표기로 보이면 의미를 파악해 후보 slug를 제안하고 사용자에게 확인을 받는다.
 
 > `$ARGUMENTS` 는 plan 단계 slug 형식이 아닌 것 같습니다. `<후보-slug>` 가 맞나요?
 
-`docs/features/$ARGUMENTS/` 경로가 존재하는지 확인한다.
+파싱하고 확인한 slug를 `FEATURE_SLUG` 로 사용한다.
+`docs/features/$FEATURE_SLUG/` 경로가 존재하는지 확인한다.
 
 ```bash
-ls docs/features/$ARGUMENTS/spec.md docs/features/$ARGUMENTS/plan.md 2>/dev/null \
+ls docs/features/$FEATURE_SLUG/spec.md docs/features/$FEATURE_SLUG/plan.md 2>/dev/null \
   && echo "DOCS_OK" || echo "DOCS_MISSING"
 ```
 
@@ -31,7 +33,7 @@ ls docs/features/$ARGUMENTS/spec.md docs/features/$ARGUMENTS/plan.md 2>/dev/null
 
 > `docs/features/$ARGUMENTS/` 의 `spec.md`, `plan.md` 를 찾을 수 없습니다. `/project-plan` 을 먼저 실행하세요.
 
-확인된 slug를 `FEATURE_SLUG` 로 사용한다.
+`--only-open` 이 있으면 `PARTIAL_IMPLEMENT=1` 로 기록한다.
 
 ---
 
@@ -39,10 +41,15 @@ ls docs/features/$ARGUMENTS/spec.md docs/features/$ARGUMENTS/plan.md 2>/dev/null
 
 ```bash
 mkdir -p docs/features/$FEATURE_SLUG
-echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
+if [ "$PARTIAL_IMPLEMENT" = "1" ]; then
+  echo "patching" > docs/features/$FEATURE_SLUG/phase.md
+else
+  echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
+fi
 ```
 
 `docs/features/$FEATURE_SLUG/spec.md` 와 `plan.md` 를 읽는다.
+부분 구현 모드에서는 `docs/features/$FEATURE_SLUG/review.md` 도 읽고, review.md의 구현 계열 `OPEN` 항목만 입력으로 사용한다.
 
 본 단계에서 `spec.md` 와 `plan.md` 는 **입력 전용**이다. 어떤 사유로도 수정·재작성하지 않는다. 요구사항 변경이 필요하면 작업을 중단하고 사용자에게 `/project-plan` 재실행을 안내한다.
 
@@ -66,6 +73,8 @@ echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
 - 변경과 무관한 데드 코드를 발견하면 보고만 한다. 직접 삭제하지 않는다.
 - 자신의 변경으로 미사용 상태가 된 import, 변수, 함수는 제거한다.
 
+부분 구현 모드에서는 전달된 `OPEN` 항목과 그 항목을 완성하는 데 필요한 `plan.md` 의 원래 설계 범위까지 수정할 수 있다. 전달되지 않은 기능, 인접 리팩터링, 새 요구사항은 추가하지 않는다.
+
 ---
 
 ## 3. 구현 파이프라인
@@ -75,15 +84,25 @@ echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
 `Skill` 툴을 사용해 `superpowers:writing-plans` 스킬을 호출한다.
 
 - `spec.md` 의 요구사항과 `plan.md` 의 태스크 목록을 입력으로 사용한다.
+- 부분 구현 모드에서는 `OPEN` 항목 목록과 그 근거가 되는 `spec.md`, `plan.md` 항목만 입력으로 사용한다.
 - 기존 `plan.md` 에 태스크가 충분히 구체화되어 있으면 이 단계를 건너뛴다.
 
-**Step 2 — 구현 실행**
+**Step 2 — 테스트 우선 작성**
+
+`Skill` 툴을 사용해 `superpowers:test-driven-development` 스킬을 호출한다.
+
+- 구현할 태스크에 대해 RED 테스트를 먼저 작성한다.
+- 부분 구현 모드에서는 전달된 `OPEN` 항목에 대응하는 실패 테스트를 먼저 작성한다.
+- 이미 충분한 실패 테스트가 있으면 그 근거를 확인하고 재사용한다.
+
+**Step 3 — 구현 실행**
 
 `Skill` 툴을 사용해 `superpowers:subagent-driven-development` 스킬을 호출한다. 태스크 단위로 분해해 실행한다.
 
 - 각 태스크 완료 시 `progress.md` 의 해당 태스크 상태를 업데이트한다.
+- 부분 구현 모드에서는 전달된 `OPEN` 항목별로 완료 여부를 기록한다.
 
-**Step 3 — 테스트**
+**Step 4 — 테스트 통과와 리팩터링**
 
 `Skill` 툴을 사용해 `superpowers:test-driven-development` 스킬을 호출한다.
 
@@ -105,8 +124,12 @@ echo "implementing" > docs/features/$FEATURE_SLUG/phase.md
 ## 5. 완료 보고
 
 ```bash
-echo "implemented" > docs/features/$FEATURE_SLUG/phase.md
+if [ "$PARTIAL_IMPLEMENT" != "1" ]; then
+  echo "implemented" > docs/features/$FEATURE_SLUG/phase.md
+fi
 ```
+
+부분 구현 모드에서는 `phase.md` 를 `implemented` 로 쓰지 않는다. 호출한 `/project-patch` 가 보강 전체를 마친 뒤 최종 상태를 기록한다.
 
 ```
 ✅ 구현 완료
