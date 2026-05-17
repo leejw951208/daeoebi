@@ -87,7 +87,7 @@ export default async function DashboardPage() {
         <div className="empty">
           예정된 결제가 없습니다.
           <div style={{ marginTop: 8 }}>
-            <Link className="btn" href="/expenses">정기 지출 추가</Link>
+            <Link className="btn" href="/expenses/new">정기 지출 추가</Link>
           </div>
         </div>
       ) : (

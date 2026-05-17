@@ -3,6 +3,9 @@ module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'app',
   testRegex: '.*\\.spec\\.ts$',
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/../$1'
+  },
   transform: {
     '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: { module: 'commonjs', target: 'ES2022', esModuleInterop: true } }]
   },
