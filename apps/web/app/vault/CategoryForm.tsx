@@ -135,7 +135,7 @@ export function CategoryForm({ entry, onSuccess, onCancel }: Props) {
   const fields = CATEGORY_FIELDS[form.category];
 
   return (
-    <form onSubmit={handleSubmit} className="card inline-bottom-sheet" style={{ display: 'grid', gap: 12 }}>
+    <form onSubmit={handleSubmit} className="card" style={{ display: 'grid', gap: 12 }}>
       <h3 style={{ margin: 0 }}>{entry ? '항목 수정' : '항목 추가'}</h3>
 
       <div className="form-row">

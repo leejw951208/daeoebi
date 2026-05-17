@@ -98,6 +98,19 @@ grep -c "| OPEN |" docs/features/$FEATURE_SLUG/review.md 2>/dev/null || echo "0"
 산출물 템플릿은 `${CLAUDE_SKILL_DIR}/templates/review.md` 를 읽고 해당 구조를 그대로 사용한다.
 헤더/표 컬럼/순서를 임의로 바꾸지 않고, 각 섹션의 빈 셀과 플레이스홀더만 채운다.
 
+각 표의 `처리상태` 는 `/project-patch` 의 수집 기준이다.
+
+- 보강이 필요한 행은 `OPEN` 으로 기록한다.
+- 보강이 필요 없는 행은 `CLOSED` 로 기록한다.
+- 섹션 1의 `판정` 은 `DONE`, `PARTIAL`, `NOT DONE`, `CHANGED` 중 하나로 기록한다.
+- 섹션 2의 `판정` 은 `DONE`, `PARTIAL`, `NOT DONE`, `CHANGED`, `SCOPE_CREEP` 중 하나로 기록한다.
+- 섹션 3의 `판정` 은 `TESTED`, `PARTIAL`, `UNTESTED` 중 하나로 기록한다.
+- 섹션 4의 `분류` 는 `BUG`, `SECURITY`, `QA`, `REGRESSION`, `DX`, `OTHER` 중 하나로 기록한다.
+- `PARTIAL`, `NOT DONE`, `SCOPE_CREEP`, `UNTESTED` 는 기본적으로 `OPEN` 으로 기록한다.
+- `CHANGED` 는 spec 변경이 필요한 경우 `OPEN` 으로 기록하고, 단순 구현 차이지만 수용 가능한 경우 `CLOSED` 로 기록한다.
+- Appendix의 confidence 5 미만 항목도 같은 표 구조를 사용한다. 보강 후보는 `OPEN` 으로 기록하되, `/project-patch --include-appendix` 를 사용하지 않으면 기본 수집 대상에서 제외된다.
+- 모든 `OPEN` 행에는 `심각도` 와 `보강 지시` 를 반드시 채운다.
+
 ---
 
 ## 6. 완료 보고

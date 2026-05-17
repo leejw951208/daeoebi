@@ -5,9 +5,15 @@ import AxeBuilder from '@axe-core/playwright';
 const PAGES = [
   { name: 'dashboard', url: '/' },
   { name: 'expenses', url: '/expenses' },
+  { name: 'expenses-new', url: '/expenses/new' },
+  { name: 'expenses-detail-missing', url: '/expenses/missing-id' },
   { name: 'calendar', url: '/calendar' },
   { name: 'summary', url: '/summary' },
-  { name: 'vault', url: '/vault' }
+  { name: 'vault', url: '/vault' },
+  { name: 'vault-new', url: '/vault/new' },
+  { name: 'vault-detail-missing', url: '/vault/missing-id' },
+  { name: 'vault-categories', url: '/vault/categories' },
+  { name: 'vault-backup', url: '/vault/backup' }
 ];
 
 for (const p of PAGES) {
