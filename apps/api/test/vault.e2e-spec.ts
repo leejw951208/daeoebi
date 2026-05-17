@@ -60,7 +60,7 @@ describe('Vault e2e', () => {
     execSync(`"${prismaBin}" migrate deploy`, {
       cwd: path.join(__dirname, '..'),
       stdio: 'pipe',
-      env: { ...process.env, DATABASE_URL: `file:${TEST_DB_PATH}` }
+      env: { ...process.env, DATABASE_URL: `file:${TEST_DB_PATH}`, RUST_LOG: 'info' }
     });
 
     const boot = await bootstrap();
@@ -69,8 +69,8 @@ describe('Vault e2e', () => {
   }, 60_000);
 
   afterAll(async () => {
-    await prisma.$disconnect();
-    await app.close();
+    await prisma?.$disconnect();
+    await app?.close();
     if (fs.existsSync(TEST_DB_PATH)) fs.unlinkSync(TEST_DB_PATH);
   });
 

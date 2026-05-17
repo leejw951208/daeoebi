@@ -26,7 +26,7 @@ describe('Expenses & Occurrences e2e', () => {
     execSync(`"${prismaBin}" migrate deploy`, {
       cwd: path.join(__dirname, '..'),
       stdio: 'pipe',
-      env: { ...process.env, DATABASE_URL: `file:${TEST_DB_PATH}` }
+      env: { ...process.env, DATABASE_URL: `file:${TEST_DB_PATH}`, RUST_LOG: 'info' }
     });
 
     const moduleRef = await Test.createTestingModule({
@@ -48,8 +48,8 @@ describe('Expenses & Occurrences e2e', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
-    await app.close();
+    await prisma?.$disconnect();
+    await app?.close();
     if (fs.existsSync(TEST_DB_PATH)) {
       fs.unlinkSync(TEST_DB_PATH);
     }

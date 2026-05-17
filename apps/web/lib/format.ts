@@ -1,4 +1,11 @@
 // 통화·날짜 포맷 헬퍼.
+const SEOUL_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+});
+
 export function formatCurrency(amount: number, currency: string = 'KRW'): string {
   if (currency === 'KRW') {
     return `₩${amount.toLocaleString('ko-KR')}`;
@@ -8,16 +15,18 @@ export function formatCurrency(amount: number, currency: string = 'KRW'): string
 
 export function formatDate(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value;
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(date.getUTCDate()).padStart(2, '0');
+  const parts = SEOUL_DATE_FORMATTER.formatToParts(date);
+  const y = parts.find((part) => part.type === 'year')?.value ?? '0000';
+  const m = parts.find((part) => part.type === 'month')?.value ?? '01';
+  const d = parts.find((part) => part.type === 'day')?.value ?? '01';
   return `${y}-${m}-${d}`;
 }
 
 export function formatDateShort(value: string | Date): string {
   const date = typeof value === 'string' ? new Date(value) : value;
-  const m = date.getUTCMonth() + 1;
-  const d = date.getUTCDate();
+  const parts = SEOUL_DATE_FORMATTER.formatToParts(date);
+  const m = Number(parts.find((part) => part.type === 'month')?.value ?? 1);
+  const d = Number(parts.find((part) => part.type === 'day')?.value ?? 1);
   return `${m}월 ${d}일`;
 }
 

@@ -1,4 +1,4 @@
-// CSV 내보내기 엔드포인트. UTF-8 BOM을 포함한 텍스트를 응답한다.
+// CSV 내보내기 엔드포인트. UTF-8 BOM을 포함한 텍스트를 스트리밍 응답한다.
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
@@ -56,31 +56,30 @@ export class ExportController {
       orderBy: { dueDate: 'asc' }
     });
 
-    const lines: string[] = [HEADERS.join(',')];
-    for (const occ of occurrences) {
-      const basis = occ.actualAmount === null ? '예상' : '실제';
-      lines.push(
-        [
-          ymd(occ.dueDate),
-          occ.expense.name,
-          occ.expense.category,
-          occ.expectedAmount,
-          occ.actualAmount ?? '',
-          basis,
-          occ.status,
-          occ.expense.paymentMethod ?? '',
-          occ.memo ?? ''
-        ]
-          .map(escapeCell)
-          .join(',')
-      );
-    }
-
-    const body = '﻿' + lines.join('\r\n');
     const filename = `life-key-${query.from}_${query.to}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(body);
+    res.write(`﻿${HEADERS.join(',')}`);
+
+    for (const occ of occurrences) {
+      const basis = occ.actualAmount === null ? '예상' : '실제';
+      const row = [
+        ymd(occ.dueDate),
+        occ.expense.name,
+        occ.expense.category,
+        occ.expectedAmount,
+        occ.actualAmount ?? '',
+        basis,
+        occ.status,
+        occ.expense.paymentMethod ?? '',
+        occ.memo ?? ''
+      ]
+        .map(escapeCell)
+        .join(',');
+      res.write(`\r\n${row}`);
+    }
+
+    res.end();
   }
 }

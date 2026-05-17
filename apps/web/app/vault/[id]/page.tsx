@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   deleteEntry,
-  listEntries,
+  getEntry,
   type VaultEntry
 } from '@/lib/vault-client';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -33,19 +33,18 @@ export default function VaultEntryDetailPage() {
     if (!id) return;
     setState('loading');
     try {
-      const list = await listEntries();
-      const found = list.find((it) => it.id === id) ?? null;
-      if (!found) {
-        setState('missing');
-        return;
-      }
+      const found = await getEntry(id);
       setEntry(found);
       setState('loaded');
       setError(null);
     } catch (e) {
-      const err = e as Error & { code?: string };
+      const err = e as Error & { code?: string; status?: number };
       if (err.code === 'VAULT_LOCKED') {
         await onStatusRefresh();
+        return;
+      }
+      if (err.status === 404) {
+        setState('missing');
         return;
       }
       setState('error');
@@ -82,7 +81,7 @@ export default function VaultEntryDetailPage() {
   if (state === 'missing') {
     return (
       <section>
-        <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <header className="page-header">
           <h1>항목을 찾을 수 없습니다</h1>
           <Link className="btn secondary" href="/vault">← 목록</Link>
         </header>
@@ -94,7 +93,7 @@ export default function VaultEntryDetailPage() {
   if (state === 'error' || !entry) {
     return (
       <section>
-        <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <header className="page-header">
           <h1>오류</h1>
           <Link className="btn secondary" href="/vault">← 목록</Link>
         </header>
@@ -105,7 +104,7 @@ export default function VaultEntryDetailPage() {
 
   return (
     <section>
-      <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <header className="page-header">
         <h1>{entry.label}</h1>
         <Link className="btn secondary" href="/vault">← 목록</Link>
       </header>

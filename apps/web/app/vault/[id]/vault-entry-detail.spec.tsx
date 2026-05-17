@@ -19,13 +19,13 @@ jest.mock('next/link', () => ({
   )
 }));
 
-const listEntriesMock = jest.fn();
+const getEntryMock = jest.fn();
 const deleteEntryMock = jest.fn();
 const updateEntryMock = jest.fn();
 const createEntryMock = jest.fn();
 
 jest.mock('@/lib/vault-client', () => ({
-  listEntries: (...args: unknown[]) => listEntriesMock(...args),
+  getEntry: (...args: unknown[]) => getEntryMock(...args),
   deleteEntry: (...args: unknown[]) => deleteEntryMock(...args),
   updateEntry: (...args: unknown[]) => updateEntryMock(...args),
   createEntry: (...args: unknown[]) => createEntryMock(...args)
@@ -55,16 +55,16 @@ describe('VaultEntryDetailPage view↔edit 토글', () => {
   beforeEach(() => {
     refresh.mockClear();
     push.mockClear();
-    listEntriesMock.mockReset();
+    getEntryMock.mockReset();
     deleteEntryMock.mockReset();
     updateEntryMock.mockReset();
     createEntryMock.mockReset();
   });
 
   it('수정 버튼을 누르면 폼이 열리고, 저장하면 view 로 복귀하며 새 값이 반영된다', async () => {
-    listEntriesMock
-      .mockResolvedValueOnce([makeEntry()])
-      .mockResolvedValueOnce([makeEntry({ label: '주거래은행 (수정)' })]);
+    getEntryMock
+      .mockResolvedValueOnce(makeEntry())
+      .mockResolvedValueOnce(makeEntry({ label: '주거래은행 (수정)' }));
     updateEntryMock.mockResolvedValue(makeEntry({ label: '주거래은행 (수정)' }));
 
     renderPage();
@@ -88,7 +88,7 @@ describe('VaultEntryDetailPage view↔edit 토글', () => {
   });
 
   it('수정 모드에서 취소를 누르면 폼이 닫히고 view 로 복귀한다', async () => {
-    listEntriesMock.mockResolvedValue([makeEntry()]);
+    getEntryMock.mockResolvedValue(makeEntry());
 
     renderPage();
 

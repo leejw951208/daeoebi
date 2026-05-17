@@ -299,6 +299,11 @@ textarea.field-control {
   border-color: var(--color-accent);
 }
 
+.field-control.compact {
+  width: auto;
+  min-width: 140px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -359,6 +364,16 @@ textarea.field-control {
 .status-SCHEDULED { background: var(--color-info-bg); color: var(--color-info-fg); }
 .status-PAID { background: var(--color-success-bg); color: var(--color-success-fg); }
 .status-SKIPPED { background: var(--color-danger-bg); color: var(--color-danger-fg); }
+
+.inactive-badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-outer);
+  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+  font-weight: 500;
+}
 
 .diff.over { color: var(--color-danger-fg); }
 .diff.under { color: var(--color-success-fg); }
@@ -480,6 +495,14 @@ textarea.field-control {
   align-items: center;
   margin: var(--space-3) 0;
   flex-wrap: wrap;
+}
+
+.page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .section-title {

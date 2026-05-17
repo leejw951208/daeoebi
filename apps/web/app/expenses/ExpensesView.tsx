@@ -78,7 +78,7 @@ export function ExpensesView({ initial }: { initial: RecurringExpense[] }) {
 
   return (
     <section>
-      <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <header className="page-header">
         <h1>정기 지출</h1>
         <Link className="btn" href="/expenses/new">
           + 추가

@@ -74,6 +74,11 @@ export async function listEntries(params: { category?: VaultCategory; q?: string
   return data;
 }
 
+export async function getEntry(id: string): Promise<VaultEntry> {
+  const { data } = await vaultClient.get<VaultEntry>(`/vault/entries/${id}`);
+  return data;
+}
+
 export async function createEntry(input: CreateEntryInput): Promise<VaultEntry> {
   const { data } = await vaultClient.post<VaultEntry>('/vault/entries', input);
   return data;

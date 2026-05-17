@@ -73,7 +73,7 @@ export function EntriesScreen() {
 
   return (
     <section>
-      <header style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <header className="page-header">
         <h1>비밀번호 보관함</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {typeof idleSecondsRemaining === 'number' && (

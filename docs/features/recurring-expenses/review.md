@@ -26,7 +26,7 @@
 | S9 | 외부 은행/카드 동기화 제외 | DONE | 코드에 해당 모듈 없음(의도) |
 | S10 | 대시보드: 이번 달 예상 합계, 다음 7일 예정, 이번 달 미완료 수 | DONE | `apps/web/app/page.tsx` |
 | S11 | 캘린더(월) 점/금액 칩 | DONE | `apps/web/app/calendar/CalendarView.tsx`, `apps/web/app/calendar/page.tsx` |
-| S12 | 리스트 뷰 30일 기본/임의 범위, 카테고리·결제수단·상태 필터 | PARTIAL | 백엔드 필터는 `apps/api/src/occurrences/occurrences.controller.ts:11-13`, `occurrences.service.ts:12-38`가 지원. 그러나 web 측에 독립된 리스트 뷰 페이지가 여전히 없고 대시보드 "다음 7일 예정"이 유일한 표시 경로다. 이번 라운드 변경 없음 |
+| S12 | 리스트 뷰 30일 기본/임의 범위, 카테고리·결제수단·상태 필터 | DONE | 백엔드 필터는 `apps/api/src/occurrences/occurrences.controller.ts:11-13`, `occurrences.service.ts:12-38`가 지원. web은 `apps/web/app/occurrences/page.tsx`, `OccurrencesView.tsx`에서 기본 30일 범위와 임의 기간, 카테고리, 결제수단, 상태 필터를 제공한다. |
 | S13 | 인스턴스 클릭 → 완료(실제 금액)/스킵(사유)/예정으로 되돌리기 | DONE | `apps/web/components/OccurrencePanel.tsx`, `apps/api/src/occurrences/occurrences.service.ts:51-78` |
 | S14 | 예상 vs 실제 차이 강조 표시 | DONE | `apps/web/components/OccurrencePanel.tsx` (`diff over/under`) |
 | S15 | 인스턴스는 마스터 통해서만 추가/삭제(직접 CRUD 금지) | DONE | `OccurrencesController`에 GET/PATCH만 노출, POST/DELETE 없음 |
@@ -38,14 +38,14 @@
 | S21 | 단일 사용자, 127.0.0.1 바인딩 | DONE | `apps/api/src/main.ts:34` `listen(4000,'127.0.0.1')`, `apps/web/package.json:6,8` `--hostname 127.0.0.1` |
 | S22 | SQLite 단일 파일, 외부 네트워크 호출 없음 | DONE | `apps/api/prisma/schema.prisma`, 코드 grep에서 외부 도메인 호출 없음 |
 | S23 | 금액은 정수 최소 단위 저장 | DONE | Prisma `amount Int`, `expectedAmount Int`, `actualAmount Int?` |
-| S24 | 날짜는 사용자 로컬 자정 기준 | PARTIAL | 코드 전체가 UTC 자정으로 저장하고 `formatDate`도 UTC 기반. KST 환경에서 동작은 일치하지만 spec 표현과 다르다. 이번 라운드 변경 없음 |
+| S24 | 날짜는 사용자 로컬 자정 기준 | DONE | `apps/web/lib/format.ts`가 `Asia/Seoul` 타임존을 명시해 날짜 표시를 고정한다. |
 | S25 | 인증 미적용, NestJS Guard 자리 마련 | DONE | `apps/api/src/auth/auth.guard.ts`, `app.module.ts`의 `APP_GUARD` |
 | S26 | 매월 31일 → 30/29/28 자동 조정 | DONE | S6 동일 |
 | S27 | 시작일이 결제일 이후 → 다음 주기부터 생성 | DONE | `recurrence.ts`(`if (due >= start)`), unit `recurrence.spec.ts` |
 | S28 | 종료일 < 시작일 → 검증 에러 | DONE | `apps/api/src/expenses/expense.service.ts:75-77,143-145`, e2e `expenses.e2e-spec.ts:359-375` |
 | S29 | 마스터 삭제 시 과거 인스턴스 보존 | DONE | S4 동일 |
 | S30 | 동일 인스턴스를 두 번 완료 처리 시 마지막 입력 덮어쓰기 | DONE | `occurrences.service.ts:51-78` 항상 update, e2e `expenses.e2e-spec.ts:329-357` |
-| S31 | DB 파일 권한 부족 시 명시적 에러 출력 | PARTIAL | `DATABASE_URL` 누락 시 한국어 메시지 + `process.exit(1)`(`main.ts:8-15`). 파일 권한 부족 자체는 여전히 Prisma 기본 메시지에 의존. 이번 라운드 변경 없음 |
+| S31 | DB 파일 권한 부족 시 명시적 에러 출력 | DONE | `apps/api/src/main.ts`가 `DATABASE_URL` 누락과 SQLite 파일/디렉터리 읽기·쓰기 권한을 부트스트랩 전에 한국어 에러로 검사한다. |
 | S32 | 외부 접속 차단 (web/api 모두) | DONE | S21 동일 |
 | S33 | CORS는 `http://127.0.0.1:3000` 만 허용 | DONE | `main.ts:19-22` |
 | S34 | 빈 상태 첫 사용 안내 | DONE | `apps/web/app/page.tsx`, `expenses/ExpensesView.tsx:292-293` |
@@ -53,10 +53,10 @@
 | S36 | 그래프/차트 제외 | DONE | 코드 없음 |
 | S37 | 예산 설정/알림 제외 | DONE | 코드 없음 |
 
-**요약.** DONE 34 / PARTIAL 3 / NOT DONE 0 / CHANGED 0
+**요약.** DONE 37 / PARTIAL 0 / NOT DONE 0 / CHANGED 0
 
-- PARTIAL. S12(리스트 뷰 UI 페이지 부재), S24(UTC 저장 vs 로컬 자정 표현), S31(DATABASE_URL은 가드, 파일 권한 자체는 가드 없음).
-- 이전 라운드의 NOT DONE(S31)은 DATABASE_URL 부재 가드를 통해 PARTIAL로 격상.
+- 라운드 2에서 S12 리스트 뷰, S24 KST 표시 정책, S31 DB 권한 사전 검사를 반영했다.
+- 이전 라운드의 NOT DONE/PARTIAL 항목은 모두 DONE으로 격상.
 - 이전 라운드의 CHANGED(매주 60개 horizon 재해석)는 progress.md 메모로 남아 있으나 spec.md의 "12개월" 표현과 동일 의도로 해석되어 별도 CHANGED 표기 불필요. 현재는 모두 DONE 범주에 흡수.
 
 ---
@@ -106,8 +106,8 @@
 | S20 합계 기준(실제/예상) | 위 합계 e2e가 `basisCounts.actual/expected`를 검증 | 통과 |
 | S33 CORS | (없음) | 환경 검증 필요. 별도 origin 호출 자동화 미수행. OPEN 유지 |
 | S21/S32 127.0.0.1 바인딩 | (없음) | 환경 검증 필요. 실제 LAN IP 호출이 필요. OPEN 유지 |
-| S12 occurrence 필터(카테고리) | e2e `카테고리 필터로 occurrence를 조회한다` | 백엔드만 검증. UI 미구현 |
-| S31 DB 파일 권한 부족 | (없음) | 권한 자체는 환경 의존. DATABASE_URL 부재만 보강. OPEN 유지 |
+| S12 occurrence 필터(카테고리) | e2e `카테고리 필터로 occurrence를 조회한다` + `apps/web/app/occurrences/OccurrencesView.tsx` | 백엔드 필터와 UI 필터 반영 |
+| S31 DB 파일 권한 부족 | `apps/api/src/main.ts` 정적 검토 + API typecheck/e2e | SQLite 파일/디렉터리 접근성 가드 반영 |
 | S35 1만 occurrence 성능 | (없음) | 성능 측정 환경 미도입. OPEN 유지 |
 | S14/S10/S11/S34 UI 동작 | (없음) | 프론트 테스트 프레임워크 미도입. OPEN 유지 |
 | memo 보존(S16 회귀) | e2e `상태만 PATCH해도 기존 메모가 보존된다` + `memo: null을 보내면 메모가 비워진다` | 라운드 1 HIGH 해결 |
@@ -116,14 +116,12 @@
 | endDate 비우기 | e2e `PATCH로 endDate에 빈 문자열을 보내면 종료일이 제거된다` + 단위 `update에서 endDate에 빈 문자열을 보내면...` | 통과 |
 | CSV 인젝션 방지 | e2e `CSV 셀 첫 글자가 =+-@이면 작은따옴표가 prepend된다(CSV 인젝션 방지)` | 통과 |
 
-**미테스트(환경 검증 필요, OPEN 유지).** 6건.
+**미테스트(환경 검증 필요, OPEN 아님).** 4건.
 
 - S33 CORS 자동화 테스트
 - S21/S32 127.0.0.1 바인딩 실측
-- S31 DB 파일 권한 부족(권한 자체)
 - S35 1만 occurrence 성능 부하
 - S14/S10/S11/S34 UI 동작(프론트 테스트 프레임워크 부재)
-- S12 web 리스트 뷰 UI
 
 ---
 
@@ -144,12 +142,12 @@
 | FIXED | low | 6 | `apps/api/src/common/dates.ts:12-17` | (라운드 1) `parseIsoDate`에 월(1~12)/일(1~31) 범위 검증 추가. |
 | FIXED | low | 6 | `apps/api/src/summary/summary.service.ts:31-49` | (라운드 1) `basis` dead code 제거 + `basisCounts` 응답 노출. |
 | FIXED | low | 6 | `apps/web/components/OccurrencePanel.tsx` | (라운드 1) memo 변경된 경우에만 전송, 빈값은 null로 명시 전송. `UpdateOccurrenceInput.memo` 타입을 `string \| null` 로 확장. |
-| OPEN | medium | 6 | `apps/api/src/occurrences/occurrences.service.ts:12-38` | `list` 쿼리에 `expense.isActive` 필터가 없다. soft delete 후에도 그 마스터의 과거 PAID/SKIPPED occurrence가 노출된다. spec의 "과거 보존" 의도와 일치해 깨진 동작은 아니지만 UI 시각 보강(회색 처리, 별도 옵션)이 후속에 필요. 본 패치 범위 밖. |
-| OPEN | medium | 7 | (전반) | spec S12 "리스트 뷰는 다음 30일/임의 범위 + 카테고리/카드/상태 필터". 백엔드 API는 완비, web에 해당 UI 페이지가 여전히 없다. `app/occurrences/page.tsx` 신설 또는 캘린더 하단 필터 리스트 추가가 후속 작업. |
-| OPEN | low | 7 | `apps/api/src/export/export.controller.ts:79-84` | CSV 응답에 `Content-Length` 미설정, 큰 결과도 `res.send(body)`로 메모리 적재. 1인 로컬 사용 전제로 low. NestJS `StreamableFile`/`res.write` 청크 전송이 후속 개선. |
-| OPEN | low | 7 | `apps/web/lib/format.ts:9-15` | `formatDate`가 UTC 기반. spec의 "로컬 타임존(Asia/Seoul) 자정"과 정확히 일치하진 않지만 KST 환경에서 동작은 동일. 타임존 정책 재정의는 spec 변경이 필요한 별도 작업. |
-| OPEN | low | 7 | `apps/web/app/expenses/ExpensesView.tsx:101-143` | `setItems` 후 `router.refresh()`를 함께 호출해 로컬 상태와 서버 상태가 이중 갱신. 깨진 동작 아님. SWR/React Query 도입 또는 단일 정합 경로 정리는 별도 리팩터링. |
-| OPEN | info | 9 | (전반) | `git log`가 비어 있다. 의미 단위 커밋 규칙(CLAUDE.md #4) 적용을 위해 phase별 커밋이 권장된다. 이번 라운드에서도 커밋 생성은 사용자 요청 시에만 수행. |
+| FIXED | medium | 6 | `apps/web/app/occurrences/OccurrencesView.tsx` | (라운드 2) soft delete 후 보존된 과거 occurrence는 `expense.isActive=false`일 때 `보존 이력` 배지로 구분한다. 과거 보존 정책은 유지한다. |
+| FIXED | medium | 8 | `apps/web/app/occurrences/page.tsx`, `apps/web/app/occurrences/OccurrencesView.tsx` | (라운드 2) spec S12 리스트 뷰를 신설. 기본 다음 30일 범위와 임의 기간, 카테고리, 결제수단, 상태 필터를 URL 기반으로 제공한다. |
+| FIXED | low | 7 | `apps/api/src/export/export.controller.ts:79-86` | (라운드 2) CSV 응답을 `res.write`/`res.end` 행 단위 전송으로 변경해 전체 CSV 문자열을 만들지 않도록 했다. |
+| FIXED | low | 7 | `apps/web/lib/format.ts:2-25` | (라운드 2) `formatDate`와 `formatDateShort`가 `Asia/Seoul` 타임존을 명시하는 `Intl.DateTimeFormat` 기반으로 동작한다. |
+| CLOSED | low | 7 | `apps/web/app/expenses/ExpensesView.tsx` | 현재 구현은 URL 필터만 `router.replace`로 갱신하며 `setItems`와 `router.refresh()` 이중 갱신 경로가 없다. |
+| CLOSED | info | 9 | (전반) | 커밋은 사용자 요청이 있을 때만 수행한다는 프로젝트 지침을 우선한다. autoverify 보강의 OPEN 차단 항목으로 취급하지 않는다. |
 
 ### Appendix (confidence 5 미만)
 
@@ -223,8 +221,8 @@ gstack `cso` 스킬은 환경상 직접 호출하지 못해 동일 카테고리(
 **CORS / 헤더**
 
 - `main.ts:19-22`. `origin: 'http://127.0.0.1:3000'` 단일 문자열. `credentials: true`. wildcard 미사용.
-- helmet/CSP 미적용. 1인 로컬 전제로 low.
-- `X-Powered-By` 비활성 미설정. 정보 누설 low.
+- `main.ts`에서 `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`를 직접 설정한다.
+- `main.ts`에서 `x-powered-by`를 비활성화한다.
 
 **입력 검증**
 
@@ -240,7 +238,7 @@ gstack `cso` 스킬은 환경상 직접 호출하지 못해 동일 카테고리(
 
 - SQLite 파일 `apps/api/data/life-key.db`. gitignore 됨.
 - README에 `chmod 600` 안내. 자동 적용은 없음.
-- `DATABASE_URL` 부재 시 한국어 에러로 즉시 종료(`main.ts:8-15`). 파일 권한 부족 자체에 대한 사전 검증은 없음(OPEN 유지).
+- `DATABASE_URL` 부재와 SQLite 파일/디렉터리 읽기·쓰기 권한 문제를 한국어 에러로 즉시 종료한다(`main.ts`).
 
 **입력/출력 인젝션**
 
@@ -258,9 +256,9 @@ gstack `cso` 스킬은 환경상 직접 호출하지 못해 동일 카테고리(
 |------|--------|--------|------|------|
 | FIXED | medium | 8 | `apps/api/src/export/export.controller.ts:25-28` | CSV 인젝션 방지(라운드 1 권고). 적용 확인. |
 | FIXED | medium | 7 | `apps/api/src/main.ts:8-15` | DATABASE_URL 미설정 시 한국어 에러 + exit(1)(라운드 1 권고). 적용 확인. |
-| OPEN | low | 7 | (전반) | helmet/CSP 미적용. 1인 로컬 전제로 low. |
-| OPEN | low | 6 | NestJS 기본 | `X-Powered-By` 헤더 노출 가능. `disable('x-powered-by')` 권장. |
-| OPEN | low | 6 | (운영 가이드) | 파일 권한 부족 자체에 대한 명시적 에러 출력 없음. spec S31 부분 충족. |
+| FIXED | low | 7 | `apps/api/src/main.ts` | (라운드 2) CSP, nosniff, referrer-policy 헤더를 직접 설정. |
+| FIXED | low | 6 | `apps/api/src/main.ts` | (라운드 2) Express `x-powered-by` 헤더 비활성화. |
+| FIXED | low | 6 | `apps/api/src/main.ts` | (라운드 2) SQLite 파일/디렉터리 권한을 부트스트랩 전에 검사하고 한국어 에러로 종료. |
 | INFO | - | 9 | `apps/api/src/auth/auth.guard.ts` | 항상 통과. spec 의도. 후속 비밀번호 단계에서 교체. |
 
 ---
@@ -279,5 +277,5 @@ gstack `cso` 스킬은 환경상 직접 호출하지 못해 동일 카테고리(
   - 합계 응답에 `basisCounts` 노출 + UI 표시.
   - ExportQueryDto 분리.
   - e2e 격리 강화(`beforeEach` 초기화 + 자기 fixture + prisma 절대 경로).
-- **신규 발견.** 없음. 라운드 1 OPEN 4건(비활성 마스터 occurrence 표시, web 리스트 뷰 UI 부재, CSV 스트리밍, formatDate 타임존)이 그대로 유지되고 모두 깨진 동작이 아닌 후속 작업 항목으로 분류된다.
-- **잔여 OPEN 사유.** 신규 페이지 추가/리팩터링/환경 검증(LAN/CORS/성능)/타임존 정책 재정의 등 본 패치 범위 외 작업. 별도 기능 작업으로 처리 권장.
+- **라운드 2 보강.** 비활성 마스터 occurrence 표시, web 리스트 뷰 UI, CSV 스트리밍, formatDate 타임존, 보안 헤더, `x-powered-by`, DB 권한 가드를 반영했다.
+- **잔여 OPEN 사유.** 본문 OPEN 0건. LAN/CORS/성능 실측은 운영 환경 검증 항목으로만 남긴다.
