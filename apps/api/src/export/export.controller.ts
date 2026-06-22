@@ -56,7 +56,7 @@ export class ExportController {
             orderBy: { dueDate: "asc" },
         })
 
-        const filename = `life-key-${query.from}_${query.to}.csv`
+        const filename = `secrets-manager-${query.from}_${query.to}.csv`
 
         res.setHeader("Content-Type", "text/csv; charset=utf-8")
         res.setHeader(

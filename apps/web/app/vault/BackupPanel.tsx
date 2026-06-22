@@ -29,7 +29,7 @@ export function BackupPanel({ onImported }: Props) {
             const url = URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `life-key-vault-${new Date().toISOString().slice(0, 10)}.lkvault`
+            a.download = `secrets-manager-vault-${new Date().toISOString().slice(0, 10)}.lkvault`
             a.click()
             URL.revokeObjectURL(url)
             setStatus("백업 파일을 다운로드했습니다.")

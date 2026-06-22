@@ -116,7 +116,7 @@ export class VaultController {
         res.setHeader("Content-Type", "application/octet-stream")
         res.setHeader(
             "Content-Disposition",
-            'attachment; filename="life-key-vault.lkvault"',
+            'attachment; filename="secrets-manager-vault.lkvault"',
         )
         res.send(buf)
     }

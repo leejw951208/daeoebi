@@ -126,19 +126,19 @@
 
 **실행 결과 (API e2e).**
 
-- 명령. `pnpm --filter @life-key/api exec jest --config ./test/jest-e2e.json`.
+- 명령. `pnpm --filter @secrets-manager/api exec jest --config ./test/jest-e2e.json`.
 - 결과. **2 suites / 36 tests 전부 통과** (vault.e2e-spec.ts 23건 + expenses.e2e-spec.ts 13건).
 - 커버 시나리오. setup·중복setup·잠금 GET·잘못된 마스터·CRUD 라운드트립·CSRF(헤더/쿠키/다단계 라우트/Origin 변조)·export 라운드트립·손상 import·import 충돌(reject/replace/skip)·재시작 후 잠금·5회 실패 backoff·OTHER key 중복·DTO 미허용 필드·1KB 라벨·유니코드 NFKC·whitespace trim·ciphertext 변조시 평문 비노출·unlock 최소 시간 패딩·동시 lock 423·rekey 라운드트립.
 
 **실행 결과 (web 단위).**
 
-- 명령. `pnpm --filter @life-key/web test`.
+- 명령. `pnpm --filter @secrets-manager/web test`.
 - 결과. **1 suite / 5 tests 전부 통과** (clipboard-clear.spec.ts).
 - 커버 시나리오. cleared(만료 시 비움) / changed(외부에서 값 교체 시 그대로 둠) / denied(권한 거부) / cancel(타이머 중단) / onTick(매 초 남은 시간 통지).
 
 **Typecheck.**
 
-- `pnpm --filter @life-key/api typecheck` / `pnpm --filter @life-key/web typecheck` 둘 다 통과.
+- `pnpm --filter @secrets-manager/api typecheck` / `pnpm --filter @secrets-manager/web typecheck` 둘 다 통과.
 
 **라이브에서 별도 검증이 필요한 잔존 항목.** (a) `/vault` UI 의 setup → unlock → 등록 → 복사 → 30초 자동 클리어 시퀀스(통합 흐름), (b) idle 카운트다운 표시(`잠금까지 N초`)와 자동 lock 후 화면 전이, (c) `/vault/rekey` 호출 후 마스터 변경 UI 흐름 부재(README §"KDF migration" 명시 한계).
 

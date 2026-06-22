@@ -54,7 +54,7 @@
 
 ### P5. 시각 회귀 baseline 갱신 + 회귀 테스트
 
-- [ ] **T501** Playwright visual baseline 재캡처. `pnpm --filter @life-key/web run test:visual:update`. 5 페이지 → 라우트 추가로 7~9 페이지 spec 으로 확장(`expenses/new`, `expenses/[id]`, `vault/new`, `vault/[id]`, `vault/categories`, `vault/backup` 추가).
+- [ ] **T501** Playwright visual baseline 재캡처. `pnpm --filter @secrets-manager/web run test:visual:update`. 5 페이지 → 라우트 추가로 7~9 페이지 spec 으로 확장(`expenses/new`, `expenses/[id]`, `vault/new`, `vault/[id]`, `vault/categories`, `vault/backup` 추가).
   - 선행. P2, P3, P4 완료 · 예상. 1.5h
 - [ ] **T502** axe-playwright spec 신규 페이지 추가. WCAG 위반 0 유지.
   - 선행. T501 · 예상. 0.5h

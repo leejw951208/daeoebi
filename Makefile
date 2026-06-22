@@ -17,16 +17,16 @@ install:
 	pnpm install
 
 migrate:
-	pnpm --filter @life-key/api exec prisma migrate dev
+	pnpm --filter @secrets-manager/api exec prisma migrate dev
 
 dev:
 	pnpm -r --parallel run dev
 
 dev-api:
-	pnpm --filter @life-key/api dev
+	pnpm --filter @secrets-manager/api dev
 
 dev-web:
-	pnpm --filter @life-key/web dev
+	pnpm --filter @secrets-manager/web dev
 
 build:
 	pnpm -r run build

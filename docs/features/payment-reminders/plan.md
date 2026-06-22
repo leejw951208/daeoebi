@@ -40,11 +40,11 @@
 
 ### P4. 검증
 
-- [ ] **T010** `pnpm --filter @life-key/web test`로 리마인더 순수 함수와 기존 화면 테스트를 검증한다.
+- [ ] **T010** `pnpm --filter @secrets-manager/web test`로 리마인더 순수 함수와 기존 화면 테스트를 검증한다.
   - 선행. T003, T009 · 예상. 0.25h
-- [ ] **T011** `pnpm --filter @life-key/web run typecheck`와 `pnpm lint`를 실행한다.
+- [ ] **T011** `pnpm --filter @secrets-manager/web run typecheck`와 `pnpm lint`를 실행한다.
   - 선행. T009 · 예상. 0.25h
-- [ ] **T012** `pnpm --filter @life-key/api exec jest --config ./test/jest-e2e.json`를 실행해 기존 occurrence API 회귀가 없는지 확인한다.
+- [ ] **T012** `pnpm --filter @secrets-manager/api exec jest --config ./test/jest-e2e.json`를 실행해 기존 occurrence API 회귀가 없는지 확인한다.
   - 선행. T009 · 예상. 0.25h
 - [ ] **T013** 로컬 서버에서 `/`와 `/occurrences`를 열어 리마인더 UI가 렌더링되는지 smoke 확인한다.
   - 선행. T010, T011, T012 · 예상. 0.5h

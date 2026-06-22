@@ -21,7 +21,7 @@
 | CLOSED | - | DONE | 7 | 모든 인터랙티브 요소 44px 터치 타깃 | `.btn`은 `apps/web/app/globals.css:202`, form control은 `apps/web/app/globals.css:267`, 하단 탭은 `apps/web/app/globals.css:142`, update/install 버튼은 `apps/web/app/globals.css:592`와 `apps/web/app/globals.css:621`에서 최소 높이 적용. | - |
 | CLOSED | - | DONE | 8 | focus-visible 포커스 링 | `apps/web/app/globals.css:116`에서 2px outline과 offset 적용. | - |
 | CLOSED | - | CHANGED | 9 | 본문 font-size 모바일 16px, 데스크탑 14px 분기 | `apps/web/app/globals.css:67`에서 16px 기본값은 구현됐고 데스크탑 14px 분기는 제거됨. 단일 모바일 레이아웃을 모든 viewport에 유지한다는 확정 방향과 일치하는 수용 가능한 변경으로 판단. | - |
-| CLOSED | - | DONE | 10 | 색 대비 WCAG AA | `apps/web/tests/visual/accessibility.spec.ts:23`의 axe WCAG 검사와 `pnpm --filter @life-key/web run test:visual` 69개 통과 확인. | - |
+| CLOSED | - | DONE | 10 | 색 대비 WCAG AA | `apps/web/tests/visual/accessibility.spec.ts:23`의 axe WCAG 검사와 `pnpm --filter @secrets-manager/web run test:visual` 69개 통과 확인. | - |
 | CLOSED | - | DONE | 11 | zinc/slate 토큰과 hardcoded hex 토큰화 | `apps/web/app/globals.css:3`의 토큰 세트와 `apps/web/app/globals.css:648`의 desktop body 배경 토큰 사용 확인. 색상 hex는 토큰 선언과 메타데이터/manifest 값에 한정됨. | - |
 | CLOSED | - | DONE | 12 | motion token과 prefers-reduced-motion | `apps/web/app/globals.css:76`의 motion token, `apps/web/app/globals.css:668`의 reduced-motion 무력화 확인. | - |
 | CLOSED | - | DONE | 13 | Skeleton 로더 | `apps/web/components/Skeleton.tsx:8`, `apps/web/app/summary/SummaryView.tsx:81`, `apps/web/app/vault/EntriesScreen.tsx:135` 사용 확인. | - |
@@ -60,7 +60,7 @@
 | CLOSED | - | DONE | T404 | `apps/web/app/globals.css:76`에서 motion token과 transition 적용. | - |
 | CLOSED | - | DONE | T405 | `apps/web/app/globals.css:668`에서 reduced-motion 무력화 적용. | - |
 | CLOSED | - | DONE | T406 | `apps/web/components/Skeleton.tsx:8`와 각 로딩 화면 적용 확인. | - |
-| CLOSED | - | DONE | T407 | `pnpm --filter @life-key/web run test:visual`에서 axe WCAG 검사 포함 69개 통과. | - |
+| CLOSED | - | DONE | T407 | `pnpm --filter @secrets-manager/web run test:visual`에서 axe WCAG 검사 포함 69개 통과. | - |
 | CLOSED | - | DONE | T501 | `file apps/web/public/icons/*.png`로 PNG 아이콘 3종 확인. | - |
 | CLOSED | - | DONE | T502 | `apps/web/public/manifest.webmanifest` 작성 확인. | - |
 | CLOSED | - | DONE | T503 | `apps/web/app/layout.tsx:8`의 metadata와 `apps/web/app/layout.tsx:23`의 viewport에 manifest, theme-color, apple icon 반영. | - |
@@ -82,11 +82,11 @@
 
 | 처리상태 | 심각도 | 판정 | 요구사항 | 테스트 | 보강 지시 |
 |----------|--------|------|----------|--------|-----------|
-| CLOSED | - | TESTED | 이전 OPEN 보강 3건 | `pnpm --filter @life-key/web test` 통과. `apps/web/app/ui-ux-redesign-open-items.spec.ts`에서 PNG 아이콘, bottom-sheet class, desktop background token 회귀 방지. | - |
-| CLOSED | - | TESTED | 설치 배너 dismiss | `pnpm --filter @life-key/web test` 통과. `apps/web/app/vault/install-banner-visibility.spec.ts`에서 7일 dismiss와 standalone 숨김 검증. | - |
-| CLOSED | - | TESTED | 타입 안정성 | `pnpm --filter @life-key/web run typecheck` 통과. | - |
-| CLOSED | - | TESTED | production build | `pnpm --filter @life-key/web run build` 통과. Next.js 15.5.18 production build 성공. | - |
-| CLOSED | - | TESTED | 시각 회귀와 접근성 | `pnpm --filter @life-key/web run test:visual` 통과. 69개 테스트가 375, 768, 1280 viewport에서 screenshot과 axe WCAG 2 A/AA/2.2 AA 검사를 수행. | - |
+| CLOSED | - | TESTED | 이전 OPEN 보강 3건 | `pnpm --filter @secrets-manager/web test` 통과. `apps/web/app/ui-ux-redesign-open-items.spec.ts`에서 PNG 아이콘, bottom-sheet class, desktop background token 회귀 방지. | - |
+| CLOSED | - | TESTED | 설치 배너 dismiss | `pnpm --filter @secrets-manager/web test` 통과. `apps/web/app/vault/install-banner-visibility.spec.ts`에서 7일 dismiss와 standalone 숨김 검증. | - |
+| CLOSED | - | TESTED | 타입 안정성 | `pnpm --filter @secrets-manager/web run typecheck` 통과. | - |
+| CLOSED | - | TESTED | production build | `pnpm --filter @secrets-manager/web run build` 통과. Next.js 15.5.18 production build 성공. | - |
+| CLOSED | - | TESTED | 시각 회귀와 접근성 | `pnpm --filter @secrets-manager/web run test:visual` 통과. 69개 테스트가 375, 768, 1280 viewport에서 screenshot과 axe WCAG 2 A/AA/2.2 AA 검사를 수행. | - |
 | CLOSED | - | TESTED | PWA PNG 파일 | `file apps/web/public/icons/icon-192.png apps/web/public/icons/icon-512.png apps/web/public/icons/icon-512-maskable.png` 통과. | - |
 | CLOSED | - | TESTED | 보안 감사 | `pnpm audit --prod` 실행. 기존 의존성 취약점 10건 확인, 이번 UI/UX redesign 직접 변경에서 새 OPEN 보안 결함은 발견하지 못함. | - |
 
@@ -110,10 +110,10 @@
 
 ## 5. 기능 검증
 
-- `pnpm --filter @life-key/web test` 통과. 6 suites, 32 tests.
-- `pnpm --filter @life-key/web run typecheck` 통과.
-- `pnpm --filter @life-key/web run build` 통과. Next.js 15.5.18 production build 성공.
-- `pnpm --filter @life-key/web run test:visual` 통과. 69 passed.
+- `pnpm --filter @secrets-manager/web test` 통과. 6 suites, 32 tests.
+- `pnpm --filter @secrets-manager/web run typecheck` 통과.
+- `pnpm --filter @secrets-manager/web run build` 통과. Next.js 15.5.18 production build 성공.
+- `pnpm --filter @secrets-manager/web run test:visual` 통과. 69 passed.
 - `file apps/web/public/icons/*.png` 통과. 192x192, 512x512, 512x512 확인.
 - 실제 모바일 Safari 홈 화면 설치와 SW updatefound 이벤트는 로컬 자동화에서 직접 재현하지 않았지만, manifest, 아이콘, service worker 등록, update toast, 오프라인 앱 셸 관련 구현과 회귀 테스트는 확인했다.
 

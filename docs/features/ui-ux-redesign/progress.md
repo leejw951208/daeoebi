@@ -50,13 +50,13 @@
 **사용자가 직접 수행할 일 (블로커 아님)**
 
 - `apps/web/public/icons/` 의 PNG 3개 생성 (README 가이드 참조)
-- `pnpm --filter @life-key/web exec playwright install` 로 브라우저 다운로드
-- `pnpm --filter @life-key/web run test:visual:update` 로 baseline 15장 초기 캡처
+- `pnpm --filter @secrets-manager/web exec playwright install` 로 브라우저 다운로드
+- `pnpm --filter @secrets-manager/web run test:visual:update` 로 baseline 15장 초기 캡처
 
 **검증 결과**
 
-- `pnpm --filter @life-key/web run typecheck` ✅ 통과
-- `pnpm --filter @life-key/web test` ✅ 통과 (clipboard-clear 5건)
+- `pnpm --filter @secrets-manager/web run typecheck` ✅ 통과
+- `pnpm --filter @secrets-manager/web test` ✅ 통과 (clipboard-clear 5건)
 
 ## 최근 업데이트
 

@@ -94,7 +94,7 @@
                                       v
                         +---------------------------+
                         |   SQLite                  |
-                        |   apps/api/data/life-key.db|
+                        |   apps/api/data/secrets-manager.db|
                         |                           |
                         |   VaultMaster (1 row)     |
                         |   VaultEntry  (N rows)    |

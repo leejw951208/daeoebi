@@ -1,6 +1,6 @@
 {
-    "name": "Life Key",
-    "short_name": "Life Key",
+    "name": "Secrets Manager",
+    "short_name": "Secrets Manager",
     "description": "로컬 1인용 정기 지출 + 비밀번호 보관함",
     "start_url": "/",
     "scope": "/",

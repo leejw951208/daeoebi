@@ -29,10 +29,10 @@
 
 ## 검증 결과
 
-- `pnpm --filter @life-key/web run typecheck` ✅ 통과
-- `pnpm --filter @life-key/web run build` ✅ 통과. 라우트 11개(이전 5개 + 신규 6개) 등록 확인.
-- `pnpm --filter @life-key/web test` ✅ 32/32 단위 테스트 통과(신규 23건 포함).
-- `pnpm --filter @life-key/web run test:visual` 🟡 baseline 미캡처 상태. verify 단계에서 백엔드 서버 띄우고 `pnpm --filter @life-key/web run test:visual:update` 실행 필요.
+- `pnpm --filter @secrets-manager/web run typecheck` ✅ 통과
+- `pnpm --filter @secrets-manager/web run build` ✅ 통과. 라우트 11개(이전 5개 + 신규 6개) 등록 확인.
+- `pnpm --filter @secrets-manager/web test` ✅ 32/32 단위 테스트 통과(신규 23건 포함).
+- `pnpm --filter @secrets-manager/web run test:visual` 🟡 baseline 미캡처 상태. verify 단계에서 백엔드 서버 띄우고 `pnpm --filter @secrets-manager/web run test:visual:update` 실행 필요.
 
 ## 스코프 결정 메모
 

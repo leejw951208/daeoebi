@@ -43,9 +43,9 @@
 | CLOSED | low | DONE | T007 | apps/web/app/occurrences/OccurrencesView.tsx:92-107 | 없음 |
 | CLOSED | low | DONE | T008 | apps/web/app/globals.css:219-249, apps/web/app/globals.css:432-462 | 없음 |
 | CLOSED | low | DONE | T009 | apps/web/app/globals.css:400-406, Playwright smoke `/occurrences` errorCount=0 | 없음 |
-| CLOSED | low | DONE | T010 | `pnpm --filter @life-key/web test` 통과. 10 suites, 43 tests | 없음 |
-| CLOSED | low | DONE | T011 | `pnpm --filter @life-key/web run typecheck`, `pnpm lint` 통과 | 없음 |
-| CLOSED | low | DONE | T012 | `pnpm --filter @life-key/api exec jest --config ./test/jest-e2e.json` 통과. 2 suites, 36 tests | 없음 |
+| CLOSED | low | DONE | T010 | `pnpm --filter @secrets-manager/web test` 통과. 10 suites, 43 tests | 없음 |
+| CLOSED | low | DONE | T011 | `pnpm --filter @secrets-manager/web run typecheck`, `pnpm lint` 통과 | 없음 |
+| CLOSED | low | DONE | T012 | `pnpm --filter @secrets-manager/api exec jest --config ./test/jest-e2e.json` 통과. 2 suites, 36 tests | 없음 |
 | CLOSED | low | DONE | T013 | curl `/` 200, curl `/occurrences?...` 200, Playwright smoke title 정상·errorCount=0 | 없음 |
 
 **스코프 이탈:** 없음
@@ -62,8 +62,8 @@
 | CLOSED | low | TESTED | 요약 bucket count와 total 계산 | apps/web/app/occurrences/reminder-state.spec.ts:101-147 | 없음 |
 | CLOSED | low | TESTED | 대시보드 필터 링크 생성 | apps/web/app/occurrences/reminder-state.spec.ts:149-164 | 없음 |
 | CLOSED | low | TESTED | 리마인더 요약 0건 빈 상태 문구와 진입 링크 | apps/web/app/payment-reminders-dashboard.spec.tsx:35-52 | 없음 |
-| CLOSED | low | TESTED | 기존 웹 화면 테스트 회귀 | `pnpm --filter @life-key/web test` 통과. 10 suites, 43 tests | 없음 |
-| CLOSED | low | TESTED | API occurrence 회귀 | `pnpm --filter @life-key/api exec jest --config ./test/jest-e2e.json` 통과. 2 suites, 36 tests | 없음 |
+| CLOSED | low | TESTED | 기존 웹 화면 테스트 회귀 | `pnpm --filter @secrets-manager/web test` 통과. 10 suites, 43 tests | 없음 |
+| CLOSED | low | TESTED | API occurrence 회귀 | `pnpm --filter @secrets-manager/api exec jest --config ./test/jest-e2e.json` 통과. 2 suites, 36 tests | 없음 |
 | CLOSED | low | TESTED | `/`, `/occurrences` 렌더 smoke | curl 200, Playwright smoke `errorCount=0` | 없음 |
 
 **미테스트:** 0건
@@ -84,11 +84,11 @@
 
 ## 5. 기능 검증
 
-- `pnpm --filter @life-key/web test` 통과. 10 suites, 43 tests.
-- `pnpm --filter @life-key/web run typecheck` 통과.
+- `pnpm --filter @secrets-manager/web test` 통과. 10 suites, 43 tests.
+- `pnpm --filter @secrets-manager/web run typecheck` 통과.
 - `pnpm lint` 통과.
 - `pnpm format:check` 통과.
-- `pnpm --filter @life-key/api exec jest --config ./test/jest-e2e.json` 통과. 2 suites, 36 tests.
+- `pnpm --filter @secrets-manager/api exec jest --config ./test/jest-e2e.json` 통과. 2 suites, 36 tests.
 - HTTP smoke. `http://127.0.0.1:3000/` 200, `http://127.0.0.1:3000/occurrences?status=SCHEDULED&from=2000-01-01&to=2026-05-24` 200.
 - Playwright smoke. `/` title 정상, 리마인더 빈 상태 1건, `.error-box` 0건. `/occurrences` title 정상, `.error-box` 0건.
 

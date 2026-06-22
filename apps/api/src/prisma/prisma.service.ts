@@ -10,7 +10,7 @@ export class PrismaService
 {
     constructor() {
         const adapter = new PrismaBetterSqlite3({
-            url: process.env.DATABASE_URL || "file:./data/life-key.db",
+            url: process.env.DATABASE_URL || "file:./data/secrets-manager.db",
         })
         super({ adapter })
     }

@@ -1,5 +1,5 @@
-// Life Key PWA service worker. 앱 셸 precache + /api 런타임 캐시. /api/vault 는 캐시 제외.
-const CACHE_VERSION = "lifekey-v1"
+// Secrets Manager PWA service worker. 앱 셸 precache + /api 런타임 캐시. /api/vault 는 캐시 제외.
+const CACHE_VERSION = "secretsmanager-v1"
 // 아이콘 PNG 는 사용자가 추후 추가하므로 precache 에 포함하지 않는다.
 // addAll 은 단 하나의 404 로도 전체 install 이 실패하므로 핵심 셸만 등록한다.
 const APP_SHELL = ["/", "/manifest.webmanifest"]

@@ -6,13 +6,13 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister"
 import "./globals.css"
 
 export const metadata: Metadata = {
-    title: "Life Key — 정기 지출 관리",
+    title: "Secrets Manager — 정기 지출 관리",
     description: "로컬 1인용 정기 지출 관리",
     manifest: "/manifest.webmanifest",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
-        title: "Life Key",
+        title: "Secrets Manager",
     },
     icons: {
         icon: "/icons/icon-192.png",

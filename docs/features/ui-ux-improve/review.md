@@ -6,7 +6,7 @@
 - Spec: docs/features/ui-ux-improve/spec.md
 - Plan: docs/features/ui-ux-improve/plan.md
 - 브랜치. main
-- 자동 검증. `pnpm --filter @life-key/web typecheck` 통과, `pnpm --filter @life-key/web test` 36/36 통과(node 6 + jsdom 2), `pnpm --filter @life-key/web build` 통과(12개 app route, 최대 First Load JS 133 kB). `pnpm --filter @life-key/web run test:visual`는 직전 6회차 69/69 통과 결과를 재사용한다(이번 patch는 UI 변경 없음).
+- 자동 검증. `pnpm --filter @secrets-manager/web typecheck` 통과, `pnpm --filter @secrets-manager/web test` 36/36 통과(node 6 + jsdom 2), `pnpm --filter @secrets-manager/web build` 통과(12개 app route, 최대 First Load JS 133 kB). `pnpm --filter @secrets-manager/web run test:visual`는 직전 6회차 69/69 통과 결과를 재사용한다(이번 patch는 UI 변경 없음).
 - 변경 메모. jest 멀티 프로젝트(node + jsdom)로 재구성. devDeps에 `jest-environment-jsdom@^29`, `@testing-library/react`, `@testing-library/dom` 추가. 신규 테스트 2건 추가로 S3/S7 UNTESTED → TESTED.
 
 ---
@@ -34,7 +34,7 @@
 | CLOSED | — | DONE | S17 | `/vault/[id]` 잘못된 id → 안내 | [apps/web/app/vault/[id]/page.tsx:82](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/vault/[id]/page.tsx:82) | — |
 | CLOSED | — | DONE | S18 | 잠금 상태에서 `/vault/*` 직접 진입 시 키·민감 필드 노출 금지 | [apps/web/app/vault/layout.tsx:63](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/vault/layout.tsx:63), [apps/web/tests/visual/vault-new.spec.ts:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/vault-new.spec.ts:4), [apps/web/tests/visual/vault-detail.spec.ts:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/vault-detail.spec.ts:4) | — |
 | CLOSED | — | DONE | S19 | 알 수 없는 카테고리 query → 디폴트 fallback | [apps/web/app/vault/vault-filter.ts:7](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/vault/vault-filter.ts:7), [apps/web/app/vault/vault-filter.spec.ts:13](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/vault/vault-filter.spec.ts:13) | — |
-| CLOSED | — | DONE | S20 | 시각 회귀 baseline 갱신 + axe 0건 | `pnpm --filter @life-key/web run test:visual` 69/69 통과, baseline png 33개 확인 | — |
+| CLOSED | — | DONE | S20 | 시각 회귀 baseline 갱신 + axe 0건 | `pnpm --filter @secrets-manager/web run test:visual` 69/69 통과, baseline png 33개 확인 | — |
 
 **요약:** DONE 19 / PARTIAL 0 / NOT DONE 0 / CHANGED 1
 
@@ -60,7 +60,7 @@
 | CLOSED | — | DONE | T403 vault 헤더 보조 액션 링크 | [apps/web/app/vault/EntriesScreen.tsx:96](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/vault/EntriesScreen.tsx:96) | — |
 | CLOSED | — | DONE | T501 시각 baseline 갱신 | baseline png 33개 확인, `test:visual` 69/69 통과 | — |
 | CLOSED | — | DONE | T502 axe-playwright 신규 페이지 추가 | [apps/web/tests/visual/accessibility.spec.ts:5](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/accessibility.spec.ts:5) | — |
-| CLOSED | — | DONE | T503 Jest 단위 테스트 보강 | `pnpm --filter @life-key/web test` 32/32 통과 | — |
+| CLOSED | — | DONE | T503 Jest 단위 테스트 보강 | `pnpm --filter @secrets-manager/web test` 32/32 통과 | — |
 | CLOSED | — | DONE | T504 README 라우트 맵 | [README.md:68](/Users/leejinwoo/Desktop/study/my-vault/README.md:68) | — |
 
 **스코프 이탈:** 없음.
@@ -81,7 +81,7 @@
 | CLOSED | — | TESTED | S16 `/expenses/잘못된id` 404 | [apps/web/tests/visual/accessibility.spec.ts:9](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/accessibility.spec.ts:9), [apps/web/app/not-found.tsx:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/not-found.tsx:4) | — |
 | CLOSED | — | TESTED | S18 vault 잠금 fallback 직접 진입 | [apps/web/tests/visual/vault-new.spec.ts:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/vault-new.spec.ts:4), [apps/web/tests/visual/vault-detail.spec.ts:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/vault-detail.spec.ts:4), [apps/web/tests/visual/vault-categories.spec.ts:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/vault-categories.spec.ts:4), [apps/web/tests/visual/vault-backup.spec.ts:4](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/vault-backup.spec.ts:4) | — |
 | CLOSED | — | TESTED | S19 알 수 없는 카테고리 query fallback | [apps/web/app/vault/vault-filter.spec.ts:13](/Users/leejinwoo/Desktop/study/my-vault/apps/web/app/vault/vault-filter.spec.ts:13) | — |
-| CLOSED | — | TESTED | S20 시각 회귀 11페이지 × 3 viewport + axe | [apps/web/tests/visual/accessibility.spec.ts:5](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/accessibility.spec.ts:5), `pnpm --filter @life-key/web run test:visual` 69/69 통과 | — |
+| CLOSED | — | TESTED | S20 시각 회귀 11페이지 × 3 viewport + axe | [apps/web/tests/visual/accessibility.spec.ts:5](/Users/leejinwoo/Desktop/study/my-vault/apps/web/tests/visual/accessibility.spec.ts:5), `pnpm --filter @secrets-manager/web run test:visual` 69/69 통과 | — |
 
 **미테스트:** 0건.
 
@@ -110,10 +110,10 @@
 
 ### 통과
 
-- `pnpm --filter @life-key/web typecheck` → 통과.
-- `pnpm --filter @life-key/web test` → 36/36 통과(node 프로젝트 32 + jsdom 프로젝트 4).
-- `pnpm --filter @life-key/web build` → 통과. 12개 app route 등록, 최대 First Load JS 133 kB.
-- `pnpm --filter @life-key/web run test:visual` → 본 회차 미실행. UI/스타일 변경이 없어 직전 회차 69/69 결과를 재사용.
+- `pnpm --filter @secrets-manager/web typecheck` → 통과.
+- `pnpm --filter @secrets-manager/web test` → 36/36 통과(node 프로젝트 32 + jsdom 프로젝트 4).
+- `pnpm --filter @secrets-manager/web build` → 통과. 12개 app route 등록, 최대 First Load JS 133 kB.
+- `pnpm --filter @secrets-manager/web run test:visual` → 본 회차 미실행. UI/스타일 변경이 없어 직전 회차 69/69 결과를 재사용.
 
 ### 검증 중 발생한 일
 
@@ -123,7 +123,7 @@
 
 1. 실제 백엔드 데이터가 있는 상태에서 `/expenses/[id]`, `/vault/[id]`의 loaded detail view↔edit 흐름을 수동 확인한다(자동 테스트는 jsdom + 모킹 기반이므로 실제 axios 호출 경로는 별개).
 2. 잠금 상태에서 `/vault/new`, `/vault/[id]/<임의id>`, `/vault/categories`, `/vault/backup` 직접 진입 시 UnlockScreen fallback을 수동 확인한다.
-3. UI/스타일 변경이 다음 회차에서 발생하면 `pnpm --filter @life-key/web run test:visual`을 재실행해 69/69 baseline 유효성을 재확인한다.
+3. UI/스타일 변경이 다음 회차에서 발생하면 `pnpm --filter @secrets-manager/web run test:visual`을 재실행해 69/69 baseline 유효성을 재확인한다.
 
 ---
 

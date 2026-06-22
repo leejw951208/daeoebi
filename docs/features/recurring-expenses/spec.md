@@ -78,7 +78,7 @@
 
 - **`apps/web`**. Next.js(App Router, TypeScript) 클라이언트. UI 렌더링과 사용자 입력 폼, 캘린더/리스트/대시보드를 담당한다. 데이터는 직접 DB를 만지지 않고 `apps/api`의 HTTP 엔드포인트를 호출해 가져온다.
 - **`apps/api`**. NestJS(TypeScript) 백엔드. Prisma 스키마와 마이그레이션, 비즈니스 로직(반복 규칙 계산, 마스터/occurrence 동기화), HTTP REST 엔드포인트를 모두 보유한다.
-- **DB**. SQLite 단일 파일(`apps/api/data/life-key.db`). `apps/api`만 직접 접근한다.
+- **DB**. SQLite 단일 파일(`apps/api/data/secrets-manager.db`). `apps/api`만 직접 접근한다.
 - **네트워킹**. 두 프로세스 모두 `127.0.0.1`에만 바인딩한다(web 3000, api 4000). 외부 네트워크 노출 없음.
 
 프론트엔드는 `axios` 인스턴스 한 개에 `NEXT_PUBLIC_API_BASE_URL`(기본 `http://127.0.0.1:4000`) 환경변수를 주입해 API를 호출한다.
@@ -89,7 +89,7 @@
 |------|----------|-----------|
 | Next.js(`apps/web`) + NestJS(`apps/api`) 모노레포 분리 | 후속으로 비밀번호 관리, 모바일 클라이언트, CLI 등 다른 프런트를 붙일 가능성을 열어 둔다. NestJS의 모듈/Provider/Guard 구조가 도메인 분리·인증 도입에 자연스럽다. 백엔드를 독립 프로세스로 두면 Prisma·반복 규칙 로직을 UI 렌더링 사이클과 분리해 테스트하기 쉽다. | 풀스택 Next.js 단일 앱(API Route + Server Action으로 처리). 1인 사용에는 충분하지만, 도메인 로직이 RSC/Route Handler에 흩어져 후속 비밀번호 도메인이 추가될 때 경계가 모호해진다. 또한 Next.js 빌드/배포 사이클에 백엔드 변경이 묶여 반복 규칙 단위 테스트와 마이그레이션 작업이 무거워진다. |
 | pnpm workspace 기반 모노레포(`apps/*`, `packages/*`) | pnpm은 디스크 사용량과 설치 속도가 빠르고 워크스페이스 의존성 해석이 엄격해, 두 앱이 공유 타입(예. DTO)을 안전하게 import할 수 있다. Next.js, NestJS 모두 공식 가이드에서 1급 지원. | npm workspace(엄격성 부족, hoisting 이슈). Nx/Turborepo(이번 단계 규모엔 도구 부담이 가치 대비 큼. 필요 시 후속 단계에서 도입 검토). |
-| SQLite 파일(`apps/api/data/life-key.db`) | 외부 DB 서버 불필요, 백업은 파일 복사, 로컬 1인에게 충분. NestJS + Prisma의 SQLite 드라이버는 안정적. | Postgres(운영 부담 큼). IndexedDB(클라이언트 측 저장이라 NestJS 백엔드와 어긋남). |
+| SQLite 파일(`apps/api/data/secrets-manager.db`) | 외부 DB 서버 불필요, 백업은 파일 복사, 로컬 1인에게 충분. NestJS + Prisma의 SQLite 드라이버는 안정적. | Postgres(운영 부담 큼). IndexedDB(클라이언트 측 저장이라 NestJS 백엔드와 어긋남). |
 | Prisma 스키마는 `apps/api`에서 관리 | DB에 접근하는 유일한 프로세스가 `apps/api`이므로 스키마·마이그레이션·생성된 클라이언트를 한 곳에 둔다. 프런트는 DB를 알 필요가 없다. | `packages/db`로 분리(이번 단계엔 공유할 다른 소비자가 없어 과잉). |
 | 마스터 + Occurrence 분리 모델 | 카드값처럼 "예상 vs 실제"가 매월 다른 케이스를 기록 가능. 과거 이력 보존이 자연스러움. | 마스터만 두고 매번 계산(예상 vs 실제 기록 불가). |
 | 시작일+12개월치 occurrence 사전 생성 | 캘린더/대시보드 조회 시 단순 SELECT로 처리. 마스터 수정 시 미래만 재생성. | 매 조회 시 즉석 계산(로직 복잡, 인스턴스 메모/실제금액 보존 불가). |
