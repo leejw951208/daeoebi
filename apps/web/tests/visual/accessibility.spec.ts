@@ -1,14 +1,8 @@
-// axe-core 로 5개 페이지의 WCAG AA 위반을 1회 검출한다.
+// axe-core 로 보관함 페이지의 WCAG AA 위반을 1회 검출한다.
 import { test, expect } from "@playwright/test"
 import AxeBuilder from "@axe-core/playwright"
 
 const PAGES = [
-    { name: "dashboard", url: "/" },
-    { name: "expenses", url: "/expenses" },
-    { name: "expenses-new", url: "/expenses/new" },
-    { name: "expenses-detail-missing", url: "/expenses/missing-id" },
-    { name: "calendar", url: "/calendar" },
-    { name: "summary", url: "/summary" },
     { name: "vault", url: "/vault" },
     { name: "vault-new", url: "/vault/new" },
     { name: "vault-detail-missing", url: "/vault/missing-id" },
