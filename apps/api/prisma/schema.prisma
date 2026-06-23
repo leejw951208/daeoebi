@@ -25,24 +25,6 @@ model VaultMaster {
   updatedAt         DateTime @updatedAt
 }
 
-// 카테고리·라벨 평문 + AEAD 암호화된 자격증명 본문.
-// label 은 검색용 평문이고 ciphertext 는 unlock 상태에서만 복호화된다.
-model VaultEntry {
-  id            String   @id @default(cuid())
-  category      String
-  label         String
-  iv            Bytes
-  ciphertext    Bytes
-  authTag       Bytes
-  kdfVersion    Int      @default(1)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([category])
-  @@index([label])
-  @@unique([category, label])
-}
-
 // 6자리 PIN 접속 인증. id 는 "singleton" 고정으로 단일 행을 강제한다.
 // pinHash 는 Argon2id 해시이며 PIN 은 암호화 키로 사용하지 않는다.
 model PinCredential {

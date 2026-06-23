@@ -1,13 +1,4 @@
-// Vault 도메인 공용 타입. 카테고리 enum 과 KDF 파라미터, 에러 코드 상수를 한 곳에 모은다.
-
-export const VAULT_CATEGORIES = [
-    "BANK",
-    "CARD",
-    "SECURITIES",
-    "SHOPPING",
-    "OTHER",
-] as const
-export type VaultCategory = (typeof VAULT_CATEGORIES)[number]
+// Vault 도메인 공용 타입. KDF 파라미터와 에러 코드, 세션 상수를 한 곳에 모은다.
 
 export interface KdfParams {
     version: number
@@ -36,13 +27,8 @@ export const VAULT_ERRORS = {
     VAULT_LOCKING: "VAULT_LOCKING",
     CSRF_INVALID: "CSRF_INVALID",
     RATE_LIMITED: "RATE_LIMITED",
-    IMPORT_CORRUPT: "IMPORT_CORRUPT",
     VALIDATION_FAILED: "VALIDATION_FAILED",
-    CATEGORY_LABEL_CONFLICT: "CATEGORY_LABEL_CONFLICT",
 } as const
-
-export const EXPORT_MAGIC = "LIFEKEY-VAULT-EXPORT"
-export const EXPORT_VERSION = 1
 
 export const IDLE_TIMEOUT_MS = 15 * 60 * 1000
 // unlock 응답 최소 소요. spec §"보안" 의 타이밍 누설 차단 항목을 실효화한다 (Argon2id 소요와 무관하게 일정).
