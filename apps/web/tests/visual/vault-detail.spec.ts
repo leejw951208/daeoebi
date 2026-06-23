@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test"
 test("vault detail route renders (locked fallback or missing/loaded)", async ({
     page,
 }) => {
-    await page.goto("/vault/missing-id")
+    await page.goto("/missing-id")
     await page.waitForLoadState("networkidle")
     await expect(page).toHaveScreenshot("vault-detail.png")
 })

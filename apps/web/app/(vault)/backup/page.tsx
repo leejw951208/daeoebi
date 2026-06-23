@@ -19,7 +19,7 @@ export default function VaultBackupPage() {
                     <span className="eyebrow">Backup · Restore</span>
                     <h1>백업·복원</h1>
                 </div>
-                <Link className="btn secondary" href="/vault">
+                <Link className="btn secondary" href="/">
                     ← 보관함
                 </Link>
             </header>

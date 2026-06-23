@@ -24,7 +24,7 @@ export default function VaultCategoriesPage() {
                     <span className="eyebrow">Reference</span>
                     <h1>카테고리</h1>
                 </div>
-                <Link className="btn secondary" href="/vault">
+                <Link className="btn secondary" href="/">
                     ← 보관함
                 </Link>
             </header>

@@ -22,7 +22,7 @@ export default function NewVaultEntryPage() {
                     <span className="eyebrow">New Entry</span>
                     <h1>새 항목 추가</h1>
                 </div>
-                <Link className="btn secondary" href="/vault">
+                <Link className="btn secondary" href="/">
                     ← 목록
                 </Link>
             </header>
@@ -31,10 +31,10 @@ export default function NewVaultEntryPage() {
                 <CategoryForm
                     entry={null}
                     onSuccess={() => {
-                        router.push("/vault")
+                        router.push("/")
                         router.refresh()
                     }}
-                    onCancel={() => router.push("/vault")}
+                    onCancel={() => router.push("/")}
                 />
             </div>
         </section>

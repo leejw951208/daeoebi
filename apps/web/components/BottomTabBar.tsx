@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { KeyRound } from "lucide-react"
 import { Icon } from "./Icon"
 
-const TABS = [{ href: "/vault", label: "보관함", icon: KeyRound }] as const
+const TABS = [{ href: "/", label: "보관함", icon: KeyRound }] as const
 
 export function BottomTabBar() {
     const pathname = usePathname()

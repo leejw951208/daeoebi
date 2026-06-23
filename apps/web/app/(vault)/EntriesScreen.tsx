@@ -1,6 +1,6 @@
 "use client"
-// vault entries 목록 전용 화면. URL 기반 카테고리·검색 필터 + 카드 클릭 시 /vault/[id] 로 이동한다.
-// 신규는 /vault/new, 카테고리 관리는 /vault/categories, 백업·복원은 /vault/backup 라우트에서 처리한다.
+// vault entries 목록 전용 화면. URL 기반 카테고리·검색 필터 + 카드 클릭 시 /[id] 로 이동한다.
+// 신규는 /new, 카테고리 관리는 /categories, 백업·복원은 /backup 라우트에서 처리한다.
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -66,7 +66,7 @@ export function EntriesScreen() {
             else params.set("q", next.q)
         }
         const qs = params.toString()
-        router.replace(qs ? `/vault?${qs}` : "/vault", { scroll: false })
+        router.replace(qs ? `/?${qs}` : "/", { scroll: false })
     }
 
     const idleWarning = useMemo(() => {
@@ -114,13 +114,13 @@ export function EntriesScreen() {
                 className="toolbar"
                 style={{ marginTop: 20 }}
             >
-                <Link className="btn secondary" href="/vault/categories">
+                <Link className="btn secondary" href="/categories">
                     카테고리
                 </Link>
-                <Link className="btn secondary" href="/vault/backup">
+                <Link className="btn secondary" href="/backup">
                     백업·복원
                 </Link>
-                <Link className="btn push-end" href="/vault/new">
+                <Link className="btn push-end" href="/new">
                     + 항목 추가
                 </Link>
             </nav>
@@ -186,7 +186,7 @@ export function EntriesScreen() {
                         {entries.map((entry) => (
                             <li key={entry.id}>
                                 <Link
-                                    href={`/vault/${entry.id}`}
+                                    href={`/${entry.id}`}
                                     className="entry-card"
                                 >
                                     <span className="entry-main">

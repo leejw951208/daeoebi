@@ -60,7 +60,7 @@ export default function VaultEntryDetailPage() {
         setError(null)
         try {
             await deleteEntry(entry.id)
-            router.push("/vault")
+            router.push("/")
             startTransition(() => router.refresh())
         } catch (e) {
             setError((e as Error).message)
@@ -81,7 +81,7 @@ export default function VaultEntryDetailPage() {
             <section>
                 <header className="page-header">
                     <h1>항목을 찾을 수 없습니다</h1>
-                    <Link className="btn secondary" href="/vault">
+                    <Link className="btn secondary" href="/">
                         ← 목록
                     </Link>
                 </header>
@@ -97,7 +97,7 @@ export default function VaultEntryDetailPage() {
             <section>
                 <header className="page-header">
                     <h1>오류</h1>
-                    <Link className="btn secondary" href="/vault">
+                    <Link className="btn secondary" href="/">
                         ← 목록
                     </Link>
                 </header>
@@ -112,7 +112,7 @@ export default function VaultEntryDetailPage() {
         <section>
             <header className="page-header">
                 <h1>{entry.label}</h1>
-                <Link className="btn secondary" href="/vault">
+                <Link className="btn secondary" href="/">
                     ← 목록
                 </Link>
             </header>

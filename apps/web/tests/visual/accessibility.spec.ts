@@ -3,11 +3,11 @@ import { test, expect } from "@playwright/test"
 import AxeBuilder from "@axe-core/playwright"
 
 const PAGES = [
-    { name: "vault", url: "/vault" },
-    { name: "vault-new", url: "/vault/new" },
-    { name: "vault-detail-missing", url: "/vault/missing-id" },
-    { name: "vault-categories", url: "/vault/categories" },
-    { name: "vault-backup", url: "/vault/backup" },
+    { name: "vault", url: "/" },
+    { name: "vault-new", url: "/new" },
+    { name: "vault-detail-missing", url: "/missing-id" },
+    { name: "vault-categories", url: "/categories" },
+    { name: "vault-backup", url: "/backup" },
 ]
 
 for (const p of PAGES) {

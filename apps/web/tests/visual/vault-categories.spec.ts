@@ -2,7 +2,7 @@
 import { test, expect } from "@playwright/test"
 
 test("vault categories route renders", async ({ page }) => {
-    await page.goto("/vault/categories")
+    await page.goto("/categories")
     await page.waitForLoadState("networkidle")
     await expect(page).toHaveScreenshot("vault-categories.png")
 })

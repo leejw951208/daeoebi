@@ -2,7 +2,7 @@
 import { test, expect } from "@playwright/test"
 
 test("vault new route renders (locked fallback or form)", async ({ page }) => {
-    await page.goto("/vault/new")
+    await page.goto("/new")
     await page.waitForLoadState("networkidle")
     await expect(page).toHaveScreenshot("vault-new.png")
 })
