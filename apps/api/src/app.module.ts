@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config"
 import { APP_GUARD } from "@nestjs/core"
 import { PrismaModule } from "./prisma/prisma.module"
 import { VaultModule } from "./vault/vault.module"
+import { PinModule } from "./pin/pin.module"
 import { AuthGuard } from "./auth/auth.guard"
 
 @Module({
@@ -11,6 +12,7 @@ import { AuthGuard } from "./auth/auth.guard"
         ConfigModule.forRoot({ isGlobal: true }),
         PrismaModule,
         VaultModule,
+        PinModule,
     ],
     providers: [
         {
