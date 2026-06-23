@@ -2,14 +2,12 @@
 import { Test } from "@nestjs/testing"
 import { INestApplication, ValidationPipe } from "@nestjs/common"
 import request from "supertest"
-import * as fs from "node:fs"
 import * as path from "node:path"
 import { execSync } from "node:child_process"
 import { AppModule } from "../src/app.module"
 import { HttpExceptionFilter } from "../src/common/http-exception.filter"
 import { PrismaService } from "../src/prisma/prisma.service"
 
-const TEST_DB_PATH = path.join(__dirname, "tmp-vault-e2e.db")
 const ORIGIN = "http://127.0.0.1:3000"
 const MASTER = "super-strong-master-pw-12345"
 const VAULT_COOKIE = "vault_session=1"
@@ -66,8 +64,11 @@ describe("Vault e2e", () => {
     let prisma: PrismaService
 
     beforeAll(async () => {
-        if (fs.existsSync(TEST_DB_PATH)) fs.unlinkSync(TEST_DB_PATH)
-        process.env.DATABASE_URL = `file:${TEST_DB_PATH}`
+        if (!process.env.DATABASE_URL) {
+            throw new Error(
+                "e2e 테스트는 PostgreSQL DATABASE_URL 이 설정되어야 한다.",
+            )
+        }
         const prismaBin = path.join(
             __dirname,
             "..",
@@ -78,11 +79,7 @@ describe("Vault e2e", () => {
         execSync(`"${prismaBin}" migrate deploy`, {
             cwd: path.join(__dirname, ".."),
             stdio: "pipe",
-            env: {
-                ...process.env,
-                DATABASE_URL: `file:${TEST_DB_PATH}`,
-                RUST_LOG: "info",
-            },
+            env: { ...process.env, RUST_LOG: "info" },
         })
 
         const boot = await bootstrap()
@@ -93,7 +90,6 @@ describe("Vault e2e", () => {
     afterAll(async () => {
         await prisma?.$disconnect()
         await app?.close()
-        if (fs.existsSync(TEST_DB_PATH)) fs.unlinkSync(TEST_DB_PATH)
     })
 
     beforeEach(async () => {
