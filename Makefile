@@ -6,7 +6,7 @@ DEV_COMPOSE := docker compose -f docker-compose.dev.yml
 
 help:
 	@echo "개발 환경 명령:"
-	@echo "  make dev        DB(도커) 기동 후 web·API(로컬) 동시 실행"
+	@echo "  make dev        DB(도커) 기동 + 마이그레이션 후 web·API(로컬) 동시 실행"
 	@echo ""
 	@echo "  make db-down    개발 DB 컨테이너 종료 (데이터 유지)"
 	@echo "  make db-reset   개발 DB 컨테이너 종료 + 데이터 삭제"
@@ -28,16 +28,18 @@ db-reset:
 
 # ── Prisma ─────────────────────────────────────────────
 migrate:
-	$(DEV_COMPOSE) up -d
+	$(DEV_COMPOSE) up -d --wait
 	pnpm --filter @secrets-manager/api exec prisma migrate dev
 
 generate:
 	pnpm --filter @secrets-manager/api exec prisma generate
 
 # ── 앱 (호스트) ────────────────────────────────────────
-# DB(도커) 를 먼저 띄운 뒤 web·API 를 병렬 실행한다.
+# DB(도커) 기동 → 마이그레이션 적용 → web·API 병렬 실행을 한 번에 수행한다.
+# --wait 로 DB 헬스체크 통과를 기다린 뒤 migrate 한다(연결 거부 방지).
 dev:
-	$(DEV_COMPOSE) up -d
+	$(DEV_COMPOSE) up -d --wait
+	pnpm --filter @secrets-manager/api exec prisma migrate deploy
 	pnpm -r --parallel run dev
 
 # ── 검증 ───────────────────────────────────────────────
