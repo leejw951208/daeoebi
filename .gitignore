@@ -14,11 +14,6 @@ apps/api/generated/
 # TypeScript 증분 빌드 캐시
 *.tsbuildinfo
 
-# 로컬 DB
-apps/api/data/
-*.db
-*.db-journal
-
 # 환경 변수
 .env
 .env.*
