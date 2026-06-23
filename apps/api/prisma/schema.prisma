@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // 단일 사용자 마스터 패스워드의 KDF 파라미터와 verifyToken 을 보관한다.
