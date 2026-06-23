@@ -1,6 +1,6 @@
-# Secrets Manager — 정기 지출 관리
+# Secrets Manager — 비밀번호 금고
 
-로컬 1인용 정기 지출 관리 도구. 카드값, 관리비, 구독료, 월세 등 매월/매주/매년 반복되는 지출을 한 곳에서 등록·조회·결제 처리한다.
+사이트별 비밀번호를 `사이트 → (카테고리) → 비밀번호` 구조로 보관하는 1인용 암호화 금고. 마스터 패스워드 한 개로 보호되며 모든 항목은 AES-256-GCM 으로 암호화된다. 제품 정의는 `docs/PRD-secrets-manager.md` 를 참조한다.
 
 ## 구조
 
@@ -9,7 +9,7 @@ secrets-manager/
 ├─ apps/
 │  ├─ web/   Next.js 15 (App Router) — http://127.0.0.1:3000
 │  └─ api/   NestJS 10 + Prisma + SQLite — http://127.0.0.1:4000
-├─ docs/features/recurring-expenses/   기능 사양·계획·진행 상태
+├─ docs/PRD-secrets-manager.md   제품 요구사항 정의서
 ├─ pnpm-workspace.yaml
 └─ package.json (워크스페이스 스크립트)
 ```
@@ -48,14 +48,14 @@ pnpm --filter @secrets-manager/web dev   # http://127.0.0.1:3000
 ## 테스트
 
 ```bash
-pnpm --filter @secrets-manager/api exec jest                          # 단위 테스트 (recurrence, expense.service)
+pnpm --filter @secrets-manager/api exec jest                          # 단위 테스트
 pnpm --filter @secrets-manager/api exec jest --config ./test/jest-e2e.json  # e2e
 pnpm --filter @secrets-manager/web exec next build                    # 프런트 타입체크 + 빌드 검증
 ```
 
 ### 시각 회귀 + 접근성
 
-`apps/web/tests/visual/` 의 Playwright spec 으로 11개 페이지 × 3 viewport (375/768/1280) 의 스크린샷 baseline 과 axe-core WCAG AA 검사를 실행한다. CRUD 라우트 분리 회차에서 baseline 대상이 5 → 11 로 확장됐다.
+`apps/web/tests/visual/` 의 Playwright spec 으로 3 viewport (375/768/1280) 의 스크린샷 baseline 과 axe-core WCAG AA 검사를 실행한다.
 
 ```bash
 pnpm --filter @secrets-manager/web exec playwright install            # 최초 1회 — 브라우저 다운로드
@@ -63,19 +63,13 @@ pnpm --filter @secrets-manager/web exec next build && pnpm --filter @secrets-man
 pnpm --filter @secrets-manager/web run test:visual                    # 회귀 검증
 ```
 
-`tests/visual/accessibility.spec.ts` 는 11개 페이지에서 WCAG 2.2 AA 위반 0건을 검증한다.
+`tests/visual/accessibility.spec.ts` 는 각 페이지에서 WCAG 2.2 AA 위반 0건을 검증한다.
 
 ### 라우트 맵
 
-웹앱은 5개의 모바일 탭 라우트 + CRUD 서브라우트로 구성된다. 정기 지출과 보관함은 목록 / 신규 / 상세를 별도 라우트로 분리해 모바일 뒤로가기·새로고침·딥링크와 자연스럽게 결합된다.
+보관함은 목록 / 신규 / 상세를 별도 라우트로 분리해 모바일 뒤로가기·새로고침·딥링크와 자연스럽게 결합된다.
 
 ```
-/                              대시보드 (조회 전용)
-/expenses                      정기 지출 목록 + URL 기반 필터(status=active|inactive|all, category)
-/expenses/new                  정기 지출 신규 폼
-/expenses/[id]                 정기 지출 상세 4섹션 + view↔edit + 삭제
-/calendar                      AgendaView (조회 전용)
-/summary                       합계 (조회 전용)
 /vault                         보관함 entries 목록 + URL 기반 필터(cat, q)
 /vault/new                     vault entry 신규
 /vault/[id]                    vault entry 상세 3섹션 + view↔edit + 삭제
@@ -101,12 +95,6 @@ cp apps/api/data/secrets-manager.db ~/backups/secrets-manager-$(date +%Y%m%d).db
 ```
 
 DB 파일 권한은 OS 사용자 권한(예. `chmod 600`)으로 두는 것을 권장한다.
-
-## 정기 지출 알려진 한계
-
-- 다중 통화 환산 없음. 입력 통화로만 표시한다.
-- 격주, 매월 마지막 영업일 같은 복합 규칙은 미지원이다.
-- 외부 은행/카드 동기화 없음.
 
 ## 비밀번호 보관함 (Vault)
 
@@ -148,6 +136,6 @@ POST /vault/rekey
 
 ### 알려진 한계
 
-- 인증 가드 자리만 비워둔 `AuthGuard` 는 모든 비 vault 라우트(`/expenses`, `/occurrences`, `/summary`, `/export`)를 무조건 통과시킨다. 127.0.0.1 바인딩 단일 사용자 가정에서만 안전하며, 외부 노출 시 가드 교체가 선행되어야 한다. vault 모듈은 `VaultLockGuard` 로 별도 보호된다.
+- 인증 가드 자리만 비워둔 `AuthGuard` 는 비 vault 라우트를 무조건 통과시킨다. 127.0.0.1 바인딩 단일 사용자 가정에서만 안전하며, 외부 노출 시 가드 교체가 선행되어야 한다. vault 모듈은 `VaultLockGuard` 로 별도 보호된다.
 - 마스터 변경 UI 는 아직 노출되지 않는다. 위 `/vault/rekey` 엔드포인트를 직접 호출한다.
 - 다중 사용자·다중 디바이스 동기화는 지원하지 않는다.

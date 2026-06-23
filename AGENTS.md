@@ -1,6 +1,6 @@
 # AGENTS.md
 ## 1. 이 프로젝트의 한 줄 설명
-Secrets Manager는 로컬 1인 사용자를 위한 정기 지출 관리와 암호화된 비밀번호 보관함 앱이다.
+Secrets Manager는 사이트별 비밀번호를 `사이트 → (카테고리) → 비밀번호` 구조로 보관하는 1인용 암호화 금고다. 제품 정의는 `docs/PRD-secrets-manager.md` 를 참조한다.
 
 ## 2. 건드리지 말 것
 - `node_modules/`, `dist/` — 빌드 산출물
@@ -33,8 +33,7 @@ pnpm --filter @secrets-manager/web run test:visual            # 시각 회귀 + 
 
 ## 5. 중요한 도메인 사실
 
-- 정기 지출은 매월, 매주, 매년 반복 지출 등록, 조회, 결제 처리를 다룬다.
-- 정기 지출은 다중 통화 환산, 외부 은행 동기화, 복합 반복 규칙을 지원하지 않는다.
+- 데이터 구조는 `사이트 → (카테고리) → 비밀번호`다. 카테고리는 선택적 1계층이다.
 - Vault는 마스터 패스워드 하나로 보호되며 항목은 AES-256-GCM으로 암호화된다.
 - Vault KDF V1은 Argon2id, 64MiB, iteration 3, parallelism 1이다.
 - 잘못된 마스터 입력 5회 후 60초 잠금이 발동한다.
