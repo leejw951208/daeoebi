@@ -20,7 +20,7 @@ import { VaultCsrfMiddleware } from "./vault-csrf.middleware"
         VaultBackoffService,
         { provide: APP_GUARD, useClass: VaultLockGuard },
     ],
-    exports: [VaultService],
+    exports: [VaultService, VaultCryptoService, VaultSessionService],
 })
 export class VaultModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {
