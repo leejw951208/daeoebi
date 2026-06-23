@@ -1,7 +1,11 @@
 "use client"
 // vault 세그먼트 레이아웃. 잠금 상태와 idle 카운트다운을 모든 vault 서브라우트에 공유한다.
 import { useCallback, useEffect, useState } from "react"
-import { getStatus, lockVault, type VaultStatus } from "@/lib/vault-client"
+import {
+    getStatus,
+    lockVault,
+    type VaultStatusView,
+} from "@/lib/vault-client"
 import { UnlockScreen } from "./UnlockScreen"
 import { VaultProvider } from "./vault-context"
 
@@ -10,16 +14,17 @@ export default function VaultLayout({
 }: {
     children: React.ReactNode
 }) {
-    const [status, setStatus] = useState<VaultStatus | null>(null)
-    const [error, setError] = useState<string | null>(null)
+    const [view, setView] = useState<VaultStatusView>({ state: "loading" })
 
     const refresh = useCallback(async () => {
         try {
             const next = await getStatus()
-            setStatus(next)
-            setError(null)
+            setView(next)
         } catch (e) {
-            setError((e as Error).message)
+            setView({
+                state: "error",
+                message: e instanceof Error ? e.message : "알 수 없는 오류",
+            })
         }
     }, [])
 
@@ -31,11 +36,10 @@ export default function VaultLayout({
     // 첫 tick 까지의 1초 지연은 의도된 것이다. server 의 idleSecondsRemaining 은 fetch 시점 기준이므로
     // mount 직후 1초 동안 같은 값을 표시하는 게 실제 경과 시간과 일치한다.
     useEffect(() => {
-        if (status?.state !== "unlocked") return
+        if (view.state !== "unlocked") return
         const id = setInterval(() => {
-            setStatus((prev) => {
+            setView((prev) => {
                 if (
-                    !prev ||
                     prev.state !== "unlocked" ||
                     typeof prev.idleSecondsRemaining !== "number"
                 )
@@ -49,7 +53,7 @@ export default function VaultLayout({
             })
         }, 1000)
         return () => clearInterval(id)
-    }, [status?.state, refresh])
+    }, [view.state, refresh])
 
     const handleLock = useCallback(async () => {
         try {
@@ -59,20 +63,23 @@ export default function VaultLayout({
         }
     }, [refresh])
 
-    if (status === null) {
+    if (view.state === "loading" || view.state === "error") {
         return (
             <section>
                 <h1>비밀번호 보관함</h1>
-                {error && <div className="error-box">{error}</div>}
-                {!error && <p className="muted">상태를 확인하고 있습니다.</p>}
+                {view.state === "error" ? (
+                    <div className="error-box">{view.message}</div>
+                ) : (
+                    <p className="muted">상태를 확인하고 있습니다.</p>
+                )}
             </section>
         )
     }
 
-    if (status.state === "setup-required" || status.state === "locked") {
+    if (view.state === "setup-required" || view.state === "locked") {
         return (
             <UnlockScreen
-                mode={status.state === "setup-required" ? "setup" : "unlock"}
+                mode={view.state === "setup-required" ? "setup" : "unlock"}
                 onSuccess={refresh}
             />
         )
@@ -81,7 +88,7 @@ export default function VaultLayout({
     return (
         <VaultProvider
             value={{
-                idleSecondsRemaining: status.idleSecondsRemaining,
+                idleSecondsRemaining: view.idleSecondsRemaining,
                 onLock: handleLock,
                 onStatusRefresh: refresh,
             }}

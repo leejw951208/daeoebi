@@ -2,6 +2,7 @@
 // 마스터 설정·잠금해제 화면. mode 에 따라 setup/unlock 동작을 분기한다.
 import { FormEvent, useState } from "react"
 import { setupMaster, unlockMaster } from "@/lib/vault-client"
+import { isApiError } from "@/lib/api-error"
 
 type ScreenState = "idle" | "typing" | "verifying" | "failed" | "rate-limited"
 
@@ -47,17 +48,15 @@ export function UnlockScreen({ mode, onSuccess }: Props) {
             setState("idle")
             await onSuccess()
         } catch (e) {
-            const err = e as Error & {
-                code?: string
-                retryAfterSeconds?: number
-            }
-            if (err.code === "RATE_LIMITED") {
+            if (isApiError(e) && e.code === "RATE_LIMITED") {
                 setState("rate-limited")
-                setRetryAfter(err.retryAfterSeconds ?? 60)
+                setRetryAfter(e.retryAfterSeconds ?? 60)
             } else {
                 setState("failed")
             }
-            setErrorMessage(err.message)
+            setErrorMessage(
+                e instanceof Error ? e.message : "알 수 없는 오류",
+            )
         }
     }
 

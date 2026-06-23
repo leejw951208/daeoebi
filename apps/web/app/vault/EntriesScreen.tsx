@@ -9,6 +9,7 @@ import {
     type VaultCategory,
     type VaultEntry,
 } from "@/lib/vault-client"
+import { isApiError } from "@/lib/api-error"
 import { CATEGORY_LABELS } from "./category-schema"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "./vault-context"
@@ -41,13 +42,12 @@ export function EntriesScreen() {
             setState("loaded")
             setError(null)
         } catch (e) {
-            const err = e as Error & { code?: string }
-            if (err.code === "VAULT_LOCKED") {
+            if (isApiError(e) && e.code === "VAULT_LOCKED") {
                 await onStatusRefresh()
                 return
             }
             setState("error")
-            setError(err.message)
+            setError(e instanceof Error ? e.message : "알 수 없는 오류")
         }
     }, [category, query, onStatusRefresh])
 

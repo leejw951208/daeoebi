@@ -1,5 +1,6 @@
 // 백엔드 API 호출을 캡슐화한다. axios 인스턴스와 도메인 helper 함수를 한 곳에 모은다.
 import axios, { AxiosError, AxiosInstance } from "axios"
+import { ApiError } from "./api-error"
 import type {
     CreateExpenseInput,
     ExpenseOccurrence,
@@ -18,18 +19,7 @@ export const apiClient: AxiosInstance = axios.create({
 
 apiClient.interceptors.response.use(
     (response) => response,
-    (error: AxiosError<{ message?: string | string[] }>) => {
-        const payload = error.response?.data
-        let message = "요청 처리에 실패했습니다."
-        if (payload?.message) {
-            message = Array.isArray(payload.message)
-                ? payload.message.join(" / ")
-                : payload.message
-        } else if (error.message) {
-            message = `백엔드 통신 실패. ${error.message}`
-        }
-        return Promise.reject(new Error(message))
-    },
+    (error: AxiosError) => Promise.reject(ApiError.fromAxios(error)),
 )
 
 export async function getExpenses(): Promise<RecurringExpense[]> {

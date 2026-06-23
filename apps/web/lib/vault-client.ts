@@ -1,5 +1,6 @@
 // vault 전용 API 클라이언트. 모든 쓰기 요청에 X-Vault-Request 헤더를 자동 부착한다.
 import axios, { AxiosError, AxiosInstance } from "axios"
+import { ApiError } from "./api-error"
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:4000"
 
@@ -14,33 +15,7 @@ export const vaultClient: AxiosInstance = axios.create({
 
 vaultClient.interceptors.response.use(
     (response) => response,
-    (
-        error: AxiosError<{
-            message?: string | string[]
-            code?: string
-            retryAfterSeconds?: number
-        }>,
-    ) => {
-        const payload = error.response?.data
-        const status = error.response?.status
-        let message = "요청 처리에 실패했습니다."
-        if (payload?.message) {
-            message = Array.isArray(payload.message)
-                ? payload.message.join(" / ")
-                : payload.message
-        } else if (error.message) {
-            message = `백엔드 통신 실패. ${error.message}`
-        }
-        const enriched = new Error(message) as Error & {
-            code?: string
-            status?: number
-            retryAfterSeconds?: number
-        }
-        enriched.code = payload?.code
-        enriched.status = status
-        enriched.retryAfterSeconds = payload?.retryAfterSeconds
-        return Promise.reject(enriched)
-    },
+    (error: AxiosError) => Promise.reject(ApiError.fromAxios(error)),
 )
 
 export type VaultCategory =
@@ -54,6 +29,11 @@ export type VaultStatus =
     | { state: "setup-required" }
     | { state: "locked" }
     | { state: "unlocked"; idleSecondsRemaining?: number }
+
+export type VaultStatusView =
+    | { state: "loading" }
+    | { state: "error"; message: string }
+    | VaultStatus
 
 export interface VaultEntry {
     id: string

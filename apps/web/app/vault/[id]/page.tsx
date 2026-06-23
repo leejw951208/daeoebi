@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { deleteEntry, getEntry, type VaultEntry } from "@/lib/vault-client"
+import { isApiError } from "@/lib/api-error"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { SkeletonCard } from "@/components/Skeleton"
 import { CATEGORY_FIELDS, CATEGORY_LABELS } from "../category-schema"
@@ -34,17 +35,18 @@ export default function VaultEntryDetailPage() {
             setState("loaded")
             setError(null)
         } catch (e) {
-            const err = e as Error & { code?: string; status?: number }
-            if (err.code === "VAULT_LOCKED") {
-                await onStatusRefresh()
-                return
-            }
-            if (err.status === 404) {
-                setState("missing")
-                return
+            if (isApiError(e)) {
+                if (e.code === "VAULT_LOCKED") {
+                    await onStatusRefresh()
+                    return
+                }
+                if (e.status === 404) {
+                    setState("missing")
+                    return
+                }
             }
             setState("error")
-            setError(err.message)
+            setError(e instanceof Error ? e.message : "알 수 없는 오류")
         }
     }, [id, onStatusRefresh])
 
