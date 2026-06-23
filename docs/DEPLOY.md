@@ -53,11 +53,11 @@ docker compose --profile cloudflare up -d --build
 
 ## 4. Cloudflare Access 적용 (필수)
 
-> **Access 설정 누락은 배포 차단 사유다.** 빠지면 6자리 PIN만 남아 공개 보관함이 매우 취약해진다.
+> **Access 설정 누락은 배포 차단 사유다.** 빠지면 passkey 인증만 남아 공개 보관함의 공격 표면이 넓어진다.
 
 1. Zero Trust → Access → **Applications**에서 Self-hosted 앱을 추가하고 도메인을 지정한다.
 2. **Policy**를 만든다. 예. 내 이메일만 허용(Emails) + One-time PIN 또는 IdP.
-3. 적용 후 도메인 접근 시 Cloudflare Access 인증(1차) → 앱의 6자리 PIN(2차) → 마스터(암호화 해제) 순서로 통과한다.
+3. 적용 후 도메인 접근 시 Cloudflare Access 인증(1차) → 앱의 passkey 인증(2차, WebAuthn PRF로 vault 키 도출·잠금해제) 순서로 통과한다.
 
 ## 5. 배포 체크리스트
 
@@ -72,5 +72,5 @@ docker compose --profile cloudflare up -d --build
 ## 6. 운영 메모
 
 - 마이그레이션은 api 컨테이너 기동 시 자동 적용된다. 수동 적용은 `docker compose run --rm api node_modules/.bin/prisma migrate deploy`.
-- 마스터 분실 시 비밀번호 본문은 복구 불가다. setup 직후 백업을 권장한다.
+- passkey 기기와 복구코드를 모두 잃으면 비밀번호 본문은 복구 불가다. 등록 시 복구코드 저장을 강제하고, setup 직후 백업을 권장한다.
 - 단일 사용자 전제다. 다중 사용자는 별도 설계가 필요하다.
