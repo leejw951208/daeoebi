@@ -2,7 +2,7 @@
 import axios, { AxiosError, AxiosInstance } from "axios"
 import { ApiError } from "./api-error"
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:4000"
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"
 
 export const vaultClient: AxiosInstance = axios.create({
     baseURL,

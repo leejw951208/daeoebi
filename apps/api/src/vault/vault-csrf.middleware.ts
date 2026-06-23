@@ -5,8 +5,8 @@ import { VAULT_ERRORS } from "./vault.types"
 import { VAULT_CSRF_COOKIE } from "./vault-cookies"
 
 // 환경 변수 VAULT_ALLOWED_ORIGINS 로 운영 시 화이트리스트를 덮어쓸 수 있다 (쉼표 구분).
-// 미설정 시 127.0.0.1:3000, localhost:3000 만 허용한다.
-const DEFAULT_ALLOWED_ORIGINS = "http://127.0.0.1:3000,http://localhost:3000"
+// 미설정 시 localhost:3000, 127.0.0.1:3000 만 허용한다.
+const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
 const ALLOWED_ORIGINS = new Set(
     (process.env.VAULT_ALLOWED_ORIGINS ?? DEFAULT_ALLOWED_ORIGINS)
         .split(",")

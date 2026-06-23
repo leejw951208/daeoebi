@@ -21,7 +21,7 @@ docker compose up -d --build
 
 - `postgres + api + web`만 뜬다. cloudflared는 `cloudflare` 프로파일이라 제외된다.
 - api는 기동 시 `prisma migrate deploy`로 마이그레이션을 적용한 뒤 서버를 띄운다.
-- 접속. 웹 `http://127.0.0.1:3000`, API `http://127.0.0.1:4000`.
+- 접속. 웹 `http://localhost:3000`, API `http://localhost:4000`.
 - 포트는 `127.0.0.1`에만 publish되어 외부에 노출되지 않는다.
 
 종료·정리.

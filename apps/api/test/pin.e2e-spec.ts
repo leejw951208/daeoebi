@@ -8,7 +8,7 @@ import { AppModule } from "../src/app.module"
 import { HttpExceptionFilter } from "../src/common/http-exception.filter"
 import { PrismaService } from "../src/prisma/prisma.service"
 
-const ORIGIN = "http://127.0.0.1:3000"
+const ORIGIN = "http://localhost:3000"
 const PIN = "135790"
 
 type SuperServer = Parameters<typeof request>[0]

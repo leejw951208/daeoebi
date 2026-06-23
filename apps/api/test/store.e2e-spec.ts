@@ -9,7 +9,7 @@ import { HttpExceptionFilter } from "../src/common/http-exception.filter"
 import { PrismaService } from "../src/prisma/prisma.service"
 import { VaultSessionService } from "../src/vault/vault-session.service"
 
-const ORIGIN = "http://127.0.0.1:3000"
+const ORIGIN = "http://localhost:3000"
 const PIN = "246810"
 const MASTER = "super-strong-master-pw-12345"
 

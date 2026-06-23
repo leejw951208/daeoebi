@@ -1,4 +1,4 @@
-// NestJS 진입점. 127.0.0.1:4000 바인딩과 CORS, 검증 파이프, 예외 필터를 설정한다.
+// NestJS 진입점. localhost:4000 바인딩과 CORS, 검증 파이프, 예외 필터를 설정한다.
 import { NestFactory } from "@nestjs/core"
 import { ValidationPipe, Logger } from "@nestjs/common"
 import type { NextFunction, Request, Response } from "express"
@@ -28,9 +28,16 @@ async function bootstrap() {
         next()
     })
 
-    // 기본은 로컬 웹 오리진. 배포 시 CORS_ORIGIN 환경 변수로 내 도메인을 지정한다.
+    // 허용 웹 오리진. CORS_ORIGIN 을 쉼표로 구분해 여러 개 지정할 수 있다.
+    // 미설정 시 로컬 개발 오리진(localhost / 127.0.0.1) 둘 다 허용한다.
+    const corsOrigins = (
+        process.env.CORS_ORIGIN ?? "http://localhost:3000,http://127.0.0.1:3000"
+    )
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean)
     app.enableCors({
-        origin: process.env.CORS_ORIGIN ?? "http://127.0.0.1:3000",
+        origin: corsOrigins,
         credentials: true,
     })
 
@@ -44,9 +51,10 @@ async function bootstrap() {
 
     app.useGlobalFilters(new HttpExceptionFilter())
 
-    // 기본은 로컬 전용 127.0.0.1 바인딩. 컨테이너에선 HOST=0.0.0.0 으로 덮어쓴다.
+    // 기본은 듀얼스택(::) 바인딩 — localhost(IPv6 ::1)와 127.0.0.1(IPv4) 모두로 접속된다.
+    // 컨테이너에선 HOST=0.0.0.0 으로 덮어쓴다.
     const port = Number(process.env.PORT ?? 4000)
-    const host = process.env.HOST ?? "127.0.0.1"
+    const host = process.env.HOST ?? "::"
     await app.listen(port, host)
 }
 

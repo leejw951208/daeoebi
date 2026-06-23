@@ -4,7 +4,7 @@ import { ForbiddenException, Injectable, NestMiddleware } from "@nestjs/common"
 import type { NextFunction, Request, Response } from "express"
 import { STORE_ERRORS } from "./store.types"
 
-const DEFAULT_ALLOWED_ORIGINS = "http://127.0.0.1:3000,http://localhost:3000"
+const DEFAULT_ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
 const ALLOWED_ORIGINS = new Set(
     (process.env.VAULT_ALLOWED_ORIGINS ?? DEFAULT_ALLOWED_ORIGINS)
         .split(",")

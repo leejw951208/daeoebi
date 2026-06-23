@@ -7,8 +7,8 @@
 ```
 secrets-manager/
 ├─ apps/
-│  ├─ web/   Next.js 15 (App Router) — http://127.0.0.1:3000
-│  └─ api/   NestJS 10 + Prisma + PostgreSQL — http://127.0.0.1:4000
+│  ├─ web/   Next.js 15 (App Router) — http://localhost:3000
+│  └─ api/   NestJS 10 + Prisma + PostgreSQL — http://localhost:4000
 ├─ docs/PRD.md   제품 요구사항 정의서
 ├─ pnpm-workspace.yaml
 └─ package.json (워크스페이스 스크립트)
@@ -41,11 +41,11 @@ pnpm dev
 개별 실행이 필요하면 다음을 사용한다.
 
 ```bash
-pnpm --filter @secrets-manager/api dev   # http://127.0.0.1:4000
-pnpm --filter @secrets-manager/web dev   # http://127.0.0.1:3000
+pnpm --filter @secrets-manager/api dev   # http://localhost:4000
+pnpm --filter @secrets-manager/web dev   # http://localhost:3000
 ```
 
-두 프로세스 모두 `127.0.0.1`에만 바인딩되어 외부 인터페이스로는 접속할 수 없다. API의 CORS는 `http://127.0.0.1:3000` 만 허용한다.
+두 프로세스 모두 듀얼스택(`::`)으로 바인딩되어 `localhost` 와 `127.0.0.1` 양쪽으로 접속된다(로컬 개발 기준이라 LAN 인터페이스에도 열린다). API의 CORS는 `http://localhost:3000` 과 `http://127.0.0.1:3000` 을 허용한다.
 
 ## 테스트
 
@@ -94,9 +94,9 @@ cp apps/web/.env.example apps/web/.env.development
 | 변수 | 개발 기본값 | 설명 |
 |------|------------|------|
 | `DATABASE_URL` (api) | `postgresql://secrets:secrets@127.0.0.1:5431/...` | PostgreSQL 연결 문자열 |
-| `HOST` / `PORT` (api) | `127.0.0.1` / `4000` | API 바인드. 컨테이너는 `HOST=0.0.0.0` |
-| `CORS_ORIGIN` (api) | `http://127.0.0.1:3000` | 허용 웹 오리진 |
-| `NEXT_PUBLIC_API_BASE_URL` (web) | `http://127.0.0.1:4000` | 백엔드 베이스 URL(빌드 시점 주입) |
+| `HOST` / `PORT` (api) | `::` / `4000` | API 바인드(듀얼스택). 컨테이너는 `HOST=0.0.0.0` |
+| `CORS_ORIGIN` (api) | `http://localhost:3000` | 허용 웹 오리진 |
+| `NEXT_PUBLIC_API_BASE_URL` (web) | `http://localhost:4000` | 백엔드 베이스 URL(빌드 시점 주입) |
 
 운영 값은 각 `.env.example` 의 `[운영]` 주석과 `docs/DEPLOY.md` 를 참고한다.
 
@@ -119,17 +119,17 @@ docker exec secrets-manager-postgres pg_dump -U secrets secrets_manager \
 
 ```bash
 # 1) PIN 설정(쿠키 저장)
-curl -c /tmp/c.txt -H 'Origin: http://127.0.0.1:3000' -H 'X-Pin-Request: 1' \
-  -H 'Content-Type: application/json' -d '{"pin":"123456"}' http://127.0.0.1:4000/pin/setup
+curl -c /tmp/c.txt -H 'Origin: http://localhost:3000' -H 'X-Pin-Request: 1' \
+  -H 'Content-Type: application/json' -d '{"pin":"123456"}' http://localhost:4000/pin/setup
 # 2) 마스터 설정(보관함 해제)
-curl -H 'Origin: http://127.0.0.1:3000' -H 'X-Vault-Request: 1' \
-  -H 'Content-Type: application/json' -d '{"master":"super-strong-master-12345"}' http://127.0.0.1:4000/vault/setup
+curl -H 'Origin: http://localhost:3000' -H 'X-Vault-Request: 1' \
+  -H 'Content-Type: application/json' -d '{"master":"super-strong-master-12345"}' http://localhost:4000/vault/setup
 # 3) 사이트 → 비밀번호 등록 → 열람
-SITE=$(curl -s -b /tmp/c.txt -H 'Origin: http://127.0.0.1:3000' -H 'X-Vault-Request: 1' \
-  -H 'Content-Type: application/json' -d '{"label":"우리은행"}' http://127.0.0.1:4000/sites | jq -r .id)
-SECRET=$(curl -s -b /tmp/c.txt -H 'Origin: http://127.0.0.1:3000' -H 'X-Vault-Request: 1' \
-  -H 'Content-Type: application/json' -d "{\"siteId\":\"$SITE\",\"label\":\"로그인\",\"value\":\"pw-1234\"}" http://127.0.0.1:4000/secrets | jq -r .id)
-curl -s -b /tmp/c.txt http://127.0.0.1:4000/secrets/$SECRET   # value 복호화 확인
+SITE=$(curl -s -b /tmp/c.txt -H 'Origin: http://localhost:3000' -H 'X-Vault-Request: 1' \
+  -H 'Content-Type: application/json' -d '{"label":"우리은행"}' http://localhost:4000/sites | jq -r .id)
+SECRET=$(curl -s -b /tmp/c.txt -H 'Origin: http://localhost:3000' -H 'X-Vault-Request: 1' \
+  -H 'Content-Type: application/json' -d "{\"siteId\":\"$SITE\",\"label\":\"로그인\",\"value\":\"pw-1234\"}" http://localhost:4000/secrets | jq -r .id)
+curl -s -b /tmp/c.txt http://localhost:4000/secrets/$SECRET   # value 복호화 확인
 ```
 
 5회 연속 잘못된 PIN/마스터는 60초 잠금이 발동한다.

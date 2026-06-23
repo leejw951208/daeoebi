@@ -11,7 +11,7 @@ import { PrismaService } from "../src/prisma/prisma.service"
 import { VaultSessionService } from "../src/vault/vault-session.service"
 import { VaultBackoffService } from "../src/vault/vault-backoff.service"
 
-const ORIGIN = "http://127.0.0.1:3000"
+const ORIGIN = "http://localhost:3000"
 const MASTER = "super-strong-master-pw-12345"
 const VAULT_COOKIE = "vault_session=1"
 const PIN = "246810"
