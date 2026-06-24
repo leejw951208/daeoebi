@@ -2,6 +2,12 @@
 
 대외비는 여러 사이트의 비밀번호를 한곳에 모아 안전하게 보관하는 서비스이다. 사이트별로 정리해 두고 키워드로 빠르게 찾을 수 있으며, 아이디·비밀번호 외에 필요한 항목을 직접 만들어 기록할 수 있다. 지문·얼굴 인식으로 간편하게 열고, 저장한 내용은 본인만 볼 수 있다.
 
+## 미리보기
+
+| 시작 | 목록 | 상세 | 추가 |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/images/onboarding.png" width="200" alt="패스키로 시작하는 온보딩 화면" /> | <img src="docs/images/list.png" width="200" alt="사이트별 비밀번호 목록" /> | <img src="docs/images/detail.png" width="200" alt="비밀번호 상세 화면" /> | <img src="docs/images/new.png" width="200" alt="새 항목 추가 화면" /> |
+
 ## 개발 환경
 
 - Node.js 24
