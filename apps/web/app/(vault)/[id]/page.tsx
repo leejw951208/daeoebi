@@ -1,25 +1,43 @@
 "use client"
-// vault entry 상세 라우트. 라벨·메타 / 민감 필드 / 액션 3섹션. view ↔ edit 같은 라우트 안 토글.
+// 시크릿 상세 라우트. 블롭을 받아 VK 로 복호화해 제목·필드·메모를 보여준다. view ↔ edit 토글.
 import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { deleteEntry, getEntry, type VaultEntry } from "@/lib/vault-client"
+import {
+    deleteSecret,
+    getSecret,
+    listCategories,
+    type Category,
+} from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { SkeletonCard } from "@/components/Skeleton"
-import { CATEGORY_FIELDS, CATEGORY_LABELS } from "../category-schema"
 import { CopyField } from "../CopyField"
-import { CategoryForm } from "../CategoryForm"
-import { useVault } from "../vault-context"
+import { SecretForm, type SecretFormInitial } from "../SecretForm"
+import { useVault, type SecretField } from "../vault-context"
+import { openPayload } from "../secret-payload"
+import { isSensitiveFieldName } from "../field-suggestions"
 
 type LoadState = "idle" | "loading" | "loaded" | "missing" | "error"
 
-export default function VaultEntryDetailPage() {
+interface Loaded {
+    id: string
+    siteId: string
+    categoryId: string | null
+    label: string
+    fields: SecretField[]
+    memo: string
+    createdAt: string
+    updatedAt: string
+}
+
+export default function SecretDetailPage() {
     const params = useParams<{ id: string }>()
     const id = params?.id
     const router = useRouter()
-    const { onStatusRefresh } = useVault()
-    const [entry, setEntry] = useState<VaultEntry | null>(null)
+    const { vaultKey, resetIdle } = useVault()
+    const [data, setData] = useState<Loaded | null>(null)
+    const [categories, setCategories] = useState<Category[]>([])
     const [state, setState] = useState<LoadState>("idle")
     const [error, setError] = useState<string | null>(null)
     const [mode, setMode] = useState<"view" | "edit">("view")
@@ -30,36 +48,57 @@ export default function VaultEntryDetailPage() {
         if (!id) return
         setState("loading")
         try {
-            const found = await getEntry(id)
-            setEntry(found)
+            const detail = await getSecret(id)
+            // 블롭을 VK 로 복호화해 필드·메모를 복원한다.
+            const payload = await openPayload(vaultKey, {
+                iv: detail.iv,
+                ciphertext: detail.ciphertext,
+                authTag: detail.authTag,
+            })
+            setData({
+                id: detail.id,
+                siteId: detail.siteId,
+                categoryId: detail.categoryId,
+                label: detail.label,
+                fields: payload.fields,
+                memo: payload.memo,
+                createdAt: detail.createdAt,
+                updatedAt: detail.updatedAt,
+            })
+            void listCategories(detail.siteId)
+                .then(setCategories)
+                .catch(() => undefined)
             setState("loaded")
             setError(null)
         } catch (e) {
-            if (isApiError(e)) {
-                if (e.code === "VAULT_LOCKED") {
-                    await onStatusRefresh()
-                    return
-                }
-                if (e.status === 404) {
-                    setState("missing")
-                    return
-                }
+            if (isApiError(e) && e.status === 404) {
+                setState("missing")
+                return
             }
             setState("error")
-            setError(e instanceof Error ? e.message : "알 수 없는 오류")
+            // 복호화 실패(DOMException)는 키 불일치/손상 안내로 바꾼다.
+            setError(
+                isApiError(e)
+                    ? e.message
+                    : e instanceof Error && e.name === "OperationError"
+                      ? "복호화에 실패했습니다. 보관함 키가 일치하지 않습니다."
+                      : e instanceof Error
+                        ? e.message
+                        : "알 수 없는 오류",
+            )
         }
-    }, [id, onStatusRefresh])
+    }, [id, vaultKey])
 
     useEffect(() => {
         void reload()
     }, [reload])
 
     async function handleDelete() {
-        if (!entry) return
+        if (!data) return
         setConfirmDelete(false)
         setError(null)
         try {
-            await deleteEntry(entry.id)
+            await deleteSecret(data.id)
             router.push("/")
             startTransition(() => router.refresh())
         } catch (e) {
@@ -92,7 +131,7 @@ export default function VaultEntryDetailPage() {
         )
     }
 
-    if (state === "error" || !entry) {
+    if (state === "error" || !data) {
         return (
             <section>
                 <header className="page-header">
@@ -108,10 +147,49 @@ export default function VaultEntryDetailPage() {
         )
     }
 
+    const categoryLabel = data.categoryId
+        ? (categories.find((c) => c.id === data.categoryId)?.label ?? null)
+        : null
+
+    if (mode === "edit") {
+        const initial: SecretFormInitial = {
+            id: data.id,
+            label: data.label,
+            categoryId: data.categoryId,
+            fields: data.fields,
+            memo: data.memo,
+        }
+        return (
+            <section>
+                <header className="page-header">
+                    <h1>항목 수정</h1>
+                    <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => setMode("view")}
+                    >
+                        ← 취소
+                    </button>
+                </header>
+                <div style={{ marginTop: 16 }}>
+                    <SecretForm
+                        siteId={data.siteId}
+                        initial={initial}
+                        onSuccess={async () => {
+                            setMode("view")
+                            await reload()
+                        }}
+                        onCancel={() => setMode("view")}
+                    />
+                </div>
+            </section>
+        )
+    }
+
     return (
         <section>
             <header className="page-header">
-                <h1>{entry.label}</h1>
+                <h1>{data.label}</h1>
                 <Link className="btn secondary" href="/">
                     ← 목록
                 </Link>
@@ -123,125 +201,76 @@ export default function VaultEntryDetailPage() {
                 </div>
             )}
 
-            {mode === "view" ? (
-                <>
-                    <section className="card" style={{ marginTop: 16 }}>
-                        <h2 className="section-title" style={{ marginTop: 0 }}>
-                            라벨·메타
-                        </h2>
-                        <dl style={{ display: "grid", gap: 8, margin: 0 }}>
-                            <DetailRow label="라벨" value={entry.label} />
-                            <DetailRow
-                                label="카테고리"
-                                value={CATEGORY_LABELS[entry.category]}
-                            />
-                            <DetailRow
-                                label="생성"
-                                value={new Date(entry.createdAt).toLocaleString(
-                                    "ko-KR",
-                                )}
-                            />
-                            <DetailRow
-                                label="수정"
-                                value={new Date(entry.updatedAt).toLocaleString(
-                                    "ko-KR",
-                                )}
-                            />
-                        </dl>
-                    </section>
-
-                    <section className="card" style={{ marginTop: 16 }}>
-                        <h2 className="section-title" style={{ marginTop: 0 }}>
-                            민감 필드
-                        </h2>
-                        <div style={{ display: "grid", gap: 8 }}>
-                            {(CATEGORY_FIELDS[entry.category] ?? []).map(
-                                (spec) => {
-                                    const v =
-                                        (entry.payload?.[spec.name] as
-                                            | string
-                                            | undefined) ?? ""
-                                    if (!v) return null
-                                    return (
-                                        <CopyField
-                                            key={spec.name}
-                                            label={spec.label}
-                                            value={v}
-                                            sensitive={spec.sensitive}
-                                        />
-                                    )
-                                },
-                            )}
-                            {entry.category === "OTHER" &&
-                                Array.isArray(entry.payload?.customFields) &&
-                                (
-                                    entry.payload?.customFields as Array<{
-                                        key: string
-                                        value: string
-                                    }>
-                                ).map((kv, idx) => (
-                                    <CopyField
-                                        key={`${kv.key}-${idx}`}
-                                        label={kv.key}
-                                        value={kv.value}
-                                        sensitive
-                                    />
-                                ))}
-                            {typeof entry.payload?.memo === "string" &&
-                                entry.payload.memo && (
-                                    <div
-                                        className="secret-plate"
-                                        style={{ display: "block" }}
-                                    >
-                                        <div className="secret-label">메모</div>
-                                        <div className="secret-memo">
-                                            {entry.payload.memo}
-                                        </div>
-                                    </div>
-                                )}
-                        </div>
-                    </section>
-
-                    <section className="card" style={{ marginTop: 16 }}>
-                        <h2 className="section-title" style={{ marginTop: 0 }}>
-                            액션
-                        </h2>
-                        <div
-                            style={{
-                                display: "flex",
-                                gap: 8,
-                                flexWrap: "wrap",
-                            }}
-                        >
-                            <button
-                                type="button"
-                                className="btn"
-                                onClick={() => setMode("edit")}
-                            >
-                                수정
-                            </button>
-                            <button
-                                type="button"
-                                className="btn danger"
-                                onClick={() => setConfirmDelete(true)}
-                            >
-                                삭제
-                            </button>
-                        </div>
-                    </section>
-                </>
-            ) : (
-                <div style={{ marginTop: 16 }}>
-                    <CategoryForm
-                        entry={entry}
-                        onSuccess={async () => {
-                            setMode("view")
-                            await reload()
-                        }}
-                        onCancel={() => setMode("view")}
+            <section className="card" style={{ marginTop: 16 }}>
+                <h2 className="section-title" style={{ marginTop: 0 }}>
+                    제목·메타
+                </h2>
+                <dl style={{ display: "grid", gap: 8, margin: 0 }}>
+                    <DetailRow label="제목" value={data.label} />
+                    {categoryLabel && (
+                        <DetailRow label="카테고리" value={categoryLabel} />
+                    )}
+                    <DetailRow
+                        label="생성"
+                        value={new Date(data.createdAt).toLocaleString("ko-KR")}
                     />
+                    <DetailRow
+                        label="수정"
+                        value={new Date(data.updatedAt).toLocaleString("ko-KR")}
+                    />
+                </dl>
+            </section>
+
+            <section className="card" style={{ marginTop: 16 }}>
+                <h2 className="section-title" style={{ marginTop: 0 }}>
+                    필드
+                </h2>
+                <div style={{ display: "grid", gap: 8 }}>
+                    {data.fields.length === 0 && (
+                        <p className="muted">등록된 필드가 없습니다.</p>
+                    )}
+                    {data.fields.map((field, idx) => (
+                        <CopyField
+                            key={`${field.name}-${idx}`}
+                            label={field.name}
+                            value={field.value}
+                            sensitive={isSensitiveFieldName(field.name)}
+                            onActivity={resetIdle}
+                        />
+                    ))}
+                    {data.memo && (
+                        <div
+                            className="secret-plate"
+                            style={{ display: "block" }}
+                        >
+                            <div className="secret-label">메모</div>
+                            <div className="secret-memo">{data.memo}</div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </section>
+
+            <section className="card" style={{ marginTop: 16 }}>
+                <h2 className="section-title" style={{ marginTop: 0 }}>
+                    액션
+                </h2>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                        type="button"
+                        className="btn"
+                        onClick={() => setMode("edit")}
+                    >
+                        수정
+                    </button>
+                    <button
+                        type="button"
+                        className="btn danger"
+                        onClick={() => setConfirmDelete(true)}
+                    >
+                        삭제
+                    </button>
+                </div>
+            </section>
 
             <ConfirmDialog
                 open={confirmDelete}

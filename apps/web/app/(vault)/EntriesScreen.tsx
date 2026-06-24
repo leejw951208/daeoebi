@@ -1,61 +1,74 @@
 "use client"
-// vault entries 목록 전용 화면. URL 기반 카테고리·검색 필터 + 카드 클릭 시 /[id] 로 이동한다.
-// 신규는 /new, 카테고리 관리는 /categories, 백업·복원은 /backup 라우트에서 처리한다.
+// 보관함 목록 화면. 기본 사이트의 시크릿 메타를 나열하고 카테고리 태그 필터 + 제목 검색을 제공한다.
+// 상세는 /[id], 신규는 /new, 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
-    listEntries,
-    type VaultCategory,
-    type VaultEntry,
+    listCategories,
+    listSecrets,
+    searchSecrets,
+    type Category,
+    type SecretMeta,
 } from "@/lib/vault-client"
-import { isApiError } from "@/lib/api-error"
-import { CATEGORY_LABELS } from "./category-schema"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "./vault-context"
-import { parseCategoryFilter } from "./vault-filter"
+import { useDefaultSite } from "./use-default-site"
 
 type ListState = "idle" | "loading" | "loaded" | "error"
-
-const CATEGORY_VALUES = Object.keys(CATEGORY_LABELS) as VaultCategory[]
 
 export function EntriesScreen() {
     const router = useRouter()
     const search = useSearchParams()
-    const { idleSecondsRemaining, onLock, onStatusRefresh } = useVault()
+    const { idleSecondsRemaining, onLock, resetIdle } = useVault()
+    const { state: siteState, retry: retrySite } = useDefaultSite()
 
-    const category = parseCategoryFilter(search.get("cat"))
+    const categoryFilter = search.get("cat") ?? "ALL"
     const query = search.get("q") ?? ""
 
-    const [entries, setEntries] = useState<VaultEntry[]>([])
+    const [secrets, setSecrets] = useState<SecretMeta[]>([])
+    const [categories, setCategories] = useState<Category[]>([])
     const [state, setState] = useState<ListState>("idle")
     const [error, setError] = useState<string | null>(null)
 
+    const siteId = siteState.status === "ready" ? siteState.siteId : null
+
     const reload = useCallback(async () => {
+        if (!siteId) return
         setState("loading")
         try {
-            const params: { category?: VaultCategory; q?: string } = {}
-            if (category !== "ALL") params.category = category
-            if (query.trim()) params.q = query.trim()
-            const next = await listEntries(params)
-            setEntries(next)
+            const [cats, items] = await Promise.all([
+                listCategories(siteId),
+                query.trim()
+                    ? searchSecrets(query.trim())
+                    : listSecrets(
+                          siteId,
+                          categoryFilter !== "ALL"
+                              ? categoryFilter
+                              : undefined,
+                      ),
+            ])
+            setCategories(cats)
+            // 검색 결과에는 카테고리 필터를 클라이언트에서 한 번 더 적용한다.
+            const filtered =
+                query.trim() && categoryFilter !== "ALL"
+                    ? items.filter((s) => s.categoryId === categoryFilter)
+                    : items
+            setSecrets(filtered)
             setState("loaded")
             setError(null)
         } catch (e) {
-            if (isApiError(e) && e.code === "VAULT_LOCKED") {
-                await onStatusRefresh()
-                return
-            }
             setState("error")
             setError(e instanceof Error ? e.message : "알 수 없는 오류")
         }
-    }, [category, query, onStatusRefresh])
+    }, [siteId, query, categoryFilter])
 
     useEffect(() => {
         void reload()
     }, [reload])
 
-    function updateFilter(next: { cat?: VaultCategory | "ALL"; q?: string }) {
+    function updateFilter(next: { cat?: string; q?: string }) {
+        resetIdle()
         const params = new URLSearchParams(search.toString())
         if (next.cat !== undefined) {
             if (next.cat === "ALL") params.delete("cat")
@@ -69,11 +82,35 @@ export function EntriesScreen() {
         router.replace(qs ? `/?${qs}` : "/", { scroll: false })
     }
 
+    const categoryLabel = useCallback(
+        (id: string | null) =>
+            id ? (categories.find((c) => c.id === id)?.label ?? null) : null,
+        [categories],
+    )
+
     const idleWarning = useMemo(() => {
-        if (typeof idleSecondsRemaining !== "number") return null
         if (idleSecondsRemaining > 60) return null
         return `${idleSecondsRemaining}초 후 자동 잠금됩니다.`
     }, [idleSecondsRemaining])
+
+    if (siteState.status === "error") {
+        return (
+            <section>
+                <h1>비밀번호 보관함</h1>
+                <div role="alert" className="error-box">
+                    {siteState.message}
+                </div>
+                <button
+                    type="button"
+                    className="btn secondary"
+                    style={{ marginTop: 12 }}
+                    onClick={retrySite}
+                >
+                    다시 시도
+                </button>
+            </section>
+        )
+    }
 
     return (
         <section>
@@ -83,16 +120,14 @@ export function EntriesScreen() {
                     <h1>비밀번호 보관함</h1>
                 </div>
                 <div className="entry-side">
-                    {typeof idleSecondsRemaining === "number" && (
-                        <span
-                            className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
-                            aria-live="polite"
-                            aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초`}
-                        >
-                            <span className="dot" aria-hidden="true" />
-                            {formatMmSs(Math.max(0, idleSecondsRemaining))}
-                        </span>
-                    )}
+                    <span
+                        className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
+                        aria-live="polite"
+                        aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초`}
+                    >
+                        <span className="dot" aria-hidden="true" />
+                        {formatMmSs(Math.max(0, idleSecondsRemaining))}
+                    </span>
                     <button
                         type="button"
                         className="btn secondary"
@@ -114,9 +149,6 @@ export function EntriesScreen() {
                 className="toolbar"
                 style={{ marginTop: 20 }}
             >
-                <Link className="btn secondary" href="/categories">
-                    카테고리
-                </Link>
                 <Link className="btn secondary" href="/backup">
                     백업·복원
                 </Link>
@@ -135,30 +167,26 @@ export function EntriesScreen() {
             >
                 <select
                     className="field-control"
-                    value={category}
-                    onChange={(e) =>
-                        updateFilter({
-                            cat: e.target.value as VaultCategory | "ALL",
-                        })
-                    }
+                    value={categoryFilter}
+                    onChange={(e) => updateFilter({ cat: e.target.value })}
                     aria-label="카테고리 필터"
                     style={{ width: "auto" }}
                 >
                     <option value="ALL">전체</option>
-                    {CATEGORY_VALUES.map((cat) => (
-                        <option key={cat} value={cat}>
-                            {CATEGORY_LABELS[cat]}
+                    {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                            {cat.label}
                         </option>
                     ))}
                 </select>
                 <input
                     className="field-control"
                     type="search"
-                    placeholder="라벨 검색"
+                    placeholder="제목 검색"
                     value={query}
                     onChange={(e) => updateFilter({ q: e.target.value })}
                     style={{ flex: 1, minWidth: 200 }}
-                    aria-label="라벨 검색"
+                    aria-label="제목 검색"
                 />
             </div>
 
@@ -173,41 +201,48 @@ export function EntriesScreen() {
             )}
 
             <div style={{ marginTop: 16 }}>
-                {state === "loading" && <SkeletonCard lines={3} />}
-                {state === "loaded" && entries.length === 0 && (
+                {(state === "loading" || siteState.status === "loading") && (
+                    <SkeletonCard lines={3} />
+                )}
+                {state === "loaded" && secrets.length === 0 && (
                     <div className="empty">
                         {query.trim()
                             ? "검색 결과가 없습니다."
                             : "아직 보관된 항목이 없습니다. 첫 항목을 추가하세요."}
                     </div>
                 )}
-                {state === "loaded" && entries.length > 0 && (
+                {state === "loaded" && secrets.length > 0 && (
                     <ul className="entry-list">
-                        {entries.map((entry) => (
-                            <li key={entry.id}>
-                                <Link
-                                    href={`/${entry.id}`}
-                                    className="entry-card"
-                                >
-                                    <span className="entry-main">
-                                        <span className="entry-label">
-                                            {entry.label}
+                        {secrets.map((secret) => {
+                            const cat = categoryLabel(secret.categoryId)
+                            return (
+                                <li key={secret.id}>
+                                    <Link
+                                        href={`/${secret.id}`}
+                                        className="entry-card"
+                                    >
+                                        <span className="entry-main">
+                                            <span className="entry-label">
+                                                {secret.label}
+                                            </span>
                                         </span>
-                                    </span>
-                                    <span className="entry-side">
-                                        <span className="cat-badge">
-                                            {entry.category}
+                                        <span className="entry-side">
+                                            {cat && (
+                                                <span className="cat-badge">
+                                                    {cat}
+                                                </span>
+                                            )}
+                                            <span
+                                                className="entry-chevron"
+                                                aria-hidden="true"
+                                            >
+                                                ›
+                                            </span>
                                         </span>
-                                        <span
-                                            className="entry-chevron"
-                                            aria-hidden="true"
-                                        >
-                                            ›
-                                        </span>
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
+                                    </Link>
+                                </li>
+                            )
+                        })}
                     </ul>
                 )}
             </div>

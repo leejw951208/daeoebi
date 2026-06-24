@@ -1,11 +1,13 @@
 "use client"
-// vault entry 신규 추가 라우트. CategoryForm 을 빈 상태로 mount 한다.
+// 시크릿 신규 추가 라우트. 기본 사이트를 해석한 뒤 SecretForm 을 빈 상태로 mount 한다.
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CategoryForm } from "../CategoryForm"
+import { SecretForm } from "../SecretForm"
+import { useDefaultSite } from "../use-default-site"
 
-export default function NewVaultEntryPage() {
+export default function NewSecretPage() {
     const router = useRouter()
+    const { state, retry } = useDefaultSite()
 
     return (
         <section>
@@ -28,14 +30,35 @@ export default function NewVaultEntryPage() {
             </header>
 
             <div style={{ marginTop: 16 }}>
-                <CategoryForm
-                    entry={null}
-                    onSuccess={() => {
-                        router.push("/")
-                        router.refresh()
-                    }}
-                    onCancel={() => router.push("/")}
-                />
+                {state.status === "loading" && (
+                    <p className="muted">준비 중입니다.</p>
+                )}
+                {state.status === "error" && (
+                    <>
+                        <div role="alert" className="error-box">
+                            {state.message}
+                        </div>
+                        <button
+                            type="button"
+                            className="btn secondary"
+                            style={{ marginTop: 12 }}
+                            onClick={retry}
+                        >
+                            다시 시도
+                        </button>
+                    </>
+                )}
+                {state.status === "ready" && (
+                    <SecretForm
+                        siteId={state.siteId}
+                        initial={null}
+                        onSuccess={() => {
+                            router.push("/")
+                            router.refresh()
+                        }}
+                        onCancel={() => router.push("/")}
+                    />
+                )}
             </div>
         </section>
     )

@@ -7,11 +7,13 @@ interface Props {
     label: string
     value: string
     sensitive?: boolean
+    // 복사·보기 등 사용자 활동 시 자동잠금 타이머를 초기화하는 콜백.
+    onActivity?: () => void
 }
 
 const CLEAR_AFTER_MS = 30_000
 
-export function CopyField({ label, value, sensitive }: Props) {
+export function CopyField({ label, value, sensitive, onActivity }: Props) {
     const [revealed, setRevealed] = useState(false)
     const [status, setStatus] = useState<string>("")
     const [remaining, setRemaining] = useState<number | null>(null)
@@ -24,6 +26,7 @@ export function CopyField({ label, value, sensitive }: Props) {
     }, [])
 
     async function handleCopy() {
+        onActivity?.()
         try {
             if (typeof navigator === "undefined" || !navigator.clipboard) {
                 setStatus("이 환경에선 클립보드 API 를 사용할 수 없습니다.")
@@ -72,7 +75,10 @@ export function CopyField({ label, value, sensitive }: Props) {
                     <button
                         type="button"
                         className="secret-btn"
-                        onClick={() => setRevealed((v) => !v)}
+                        onClick={() => {
+                            onActivity?.()
+                            setRevealed((v) => !v)
+                        }}
                         aria-pressed={revealed}
                     >
                         {revealed ? "숨기기" : "보기"}
