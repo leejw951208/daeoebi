@@ -49,6 +49,8 @@ services:
             # WebAuthn 기대 오리진 + CSRF 허용 오리진(동일 값). same-origin 이라 https://DOMAIN 하나면 된다.
             VAULT_ALLOWED_ORIGINS: https://${DOMAIN}
             CORS_ORIGIN: https://${DOMAIN}
+            # 패스키 첫 등록 게이트 토큰. 미설정 시 기동을 거부한다(첫 등록 fail-closed).
+            BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:?BOOTSTRAP_TOKEN 을 .env 에 설정하세요}
         depends_on:
             postgres:
                 condition: service_healthy

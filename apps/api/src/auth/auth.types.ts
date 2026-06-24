@@ -13,6 +13,8 @@ export const AUTH_ERRORS = {
     CSRF_INVALID: "CSRF_INVALID",
     RATE_LIMITED: "RATE_LIMITED",
     VALIDATION_FAILED: "VALIDATION_FAILED",
+    BOOTSTRAP_REQUIRED: "BOOTSTRAP_REQUIRED",
+    BOOTSTRAP_INVALID: "BOOTSTRAP_INVALID",
 } as const
 
 // 세션 idle 만료(구 vault 와 동일한 15분).
@@ -42,3 +44,7 @@ export const EXPECTED_ORIGINS = (
 
 // 단일 사용자 모델: WebAuthn user 핸들은 고정 식별자 한 개면 충분하다.
 export const SINGLETON_USER_NAME = "secrets-manager-user"
+
+// 패스키 첫 등록(credential 0개) 게이트 토큰. 외부 제3자의 첫 등록 선점을 막는다.
+// 미설정(빈 문자열)이면 첫 등록 자체를 차단한다(fail-closed). 기기 추가에는 사용하지 않는다.
+export const BOOTSTRAP_TOKEN = process.env.BOOTSTRAP_TOKEN ?? ""

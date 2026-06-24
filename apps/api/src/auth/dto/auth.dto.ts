@@ -53,6 +53,12 @@ export class RegisterVerifyDto {
     @ValidateNested()
     @Type(() => RecoveryWrapDto)
     recovery?: RecoveryWrapDto
+
+    // 첫 등록 게이트 토큰. 기기 추가 시 생략. 서버 BOOTSTRAP_TOKEN 과 일치해야 첫 등록을 허용한다.
+    @IsOptional()
+    @IsString()
+    @MaxLength(200)
+    bootstrapToken?: string
 }
 
 export class LoginVerifyDto {

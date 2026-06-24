@@ -9,7 +9,7 @@ import {
     NotFoundException,
     UnauthorizedException,
 } from "@nestjs/common"
-import { timingSafeEqual } from "node:crypto"
+import { createHash, timingSafeEqual } from "node:crypto"
 import {
     generateAuthenticationOptions,
     generateRegistrationOptions,
@@ -33,6 +33,7 @@ import { fromBase64url, isBase64url, toBase64url } from "./base64url"
 import { computeVerifier, RECOVERY_CODE_BYTES } from "./recovery-code"
 import {
     AUTH_ERRORS,
+    BOOTSTRAP_TOKEN,
     EXPECTED_ORIGINS,
     OPTIONS_MAX_PER_WINDOW,
     OPTIONS_WINDOW_MS,
@@ -130,6 +131,12 @@ export class AuthService {
         const isFirstRegistration = credentialCount === 0
 
         this.assertRegisterAllowed(isFirstRegistration, authenticated)
+
+        // 첫 등록(credential 0개)은 부트스트랩 토큰 게이트를 통과해야 한다(외부 선점 차단).
+        // 기기 추가는 세션/복구세션으로 이미 인가됐으므로 토큰을 요구하지 않는다.
+        if (isFirstRegistration) {
+            this.assertBootstrapToken(dto.bootstrapToken)
+        }
 
         const expectedChallenge = this.challenge.consume("register")
         if (!expectedChallenge) {
@@ -426,6 +433,52 @@ export class AuthService {
             message:
                 "기기 추가 등록에는 유효한 세션이 필요합니다. 먼저 기존 passkey 로 로그인하세요.",
         })
+    }
+
+    // 첫 등록 게이트: 클라이언트가 제출한 부트스트랩 토큰을 서버 BOOTSTRAP_TOKEN 과 상수시간 비교한다.
+    // 보안: 토큰 값 자체는 로그/예외 메시지/에러에 절대 싣지 않는다.
+    // 무차별 대입 방어로 login/recovery 와 동일한 글로벌 백오프 카운터를 공유한다(단일 사용자 모델).
+    private assertBootstrapToken(provided: string | undefined): void {
+        if (this.backoff.isBlocked()) {
+            throw new HttpException(
+                {
+                    code: AUTH_ERRORS.RATE_LIMITED,
+                    message: "시도가 너무 많습니다. 잠시 후 다시 시도해주세요.",
+                    retryAfterSeconds: this.backoff.retryAfterSeconds(),
+                },
+                HttpStatus.TOO_MANY_REQUESTS,
+            )
+        }
+        // 서버 토큰 미설정이면 첫 등록을 차단한다(fail-closed).
+        // 운영자 설정 누락이지 공격 추측이 아니므로 백오프 카운터는 올리지 않는다.
+        if (!BOOTSTRAP_TOKEN) {
+            throw new UnauthorizedException({
+                code: AUTH_ERRORS.BOOTSTRAP_REQUIRED,
+                message:
+                    "첫 등록 토큰이 서버에 설정되지 않았습니다. 관리자에게 문의하세요.",
+            })
+        }
+        if (!provided) {
+            this.backoff.recordFailure()
+            throw new UnauthorizedException({
+                code: AUTH_ERRORS.BOOTSTRAP_REQUIRED,
+                message: "첫 등록에는 부트스트랩 토큰이 필요합니다.",
+            })
+        }
+        // 길이 누출/길이 불일치 throw 를 피하려 양쪽을 SHA-256(32바이트)으로 고정한 뒤 비교한다.
+        const providedHash = createHash("sha256")
+            .update(provided, "utf8")
+            .digest()
+        const expectedHash = createHash("sha256")
+            .update(BOOTSTRAP_TOKEN, "utf8")
+            .digest()
+        if (!timingSafeEqual(providedHash, expectedHash)) {
+            this.backoff.recordFailure()
+            throw new UnauthorizedException({
+                code: AUTH_ERRORS.BOOTSTRAP_INVALID,
+                message: "부트스트랩 토큰이 올바르지 않습니다.",
+            })
+        }
     }
 
     // H-1 레이트리밋: 윈도우 내 호출 횟수를 초과하면 429 로 거부한다.

@@ -53,6 +53,8 @@ export interface RegisterVerifyInput {
     wrappedVkPrf: string
     nickname?: string
     recovery?: RecoveryRegisterPayload
+    // 첫 등록 게이트 토큰. 서버가 아는 비밀 토큰과 일치해야 등록을 허용한다.
+    bootstrapToken?: string
 }
 
 // login/verify 응답. 사용된 credential 기준 PRF 래핑 블롭과 salt.

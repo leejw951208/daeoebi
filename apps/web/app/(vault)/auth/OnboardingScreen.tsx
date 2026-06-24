@@ -34,6 +34,8 @@ interface Props {
 export function OnboardingScreen({ onUnlocked }: Props) {
     const [phase, setPhase] = useState<Phase>("intro")
     const [error, setError] = useState<string | null>(null)
+    // 첫 등록 게이트 토큰. 배포 시 설정한 부트스트랩 토큰을 입력받는다.
+    const [token, setToken] = useState<string>("")
     // 등록 완료 후 사용자가 복구코드를 확인할 때까지 VK 와 코드를 보관한다.
     const [pending, setPending] = useState<{
         vaultKey: CryptoKey
@@ -43,6 +45,11 @@ export function OnboardingScreen({ onUnlocked }: Props) {
     async function handleRegister() {
         if (!supportsWebAuthn()) {
             setError("이 브라우저는 passkey(WebAuthn)를 지원하지 않습니다.")
+            return
+        }
+        const trimmedToken = token.trim()
+        if (!trimmedToken) {
+            setError("부트스트랩 토큰을 입력하세요.")
             return
         }
         setPhase("registering")
@@ -76,6 +83,7 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                     wrappedVkRc: toBase64Url(wrappedVkRc),
                     verifier: toBase64Url(verifier),
                 },
+                bootstrapToken: trimmedToken,
             })
 
             setPending({ vaultKey, recoveryCode: recovery.display })
@@ -144,12 +152,33 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 </li>
             </ul>
 
+            <div className="form-row" style={{ margin: "0 0 14px" }}>
+                <label htmlFor="bootstrap-token">부트스트랩 토큰</label>
+                <input
+                    id="bootstrap-token"
+                    type="password"
+                    className="field-control"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    disabled={phase === "registering"}
+                    autoComplete="off"
+                    aria-describedby="bootstrap-token-hint"
+                />
+                <p
+                    id="bootstrap-token-hint"
+                    className="muted"
+                    style={{ margin: "2px 0 0", fontSize: 12.5, lineHeight: 1.5 }}
+                >
+                    첫 등록에만 필요합니다. 배포 시 설정한 토큰을 입력하세요.
+                </p>
+            </div>
+
             <button
                 type="button"
                 className="btn"
                 style={{ width: "100%" }}
                 onClick={handleRegister}
-                disabled={phase === "registering"}
+                disabled={phase === "registering" || !token.trim()}
                 aria-busy={phase === "registering"}
             >
                 {phase === "registering"
