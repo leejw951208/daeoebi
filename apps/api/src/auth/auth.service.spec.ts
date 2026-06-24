@@ -41,23 +41,23 @@ function makeService(prisma: ConstructorParameters<typeof AuthService>[0]) {
 describe("AuthService 등록 게이팅(C-1)", () => {
     it("credential 0개(최초)면 무인증 register/options 를 허용한다", async () => {
         const service = makeService(makePrisma({ credentialCount: 0 }))
-        await expect(service.registerOptions(false)).resolves.toHaveProperty(
-            "options",
-        )
+        await expect(
+            service.registerOptions(false, false),
+        ).resolves.toHaveProperty("options")
     })
 
     it("credential 1개 이상이고 미인증이면 register/options 를 401 로 거부한다", async () => {
         const service = makeService(makePrisma({ credentialCount: 1 }))
-        await expect(service.registerOptions(false)).rejects.toBeInstanceOf(
-            UnauthorizedException,
-        )
+        await expect(
+            service.registerOptions(false, false),
+        ).rejects.toBeInstanceOf(UnauthorizedException)
     })
 
     it("credential 1개 이상이라도 인증(세션/복구세션)되면 register/options 를 허용한다", async () => {
         const service = makeService(makePrisma({ credentialCount: 1 }))
-        await expect(service.registerOptions(true)).resolves.toHaveProperty(
-            "options",
-        )
+        await expect(
+            service.registerOptions(true, false),
+        ).resolves.toHaveProperty("options")
     })
 })
 

@@ -48,7 +48,10 @@ export class AuthController {
     @HttpCode(200)
     @Public()
     registerOptions(@Body() _dto: EmptyDto, @Req() req: Request) {
-        return this.service.registerOptions(this.canRegister(req))
+        return this.service.registerOptions(
+            this.canRegister(req),
+            this.isRecoverySession(req),
+        )
     }
 
     @Post("register/verify")
@@ -59,7 +62,11 @@ export class AuthController {
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ): Promise<{ ok: true }> {
-        await this.service.registerVerify(dto, this.canRegister(req))
+        await this.service.registerVerify(
+            dto,
+            this.canRegister(req),
+            this.isRecoverySession(req),
+        )
         // 복구 세션으로 들어온 등록이면 1회용 복구 세션을 폐기한다(one-shot).
         const recoveryToken = readCookie(req, RECOVERY_COOKIE)
         if (this.session.isRecoveryValid(recoveryToken)) {
@@ -124,5 +131,10 @@ export class AuthController {
             this.session.isValid(session) ||
             this.session.isRecoveryValid(recovery)
         )
+    }
+
+    // 복구 세션 컨텍스트 여부: 복구 재등록은 자격증명 교체(분실 기기 무효화)로 처리한다.
+    private isRecoverySession(req: Request): boolean {
+        return this.session.isRecoveryValid(readCookie(req, RECOVERY_COOKIE))
     }
 }

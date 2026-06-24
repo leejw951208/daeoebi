@@ -78,7 +78,12 @@ export class AuthService {
 
     // 등록 옵션 생성. PRF 확장 enable, 이미 등록된 credential 은 excludeCredentials 로 중복 방지.
     // C-1: 이미 등록된 보관함(credential ≥ 1)에 대한 기기 추가는 유효 세션을 요구한다.
-    async registerOptions(authenticated: boolean): Promise<{
+    // 복구 재등록(isRecovery)은 분실 기기 자격증명을 교체하는 흐름이라, 같은 인증기 재사용을 허용하기 위해
+    // excludeCredentials 를 비운다(중복 등록 방지 제외).
+    async registerOptions(
+        authenticated: boolean,
+        isRecovery: boolean,
+    ): Promise<{
         options: PublicKeyCredentialCreationOptionsJSON
     }> {
         const existing = await this.prisma.webauthnCredential.findMany({
@@ -97,10 +102,12 @@ export class AuthService {
                 residentKey: "required",
                 userVerification: "required",
             },
-            excludeCredentials: existing.map((c) => ({
-                id: toBase64url(c.credentialId),
-                transports: c.transports as AuthenticatorTransportFuture[],
-            })),
+            excludeCredentials: isRecovery
+                ? []
+                : existing.map((c) => ({
+                      id: toBase64url(c.credentialId),
+                      transports: c.transports as AuthenticatorTransportFuture[],
+                  })),
             // PRF 확장 enable. 등록 단계에선 eval 없이 지원 여부만 요청한다.
             // DOM 표준 타입에 prf 가 아직 없어 라이브러리 입력 타입으로 단언한다.
             extensions: {
@@ -117,6 +124,7 @@ export class AuthService {
     async registerVerify(
         dto: RegisterVerifyDto,
         authenticated: boolean,
+        isRecovery: boolean,
     ): Promise<void> {
         const credentialCount = await this.prisma.webauthnCredential.count()
         const isFirstRegistration = credentialCount === 0
@@ -167,6 +175,10 @@ export class AuthService {
 
         // 새 자격증명과(첫 등록이면) 복구 래핑을 한 트랜잭션에서 커밋한다.
         await this.prisma.$transaction(async (tx) => {
+            // 복구 재등록은 분실 기기 자격증명을 무효화하고 새 passkey 로 교체한다(보안: 분실 기기 차단).
+            if (isRecovery) {
+                await tx.webauthnCredential.deleteMany({})
+            }
             await tx.webauthnCredential.create({
                 data: {
                     credentialId: prismaBytes(fromBase64url(credential.id)),
