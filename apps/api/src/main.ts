@@ -22,6 +22,24 @@ async function bootstrap() {
 
     const app = await NestFactory.create<NestExpressApplication>(AppModule)
     app.getHttpAdapter().getInstance().disable("x-powered-by")
+
+    // 리버스 프록시(cloudflared) 뒤에서 X-Forwarded-* 헤더를 신뢰한다.
+    // 운영에서 TRUST_PROXY=1 로 켜야 req.ip·protocol 이 실제 클라이언트 값으로 잡힌다. 미설정(개발)이면 비활성.
+    const trustProxy = process.env.TRUST_PROXY?.trim()
+    if (trustProxy) {
+        app.set(
+            "trust proxy",
+            /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy,
+        )
+    }
+
+    // same-origin 배포에서는 API_GLOBAL_PREFIX=api 로 /api 하위에 서비스한다.
+    // cloudflared 가 /api/* 경로를 strip 없이 전달하므로 서버가 프리픽스를 받아야 한다. 미설정(개발)이면 프리픽스 없음.
+    const globalPrefix = process.env.API_GLOBAL_PREFIX?.trim()
+    if (globalPrefix) {
+        app.setGlobalPrefix(globalPrefix)
+    }
+
     // 명시적 body limit 으로 기본값에 의존하지 않는다(M-2 DoS 방어).
     app.useBodyParser("json", { limit: BODY_LIMIT })
     app.useBodyParser("urlencoded", { extended: true, limit: BODY_LIMIT })
