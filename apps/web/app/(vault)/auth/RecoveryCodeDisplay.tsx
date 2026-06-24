@@ -31,7 +31,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
         const blob = new Blob(
             [
                 "대외비 복구코드\n",
-                "분실 시 이 코드로만 보관함을 복구할 수 있습니다. 안전한 곳에 보관하세요.\n\n",
+                "분실 시 이 코드로만 대외비를 복구할 수 있습니다. 안전한 곳에 보관하세요.\n\n",
                 code,
                 "\n",
             ],
@@ -63,7 +63,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
             </div>
             <h1>복구코드를 저장하세요</h1>
             <p className="muted" style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
-                기기를 잃어버리면 이 코드로만 보관함을 되찾을 수 있습니다. 화면 캡처
+                기기를 잃어버리면 이 코드로만 대외비를 되찾을 수 있습니다. 화면 캡처
                 대신 안전한 곳에 따로 보관하세요. 서버에는 저장되지 않습니다.
             </p>
 
@@ -130,7 +130,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                 disabled={!saved || !acknowledged}
                 onClick={onConfirmed}
             >
-                완료하고 보관함 열기
+                완료하고 대외비 열기
             </button>
 
             <span

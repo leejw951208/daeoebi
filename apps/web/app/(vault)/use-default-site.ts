@@ -1,10 +1,10 @@
-// 기본 사이트 해석 훅. 단일 사용자 평면 보관함을 위해 사이트가 없으면 1개를 생성하고 그 id 를 재사용한다.
+// 기본 사이트 해석 훅. 단일 사용자 평면 대외비를 위해 사이트가 없으면 1개를 생성하고 그 id 를 재사용한다.
 // 서버엔 기본 사이트 자동 생성/표식이 없으므로(api-engineer 확정) 클라가 멱등하게 보장한다.
 import { useCallback, useEffect, useState } from "react"
 import { createSite, listSites } from "@/lib/vault-client"
 
 // 기본 사이트 라벨. 평면 목록 UX 에서 사용자에게 노출되지 않는다.
-const DEFAULT_SITE_LABEL = "내 보관함"
+const DEFAULT_SITE_LABEL = "내 대외비"
 
 // 단일 in-flight promise. strict mode 이중 effect·동시 마운트에서 createSite 중복 호출을 막는다.
 let inflight: Promise<string> | null = null

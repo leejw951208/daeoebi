@@ -170,7 +170,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 ? "기기에서 생체 인증을 완료해 주세요."
                 : failed
                   ? "다시 시도하거나 복구코드로 접근할 수 있어요."
-                  : "패스키로 본인을 확인하고 보관함을 엽니다."
+                  : "패스키로 본인을 확인하고 대외비를 엽니다."
 
         return (
             <section

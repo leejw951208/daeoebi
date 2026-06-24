@@ -1,5 +1,5 @@
 "use client"
-// 보관함 목록 화면. 기본 사이트의 시크릿 메타를 나열하고 카테고리 태그 필터 + 제목 검색을 제공한다.
+// 대외비 목록 화면. 기본 사이트의 시크릿 메타를 나열하고 카테고리 태그 필터 + 제목 검색을 제공한다.
 // 상세는 /[id], 신규는 /new, 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
@@ -96,7 +96,7 @@ export function EntriesScreen() {
     if (siteState.status === "error") {
         return (
             <section>
-                <h1>보관함</h1>
+                <h1>대외비</h1>
                 <div role="alert" className="error-box">
                     {siteState.message}
                 </div>
@@ -125,7 +125,7 @@ export function EntriesScreen() {
                 >
                     <div>
                         <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: "-0.03em" }}>
-                            보관함
+                            대외비
                         </div>
                         <div style={{ fontSize: 12, color: "var(--color-text-muted)", fontWeight: 500 }}>
                             {secrets.length}개 항목
@@ -180,7 +180,7 @@ export function EntriesScreen() {
                 </div>
             )}
 
-            <nav aria-label="보관함 관리" className="toolbar">
+            <nav aria-label="대외비 관리" className="toolbar">
                 <Link className="btn secondary" style={{ minHeight: 42 }} href="/backup">
                     백업·복원
                 </Link>

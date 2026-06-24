@@ -1,7 +1,7 @@
 {
     "name": "대외비",
     "short_name": "대외비",
-    "description": "패스키로 잠그는 개인 비밀번호 보관함",
+    "description": "패스키로 잠그는 나만의 대외비",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

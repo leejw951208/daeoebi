@@ -81,7 +81,7 @@ export default function SecretDetailPage() {
                 isApiError(e)
                     ? e.message
                     : e instanceof Error && e.name === "OperationError"
-                      ? "복호화에 실패했습니다. 보관함 키가 일치하지 않습니다."
+                      ? "복호화에 실패했습니다. 대외비 키가 일치하지 않습니다."
                       : e instanceof Error
                         ? e.message
                         : "알 수 없는 오류",
@@ -148,11 +148,11 @@ export default function SecretDetailPage() {
                     className="muted"
                     style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 240, marginBottom: 28 }}
                 >
-                    삭제되었거나 주소가 잘못되었을 수 있어요. 보관함으로 돌아가 다시
+                    삭제되었거나 주소가 잘못되었을 수 있어요. 대외비로 돌아가 다시
                     찾아보세요.
                 </p>
                 <Link className="btn" href="/">
-                    보관함으로 돌아가기
+                    대외비로 돌아가기
                 </Link>
             </section>
         )
@@ -232,7 +232,7 @@ export default function SecretDetailPage() {
                 }}
             >
                 <Link className="btn-text" href="/">
-                    ← 보관함
+                    ← 대외비
                 </Link>
                 <button
                     type="button"

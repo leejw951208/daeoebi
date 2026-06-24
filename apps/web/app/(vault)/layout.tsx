@@ -106,7 +106,7 @@ export default function VaultLayout({
                 }}
             >
                 <span className="vault-emblem" aria-hidden="true" />
-                <h1>보관함</h1>
+                <h1>대외비</h1>
                 {view.state === "error" ? (
                     <div role="alert" className="error-box">
                         {view.message}

@@ -1,5 +1,5 @@
 "use client"
-// 보관함 페이지에서 "홈 화면에 추가" 안내. 7일 dismiss cookie.
+// 대외비 페이지에서 "홈 화면에 추가" 안내. 7일 dismiss cookie.
 import { useEffect, useState } from "react"
 import {
     buildInstallBannerDismissCookie,

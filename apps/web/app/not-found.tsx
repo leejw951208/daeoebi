@@ -1,4 +1,4 @@
-// 글로벌 404. 잘못된 라우트 진입 시 한국어 안내와 보관함 복귀 링크를 제공한다(Ink 테마).
+// 글로벌 404. 잘못된 라우트 진입 시 한국어 안내와 대외비 복귀 링크를 제공한다(Ink 테마).
 import Link from "next/link"
 
 export default function NotFound() {
@@ -34,11 +34,11 @@ export default function NotFound() {
                 className="muted"
                 style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 240, marginBottom: 28 }}
             >
-                요청하신 페이지가 존재하지 않거나 이동되었을 수 있어요. 보관함으로
+                요청하신 페이지가 존재하지 않거나 이동되었을 수 있어요. 대외비로
                 돌아가 다시 찾아보세요.
             </p>
             <Link className="btn" href="/">
-                보관함으로 돌아가기
+                대외비로 돌아가기
             </Link>
         </section>
     )

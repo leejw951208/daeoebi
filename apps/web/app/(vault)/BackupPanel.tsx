@@ -118,7 +118,7 @@ export function BackupPanel({ onImported }: Props) {
                         margin: "0 0 16px",
                     }}
                 >
-                    모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의 보관함
+                    모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의 대외비
                     키로만 가능합니다.
                 </p>
                 <button

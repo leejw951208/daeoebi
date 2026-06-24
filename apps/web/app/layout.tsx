@@ -6,8 +6,8 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister"
 import "./globals.css"
 
 export const metadata: Metadata = {
-    title: "대외비 — 비밀번호 보관함",
-    description: "로컬 1인용 비밀번호·시크릿 보관함",
+    title: "대외비",
+    description: "패스키로 잠그는 나만의 대외비",
     manifest: "/manifest.webmanifest",
     appleWebApp: {
         capable: true,
