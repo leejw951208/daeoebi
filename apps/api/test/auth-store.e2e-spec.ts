@@ -193,6 +193,30 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
                 .expect(403)
             expect(res.body.code).toBe("CSRF_INVALID")
         })
+
+        it("Origin 헤더가 없어도 X-Vault-Request 가 있으면 통과한다(Safari same-origin)", async () => {
+            const cookie = await registerFirst()
+            // Safari(WebKit)는 same-origin POST 에서 Origin 을 생략한다. 커스텀 헤더만으로 검증되어야 한다.
+            const res = await request(app.getHttpServer())
+                .post("/sites")
+                .set("X-Vault-Request", "1")
+                .set("Cookie", cookie)
+                .send({ label: "사이트" })
+            expect(res.status).not.toBe(403)
+            expect(res.status).toBe(201)
+        })
+
+        it("허용되지 않은 Origin 은 여전히 403", async () => {
+            const cookie = await registerFirst()
+            const res = await request(app.getHttpServer())
+                .post("/sites")
+                .set("Origin", "https://evil.example.com")
+                .set("X-Vault-Request", "1")
+                .set("Cookie", cookie)
+                .send({ label: "사이트" })
+                .expect(403)
+            expect(res.body.code).toBe("CSRF_INVALID")
+        })
     })
 
     describe("store 암호문 패스스루", () => {

@@ -15,14 +15,19 @@ export class AuthCsrfMiddleware implements NestMiddleware {
             return
         }
 
-        const origin = (req.headers.origin as string | undefined) ?? ""
-        if (!ALLOWED_ORIGINS.has(origin)) {
+        // Origin 이 있으면 반드시 화이트리스트여야 한다(cross-site 차단).
+        // Origin 이 없으면 same-origin 요청이다 — 브라우저는 cross-origin 요청에는 항상 Origin 을 붙이지만,
+        // Safari(WebKit)는 same-origin POST 에서 Origin 을 생략한다. 이 경우는 아래 커스텀 헤더로 검증한다.
+        const origin = req.headers.origin as string | undefined
+        if (origin !== undefined && !ALLOWED_ORIGINS.has(origin)) {
             throw new ForbiddenException({
                 code: AUTH_ERRORS.CSRF_INVALID,
                 message: "Origin 이 허용되지 않습니다.",
             })
         }
 
+        // 커스텀 헤더 X-Vault-Request 는 CSRF 1차 방어다. cross-origin 요청이 이 헤더를 붙이면 preflight 가
+        // 발생하고, 우리 CORS 는 허용 오리진만 통과시키므로 위조 요청은 브라우저 단계에서 차단된다.
         if (req.headers["x-vault-request"] !== "1") {
             throw new ForbiddenException({
                 code: AUTH_ERRORS.CSRF_INVALID,
