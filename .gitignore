@@ -34,3 +34,9 @@ pnpm-debug.log*
 
 # project-design 캐시 (HTML/CSS 임시 보관, project-implement가 React로 변환 후 삭제 가능)
 .design-cache/
+
+# Cloudflare Tunnel 자격증명 (절대 커밋 금지). config.yml 템플릿만 추적한다.
+cloudflared/credentials.json
+cloudflared/*.json
+cloudflared/cert.pem
+cloudflared/*.pem

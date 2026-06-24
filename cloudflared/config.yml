@@ -1,0 +1,24 @@
+# Cloudflare Tunnel 인그레스 라우팅. 웹·API·SSH 를 하나의 터널로 받는다.
+# <TUNNEL_UUID> 와 example.com 을 실제 값으로 바꾼다(아래 DEPLOY.md 참고).
+# credentials.json 은 `cloudflared tunnel create` 로 생성되며 절대 커밋하지 않는다(.gitignore).
+
+tunnel: <TUNNEL_UUID>
+credentials-file: /etc/cloudflared/credentials.json
+
+# 인그레스 규칙은 위에서 아래로 매칭된다. 더 구체적인 규칙(SSH·/api)을 먼저 둔다.
+ingress:
+    # SSH → 호스트의 22 포트. Cloudflare Access 정책으로 보호한다(이메일/IdP 인증 게이트).
+    - hostname: ssh.example.com
+      service: ssh://host.docker.internal:22
+
+    # /api/* → NestJS(api). cloudflared 는 경로를 strip 하지 않으므로 서버는 API_GLOBAL_PREFIX=api 로 받는다.
+    - hostname: example.com
+      path: ^/api(/|$)
+      service: http://api:4000
+
+    # 그 외 모든 경로 → Next.js(web). same-origin 이라 CORS 불필요.
+    - hostname: example.com
+      service: http://web:3000
+
+    # 매칭되지 않는 요청은 404.
+    - service: http_status:404
