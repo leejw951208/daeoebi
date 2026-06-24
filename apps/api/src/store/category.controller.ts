@@ -1,4 +1,4 @@
-// 카테고리 CRUD 엔드포인트. PIN 로그인 보호.
+// 카테고리 CRUD 엔드포인트. 전역 세션 가드로 보호된다.
 import {
     Body,
     Controller,
@@ -9,14 +9,11 @@ import {
     Patch,
     Post,
     Query,
-    UseGuards,
 } from "@nestjs/common"
-import { PinGuard } from "../pin/pin.guard"
 import { CategoryService } from "./category.service"
 import { CreateCategoryDto, UpdateCategoryDto } from "./dto/category.dto"
 
 @Controller("categories")
-@UseGuards(PinGuard)
 export class CategoryController {
     constructor(private readonly service: CategoryService) {}
 

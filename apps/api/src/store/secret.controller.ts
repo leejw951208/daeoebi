@@ -1,4 +1,4 @@
-// 비밀번호(Secret) CRUD 엔드포인트. PIN 로그인 보호. 본문 열람·추가·수정은 마스터 해제가 필요하다.
+// 비밀번호(Secret) CRUD 엔드포인트. 전역 세션 가드로 보호된다. 본문은 클라이언트 E2E 암호문 패스스루.
 import {
     Body,
     Controller,
@@ -9,14 +9,11 @@ import {
     Patch,
     Post,
     Query,
-    UseGuards,
 } from "@nestjs/common"
-import { PinGuard } from "../pin/pin.guard"
 import { SecretService } from "./secret.service"
 import { CreateSecretDto, UpdateSecretDto } from "./dto/secret.dto"
 
 @Controller("secrets")
-@UseGuards(PinGuard)
 export class SecretController {
     constructor(private readonly service: SecretService) {}
 
@@ -28,10 +25,10 @@ export class SecretController {
         return this.service.listBySite(siteId, categoryId)
     }
 
-    // 본문(value)을 복호화해 반환한다. 마스터 해제 상태여야 한다.
+    // 암호문 블롭(base64url)을 포함해 반환한다. 복호화는 클라이언트가 수행한다.
     @Get(":id")
-    reveal(@Param("id") id: string) {
-        return this.service.reveal(id)
+    detail(@Param("id") id: string) {
+        return this.service.detail(id)
     }
 
     @Post()

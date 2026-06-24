@@ -1,14 +1,11 @@
-// 비밀번호(Secret) CRUD. 본문은 마스터 해제 세션 키로 AES-256-GCM 암호화·복호화한다.
+// 비밀번호(Secret) CRUD. 본문은 클라이언트 E2E 암호문이므로 서버는 복호화 없이 패스스루한다.
 import {
     BadRequestException,
     Injectable,
-    InternalServerErrorException,
     NotFoundException,
-    UnauthorizedException,
 } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { VaultSessionService } from "../vault/vault-session.service"
-import { VaultCryptoService } from "../vault/vault-crypto.service"
+import { fromBase64url, toBase64url } from "../auth/base64url"
 import { CreateSecretDto, UpdateSecretDto } from "./dto/secret.dto"
 import { STORE_ERRORS } from "./store.types"
 
@@ -21,18 +18,26 @@ const LIST_SELECT = {
     updatedAt: true,
 } as const
 
-// Prisma Bytes 입력은 Uint8Array<ArrayBuffer> 를 기대하므로 Buffer 를 복사해 변환한다.
+const DETAIL_SELECT = {
+    id: true,
+    siteId: true,
+    categoryId: true,
+    label: true,
+    iv: true,
+    ciphertext: true,
+    authTag: true,
+    createdAt: true,
+    updatedAt: true,
+} as const
+
+// Prisma Bytes 입력은 Uint8Array<ArrayBuffer> 를 기대하므로 복사해 변환한다.
 function prismaBytes(value: Uint8Array): Uint8Array<ArrayBuffer> {
     return new Uint8Array(value)
 }
 
 @Injectable()
 export class SecretService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly session: VaultSessionService,
-        private readonly crypto: VaultCryptoService,
-    ) {}
+    constructor(private readonly prisma: PrismaService) {}
 
     async listBySite(siteId: string, categoryId?: string) {
         await this.ensureSite(siteId)
@@ -46,50 +51,41 @@ export class SecretService {
         })
     }
 
-    async create(dto: CreateSecretDto) {
-        await this.ensureSite(dto.siteId)
-        const categoryId = dto.categoryId ?? null
-        if (categoryId) await this.ensureCategoryInSite(categoryId, dto.siteId)
-        const key = this.requireKey()
-        const blob = this.crypto.seal(key, Buffer.from(dto.value, "utf8"))
-        const created = await this.prisma.secret.create({
-            data: {
-                siteId: dto.siteId,
-                categoryId,
-                label: dto.label,
-                iv: prismaBytes(blob.iv),
-                ciphertext: prismaBytes(blob.ciphertext),
-                authTag: prismaBytes(blob.authTag),
-            },
-            select: LIST_SELECT,
+    // 상세 조회는 암호문 블롭(base64url)을 포함해 반환한다. 복호화는 클라이언트에서 수행한다.
+    async detail(id: string) {
+        const secret = await this.prisma.secret.findUnique({
+            where: { id },
+            select: DETAIL_SELECT,
         })
-        return created
-    }
-
-    async reveal(id: string) {
-        const secret = await this.prisma.secret.findUnique({ where: { id } })
         if (!secret) throw this.notFound()
-        const key = this.requireKey()
-        const plain = this.crypto.open(key, {
-            iv: Buffer.from(secret.iv),
-            ciphertext: Buffer.from(secret.ciphertext),
-            authTag: Buffer.from(secret.authTag),
-        })
-        if (!plain) {
-            throw new InternalServerErrorException({
-                code: STORE_ERRORS.DECRYPT_FAILED,
-                message: "복호화에 실패했습니다.",
-            })
-        }
         return {
             id: secret.id,
             siteId: secret.siteId,
             categoryId: secret.categoryId,
             label: secret.label,
-            value: plain.toString("utf8"),
+            iv: toBase64url(secret.iv),
+            ciphertext: toBase64url(secret.ciphertext),
+            authTag: toBase64url(secret.authTag),
             createdAt: secret.createdAt,
             updatedAt: secret.updatedAt,
         }
+    }
+
+    async create(dto: CreateSecretDto) {
+        await this.ensureSite(dto.siteId)
+        const categoryId = dto.categoryId ?? null
+        if (categoryId) await this.ensureCategoryInSite(categoryId, dto.siteId)
+        return this.prisma.secret.create({
+            data: {
+                siteId: dto.siteId,
+                categoryId,
+                label: dto.label,
+                iv: prismaBytes(fromBase64url(dto.iv)),
+                ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
+                authTag: prismaBytes(fromBase64url(dto.authTag)),
+            },
+            select: LIST_SELECT,
+        })
     }
 
     async update(id: string, dto: UpdateSecretDto) {
@@ -107,12 +103,21 @@ export class SecretService {
             }
             data.categoryId = dto.categoryId
         }
-        if (dto.value !== undefined) {
-            const key = this.requireKey()
-            const blob = this.crypto.seal(key, Buffer.from(dto.value, "utf8"))
-            data.iv = prismaBytes(blob.iv)
-            data.ciphertext = prismaBytes(blob.ciphertext)
-            data.authTag = prismaBytes(blob.authTag)
+
+        // 본문 갱신은 세 필드가 모두 있을 때만 수행한다(부분 암호문 방지).
+        const hasIv = dto.iv !== undefined
+        const hasCt = dto.ciphertext !== undefined
+        const hasTag = dto.authTag !== undefined
+        if (hasIv || hasCt || hasTag) {
+            if (!hasIv || !hasCt || !hasTag) {
+                throw new BadRequestException({
+                    code: STORE_ERRORS.CIPHERTEXT_INCOMPLETE,
+                    message: "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
+                })
+            }
+            data.iv = prismaBytes(fromBase64url(dto.iv as string))
+            data.ciphertext = prismaBytes(fromBase64url(dto.ciphertext as string))
+            data.authTag = prismaBytes(fromBase64url(dto.authTag as string))
         }
 
         return this.prisma.secret.update({
@@ -129,17 +134,6 @@ export class SecretService {
         })
         if (!found) throw this.notFound()
         await this.prisma.secret.delete({ where: { id } })
-    }
-
-    private requireKey(): Buffer {
-        const key = this.session.getKey()
-        if (!key) {
-            throw new UnauthorizedException({
-                code: STORE_ERRORS.VAULT_LOCKED,
-                message: "보관함이 잠겨 있습니다. 마스터로 해제하세요.",
-            })
-        }
-        return key
     }
 
     private async ensureSite(siteId: string): Promise<void> {

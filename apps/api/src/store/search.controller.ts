@@ -1,10 +1,8 @@
-// 라벨 검색 엔드포인트. PIN 로그인 보호.
-import { Controller, Get, Query, UseGuards } from "@nestjs/common"
-import { PinGuard } from "../pin/pin.guard"
+// 라벨 검색 엔드포인트. 전역 세션 가드로 보호된다.
+import { Controller, Get, Query } from "@nestjs/common"
 import { SearchService } from "./search.service"
 
 @Controller("search")
-@UseGuards(PinGuard)
 export class SearchController {
     constructor(private readonly service: SearchService) {}
 

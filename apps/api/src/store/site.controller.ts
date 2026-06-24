@@ -1,4 +1,4 @@
-// 사이트 CRUD 엔드포인트. PIN 로그인 보호.
+// 사이트 CRUD 엔드포인트. 전역 세션 가드로 보호된다.
 import {
     Body,
     Controller,
@@ -8,14 +8,11 @@ import {
     Param,
     Patch,
     Post,
-    UseGuards,
 } from "@nestjs/common"
-import { PinGuard } from "../pin/pin.guard"
 import { SiteService } from "./site.service"
 import { CreateSiteDto, UpdateSiteDto } from "./dto/site.dto"
 
 @Controller("sites")
-@UseGuards(PinGuard)
 export class SiteController {
     constructor(private readonly service: SiteService) {}
 

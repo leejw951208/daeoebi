@@ -1,4 +1,4 @@
-// 비밀번호(Secret) 생성·수정 DTO. value 는 본문이며 저장 전 AES-256-GCM 으로 암호화된다.
+// 비밀번호(Secret) 생성·수정 DTO. 본문은 클라이언트 E2E 암호문(iv/ciphertext/authTag, base64url)으로 전달된다.
 import {
     IsOptional,
     IsString,
@@ -6,6 +6,7 @@ import {
     MinLength,
     ValidateIf,
 } from "class-validator"
+import { IsBase64url } from "../../auth/base64url"
 
 export class CreateSecretDto {
     @IsString()
@@ -24,10 +25,15 @@ export class CreateSecretDto {
     @MaxLength(200)
     label!: string
 
-    @IsString()
-    @MinLength(1)
-    @MaxLength(4096)
-    value!: string
+    // 클라이언트가 VK 로 봉인한 암호문 블롭. 서버는 복호화하지 않는다.
+    @IsBase64url()
+    iv!: string
+
+    @IsBase64url()
+    ciphertext!: string
+
+    @IsBase64url()
+    authTag!: string
 }
 
 export class UpdateSecretDto {
@@ -44,9 +50,16 @@ export class UpdateSecretDto {
     @MinLength(1)
     categoryId?: string | null
 
+    // 본문 갱신 시 세 필드를 함께 보낸다(부분 암호문은 허용하지 않는다).
     @IsOptional()
-    @IsString()
-    @MinLength(1)
-    @MaxLength(4096)
-    value?: string
+    @IsBase64url()
+    iv?: string
+
+    @IsOptional()
+    @IsBase64url()
+    ciphertext?: string
+
+    @IsOptional()
+    @IsBase64url()
+    authTag?: string
 }
