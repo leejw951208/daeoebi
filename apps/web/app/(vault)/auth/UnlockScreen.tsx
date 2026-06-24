@@ -1,7 +1,7 @@
 "use client"
 // 잠금해제 화면. passkey 로그인으로 PRF→VK 언랩하거나, 복구코드로 VK 확보 후 새 passkey 를 재등록한다.
 import { useState } from "react"
-import { KeyRound, LifeBuoy } from "lucide-react"
+import { Lock } from "lucide-react"
 import { Icon } from "@/components/Icon"
 import {
     getLoginOptions,
@@ -98,11 +98,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
             )
 
             // 복구 세션을 가진 상태로 새 passkey 를 등록한다(recovery 재발급 생략).
+            // prfSalt 를 먼저 만들어 등록 세레모니의 PRF eval 로 주입한다.
+            const prfSalt = randomSalt()
             const options = await getRegisterOptions()
-            const { response, prfOutput } = await registerPasskey(options)
+            const { response, prfOutput } = await registerPasskey(options, prfSalt)
             if (!prfOutput) throw new PrfUnsupportedError()
 
-            const prfSalt = randomSalt()
             const wrappedVkPrf = await wrapVkWithPrf(vaultKey, prfOutput, prfSalt)
             await postRegisterVerify({
                 response,
@@ -154,96 +155,172 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
         setError(e instanceof Error ? e.message : "잠금해제에 실패했습니다.")
     }
 
-    return (
-        <section style={{ maxWidth: 440, margin: "0 auto", paddingTop: 32 }}>
-            <span className="vault-emblem">
-                <Icon icon={mode === "passkey" ? KeyRound : LifeBuoy} size={26} />
-            </span>
-            <span className="eyebrow">Secrets · Vault</span>
-            <h1 style={{ marginTop: 6 }}>
-                {mode === "passkey" ? "보관함 잠금해제" : "복구코드로 접근"}
-            </h1>
-            <p className="muted" style={{ marginTop: 8 }}>
-                {mode === "passkey"
-                    ? "passkey로 인증하면 보관함이 열립니다."
-                    : "기기를 분실했나요? 복구코드를 입력하고 이 기기에 새 passkey를 등록하세요."}
-            </p>
+    // ── passkey 모드: 중앙 링 + 상태별 문구 ──
+    if (mode === "passkey") {
+        const failed = error !== null
+        const ringState = busy === "unlocking" ? "authing" : failed ? "fail" : "idle"
+        const title =
+            busy === "unlocking"
+                ? "인증 중…"
+                : failed
+                  ? "인증에 실패했어요"
+                  : "잠겨 있어요"
+        const sub =
+            busy === "unlocking"
+                ? "기기에서 생체 인증을 완료해 주세요."
+                : failed
+                  ? "다시 시도하거나 복구코드로 접근할 수 있어요."
+                  : "패스키로 본인을 확인하고 보관함을 엽니다."
 
-            {mode === "passkey" ? (
+        return (
+            <section
+                style={{
+                    maxWidth: 440,
+                    margin: "0 auto",
+                    paddingTop: 24,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    minHeight: "70vh",
+                }}
+            >
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                    <div
+                        className={`unlock-ring ${ringState}`}
+                        role="img"
+                        aria-label={title}
+                    >
+                        {ringState !== "authing" && (
+                            <div className={`unlock-dot${failed ? " fail" : ""}`}>
+                                {failed ? (
+                                    <span style={{ fontSize: 30, lineHeight: 1 }}>!</span>
+                                ) : (
+                                    <Icon icon={Lock} size={28} />
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <h1 style={{ marginTop: 30 }}>{title}</h1>
+                    <p
+                        className="muted"
+                        style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, maxWidth: 260 }}
+                    >
+                        {sub}
+                    </p>
+                </div>
+
+                {error && (
+                    <div role="alert" className="error-box" style={{ width: "100%" }}>
+                        {error}
+                        {retryAfter !== null && (
+                            <> {retryAfter}초 후 다시 시도할 수 있습니다.</>
+                        )}
+                    </div>
+                )}
+
                 <button
                     type="button"
                     className="btn"
-                    style={{ width: "100%", marginTop: 24 }}
+                    style={{ width: "100%" }}
                     onClick={handlePasskeyUnlock}
                     disabled={busy !== "idle" || retryAfter !== null}
                     aria-busy={busy === "unlocking"}
                 >
                     {busy === "unlocking"
-                        ? "인증 중..."
-                        : "passkey로 잠금해제"}
+                        ? "인증 중…"
+                        : failed
+                          ? "다시 시도"
+                          : "패스키로 잠금해제"}
                 </button>
-            ) : (
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        if (busy === "idle") void handleRecover()
+                <button
+                    type="button"
+                    className="btn-text"
+                    style={{ marginTop: 6 }}
+                    onClick={() => {
+                        setMode("recovery")
+                        setError(null)
+                        setRetryAfter(null)
                     }}
-                    style={{ marginTop: 24 }}
+                    disabled={busy !== "idle"}
                 >
-                    <div className="form-row">
-                        <label htmlFor="recovery-code">복구코드</label>
-                        <input
-                            id="recovery-code"
-                            type="text"
-                            className="field-control"
-                            autoComplete="off"
-                            autoCapitalize="characters"
-                            spellCheck={false}
-                            placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX"
-                            value={recoveryInput}
-                            onChange={(e) => {
-                                setRecoveryInput(e.target.value)
-                                setError(null)
-                            }}
-                            disabled={busy !== "idle"}
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="btn"
-                        style={{ width: "100%", marginTop: 8 }}
-                        disabled={busy !== "idle"}
-                        aria-busy={busy === "recovering"}
-                    >
-                        {busy === "recovering"
-                            ? "복구 중..."
-                            : "복구하고 새 passkey 등록"}
-                    </button>
-                </form>
-            )}
+                    복구코드로 접근
+                </button>
+            </section>
+        )
+    }
 
-            {error && (
-                <div role="alert" className="error-box" style={{ marginTop: 16 }}>
-                    {error}
-                    {retryAfter !== null && (
-                        <> {retryAfter}초 후 다시 시도할 수 있습니다.</>
-                    )}
-                </div>
-            )}
-
+    // ── recovery 모드: 복구코드 입력 ──
+    return (
+        <section style={{ maxWidth: 440, margin: "0 auto", paddingTop: 24 }}>
             <button
                 type="button"
-                className="btn secondary"
-                style={{ width: "100%", marginTop: 16 }}
+                className="btn-text"
+                style={{ marginBottom: 16, marginLeft: -8 }}
                 onClick={() => {
-                    setMode((m) => (m === "passkey" ? "recovery" : "passkey"))
+                    setMode("passkey")
                     setError(null)
                     setRetryAfter(null)
                 }}
                 disabled={busy !== "idle"}
             >
-                {mode === "passkey" ? "복구코드로 접근" : "passkey로 돌아가기"}
+                ← 잠금해제로
             </button>
+            <h1>복구코드로 접근</h1>
+            <p className="muted" style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
+                발급받은 복구코드를 입력하면 접근을 복구하고 이 기기에 새 패스키를
+                등록합니다.
+            </p>
+
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    if (busy === "idle") void handleRecover()
+                }}
+                style={{ marginTop: 24 }}
+            >
+                <div className="form-row">
+                    <label htmlFor="recovery-code">복구코드</label>
+                    <input
+                        id="recovery-code"
+                        type="text"
+                        className="field-control"
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX-XX"
+                        value={recoveryInput}
+                        onChange={(e) => {
+                            setRecoveryInput(e.target.value)
+                            setError(null)
+                        }}
+                        disabled={busy !== "idle"}
+                    />
+                </div>
+                <p className="muted" style={{ fontSize: 12.5, marginTop: -4 }}>
+                    대소문자 구분 없이 입력하세요. 여러 번 실패하면 잠시 후 다시
+                    시도할 수 있습니다.
+                </p>
+
+                {error && (
+                    <div role="alert" className="error-box">
+                        {error}
+                        {retryAfter !== null && (
+                            <> {retryAfter}초 후 다시 시도할 수 있습니다.</>
+                        )}
+                    </div>
+                )}
+
+                <button
+                    type="submit"
+                    className="btn"
+                    style={{ width: "100%", marginTop: 8 }}
+                    disabled={busy !== "idle"}
+                    aria-busy={busy === "recovering"}
+                >
+                    {busy === "recovering" ? "복구 중…" : "검증하고 복구"}
+                </button>
+            </form>
         </section>
     )
 }

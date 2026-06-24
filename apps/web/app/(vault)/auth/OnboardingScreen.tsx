@@ -1,7 +1,7 @@
 "use client"
 // 온보딩/passkey 등록 화면. passkey 생성 → VK·복구코드 생성 → PRF·복구코드로 래핑 → register/verify → 복구코드 발급.
 import { useState } from "react"
-import { ShieldPlus } from "lucide-react"
+import { Lock, Check } from "lucide-react"
 import { Icon } from "@/components/Icon"
 import {
     getRegisterOptions,
@@ -48,14 +48,15 @@ export function OnboardingScreen({ onUnlocked }: Props) {
         setPhase("registering")
         setError(null)
         try {
+            // prfSalt 를 먼저 만들어 등록 세레모니의 PRF eval 로 주입한다(출력은 이 salt 에 묶인다).
+            const prfSalt = randomSalt()
             const options = await getRegisterOptions()
-            const { response, prfOutput } = await registerPasskey(options)
+            const { response, prfOutput } = await registerPasskey(options, prfSalt)
             if (!prfOutput) throw new PrfUnsupportedError()
 
             // VK·복구코드 생성 후 PRF·복구코드로 각각 래핑한다.
             const vaultKey = await generateVaultKey()
             const recovery = generateRecoveryCode()
-            const prfSalt = randomSalt()
             const rcSalt = randomSalt()
             const wrappedVkPrf = await wrapVkWithPrf(vaultKey, prfOutput, prfSalt)
             const wrappedVkRc = await wrapVkWithRecovery(
@@ -95,33 +96,65 @@ export function OnboardingScreen({ onUnlocked }: Props) {
     }
 
     return (
-        <section style={{ maxWidth: 440, margin: "0 auto", paddingTop: 32 }}>
-            <span className="vault-emblem">
-                <Icon icon={ShieldPlus} size={26} />
-            </span>
-            <span className="eyebrow">Secrets · Vault</span>
-            <h1 style={{ marginTop: 6 }}>passkey로 시작하기</h1>
-            <p className="muted" style={{ marginTop: 8 }}>
-                이 기기의 생체 인증(지문·얼굴) 또는 보안키로 보관함을 보호합니다.
-                비밀번호는 따로 만들 필요가 없습니다.
-            </p>
+        <section
+            style={{
+                maxWidth: 440,
+                margin: "0 auto",
+                paddingTop: 24,
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "70vh",
+            }}
+        >
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <span className="vault-emblem pop">
+                    <Icon icon={Lock} size={26} />
+                </span>
+                <span className="eyebrow">개인 암호화 보관함</span>
+                <h1 style={{ fontSize: 30, marginTop: 10, lineHeight: 1.25 }}>
+                    비밀번호를 안전하게 잠가두고, 필요할 때만 엽니다
+                </h1>
+                <p className="muted" style={{ marginTop: 14, fontSize: 15, lineHeight: 1.6 }}>
+                    패스키 하나로 잠금해제합니다. 마스터 비밀번호도, PIN도 없습니다.
+                    암호화 키는 이 기기를 벗어나지 않습니다.
+                </p>
+            </div>
 
-            <ol className="muted" style={{ marginTop: 16, paddingLeft: 18 }}>
-                <li>passkey 만들기</li>
-                <li>복구코드 발급·보관</li>
-            </ol>
+            <ul
+                style={{
+                    listStyle: "none",
+                    padding: 0,
+                    margin: "26px 0 18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                }}
+            >
+                <li style={onboardCheckRow}>
+                    <span style={onboardCheckMark} aria-hidden="true">
+                        <Icon icon={Check} size={11} />
+                    </span>
+                    생체·기기 인증으로 본인 확인
+                </li>
+                <li style={onboardCheckRow}>
+                    <span style={onboardCheckMark} aria-hidden="true">
+                        <Icon icon={Check} size={11} />
+                    </span>
+                    일정 시간 미사용 시 자동 재잠금
+                </li>
+            </ul>
 
             <button
                 type="button"
                 className="btn"
-                style={{ width: "100%", marginTop: 24 }}
+                style={{ width: "100%" }}
                 onClick={handleRegister}
                 disabled={phase === "registering"}
                 aria-busy={phase === "registering"}
             >
                 {phase === "registering"
-                    ? "passkey 만드는 중..."
-                    : "passkey 만들기"}
+                    ? "패스키 만드는 중..."
+                    : "패스키 만들기"}
             </button>
 
             {error && (
@@ -129,8 +162,37 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                     {error}
                 </div>
             )}
+
+            <div
+                className="progress-dots"
+                style={{ justifyContent: "center", marginTop: 18 }}
+                aria-hidden="true"
+            >
+                <span className="dot active" />
+                <span className="dot" />
+            </div>
         </section>
     )
+}
+
+// 체크 2줄(보조 안내) 공통 스타일.
+const onboardCheckRow: React.CSSProperties = {
+    display: "flex",
+    gap: 10,
+    alignItems: "center",
+    fontSize: 13.5,
+    color: "#444",
+}
+const onboardCheckMark: React.CSSProperties = {
+    flexShrink: 0,
+    width: 18,
+    height: 18,
+    borderRadius: "50%",
+    background: "var(--soft)",
+    color: "var(--ac)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
 }
 
 // 예외를 사용자에게 보여줄 한국어 메시지로 변환한다.
