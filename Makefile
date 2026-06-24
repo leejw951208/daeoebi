@@ -1,13 +1,16 @@
 # 개발 환경 전용 명령 모음. (운영 배포는 docker-compose.yml 로 별도 관리)
 # 개발 구성: DB 는 도커(docker-compose.dev.yml), web·API 는 호스트에서 직접 실행.
-.PHONY: help db-down db-reset migrate generate dev lint typecheck test build clean
+.PHONY: help db-down db-reset migrate generate dev stop-app down down-reset lint typecheck test build clean
 
 DEV_COMPOSE := docker compose -f docker-compose.dev.yml
 
 help:
 	@echo "개발 환경 명령:"
 	@echo "  make dev        DB(도커) 기동 + 마이그레이션 후 web·API(로컬) 동시 실행"
+	@echo "  make down       web·API(로컬) 종료 + 개발 DB 컨테이너 종료 (데이터 유지)"
+	@echo "  make down-reset web·API(로컬) 종료 + 개발 DB 컨테이너 종료 + 데이터 삭제"
 	@echo ""
+	@echo "  make stop-app   web·API(로컬) 개발 서버만 종료 (DB 유지)"
 	@echo "  make db-down    개발 DB 컨테이너 종료 (데이터 유지)"
 	@echo "  make db-reset   개발 DB 컨테이너 종료 + 데이터 삭제"
 	@echo "  make migrate    Prisma 마이그레이션 적용 (DB 자동 기동)"
@@ -41,6 +44,20 @@ dev:
 	$(DEV_COMPOSE) up -d --wait
 	pnpm --filter @secrets-manager/api exec prisma migrate deploy
 	pnpm -r --parallel run dev
+
+# ── 종료 ───────────────────────────────────────────────
+# 호스트에서 떠 있는 web(:3000)·API(:4000) 개발 서버를 포트 점유 프로세스 기준으로 종료한다.
+# 프로세스가 없어도 실패하지 않는다.
+stop-app:
+	@echo "▶ web·API 개발 서버 종료"
+	@pids="$$(lsof -ti tcp:3000 2>/dev/null; lsof -ti tcp:4000 2>/dev/null)"; \
+		if [ -n "$$pids" ]; then kill $$pids 2>/dev/null || true; else echo "  (실행 중인 개발 서버 없음)"; fi
+
+# 서비스(web·API) + DB 를 함께 내린다. DB 데이터는 유지한다.
+down: stop-app db-down
+
+# 서비스(web·API) + DB 를 함께 내리고 DB 데이터까지 삭제한다.
+down-reset: stop-app db-reset
 
 # ── 검증 ───────────────────────────────────────────────
 lint:
