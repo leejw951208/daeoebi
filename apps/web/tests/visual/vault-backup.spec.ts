@@ -1,4 +1,4 @@
-// vault/backup 라우트 시각 회귀. 잠금 상태에서는 layout 이 UnlockScreen 으로 fallback 한다.
+// 백업·복원 라우트 시각 회귀. VK 미보유(잠금) 상태에서는 layout 이 인증 화면으로 fallback 한다.
 import { test, expect } from "@playwright/test"
 
 test("vault backup route renders", async ({ page }) => {

@@ -6,7 +6,6 @@ const PAGES = [
     { name: "vault", url: "/" },
     { name: "vault-new", url: "/new" },
     { name: "vault-detail-missing", url: "/missing-id" },
-    { name: "vault-categories", url: "/categories" },
     { name: "vault-backup", url: "/backup" },
 ]
 
