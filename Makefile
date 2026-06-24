@@ -1,8 +1,9 @@
 # 개발 환경 전용 명령 모음. (운영 배포는 docker-compose.yml 로 별도 관리)
 # 개발 구성: DB 는 도커(docker-compose.dev.yml), web·API 는 호스트에서 직접 실행.
-.PHONY: help db-down db-reset migrate generate dev stop-app down down-reset lint typecheck test build clean
+.PHONY: help db-down db-reset migrate generate dev stop-app down down-reset lint typecheck test build clean prod-up prod-down prod-logs prod-ps prod-backup
 
 DEV_COMPOSE := docker compose -f docker-compose.dev.yml
+PROD_COMPOSE := docker compose -f docker-compose.yml
 
 help:
 	@echo "개발 환경 명령:"
@@ -21,6 +22,13 @@ help:
 	@echo "  make test       전체 테스트"
 	@echo "  make build      전체 빌드"
 	@echo "  make clean      node_modules / 빌드 산출물 제거"
+	@echo ""
+	@echo "운영 배포 명령 (VPS, docker-compose.yml — DEPLOY.md 참고):"
+	@echo "  make prod-up     빌드 + 기동"
+	@echo "  make prod-down   종료 (데이터 유지)"
+	@echo "  make prod-logs   로그 추적"
+	@echo "  make prod-ps     서비스 상태"
+	@echo "  make prod-backup DB 즉시 백업 (R2)"
 
 # ── DB (도커) ──────────────────────────────────────────
 db-down:
@@ -74,3 +82,20 @@ build:
 
 clean:
 	rm -rf node_modules apps/*/node_modules apps/*/dist apps/web/.next
+
+# ── 운영 배포 (VPS) ────────────────────────────────────
+# docker-compose.yml + .env + cloudflared/ 가 준비된 상태에서 실행한다(DEPLOY.md).
+prod-up:
+	$(PROD_COMPOSE) up -d --build
+
+prod-down:
+	$(PROD_COMPOSE) down
+
+prod-logs:
+	$(PROD_COMPOSE) logs -f
+
+prod-ps:
+	$(PROD_COMPOSE) ps
+
+prod-backup:
+	./scripts/backup-db.sh
