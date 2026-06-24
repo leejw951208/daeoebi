@@ -1,7 +1,7 @@
 {
-    "name": "Secrets Manager",
-    "short_name": "Secrets Manager",
-    "description": "로컬 1인용 정기 지출 + 비밀번호 보관함",
+    "name": "대외비",
+    "short_name": "대외비",
+    "description": "패스키로 잠그는 개인 비밀번호 보관함",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

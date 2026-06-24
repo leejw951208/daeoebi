@@ -110,7 +110,7 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 <span className="vault-emblem pop">
                     <Icon icon={Lock} size={26} />
                 </span>
-                <span className="eyebrow">개인 암호화 보관함</span>
+                <span className="eyebrow">대외비</span>
                 <h1 style={{ fontSize: 30, marginTop: 10, lineHeight: 1.25 }}>
                     비밀번호를 안전하게 잠가두고, 필요할 때만 엽니다
                 </h1>

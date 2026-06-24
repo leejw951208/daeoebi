@@ -30,7 +30,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
     function handleDownload() {
         const blob = new Blob(
             [
-                "Secrets Manager 복구코드\n",
+                "대외비 복구코드\n",
                 "분실 시 이 코드로만 보관함을 복구할 수 있습니다. 안전한 곳에 보관하세요.\n\n",
                 code,
                 "\n",

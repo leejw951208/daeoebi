@@ -6,13 +6,13 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister"
 import "./globals.css"
 
 export const metadata: Metadata = {
-    title: "Secrets Manager — 비밀번호 보관함",
+    title: "대외비 — 비밀번호 보관함",
     description: "로컬 1인용 비밀번호·시크릿 보관함",
     manifest: "/manifest.webmanifest",
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
-        title: "Secrets Manager",
+        title: "대외비",
     },
     icons: {
         icon: "/icons/icon-192.png",
