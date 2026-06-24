@@ -1,26 +1,9 @@
-// 전역 레이아웃. 단일 모바일 셸 + 데스크탑 phone-frame + PWA 메타 + Strongbox 타입.
+// 전역 레이아웃. 단일 모바일 셸 + 데스크탑 phone-frame + PWA 메타 + Pretendard(Ink 테마) 타입.
 import type { Metadata, Viewport } from "next"
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google"
 import { BottomTabBar } from "@/components/BottomTabBar"
 import { UpdateToast } from "@/components/UpdateToast"
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister"
 import "./globals.css"
-
-// 기계 라벨·숫자용 디스플레이 페이스. 한글은 var(--font-body) 로 폴백.
-const spaceGrotesk = Space_Grotesk({
-    subsets: ["latin"],
-    weight: ["500", "700"],
-    variable: "--font-display-grotesk",
-    display: "swap",
-})
-
-// 비밀값·카운트다운용 모노 페이스.
-const jetBrainsMono = JetBrains_Mono({
-    subsets: ["latin"],
-    weight: ["400", "500", "700"],
-    variable: "--font-mono-jetbrains",
-    display: "swap",
-})
 
 export const metadata: Metadata = {
     title: "Secrets Manager — 비밀번호 보관함",
@@ -28,7 +11,7 @@ export const metadata: Metadata = {
     manifest: "/manifest.webmanifest",
     appleWebApp: {
         capable: true,
-        statusBarStyle: "black-translucent",
+        statusBarStyle: "default",
         title: "Secrets Manager",
     },
     icons: {
@@ -41,7 +24,7 @@ export const viewport: Viewport = {
     width: "device-width",
     initialScale: 1,
     viewportFit: "cover",
-    themeColor: "#12181c",
+    themeColor: "#ffffff",
 }
 
 export default function RootLayout({
@@ -50,10 +33,15 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html
-            lang="ko"
-            className={`${spaceGrotesk.variable} ${jetBrainsMono.variable}`}
-        >
+        <html lang="ko">
+            <head>
+                {/* Pretendard — 본문 한글·영문 페이스. 폴백 system-ui. */}
+                <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+                <link
+                    rel="stylesheet"
+                    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
+                />
+            </head>
             <body>
                 <div className="phone-frame">
                     <main className="container">{children}</main>

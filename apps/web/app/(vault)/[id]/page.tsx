@@ -35,7 +35,7 @@ export default function SecretDetailPage() {
     const params = useParams<{ id: string }>()
     const id = params?.id
     const router = useRouter()
-    const { vaultKey, resetIdle } = useVault()
+    const { vaultKey, resetIdle, idleSecondsRemaining, onLock } = useVault()
     const [data, setData] = useState<Loaded | null>(null)
     const [categories, setCategories] = useState<Category[]>([])
     const [state, setState] = useState<LoadState>("idle")
@@ -117,16 +117,43 @@ export default function SecretDetailPage() {
 
     if (state === "missing") {
         return (
-            <section>
-                <header className="page-header">
-                    <h1>항목을 찾을 수 없습니다</h1>
-                    <Link className="btn secondary" href="/">
-                        ← 목록
-                    </Link>
-                </header>
-                <div className="empty">
-                    요청한 항목이 존재하지 않거나 삭제되었습니다.
+            <section
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    minHeight: "70vh",
+                }}
+            >
+                <div
+                    className="pop"
+                    style={{
+                        fontSize: 72,
+                        fontWeight: 800,
+                        letterSpacing: "-0.04em",
+                        color: "var(--ac)",
+                        lineHeight: 1,
+                        marginBottom: 8,
+                    }}
+                    aria-hidden="true"
+                >
+                    404
                 </div>
+                <h1 style={{ fontSize: 18, marginBottom: 8 }}>
+                    항목을 찾을 수 없어요
+                </h1>
+                <p
+                    className="muted"
+                    style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 240, marginBottom: 28 }}
+                >
+                    삭제되었거나 주소가 잘못되었을 수 있어요. 보관함으로 돌아가 다시
+                    찾아보세요.
+                </p>
+                <Link className="btn" href="/">
+                    보관함으로 돌아가기
+                </Link>
             </section>
         )
     }
@@ -161,17 +188,25 @@ export default function SecretDetailPage() {
         }
         return (
             <section>
-                <header className="page-header">
-                    <h1>항목 수정</h1>
+                <div
+                    className="sticky-header"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    }}
+                >
                     <button
                         type="button"
-                        className="btn secondary"
+                        className="btn-text"
                         onClick={() => setMode("view")}
                     >
-                        ← 취소
+                        취소
                     </button>
-                </header>
-                <div style={{ marginTop: 16 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700 }}>항목 수정</div>
+                    <span style={{ width: 36 }} />
+                </div>
+                <div>
                     <SecretForm
                         siteId={data.siteId}
                         initial={initial}
@@ -188,12 +223,27 @@ export default function SecretDetailPage() {
 
     return (
         <section>
-            <header className="page-header">
-                <h1>{data.label}</h1>
-                <Link className="btn secondary" href="/">
-                    ← 목록
+            <div
+                className="sticky-header"
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                }}
+            >
+                <Link className="btn-text" href="/">
+                    ← 보관함
                 </Link>
-            </header>
+                <button
+                    type="button"
+                    className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
+                    onClick={onLock}
+                    aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초. 지금 잠그기`}
+                >
+                    <span className="dot" aria-hidden="true" />
+                    {formatMmSs(Math.max(0, idleSecondsRemaining))}
+                </button>
+            </div>
 
             {error && (
                 <div role="alert" className="error-box">
@@ -201,31 +251,27 @@ export default function SecretDetailPage() {
                 </div>
             )}
 
-            <section className="card" style={{ marginTop: 16 }}>
-                <h2 className="section-title" style={{ marginTop: 0 }}>
-                    제목·메타
-                </h2>
-                <dl style={{ display: "grid", gap: 8, margin: 0 }}>
-                    <DetailRow label="제목" value={data.label} />
-                    {categoryLabel && (
-                        <DetailRow label="카테고리" value={categoryLabel} />
-                    )}
-                    <DetailRow
-                        label="생성"
-                        value={new Date(data.createdAt).toLocaleString("ko-KR")}
-                    />
-                    <DetailRow
-                        label="수정"
-                        value={new Date(data.updatedAt).toLocaleString("ko-KR")}
-                    />
-                </dl>
-            </section>
+            <div className="stagger">
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        marginBottom: 22,
+                    }}
+                >
+                    <span className="avatar lg" aria-hidden="true">
+                        {data.label.trim()[0] ?? "·"}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                        <h1 style={{ fontSize: 21 }}>{data.label}</h1>
+                        {categoryLabel && (
+                            <span className="entry-sub">{categoryLabel}</span>
+                        )}
+                    </div>
+                </div>
 
-            <section className="card" style={{ marginTop: 16 }}>
-                <h2 className="section-title" style={{ marginTop: 0 }}>
-                    필드
-                </h2>
-                <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ display: "grid", gap: 9 }}>
                     {data.fields.length === 0 && (
                         <p className="muted">등록된 필드가 없습니다.</p>
                     )}
@@ -239,25 +285,34 @@ export default function SecretDetailPage() {
                         />
                     ))}
                     {data.memo && (
-                        <div
-                            className="secret-plate"
-                            style={{ display: "block" }}
-                        >
-                            <div className="secret-label">메모</div>
+                        <div className="secret-plate">
+                            <div className="secret-label" style={{ marginBottom: 6 }}>
+                                메모
+                            </div>
                             <div className="secret-memo">{data.memo}</div>
                         </div>
                     )}
                 </div>
-            </section>
 
-            <section className="card" style={{ marginTop: 16 }}>
-                <h2 className="section-title" style={{ marginTop: 0 }}>
-                    액션
-                </h2>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <dl
+                    className="secret-plate"
+                    style={{ marginTop: 9, display: "grid", gap: 8 }}
+                >
+                    <DetailRow
+                        label="생성"
+                        value={new Date(data.createdAt).toLocaleString("ko-KR")}
+                    />
+                    <DetailRow
+                        label="수정"
+                        value={new Date(data.updatedAt).toLocaleString("ko-KR")}
+                    />
+                </dl>
+
+                <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
                     <button
                         type="button"
-                        className="btn"
+                        className="btn secondary"
+                        style={{ flex: 1, minHeight: 48 }}
                         onClick={() => setMode("edit")}
                     >
                         수정
@@ -265,12 +320,13 @@ export default function SecretDetailPage() {
                     <button
                         type="button"
                         className="btn danger"
+                        style={{ flex: 1, minHeight: 48 }}
                         onClick={() => setConfirmDelete(true)}
                     >
                         삭제
                     </button>
                 </div>
-            </section>
+            </div>
 
             <ConfirmDialog
                 open={confirmDelete}
@@ -292,4 +348,11 @@ function DetailRow({ label, value }: { label: string; value: string }) {
             <dd>{value}</dd>
         </div>
     )
+}
+
+// 초 → m:ss. 자동 잠금 타이머 표시용.
+function formatMmSs(totalSeconds: number): string {
+    const m = Math.floor(totalSeconds / 60)
+    const s = totalSeconds % 60
+    return `${m}:${String(s).padStart(2, "0")}`
 }

@@ -174,17 +174,17 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
     return (
         <form
             onSubmit={handleSubmit}
-            className="card"
-            style={{ display: "grid", gap: 16 }}
+            style={{ display: "grid", gap: 22 }}
         >
-            <h3 style={{ margin: 0 }}>{initial ? "항목 수정" : "항목 추가"}</h3>
-
-            <div className="form-row">
-                <label htmlFor="secret-label">제목 *</label>
+            <div className="form-row" style={{ margin: 0 }}>
+                <label htmlFor="secret-label">
+                    제목 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>· 평문 저장</span>
+                </label>
                 <input
                     id="secret-label"
                     type="text"
                     className="field-control"
+                    placeholder="예: 국민은행 인터넷뱅킹"
                     value={label}
                     onChange={(e) => {
                         resetIdle()
@@ -196,8 +196,10 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                 />
             </div>
 
-            <div className="form-row">
-                <label htmlFor="secret-category">카테고리 (선택)</label>
+            <div className="form-row" style={{ margin: 0 }}>
+                <label htmlFor="secret-category">
+                    카테고리 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>· 선택</span>
+                </label>
                 <select
                     id="secret-category"
                     className="field-control"
@@ -230,118 +232,185 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             </div>
 
             <fieldset style={{ border: "none", padding: 0, margin: 0 }}>
-                <legend style={{ fontWeight: 700, marginBottom: 8 }}>
-                    필드 ({usedNames.size}/{MAX_FIELDS})
+                <legend
+                    style={{
+                        display: "flex",
+                        width: "100%",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 9,
+                        padding: 0,
+                    }}
+                >
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--color-text-muted)" }}>
+                        필드 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>· 암호화</span>
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#bcbcbc" }}>
+                        {usedNames.size}/{MAX_FIELDS}
+                    </span>
                 </legend>
 
-                {rows.map((row, idx) => (
-                    <div
-                        key={row.key}
-                        className="form-row"
+                {/* 추천 칩 가로 스크롤 (quick-add) */}
+                <div
+                    className="scr"
+                    style={{
+                        display: "flex",
+                        gap: 6,
+                        overflowX: "auto",
+                        paddingBottom: 8,
+                        marginBottom: 9,
+                    }}
+                >
+                    <span
                         style={{
-                            gridTemplateColumns: "1fr 1fr auto",
-                            gap: 8,
-                            marginTop: 8,
-                            alignItems: "end",
+                            flexShrink: 0,
+                            fontSize: 11,
+                            color: "#bbb",
+                            alignSelf: "center",
+                            fontWeight: 600,
                         }}
                     >
-                        <input
-                            className="field-control"
-                            aria-label={`필드 ${idx + 1} 이름`}
-                            placeholder="필드 이름"
-                            value={row.name}
-                            onChange={(e) =>
-                                updateRow(idx, { name: e.target.value })
+                        추천
+                    </span>
+                    {FIELD_SUGGESTIONS.map((s) => (
+                        <button
+                            key={s.name}
+                            type="button"
+                            className="chip"
+                            onClick={() => addRow(s.name)}
+                            disabled={
+                                usedNames.has(s.name) ||
+                                rows.length >= MAX_FIELDS
                             }
-                            maxLength={128}
-                        />
-                        <input
-                            className="field-control"
-                            aria-label={`필드 ${idx + 1} 값`}
-                            placeholder="값"
-                            value={row.value}
-                            onChange={(e) =>
-                                updateRow(idx, { value: e.target.value })
-                            }
-                            maxLength={4096}
-                            autoComplete="off"
-                        />
-                        <div style={{ display: "flex", gap: 4 }}>
-                            <button
-                                type="button"
-                                className="secret-btn"
-                                onClick={() => moveRow(idx, -1)}
-                                disabled={idx === 0}
-                                aria-label={`필드 ${idx + 1} 위로`}
-                            >
-                                ↑
-                            </button>
-                            <button
-                                type="button"
-                                className="secret-btn"
-                                onClick={() => moveRow(idx, 1)}
-                                disabled={idx === rows.length - 1}
-                                aria-label={`필드 ${idx + 1} 아래로`}
-                            >
-                                ↓
-                            </button>
-                            <button
-                                type="button"
-                                className="secret-btn"
-                                onClick={() => removeRow(idx)}
-                                aria-label={`필드 ${idx + 1} 삭제`}
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    </div>
-                ))}
-
-                <div style={{ marginTop: 12 }}>
-                    <button
-                        type="button"
-                        className="btn secondary"
-                        onClick={() => addRow()}
-                        disabled={rows.length >= MAX_FIELDS}
-                    >
-                        + 빈 필드 추가
-                    </button>
+                        >
+                            + {s.name}
+                        </button>
+                    ))}
                 </div>
 
-                <div style={{ marginTop: 12 }}>
-                    <span className="muted">추천 필드</span>
-                    <div
+                <div style={{ display: "grid", gap: 9 }}>
+                    {rows.map((row, idx) => (
+                        <div
+                            key={row.key}
+                            style={{
+                                border: "1.5px solid #ececec",
+                                borderRadius: 14,
+                                background: "var(--tint)",
+                                padding: "11px 12px",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 8,
+                                animation: "fadeUp 0.3s both",
+                            }}
+                        >
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span
+                                    aria-hidden="true"
+                                    style={{ color: "#cdcdcd", fontSize: 16, lineHeight: 1 }}
+                                >
+                                    ⋮⋮
+                                </span>
+                                <input
+                                    aria-label={`필드 ${idx + 1} 이름`}
+                                    placeholder="필드 이름"
+                                    value={row.name}
+                                    onChange={(e) =>
+                                        updateRow(idx, { name: e.target.value })
+                                    }
+                                    maxLength={128}
+                                    style={{
+                                        flex: 1,
+                                        minHeight: 40,
+                                        border: "none",
+                                        background: "none",
+                                        font: "inherit",
+                                        fontSize: 14.5,
+                                        fontWeight: 700,
+                                        color: "#222",
+                                        outline: "none",
+                                        padding: 0,
+                                    }}
+                                />
+                                <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                                    <button
+                                        type="button"
+                                        className="secret-btn"
+                                        onClick={() => moveRow(idx, -1)}
+                                        disabled={idx === 0}
+                                        aria-label={`필드 ${idx + 1} 위로`}
+                                    >
+                                        ↑
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="secret-btn"
+                                        onClick={() => moveRow(idx, 1)}
+                                        disabled={idx === rows.length - 1}
+                                        aria-label={`필드 ${idx + 1} 아래로`}
+                                    >
+                                        ↓
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="secret-btn"
+                                        style={{ color: "#d99" }}
+                                        onClick={() => removeRow(idx)}
+                                        aria-label={`필드 ${idx + 1} 삭제`}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                            <input
+                                className="field-control"
+                                aria-label={`필드 ${idx + 1} 값`}
+                                placeholder="값 입력"
+                                value={row.value}
+                                onChange={(e) =>
+                                    updateRow(idx, { value: e.target.value })
+                                }
+                                maxLength={4096}
+                                autoComplete="off"
+                                style={{
+                                    minHeight: 44,
+                                    border: "1px solid #e9e9e9",
+                                    borderRadius: 10,
+                                    background: "#fff",
+                                }}
+                            />
+                        </div>
+                    ))}
+
+                    <button
+                        type="button"
+                        onClick={() => addRow()}
+                        disabled={rows.length >= MAX_FIELDS}
                         style={{
-                            display: "flex",
-                            gap: 6,
-                            flexWrap: "wrap",
-                            marginTop: 6,
+                            minHeight: 46,
+                            border: "1.5px dashed #d8d8d8",
+                            borderRadius: 13,
+                            background: "none",
+                            font: "inherit",
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: "var(--ac)",
+                            cursor: rows.length >= MAX_FIELDS ? "not-allowed" : "pointer",
+                            opacity: rows.length >= MAX_FIELDS ? 0.5 : 1,
                         }}
                     >
-                        {FIELD_SUGGESTIONS.map((s) => (
-                            <button
-                                key={s.name}
-                                type="button"
-                                className="btn secondary"
-                                style={{ minHeight: 44 }}
-                                onClick={() => addRow(s.name)}
-                                disabled={
-                                    usedNames.has(s.name) ||
-                                    rows.length >= MAX_FIELDS
-                                }
-                            >
-                                {s.name}
-                            </button>
-                        ))}
-                    </div>
+                        + 필드 추가
+                    </button>
                 </div>
             </fieldset>
 
-            <div className="form-row">
-                <label htmlFor="secret-memo">메모 (선택)</label>
+            <div className="form-row" style={{ margin: 0 }}>
+                <label htmlFor="secret-memo">
+                    메모 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>· 암호화 · 선택</span>
+                </label>
                 <textarea
                     id="secret-memo"
                     className="field-control"
+                    placeholder="선택 입력"
                     value={memo}
                     onChange={(e) => {
                         resetIdle()
@@ -352,15 +421,41 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                 />
             </div>
 
+            <div
+                style={{
+                    display: "flex",
+                    gap: 9,
+                    alignItems: "flex-start",
+                    padding: "13px 14px",
+                    borderRadius: 13,
+                    background: "var(--soft)",
+                }}
+            >
+                <span aria-hidden="true" style={{ fontSize: 14, lineHeight: 1.4 }}>
+                    🔒
+                </span>
+                <span style={{ fontSize: 12.5, lineHeight: 1.5, color: "#666", fontWeight: 500 }}>
+                    제목·카테고리만 평문으로 저장되고, 필드 이름·값·메모는 통째로
+                    암호화됩니다.
+                </span>
+            </div>
+
             {error && (
                 <div role="alert" className="error-box">
                     {error}
                 </div>
             )}
 
-            <div style={{ display: "flex", gap: 8 }}>
-                <button type="submit" className="btn" disabled={submitting}>
-                    {submitting ? "저장 중..." : initial ? "저장" : "추가"}
+            <div style={{ display: "flex", gap: 10 }}>
+                <button
+                    type="submit"
+                    className="btn"
+                    style={{ flex: 1 }}
+                    disabled={submitting}
+                >
+                    {submitting
+                        ? "암호화하여 저장 중…"
+                        : "암호화하여 저장"}
                 </button>
                 <button
                     type="button"

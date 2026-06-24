@@ -6,25 +6,19 @@ import { BackupPanel } from "../BackupPanel"
 export default function VaultBackupPage() {
     return (
         <section>
-            <header
-                style={{
-                    display: "flex",
-                    alignItems: "baseline",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: 12,
-                }}
+            <div
+                className="sticky-header"
+                style={{ display: "flex", alignItems: "center", gap: 10 }}
             >
-                <div style={{ display: "grid", gap: 4 }}>
-                    <span className="eyebrow">Backup · Restore</span>
-                    <h1>백업·복원</h1>
-                </div>
-                <Link className="btn secondary" href="/">
-                    ← 보관함
+                <Link className="btn-text" href="/" aria-label="보관함으로">
+                    ←
                 </Link>
-            </header>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em" }}>
+                    백업 · 복원
+                </div>
+            </div>
 
-            <div style={{ marginTop: 16 }}>
+            <div>
                 <BackupPanel onImported={async () => undefined} />
             </div>
         </section>

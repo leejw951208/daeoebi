@@ -48,81 +48,85 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
     }
 
     const saved = copied || downloaded
+    // 그룹 표기(4글자-…)를 2열 그리드 셀로 분해한다.
+    const parts = code.split("-")
 
     return (
         <section style={{ maxWidth: 480, margin: "0 auto", paddingTop: 24 }}>
-            <span className="eyebrow">Secrets · 복구코드</span>
-            <h1 style={{ marginTop: 6 }}>복구코드를 안전하게 보관하세요</h1>
-            <p className="muted" style={{ marginTop: 8 }}>
-                기기를 분실하면 이 복구코드로만 보관함을 다시 열 수 있습니다.
-                서버에는 저장되지 않으니 지금 반드시 보관하세요.
+            <div
+                className="progress-dots"
+                style={{ marginBottom: 26 }}
+                aria-hidden="true"
+            >
+                <span className="dot" />
+                <span className="dot active" />
+            </div>
+            <h1>복구코드를 저장하세요</h1>
+            <p className="muted" style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
+                기기를 잃어버리면 이 코드로만 보관함을 되찾을 수 있습니다. 화면 캡처
+                대신 안전한 곳에 따로 보관하세요. 서버에는 저장되지 않습니다.
             </p>
 
-            <div
-                className="card"
-                style={{ marginTop: 20, display: "grid", gap: 12 }}
-            >
-                <code
-                    className="secret-value revealed"
+            <div className="recovery-box" style={{ marginTop: 22 }}>
+                <div
                     style={{
-                        fontSize: 18,
-                        lineHeight: 1.6,
-                        wordBreak: "break-all",
-                        userSelect: "all",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#999",
+                        letterSpacing: "0.08em",
+                        marginBottom: 14,
                     }}
-                    aria-label="복구코드"
                 >
-                    {code}
-                </code>
-
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                        type="button"
-                        className="btn secondary"
-                        onClick={handleCopy}
-                    >
-                        {copied ? "복사됨" : "복사"}
-                    </button>
-                    <button
-                        type="button"
-                        className="btn secondary"
-                        onClick={handleDownload}
-                    >
-                        {downloaded ? "다운로드됨" : "파일로 저장"}
-                    </button>
+                    RECOVERY CODE
+                </div>
+                <div
+                    className="recovery-grid"
+                    role="text"
+                    aria-label={`복구코드 ${code}`}
+                >
+                    {parts.map((p, i) => (
+                        <div key={i}>{p}</div>
+                    ))}
                 </div>
             </div>
 
-            <div
-                role="alert"
-                className="error-box"
-                style={{ marginTop: 16 }}
-            >
-                이 화면을 벗어나면 복구코드를 다시 볼 수 없습니다.
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                <button
+                    type="button"
+                    className="btn secondary"
+                    style={{ flex: 1, minHeight: 48 }}
+                    onClick={handleCopy}
+                >
+                    {copied ? "✓ 복사됨" : "복사"}
+                </button>
+                <button
+                    type="button"
+                    className="btn secondary"
+                    style={{ flex: 1, minHeight: 48 }}
+                    onClick={handleDownload}
+                >
+                    {downloaded ? "✓ 다운로드됨" : "다운로드"}
+                </button>
             </div>
 
             <label
-                style={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "flex-start",
-                    marginTop: 16,
-                    minHeight: 44,
-                }}
+                className="ack-label"
+                style={{ marginTop: 20 }}
             >
                 <input
                     type="checkbox"
                     checked={acknowledged}
                     onChange={(e) => setAcknowledged(e.target.checked)}
-                    style={{ width: 22, height: 22, marginTop: 2 }}
                 />
-                <span>복구코드를 안전한 곳에 저장했습니다.</span>
+                <span style={{ fontSize: 13.5, lineHeight: 1.5, color: "#444", fontWeight: 500 }}>
+                    복구코드를 안전한 곳에 보관했습니다.
+                </span>
             </label>
 
             <button
                 type="button"
                 className="btn"
-                style={{ width: "100%", marginTop: 16 }}
+                style={{ width: "100%", marginTop: 12 }}
                 disabled={!saved || !acknowledged}
                 onClick={onConfirmed}
             >

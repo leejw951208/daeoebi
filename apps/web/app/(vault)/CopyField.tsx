@@ -64,33 +64,35 @@ export function CopyField({ label, value, sensitive, onActivity }: Props) {
 
     return (
         <div className="secret-plate">
-            <span className="secret-label">{label}</span>
+            <div className="secret-plate-head">
+                <span className="secret-label">{label}</span>
+                <span className="secret-actions">
+                    {sensitive && (
+                        <button
+                            type="button"
+                            className="secret-btn"
+                            onClick={() => {
+                                onActivity?.()
+                                setRevealed((v) => !v)
+                            }}
+                            aria-pressed={revealed}
+                        >
+                            {revealed ? "숨김" : "표시"}
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        className="secret-btn accent"
+                        onClick={handleCopy}
+                    >
+                        {remaining !== null ? `복사됨 ${remaining}s` : "복사"}
+                    </button>
+                </span>
+            </div>
             <span
                 className={`secret-value${masked ? " masked" : revealed ? " revealed" : ""}`}
             >
                 {masked ? MASK : value}
-            </span>
-            <span className="secret-actions">
-                {sensitive && (
-                    <button
-                        type="button"
-                        className="secret-btn"
-                        onClick={() => {
-                            onActivity?.()
-                            setRevealed((v) => !v)
-                        }}
-                        aria-pressed={revealed}
-                    >
-                        {revealed ? "숨기기" : "보기"}
-                    </button>
-                )}
-                <button
-                    type="button"
-                    className="secret-btn"
-                    onClick={handleCopy}
-                >
-                    복사
-                </button>
             </span>
 
             {remaining !== null && (

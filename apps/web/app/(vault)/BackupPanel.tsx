@@ -97,74 +97,191 @@ export function BackupPanel({ onImported }: Props) {
     }
 
     return (
-        <section
-            className="card"
-            style={{ marginTop: 16, display: "grid", gap: 12 }}
+        <div
+            className="stagger"
+            style={{ display: "grid", gap: 14 }}
             aria-label="백업과 복원"
         >
-            <h3 style={{ margin: 0 }}>백업·복원</h3>
-            <p className="muted" style={{ margin: 0 }}>
-                백업 파일에는 암호화된 데이터만 담깁니다. 복호화는 이 기기의
-                보관함 키로만 가능합니다.
-            </p>
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {/* 내보내기 카드 */}
+            <section
+                className="card"
+                style={{ background: "var(--tint)", padding: 20 }}
+            >
+                <h2 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}>
+                    암호화 백업 내보내기
+                </h2>
+                <p
+                    style={{
+                        fontSize: 13.5,
+                        lineHeight: 1.55,
+                        color: "#777",
+                        margin: "0 0 16px",
+                    }}
+                >
+                    모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의 보관함
+                    키로만 가능합니다.
+                </p>
                 <button
                     type="button"
                     className="btn"
+                    style={{ width: "100%", minHeight: 50 }}
                     onClick={handleExport}
                     disabled={busy}
                 >
-                    백업 다운로드
+                    백업 파일 다운로드
                 </button>
-            </div>
+            </section>
 
-            <div style={{ display: "grid", gap: 8 }}>
-                <label htmlFor="import-file">백업 파일</label>
-                <input
-                    id="import-file"
-                    ref={inputRef}
-                    type="file"
-                    className="field-control"
-                    accept=".json,application/json"
-                    onChange={handleFileChosen}
-                    disabled={busy}
-                />
-                {pendingName && (
-                    <span className="muted">선택됨. {pendingName}</span>
-                )}
-
-                <label htmlFor="import-mode">충돌 처리</label>
-                <select
-                    id="import-mode"
-                    className="field-control"
-                    value={mode}
-                    onChange={(e) => setMode(e.target.value as ImportMode)}
-                    disabled={busy}
+            {/* 가져오기 카드 */}
+            <section className="card" style={{ padding: 20 }}>
+                <h2 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}>
+                    복원 가져오기
+                </h2>
+                <p
+                    style={{
+                        fontSize: 13.5,
+                        lineHeight: 1.55,
+                        color: "#777",
+                        margin: "0 0 14px",
+                    }}
                 >
-                    <option value="reject">
-                        중단 (기본). 충돌이 있으면 복원하지 않음
-                    </option>
-                    <option value="skip">건너뛰기. 충돌 항목은 무시</option>
-                    <option value="replace">
-                        덮어쓰기. 충돌 항목을 새 내용으로 교체
-                    </option>
-                </select>
+                    백업 파일을 선택하고 충돌 처리 방식을 고르세요.
+                </p>
 
-                <div>
-                    <button
-                        type="button"
-                        className="btn"
-                        onClick={handleImport}
-                        disabled={busy || pendingPayload === null}
+                {/* dashed 드롭존 (파일 선택) */}
+                <label
+                    htmlFor="import-file"
+                    style={{
+                        display: "block",
+                        border: "1.5px dashed #d8d8d8",
+                        borderRadius: 14,
+                        padding: 22,
+                        textAlign: "center",
+                        background: "var(--tint)",
+                        marginBottom: 16,
+                        cursor: busy ? "not-allowed" : "pointer",
+                    }}
+                >
+                    <div
+                        aria-hidden="true"
+                        style={{ fontSize: 24, color: "#ccc", marginBottom: 6 }}
                     >
-                        복원 실행
-                    </button>
+                        ⤓
+                    </div>
+                    <div style={{ fontSize: 13.5, color: "#999", fontWeight: 500 }}>
+                        {pendingName ?? "파일을 선택하세요"}
+                    </div>
+                    <input
+                        id="import-file"
+                        ref={inputRef}
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={handleFileChosen}
+                        disabled={busy}
+                        style={{ position: "absolute", left: -9999 }}
+                    />
+                </label>
+
+                <div
+                    style={{
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: "var(--color-text-muted)",
+                        marginBottom: 9,
+                    }}
+                >
+                    충돌 처리
                 </div>
-            </div>
+                <fieldset
+                    style={{
+                        border: "none",
+                        padding: 0,
+                        margin: 0,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                    }}
+                >
+                    <legend style={{ position: "absolute", left: -9999 }}>
+                        충돌 처리 방식
+                    </legend>
+                    {CONFLICT_MODES.map((m) => {
+                        const on = mode === m.value
+                        return (
+                            <label
+                                key={m.value}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 12,
+                                    width: "100%",
+                                    padding: "13px 15px",
+                                    border: `1.5px solid ${on ? "var(--ac)" : "#ececec"}`,
+                                    borderRadius: 13,
+                                    background: on ? "var(--tint)" : "#fff",
+                                    cursor: busy ? "not-allowed" : "pointer",
+                                    transition: "all 0.16s",
+                                }}
+                            >
+                                <input
+                                    type="radio"
+                                    name="import-mode"
+                                    value={m.value}
+                                    checked={on}
+                                    onChange={() => setMode(m.value)}
+                                    disabled={busy}
+                                    style={{
+                                        width: 19,
+                                        height: 19,
+                                        accentColor: "var(--ac)",
+                                        flexShrink: 0,
+                                    }}
+                                />
+                                <span style={{ flex: 1, textAlign: "left" }}>
+                                    <span
+                                        style={{
+                                            display: "block",
+                                            fontSize: 14,
+                                            fontWeight: 700,
+                                            color: "#222",
+                                        }}
+                                    >
+                                        {m.label}
+                                    </span>
+                                    <span
+                                        style={{
+                                            display: "block",
+                                            fontSize: 12,
+                                            color: "#999",
+                                            marginTop: 1,
+                                        }}
+                                    >
+                                        {m.desc}
+                                    </span>
+                                </span>
+                            </label>
+                        )
+                    })}
+                </fieldset>
+
+                <button
+                    type="button"
+                    className="btn"
+                    style={{ width: "100%", marginTop: 16, minHeight: 50 }}
+                    onClick={handleImport}
+                    disabled={busy || pendingPayload === null}
+                >
+                    복원 실행
+                </button>
+            </section>
 
             {status && (
-                <div role="status" aria-live="polite">
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="card"
+                    style={{ fontSize: 13.5, color: "#444" }}
+                >
                     {status}
                 </div>
             )}
@@ -173,6 +290,25 @@ export function BackupPanel({ onImported }: Props) {
                     {error}
                 </div>
             )}
-        </section>
+        </div>
     )
 }
+
+// 충돌 처리 모드(거부/건너뛰기/덮어쓰기) 라벨·설명.
+const CONFLICT_MODES: { value: ImportMode; label: string; desc: string }[] = [
+    {
+        value: "reject",
+        label: "거부",
+        desc: "충돌이 있으면 전체 가져오기를 중단합니다.",
+    },
+    {
+        value: "skip",
+        label: "건너뛰기",
+        desc: "기존 항목은 유지하고 새 항목만 추가합니다.",
+    },
+    {
+        value: "replace",
+        label: "덮어쓰기",
+        desc: "같은 항목은 백업 내용으로 교체합니다.",
+    },
+]

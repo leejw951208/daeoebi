@@ -96,7 +96,7 @@ export function EntriesScreen() {
     if (siteState.status === "error") {
         return (
             <section>
-                <h1>비밀번호 보관함</h1>
+                <h1>보관함</h1>
                 <div role="alert" className="error-box">
                     {siteState.message}
                 </div>
@@ -114,29 +114,65 @@ export function EntriesScreen() {
 
     return (
         <section>
-            <header className="page-header" style={{ alignItems: "center" }}>
-                <div style={{ display: "grid", gap: 4 }}>
-                    <span className="eyebrow">Secrets · Vault</span>
-                    <h1>비밀번호 보관함</h1>
-                </div>
-                <div className="entry-side">
-                    <span
-                        className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
-                        aria-live="polite"
-                        aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초`}
-                    >
-                        <span className="dot" aria-hidden="true" />
-                        {formatMmSs(Math.max(0, idleSecondsRemaining))}
-                    </span>
+            <div className="sticky-header">
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 12,
+                    }}
+                >
+                    <div>
+                        <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: "-0.03em" }}>
+                            보관함
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)", fontWeight: 500 }}>
+                            {secrets.length}개 항목
+                        </div>
+                    </div>
                     <button
                         type="button"
-                        className="btn secondary"
+                        className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
                         onClick={onLock}
+                        aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초. 지금 잠그기`}
                     >
-                        잠그기
+                        <span className="dot" aria-hidden="true" />
+                        {formatMmSs(Math.max(0, idleSecondsRemaining))} 잠그기
                     </button>
                 </div>
-            </header>
+
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    {categories.length > 0 && (
+                        <select
+                            className="field-control compact"
+                            value={categoryFilter}
+                            onChange={(e) => updateFilter({ cat: e.target.value })}
+                            aria-label="카테고리 필터"
+                            style={{ minHeight: 42, width: "auto", borderRadius: 13 }}
+                        >
+                            <option value="ALL">전체</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                    {cat.label}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    <div className="search-bar" style={{ flex: 1 }}>
+                        <span aria-hidden="true" style={{ color: "#aaa", fontSize: 15 }}>
+                            ⌕
+                        </span>
+                        <input
+                            type="search"
+                            placeholder="제목 검색"
+                            value={query}
+                            onChange={(e) => updateFilter({ q: e.target.value })}
+                            aria-label="제목 검색"
+                        />
+                    </div>
+                </div>
+            </div>
 
             {idleWarning && (
                 <div role="alert" className="error-box">
@@ -144,75 +180,66 @@ export function EntriesScreen() {
                 </div>
             )}
 
-            <nav
-                aria-label="보관함 관리"
-                className="toolbar"
-                style={{ marginTop: 20 }}
-            >
-                <Link className="btn secondary" href="/backup">
+            <nav aria-label="보관함 관리" className="toolbar">
+                <Link className="btn secondary" style={{ minHeight: 42 }} href="/backup">
                     백업·복원
-                </Link>
-                <Link className="btn push-end" href="/new">
-                    + 항목 추가
                 </Link>
             </nav>
 
-            <div
-                style={{
-                    display: "flex",
-                    gap: 8,
-                    flexWrap: "wrap",
-                    marginTop: 8,
-                }}
-            >
-                <select
-                    className="field-control"
-                    value={categoryFilter}
-                    onChange={(e) => updateFilter({ cat: e.target.value })}
-                    aria-label="카테고리 필터"
-                    style={{ width: "auto" }}
-                >
-                    <option value="ALL">전체</option>
-                    {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                            {cat.label}
-                        </option>
-                    ))}
-                </select>
-                <input
-                    className="field-control"
-                    type="search"
-                    placeholder="제목 검색"
-                    value={query}
-                    onChange={(e) => updateFilter({ q: e.target.value })}
-                    style={{ flex: 1, minWidth: 200 }}
-                    aria-label="제목 검색"
-                />
-            </div>
-
             {error && (
-                <div
-                    role="alert"
-                    className="error-box"
-                    style={{ marginTop: 12 }}
-                >
+                <div role="alert" className="error-box">
                     {error}
                 </div>
             )}
 
-            <div style={{ marginTop: 16 }}>
+            <div>
                 {(state === "loading" || siteState.status === "loading") && (
                     <SkeletonCard lines={3} />
                 )}
                 {state === "loaded" && secrets.length === 0 && (
-                    <div className="empty">
-                        {query.trim()
-                            ? "검색 결과가 없습니다."
-                            : "아직 보관된 항목이 없습니다. 첫 항목을 추가하세요."}
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 40,
+                            textAlign: "center",
+                            animation: "fadeUp 0.4s both",
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: 64,
+                                height: 64,
+                                borderRadius: 20,
+                                background: "var(--soft)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 26,
+                                color: "#bbb",
+                                marginBottom: 18,
+                            }}
+                            aria-hidden="true"
+                        >
+                            +
+                        </div>
+                        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
+                            {query.trim() ? "검색 결과가 없어요" : "아직 항목이 없어요"}
+                        </div>
+                        <p
+                            className="muted"
+                            style={{ fontSize: 13.5, lineHeight: 1.5, maxWidth: 220 }}
+                        >
+                            {query.trim()
+                                ? "다른 검색어로 다시 시도해 보세요."
+                                : "첫 번째 비밀번호를 추가하면 여기에 안전하게 보관됩니다."}
+                        </p>
                     </div>
                 )}
                 {state === "loaded" && secrets.length > 0 && (
-                    <ul className="entry-list">
+                    <ul className="entry-list stagger">
                         {secrets.map((secret) => {
                             const cat = categoryLabel(secret.categoryId)
                             return (
@@ -221,17 +248,20 @@ export function EntriesScreen() {
                                         href={`/${secret.id}`}
                                         className="entry-card"
                                     >
+                                        <span className="avatar" aria-hidden="true">
+                                            {firstChar(secret.label)}
+                                        </span>
                                         <span className="entry-main">
                                             <span className="entry-label">
                                                 {secret.label}
                                             </span>
-                                        </span>
-                                        <span className="entry-side">
                                             {cat && (
-                                                <span className="cat-badge">
+                                                <span className="entry-sub">
                                                     {cat}
                                                 </span>
                                             )}
+                                        </span>
+                                        <span className="entry-side">
                                             <span
                                                 className="entry-chevron"
                                                 aria-hidden="true"
@@ -246,8 +276,21 @@ export function EntriesScreen() {
                     </ul>
                 )}
             </div>
+
+            <Link
+                className="fab"
+                href="/new"
+                aria-label="새 항목 추가"
+            >
+                <span aria-hidden="true">+</span>
+            </Link>
         </section>
     )
+}
+
+// 라벨의 첫 글자(아바타 이니셜). 비어 있으면 자물쇠 기호로 대체한다.
+function firstChar(label: string): string {
+    return label.trim()[0] ?? "·"
 }
 
 // 초 → m:ss. 자동 잠금 타이머 표시용.

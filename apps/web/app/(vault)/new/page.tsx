@@ -11,25 +11,22 @@ export default function NewSecretPage() {
 
     return (
         <section>
-            <header
+            <div
+                className="sticky-header"
                 style={{
                     display: "flex",
-                    alignItems: "baseline",
+                    alignItems: "center",
                     justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: 12,
                 }}
             >
-                <div style={{ display: "grid", gap: 4 }}>
-                    <span className="eyebrow">New Entry</span>
-                    <h1>새 항목 추가</h1>
-                </div>
-                <Link className="btn secondary" href="/">
-                    ← 목록
+                <Link className="btn-text" href="/">
+                    취소
                 </Link>
-            </header>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>새 항목</div>
+                <span style={{ width: 36 }} />
+            </div>
 
-            <div style={{ marginTop: 16 }}>
+            <div>
                 {state.status === "loading" && (
                     <p className="muted">준비 중입니다.</p>
                 )}

@@ -94,8 +94,19 @@ export default function VaultLayout({
 
     if (view.state === "loading" || view.state === "error") {
         return (
-            <section>
-                <h1>비밀번호 보관함</h1>
+            <section
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    minHeight: "70vh",
+                    gap: 12,
+                }}
+            >
+                <span className="vault-emblem" aria-hidden="true" />
+                <h1>보관함</h1>
                 {view.state === "error" ? (
                     <div role="alert" className="error-box">
                         {view.message}
