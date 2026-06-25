@@ -100,8 +100,6 @@ export class AuthService {
             userName: SINGLETON_USER_NAME,
             attestationType: "none",
             authenticatorSelection: {
-                // 이 기기 내장 인증기만(Face ID/지문 등). QR·외장 보안키 등록 차단.
-                authenticatorAttachment: "platform",
                 residentKey: "required",
                 userVerification: "required",
             },
