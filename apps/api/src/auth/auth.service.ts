@@ -33,7 +33,7 @@ import { fromBase64url, isBase64url, toBase64url } from "./base64url"
 import { computeVerifier, RECOVERY_CODE_BYTES } from "./recovery-code"
 import {
     AUTH_ERRORS,
-    BOOTSTRAP_TOKEN,
+    getBootstrapToken,
     EXPECTED_ORIGINS,
     OPTIONS_MAX_PER_WINDOW,
     OPTIONS_WINDOW_MS,
@@ -451,7 +451,8 @@ export class AuthService {
         }
         // 서버 토큰 미설정이면 첫 등록을 차단한다(fail-closed).
         // 운영자 설정 누락이지 공격 추측이 아니므로 백오프 카운터는 올리지 않는다.
-        if (!BOOTSTRAP_TOKEN) {
+        const bootstrapToken = getBootstrapToken()
+        if (!bootstrapToken) {
             throw new UnauthorizedException({
                 code: AUTH_ERRORS.BOOTSTRAP_REQUIRED,
                 message:
@@ -470,7 +471,7 @@ export class AuthService {
             .update(provided, "utf8")
             .digest()
         const expectedHash = createHash("sha256")
-            .update(BOOTSTRAP_TOKEN, "utf8")
+            .update(bootstrapToken, "utf8")
             .digest()
         if (!timingSafeEqual(providedHash, expectedHash)) {
             this.backoff.recordFailure()

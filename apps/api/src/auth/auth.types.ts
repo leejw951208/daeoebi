@@ -47,4 +47,10 @@ export const SINGLETON_USER_NAME = "daeoebi-user"
 
 // 패스키 첫 등록(credential 0개) 게이트 토큰. 외부 제3자의 첫 등록 선점을 막는다.
 // 미설정(빈 문자열)이면 첫 등록 자체를 차단한다(fail-closed). 기기 추가에는 사용하지 않는다.
-export const BOOTSTRAP_TOKEN = process.env.BOOTSTRAP_TOKEN ?? ""
+//
+// 주의: top-level const 로 캡처하지 않는다. app.module 의 import 평가가
+// ConfigModule.forRoot(.env.* 로드)보다 먼저 실행되므로, 모듈 로드 시점에 읽으면
+// .env 파일에서만 공급되는 개발 환경에선 항상 빈 값이 된다. 호출 시점에 읽는다.
+export function getBootstrapToken(): string {
+    return process.env.BOOTSTRAP_TOKEN ?? ""
+}
