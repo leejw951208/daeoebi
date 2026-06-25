@@ -25,8 +25,11 @@ import {
 import { AppModule } from "../src/app.module"
 import { HttpExceptionFilter } from "../src/common/http-exception.filter"
 import { PrismaService } from "../src/prisma/prisma.service"
+import { BackoffService } from "../src/auth/backoff.service"
 
 const ORIGIN = "http://localhost:3000"
+// 첫 등록 부트스트랩 게이트(e044723) 토큰. setup-env.ts 가 같은 값을 BOOTSTRAP_TOKEN 으로 주입한다.
+const BOOTSTRAP_TOKEN = "e2e-bootstrap-token"
 const mockVerifyReg = verifyRegistrationResponse as jest.Mock
 const mockVerifyAuth = verifyAuthenticationResponse as jest.Mock
 
@@ -48,6 +51,7 @@ const RECOVERY_VERIFIER = createHash("sha256")
 describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
     let app: INestApplication
     let prisma: PrismaService
+    let backoff: BackoffService
 
     function cookieHeader(res: request.Response): string {
         const set = res.headers["set-cookie"] as unknown as string[] | undefined
@@ -82,6 +86,7 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
                     wrappedVkRc: b64(48),
                     verifier: RECOVERY_VERIFIER,
                 },
+                bootstrapToken: BOOTSTRAP_TOKEN,
             })
             .expect(200)
         return cookieHeader(res)
@@ -118,6 +123,7 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
         app.useGlobalFilters(new HttpExceptionFilter())
         await app.init()
         prisma = app.get(PrismaService)
+        backoff = app.get(BackoffService)
     })
 
     afterAll(async () => {
@@ -127,6 +133,10 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
     beforeEach(async () => {
         mockVerifyReg.mockReset()
         mockVerifyAuth.mockReset()
+        // 백오프는 in-memory 싱글톤이라 테스트 간 누적된다(예: 429 누적 테스트가 5회 실패를
+        // 남김). 첫 등록 부트스트랩 게이트도 같은 백오프를 보므로 리셋하지 않으면 다음 테스트의
+        // registerFirst 가 429 로 연쇄 실패한다. 매 테스트 시작 시 격리한다.
+        backoff.reset()
         // 단일 사용자 모델: 매 테스트마다 빈 DB 로 시작한다.
         await prisma.secret.deleteMany()
         await prisma.category.deleteMany()

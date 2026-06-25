@@ -12,3 +12,8 @@ loadEnv({ path: path.join(ROOT, ".env.development.local") })
 loadEnv({ path: path.join(ROOT, ".env.development") })
 loadEnv({ path: path.join(ROOT, ".env.local") })
 loadEnv({ path: path.join(ROOT, ".env") })
+
+// 첫 등록 부트스트랩 게이트(e044723) 때문에 첫 passkey 등록 e2e 는 서버에 토큰이 설정돼
+// 있어야 한다. dev .env 의 값에 의존하지 않도록 테스트 토큰을 고정 주입한다(spec 의 헬퍼가
+// 같은 값을 register/verify 본문에 싣는다). 운영/개발 동작은 건드리지 않는다.
+process.env.BOOTSTRAP_TOKEN = "e2e-bootstrap-token"
