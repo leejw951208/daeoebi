@@ -18,8 +18,8 @@ type View =
     | { state: "locked" }
     | { state: "unlocked"; vaultKey: CryptoKey }
 
-// 자동잠금까지의 idle 시간(초). 기존 vault-session 타임아웃과 동일한 5분.
-const IDLE_LIMIT_SECONDS = 5 * 60
+// 자동잠금까지의 idle 시간(초). 프로토타입 autoLockSeconds 기본값과 동일한 3분.
+const IDLE_LIMIT_SECONDS = 3 * 60
 
 export default function VaultLayout({
     children,

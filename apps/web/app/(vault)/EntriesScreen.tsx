@@ -1,14 +1,12 @@
 "use client"
-// 대외비 목록 화면. 기본 사이트의 시크릿 메타를 나열하고 카테고리 태그 필터 + 제목 검색을 제공한다.
-// 상세는 /[id], 신규는 /new, 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
-import { useCallback, useEffect, useMemo, useState } from "react"
+// 대외비 목록 화면. 기본 사이트의 시크릿 메타를 나열하고 제목 검색을 제공한다.
+// 상세는 /[id], 신규는 /new(우하단 FAB), 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
-    listCategories,
     listSecrets,
     searchSecrets,
-    type Category,
     type SecretMeta,
 } from "@/lib/vault-client"
 import { SkeletonCard } from "@/components/Skeleton"
@@ -23,57 +21,41 @@ export function EntriesScreen() {
     const { idleSecondsRemaining, onLock, resetIdle } = useVault()
     const { state: siteState, retry: retrySite } = useDefaultSite()
 
-    const categoryFilter = search.get("cat") ?? "ALL"
     const query = search.get("q") ?? ""
 
     const [secrets, setSecrets] = useState<SecretMeta[]>([])
-    const [categories, setCategories] = useState<Category[]>([])
     const [state, setState] = useState<ListState>("idle")
     const [error, setError] = useState<string | null>(null)
 
     const siteId = siteState.status === "ready" ? siteState.siteId : null
 
-    const reload = useCallback(async () => {
-        if (!siteId) return
-        setState("loading")
-        try {
-            const [cats, items] = await Promise.all([
-                listCategories(siteId),
-                query.trim()
-                    ? searchSecrets(query.trim())
-                    : listSecrets(
-                          siteId,
-                          categoryFilter !== "ALL"
-                              ? categoryFilter
-                              : undefined,
-                      ),
-            ])
-            setCategories(cats)
-            // 검색 결과에는 카테고리 필터를 클라이언트에서 한 번 더 적용한다.
-            const filtered =
-                query.trim() && categoryFilter !== "ALL"
-                    ? items.filter((s) => s.categoryId === categoryFilter)
-                    : items
-            setSecrets(filtered)
-            setState("loaded")
-            setError(null)
-        } catch (e) {
-            setState("error")
-            setError(e instanceof Error ? e.message : "알 수 없는 오류")
-        }
-    }, [siteId, query, categoryFilter])
-
     useEffect(() => {
-        void reload()
-    }, [reload])
+        if (!siteId) return
+        let cancelled = false
+        setState("loading")
+        const load = query.trim()
+            ? searchSecrets(query.trim())
+            : listSecrets(siteId)
+        load
+            .then((items) => {
+                if (cancelled) return
+                setSecrets(items)
+                setState("loaded")
+                setError(null)
+            })
+            .catch((e) => {
+                if (cancelled) return
+                setState("error")
+                setError(e instanceof Error ? e.message : "알 수 없는 오류")
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [siteId, query])
 
-    function updateFilter(next: { cat?: string; q?: string }) {
+    function updateFilter(next: { q?: string }) {
         resetIdle()
         const params = new URLSearchParams(search.toString())
-        if (next.cat !== undefined) {
-            if (next.cat === "ALL") params.delete("cat")
-            else params.set("cat", next.cat)
-        }
         if (next.q !== undefined) {
             if (!next.q) params.delete("q")
             else params.set("q", next.q)
@@ -81,12 +63,6 @@ export function EntriesScreen() {
         const qs = params.toString()
         router.replace(qs ? `/?${qs}` : "/", { scroll: false })
     }
-
-    const categoryLabel = useCallback(
-        (id: string | null) =>
-            id ? (categories.find((c) => c.id === id)?.label ?? null) : null,
-        [categories],
-    )
 
     const idleWarning = useMemo(() => {
         if (idleSecondsRemaining > 60) return null
@@ -142,35 +118,17 @@ export function EntriesScreen() {
                     </button>
                 </div>
 
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    {categories.length > 0 && (
-                        <select
-                            className="field-control compact"
-                            value={categoryFilter}
-                            onChange={(e) => updateFilter({ cat: e.target.value })}
-                            aria-label="카테고리 필터"
-                            style={{ minHeight: 42, width: "auto", borderRadius: 13 }}
-                        >
-                            <option value="ALL">전체</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.label}
-                                </option>
-                            ))}
-                        </select>
-                    )}
-                    <div className="search-bar" style={{ flex: 1 }}>
-                        <span aria-hidden="true" style={{ color: "#aaa", fontSize: 15 }}>
-                            ⌕
-                        </span>
-                        <input
-                            type="search"
-                            placeholder="제목 검색"
-                            value={query}
-                            onChange={(e) => updateFilter({ q: e.target.value })}
-                            aria-label="제목 검색"
-                        />
-                    </div>
+                <div className="search-bar">
+                    <span aria-hidden="true" style={{ color: "#aaa", fontSize: 15 }}>
+                        ⌕
+                    </span>
+                    <input
+                        type="search"
+                        placeholder="제목 검색"
+                        value={query}
+                        onChange={(e) => updateFilter({ q: e.target.value })}
+                        aria-label="제목 검색"
+                    />
                 </div>
             </div>
 
@@ -240,39 +198,28 @@ export function EntriesScreen() {
                 )}
                 {state === "loaded" && secrets.length > 0 && (
                     <ul className="entry-list stagger">
-                        {secrets.map((secret) => {
-                            const cat = categoryLabel(secret.categoryId)
-                            return (
-                                <li key={secret.id}>
-                                    <Link
-                                        href={`/${secret.id}`}
-                                        className="entry-card"
-                                    >
-                                        <span className="avatar" aria-hidden="true">
-                                            {firstChar(secret.label)}
+                        {secrets.map((secret) => (
+                            <li key={secret.id}>
+                                <Link href={`/${secret.id}`} className="entry-card">
+                                    <span className="avatar" aria-hidden="true">
+                                        {firstChar(secret.label)}
+                                    </span>
+                                    <span className="entry-main">
+                                        <span className="entry-label">
+                                            {secret.label}
                                         </span>
-                                        <span className="entry-main">
-                                            <span className="entry-label">
-                                                {secret.label}
-                                            </span>
-                                            {cat && (
-                                                <span className="entry-sub">
-                                                    {cat}
-                                                </span>
-                                            )}
+                                    </span>
+                                    <span className="entry-side">
+                                        <span
+                                            className="entry-chevron"
+                                            aria-hidden="true"
+                                        >
+                                            ›
                                         </span>
-                                        <span className="entry-side">
-                                            <span
-                                                className="entry-chevron"
-                                                aria-hidden="true"
-                                            >
-                                                ›
-                                            </span>
-                                        </span>
-                                    </Link>
-                                </li>
-                            )
-                        })}
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
                     </ul>
                 )}
             </div>

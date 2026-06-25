@@ -3,12 +3,7 @@
 import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import {
-    deleteSecret,
-    getSecret,
-    listCategories,
-    type Category,
-} from "@/lib/vault-client"
+import { deleteSecret, getSecret } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { SkeletonCard } from "@/components/Skeleton"
@@ -37,7 +32,6 @@ export default function SecretDetailPage() {
     const router = useRouter()
     const { vaultKey, resetIdle, idleSecondsRemaining, onLock } = useVault()
     const [data, setData] = useState<Loaded | null>(null)
-    const [categories, setCategories] = useState<Category[]>([])
     const [state, setState] = useState<LoadState>("idle")
     const [error, setError] = useState<string | null>(null)
     const [mode, setMode] = useState<"view" | "edit">("view")
@@ -65,9 +59,6 @@ export default function SecretDetailPage() {
                 createdAt: detail.createdAt,
                 updatedAt: detail.updatedAt,
             })
-            void listCategories(detail.siteId)
-                .then(setCategories)
-                .catch(() => undefined)
             setState("loaded")
             setError(null)
         } catch (e) {
@@ -174,10 +165,6 @@ export default function SecretDetailPage() {
         )
     }
 
-    const categoryLabel = data.categoryId
-        ? (categories.find((c) => c.id === data.categoryId)?.label ?? null)
-        : null
-
     if (mode === "edit") {
         const initial: SecretFormInitial = {
             id: data.id,
@@ -188,35 +175,15 @@ export default function SecretDetailPage() {
         }
         return (
             <section>
-                <div
-                    className="sticky-header"
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                <SecretForm
+                    siteId={data.siteId}
+                    initial={initial}
+                    onSuccess={async () => {
+                        setMode("view")
+                        await reload()
                     }}
-                >
-                    <button
-                        type="button"
-                        className="btn-text"
-                        onClick={() => setMode("view")}
-                    >
-                        취소
-                    </button>
-                    <div style={{ fontSize: 15, fontWeight: 700 }}>항목 수정</div>
-                    <span style={{ width: 36 }} />
-                </div>
-                <div>
-                    <SecretForm
-                        siteId={data.siteId}
-                        initial={initial}
-                        onSuccess={async () => {
-                            setMode("view")
-                            await reload()
-                        }}
-                        onCancel={() => setMode("view")}
-                    />
-                </div>
+                    onCancel={() => setMode("view")}
+                />
             </section>
         )
     }
@@ -265,9 +232,6 @@ export default function SecretDetailPage() {
                     </span>
                     <div style={{ minWidth: 0 }}>
                         <h1 style={{ fontSize: 21 }}>{data.label}</h1>
-                        {categoryLabel && (
-                            <span className="entry-sub">{categoryLabel}</span>
-                        )}
                     </div>
                 </div>
 
