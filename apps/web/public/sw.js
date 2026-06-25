@@ -1,5 +1,5 @@
 // 대외비 PWA service worker. 앱 셸 precache + /api 런타임 캐시. /api/vault 는 캐시 제외.
-const CACHE_VERSION = "daeoebi-v4"
+const CACHE_VERSION = "daeoebi-v5"
 // 아이콘 PNG 는 사용자가 추후 추가하므로 precache 에 포함하지 않는다.
 // addAll 은 단 하나의 404 로도 전체 install 이 실패하므로 핵심 셸만 등록한다.
 const APP_SHELL = ["/", "/manifest.webmanifest"]
@@ -61,7 +61,30 @@ self.addEventListener("fetch", (event) => {
         return
     }
 
-    // 정적 자산은 cache-first
+    // 내비게이션(HTML 문서)은 network-first. 항상 최신 셸을 받고, 오프라인일 때만 캐시로 폴백한다.
+    // (cache-first 로 두면 새 배포 후에도 옛 셸이 영구히 서빙되는 stale 문제가 생긴다.)
+    if (event.request.mode === "navigate") {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    if (response.ok && response.type === "basic") {
+                        const clone = response.clone()
+                        caches
+                            .open(CACHE_VERSION)
+                            .then((cache) => cache.put(event.request, clone))
+                    }
+                    return response
+                })
+                .catch(() =>
+                    caches
+                        .match(event.request)
+                        .then((cached) => cached ?? caches.match("/")),
+                ),
+        )
+        return
+    }
+
+    // 정적 자산(해시 파일명)은 cache-first
     event.respondWith(
         caches.match(event.request).then(
             (cached) =>
