@@ -32,7 +32,7 @@ export const OPTIONS_MAX_PER_WINDOW = 20
 
 // RP 식별자·표시명. 환경 변수로 덮어쓸 수 있고, 기본은 로컬 개발 도메인이다.
 export const RP_ID = process.env.WEBAUTHN_RP_ID ?? "localhost"
-export const RP_NAME = process.env.WEBAUTHN_RP_NAME ?? "Secrets Manager"
+export const RP_NAME = process.env.WEBAUTHN_RP_NAME ?? "대외비"
 // 기대 origin 화이트리스트. CSRF 미들웨어와 동일한 기본값을 사용한다.
 export const EXPECTED_ORIGINS = (
     process.env.VAULT_ALLOWED_ORIGINS ??
@@ -43,7 +43,7 @@ export const EXPECTED_ORIGINS = (
     .filter((origin) => origin.length > 0)
 
 // 단일 사용자 모델: WebAuthn user 핸들은 고정 식별자 한 개면 충분하다.
-export const SINGLETON_USER_NAME = "secrets-manager-user"
+export const SINGLETON_USER_NAME = "daeoebi-user"
 
 // 패스키 첫 등록(credential 0개) 게이트 토큰. 외부 제3자의 첫 등록 선점을 막는다.
 // 미설정(빈 문자열)이면 첫 등록 자체를 차단한다(fail-closed). 기기 추가에는 사용하지 않는다.

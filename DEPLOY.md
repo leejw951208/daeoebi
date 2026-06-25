@@ -38,7 +38,7 @@ sudo ufw enable
 ## 2. 코드·환경 배치
 
 ```bash
-git clone <repo> /opt/secrets-manager && cd /opt/secrets-manager
+git clone <repo> /opt/daeoebi && cd /opt/daeoebi
 cp .env.example .env
 # .env 편집: DOMAIN, POSTGRES_PASSWORD(openssl rand -base64 24), R2_BUCKET 등
 ```
@@ -51,20 +51,20 @@ cp .env.example .env
 
 ```bash
 cloudflared tunnel login                       # 브라우저로 도메인 인가
-cloudflared tunnel create secrets-manager      # 터널 + credentials.json(UUID) 생성
-cloudflared tunnel route dns secrets-manager DOMAIN
-cloudflared tunnel route dns secrets-manager ssh.DOMAIN
+cloudflared tunnel create daeoebi      # 터널 + credentials.json(UUID) 생성
+cloudflared tunnel route dns daeoebi DOMAIN
+cloudflared tunnel route dns daeoebi ssh.DOMAIN
 ```
 
 생성된 자격증명을 서버의 `cloudflared/` 로 옮긴다.
 
 ```bash
-cp ~/.cloudflared/<UUID>.json /opt/secrets-manager/cloudflared/credentials.json
+cp ~/.cloudflared/<UUID>.json /opt/daeoebi/cloudflared/credentials.json
 ```
 
 `cloudflared/config.yml` 을 편집한다.
 
-- `tunnel:` → 위 `<UUID>` (또는 `secrets-manager`)
+- `tunnel:` → 위 `<UUID>` (또는 `daeoebi`)
 - `example.com` → 실제 `DOMAIN`, `ssh.example.com` → `ssh.DOMAIN`
 
 > `credentials.json` 과 `*.pem` 은 `.gitignore` 로 추적 제외된다. 절대 커밋하지 않는다.
@@ -123,14 +123,14 @@ cron 등록(매일 03:00).
 
 ```bash
 crontab -e
-# 0 3 * * * cd /opt/secrets-manager && ./scripts/backup-db.sh >> /var/log/sm-backup.log 2>&1
+# 0 3 * * * cd /opt/daeoebi && ./scripts/backup-db.sh >> /var/log/sm-backup.log 2>&1
 ```
 
 복구.
 
 ```bash
-rclone cat r2:secrets-manager-backups/db/<파일>.sql.gz | gunzip \
-  | docker exec -i secrets-manager-postgres psql -U secrets -d secrets_manager
+rclone cat r2:daeoebi-backups/db/<파일>.sql.gz | gunzip \
+  | docker exec -i daeoebi-postgres psql -U secrets -d daeoebi
 ```
 
 ---
@@ -157,4 +157,4 @@ make prod-backup    # 즉시 백업
 | `TRUST_PROXY` | 프록시 신뢰 홉 수(compose 고정) | `1` |
 | `COOKIE_SECURE` | secure 쿠키 강제(compose 고정) | `true` |
 | `VAULT_ALLOWED_ORIGINS` | WebAuthn·CSRF 허용 오리진(compose 자동) | `https://DOMAIN` |
-| `RCLONE_REMOTE` / `R2_BUCKET` | 백업 대상 | `r2` / `secrets-manager-backups` |
+| `RCLONE_REMOTE` / `R2_BUCKET` | 백업 대상 | `r2` / `daeoebi-backups` |

@@ -30,7 +30,7 @@ export function BackupPanel({ onImported }: Props) {
             const url = URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `secrets-manager-backup-${new Date().toISOString().slice(0, 10)}.json`
+            a.download = `daeoebi-backup-${new Date().toISOString().slice(0, 10)}.json`
             a.click()
             URL.revokeObjectURL(url)
             setStatus("백업 파일을 다운로드했습니다.")

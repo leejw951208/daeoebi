@@ -4,17 +4,17 @@
 # 사전 준비:  cp .env.example .env  &&  .env 값 채우기  &&  cloudflared/ 에 config.yml·credentials.json 배치
 # 실행:       docker compose up -d --build
 # 갱신:       git pull && docker compose up -d --build
-name: secrets-manager
+name: daeoebi
 
 services:
     postgres:
         image: postgres:17-alpine
-        container_name: secrets-manager-postgres
+        container_name: daeoebi-postgres
         restart: unless-stopped
         environment:
             POSTGRES_USER: ${POSTGRES_USER:-secrets}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 를 .env 에 설정하세요}
-            POSTGRES_DB: ${POSTGRES_DB:-secrets_manager}
+            POSTGRES_DB: ${POSTGRES_DB:-daeoebi}
         # 공개 포트 없음. 내부 도커 네트워크로만 접근한다.
         volumes:
             - postgres-data:/var/lib/postgresql/data
@@ -22,7 +22,7 @@ services:
             test:
                 [
                     "CMD-SHELL",
-                    "pg_isready -U ${POSTGRES_USER:-secrets} -d ${POSTGRES_DB:-secrets_manager}",
+                    "pg_isready -U ${POSTGRES_USER:-secrets} -d ${POSTGRES_DB:-daeoebi}",
                 ]
             interval: 5s
             timeout: 5s
@@ -33,11 +33,11 @@ services:
             context: .
             dockerfile: Dockerfile
             target: api
-        container_name: secrets-manager-api
+        container_name: daeoebi-api
         restart: unless-stopped
         environment:
             NODE_ENV: production
-            DATABASE_URL: postgresql://${POSTGRES_USER:-secrets}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-secrets_manager}?schema=public
+            DATABASE_URL: postgresql://${POSTGRES_USER:-secrets}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-daeoebi}?schema=public
             HOST: 0.0.0.0
             PORT: 4000
             # same-origin 경로 분리. 브라우저는 https://DOMAIN/api/* 로 호출하고 cloudflared 가 그대로 전달한다.
@@ -45,7 +45,7 @@ services:
             TRUST_PROXY: "1"
             COOKIE_SECURE: "true"
             WEBAUTHN_RP_ID: ${DOMAIN:?DOMAIN 을 .env 에 설정하세요}
-            WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-Secrets Manager}
+            WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-대외비}
             # WebAuthn 기대 오리진 + CSRF 허용 오리진(동일 값). same-origin 이라 https://DOMAIN 하나면 된다.
             VAULT_ALLOWED_ORIGINS: https://${DOMAIN}
             CORS_ORIGIN: https://${DOMAIN}
@@ -77,7 +77,7 @@ services:
                 # 상대경로 /api → 페이지와 같은 오리진. 호스트 불일치로 인한 쿠키 미전송 문제가 구조적으로 사라진다.
                 # NEXT_PUBLIC_* 는 빌드 시점에 인라인되므로 도메인이 바뀌어도 이 값(/api)은 그대로 둔다.
                 NEXT_PUBLIC_API_BASE_URL: /api
-        container_name: secrets-manager-web
+        container_name: daeoebi-web
         restart: unless-stopped
         depends_on:
             - api
@@ -85,7 +85,7 @@ services:
     # Cloudflare Tunnel. 웹·API·SSH 인그레스를 cloudflared/config.yml 로 라우팅한다.
     cloudflared:
         image: cloudflare/cloudflared:latest
-        container_name: secrets-manager-cloudflared
+        container_name: daeoebi-cloudflared
         restart: unless-stopped
         command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
         volumes:

@@ -19,7 +19,7 @@
 ## 프로젝트 구조
 
 ```
-secrets-manager/
+daeoebi/
 ├─ apps/
 │  ├─ web/   Next.js 15 (App Router) — http://localhost:3000
 │  └─ api/   NestJS 10 + Prisma + PostgreSQL — http://localhost:4000

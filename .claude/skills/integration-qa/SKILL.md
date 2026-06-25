@@ -29,7 +29,7 @@ description: API↔웹 경계면 정합성(엔드포인트·shape·타입 일치
 - `make typecheck` — 전체 타입 검사. 경계면 타입 불일치를 가장 잘 잡는다.
 - `make lint` — ESLint (`--max-warnings 0`).
 - `make test` — 전체 테스트 (api jest + web jest).
-- 비주얼 회귀가 의심되면 `pnpm --filter @secrets-manager/web test:visual`.
+- 비주얼 회귀가 의심되면 `pnpm --filter @daeoebi/web test:visual`.
 
 DB가 필요한 테스트는 `make dev`/`make migrate`로 DB 기동이 선행돼야 한다. 환경 문제로 인한 실패는 **코드 결함과 구분**해 보고한다.
 

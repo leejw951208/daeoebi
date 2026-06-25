@@ -24,9 +24,9 @@ description: Next.js 15 App Router 화면·React 컴포넌트 구현, API 클라
 - **반응형**: 모바일(≈375) → 태블릿(≈768) → 데스크탑(≈1280) 모두 동작.
 
 ## 비주얼 테스트
-- 화면을 바꾸면 관련 Playwright 스냅샷을 갱신한다: `pnpm --filter @secrets-manager/web test:visual:update` (의도된 변경일 때만).
+- 화면을 바꾸면 관련 Playwright 스냅샷을 갱신한다: `pnpm --filter @daeoebi/web test:visual:update` (의도된 변경일 때만).
 - 회귀 확인은 `test:visual`. 스냅샷은 모바일/태블릿/데스크탑 3종이 있다.
-- 단위 테스트는 `pnpm --filter @secrets-manager/web test` (jest + testing-library).
+- 단위 테스트는 `pnpm --filter @daeoebi/web test` (jest + testing-library).
 
 ## 검증
 - 변경 후 `make typecheck`. API 응답 shape과 클라이언트 타입(`VaultEntry` 등)이 어긋나면 추측하지 말고 api-engineer에게 확인한다.

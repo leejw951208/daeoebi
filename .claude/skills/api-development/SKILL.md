@@ -30,7 +30,7 @@ description: NestJS 백엔드 모듈·컨트롤러·서비스·DTO 작성과 Pri
 - 마이그레이션 충돌·데이터 손실 위험이 보이면 멈추고 리더에게 보고한다.
 
 ## 검증
-- 변경 후 `make typecheck`로 타입을 확인한다. 테스트가 있으면 `pnpm --filter @secrets-manager/api test`.
+- 변경 후 `make typecheck`로 타입을 확인한다. 테스트가 있으면 `pnpm --filter @daeoebi/api test`.
 - API 계약(메서드·경로·요청/응답 shape)이 바뀌면 변경 요약을 `_workspace/`에 남기고 web-engineer에게 통보한다.
 
 ## 파일 헤더

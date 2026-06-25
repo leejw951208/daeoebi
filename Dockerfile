@@ -14,12 +14,12 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 # prisma 클라이언트 생성(연결 불필요, 더미 URL 로 충분)
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
-RUN pnpm --filter @secrets-manager/api exec prisma generate
-RUN pnpm --filter @secrets-manager/api run build
+RUN pnpm --filter @daeoebi/api exec prisma generate
+RUN pnpm --filter @daeoebi/api run build
 # NEXT_PUBLIC_* 는 빌드 시점에 주입된다. Cloudflare 도메인 확정 후 이 값을 바꿔 재빌드한다.
 ARG NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4000
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
-RUN pnpm --filter @secrets-manager/web run build
+RUN pnpm --filter @daeoebi/web run build
 
 # ---- API 런타임 ----
 FROM node:24-bookworm-slim AS api

@@ -40,17 +40,17 @@ db-reset:
 # ── Prisma ─────────────────────────────────────────────
 migrate:
 	$(DEV_COMPOSE) up -d --wait
-	pnpm --filter @secrets-manager/api exec prisma migrate dev
+	pnpm --filter @daeoebi/api exec prisma migrate dev
 
 generate:
-	pnpm --filter @secrets-manager/api exec prisma generate
+	pnpm --filter @daeoebi/api exec prisma generate
 
 # ── 앱 (호스트) ────────────────────────────────────────
 # DB(도커) 기동 → 마이그레이션 적용 → web·API 병렬 실행을 한 번에 수행한다.
 # --wait 로 DB 헬스체크 통과를 기다린 뒤 migrate 한다(연결 거부 방지).
 dev:
 	$(DEV_COMPOSE) up -d --wait
-	pnpm --filter @secrets-manager/api exec prisma migrate deploy
+	pnpm --filter @daeoebi/api exec prisma migrate deploy
 	pnpm -r --parallel run dev
 
 # ── 종료 ───────────────────────────────────────────────
