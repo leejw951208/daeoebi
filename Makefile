@@ -1,7 +1,7 @@
 # 개발 환경 전용 명령 모음. (운영 배포는 docker-compose.yml 로 별도 관리)
 # 개발 구성: DB 는 도커(docker-compose.dev.yml), web·API 는 호스트에서 직접 실행.
 # 명명 규칙: 개발 환경 타깃은 dev-, 운영 배포 타깃은 prod- 프리픽스. 검증(lint/typecheck/test/build/clean)은 환경 무관.
-.PHONY: help dev-db-down dev-db-reset dev-migrate dev-generate dev-up dev-stop-app dev-down dev-down-reset lint typecheck test build clean prod-up prod-down prod-logs prod-ps prod-backup tunnel-up tunnel-down tunnel-restart tunnel-logs
+.PHONY: help dev-db-down dev-db-reset dev-migrate dev-generate dev-up dev-stop-app dev-down dev-down-reset lint typecheck test build clean prod-up prod-up-api prod-up-web prod-down prod-logs prod-ps prod-backup tunnel-up tunnel-down tunnel-restart tunnel-logs
 
 # 개발 DB 컨테이너 자격증명도 apps/api/.env.development 를 ${} 치환 출처로 쓴다(운영과 동일 패턴).
 DEV_COMPOSE := docker compose -f docker-compose.dev.yml --env-file apps/api/.env.development
@@ -29,7 +29,9 @@ help:
 	@echo "  make clean          node_modules / 빌드 산출물 제거"
 	@echo ""
 	@echo "운영 배포 명령 (VPS, docker-compose.yml — DEPLOY.md 참고):"
-	@echo "  make prod-up     빌드 + 기동"
+	@echo "  make prod-up     빌드 + 기동 (전체)"
+	@echo "  make prod-up-api api 만 재빌드·재기동"
+	@echo "  make prod-up-web web 만 재빌드·재기동"
 	@echo "  make prod-down   종료 (데이터 유지)"
 	@echo "  make prod-logs   로그 추적"
 	@echo "  make prod-ps     서비스 상태"
@@ -98,6 +100,12 @@ clean:
 # docker-compose.yml + apps/api/.env.production + cloudflared/ 가 준비된 상태에서 실행한다(DEPLOY.md).
 prod-up:
 	$(PROD_COMPOSE) up -d --build
+
+prod-up-api:
+	$(PROD_COMPOSE) up -d --build api
+
+prod-up-web:
+	$(PROD_COMPOSE) up -d --build web
 
 prod-down:
 	$(PROD_COMPOSE) down
