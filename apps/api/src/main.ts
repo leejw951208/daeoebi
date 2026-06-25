@@ -1,4 +1,6 @@
-// NestJS 진입점. localhost:4000 바인딩과 CORS, 검증 파이프, 예외 필터를 설정한다.
+// NestJS 진입점. 호스트:포트 바인딩과 CORS, 검증 파이프, 예외 필터를 설정한다.
+// load-env 를 가장 먼저 import 해 다른 모듈(top-level env 상수) 평가 전에 process.env 를 채운다.
+import "./load-env"
 import { NestFactory } from "@nestjs/core"
 import { ValidationPipe, Logger } from "@nestjs/common"
 import type { NestExpressApplication } from "@nestjs/platform-express"
