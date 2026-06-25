@@ -3,14 +3,14 @@
 # cron 예시:  0 3 * * *  cd /opt/daeoebi && ./scripts/backup-db.sh >> /var/log/daeoebi-backup.log 2>&1
 set -eu
 
-# 스크립트 위치 기준 프로젝트 루트로 이동해 .env 를 읽는다.
+# 스크립트 위치 기준 프로젝트 루트로 이동해 운영 설정 파일(apps/api/.env.production)을 읽는다.
 cd "$(dirname "$0")/.."
-[ -f .env ] && . ./.env
+[ -f apps/api/.env.production ] && . ./apps/api/.env.production
 
 : "${POSTGRES_USER:=secrets}"
 : "${POSTGRES_DB:=daeoebi}"
 : "${RCLONE_REMOTE:=r2}"
-: "${R2_BUCKET:?R2_BUCKET 를 .env 에 설정하세요}"
+: "${R2_BUCKET:?R2_BUCKET 를 apps/api/.env.production 에 설정하세요}"
 
 STAMP=$(date +%Y%m%d-%H%M%S)
 FILE="daeoebi-${STAMP}.sql.gz"

@@ -1,9 +1,10 @@
 # 단일 VPS(Vultr) self-host 운영 스택. Cloudflare Tunnel 뒤에서 동작한다.
 # 외부 공개 포트를 열지 않는다(인바운드 0). 모든 진입은 cloudflared 의 outbound 터널로만 들어온다.
 #
-# 사전 준비:  cp .env.example .env  &&  .env 값 채우기  &&  cloudflared/ 에 config.yml·credentials.json 배치
-# 실행:       docker compose up -d --build
-# 갱신:       git pull && docker compose up -d --build
+# 사전 준비:  cp apps/api/.env.example apps/api/.env.production  &&  [운영 환경] 블록 값 채우기  &&  cloudflared/ 에 config.yml·credentials.json 배치
+# 실행:       make prod-up        (= docker compose --env-file apps/api/.env.production up -d --build)
+# 갱신:       git pull && make prod-up
+# 주의:       직접 docker compose 를 쓸 땐 --env-file apps/api/.env.production 을 반드시 붙인다(${} 치환 출처).
 name: daeoebi
 
 services:
@@ -13,7 +14,7 @@ services:
         restart: unless-stopped
         environment:
             POSTGRES_USER: ${POSTGRES_USER:-secrets}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 를 .env 에 설정하세요}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?apps/api/.env.production 에 POSTGRES_PASSWORD 를 설정하세요(make prod-up 은 --env-file 로 읽음)}
             POSTGRES_DB: ${POSTGRES_DB:-daeoebi}
         # 공개 포트 없음. 내부 도커 네트워크로만 접근한다.
         volumes:
@@ -35,22 +36,15 @@ services:
             target: api
         container_name: daeoebi-api
         restart: unless-stopped
+        # 운영 설정은 apps/api/.env.production 한 파일에서 주입한다(개발은 같은 .env.example 의 .env.development).
+        # 파일 전체 키가 컨테이너 환경변수로 주입되고, 앱은 process.env 만 읽는다.
+        # 필수 키: DATABASE_URL, HOST, PORT, API_GLOBAL_PREFIX, TRUST_PROXY, COOKIE_SECURE,
+        #          WEBAUTHN_RP_ID, WEBAUTHN_RP_NAME, VAULT_ALLOWED_ORIGINS, CORS_ORIGIN, BOOTSTRAP_TOKEN.
+        env_file:
+            - apps/api/.env.production
         environment:
+            # 컨테이너를 운영 모드로 고정(파일과 무관한 정적값).
             NODE_ENV: production
-            DATABASE_URL: postgresql://${POSTGRES_USER:-secrets}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-daeoebi}?schema=public
-            HOST: 0.0.0.0
-            PORT: 4000
-            # same-origin 경로 분리. 브라우저는 https://DOMAIN/api/* 로 호출하고 cloudflared 가 그대로 전달한다.
-            API_GLOBAL_PREFIX: api
-            TRUST_PROXY: "1"
-            COOKIE_SECURE: "true"
-            WEBAUTHN_RP_ID: ${DOMAIN:?DOMAIN 을 .env 에 설정하세요}
-            WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-대외비}
-            # WebAuthn 기대 오리진 + CSRF 허용 오리진(동일 값). same-origin 이라 https://DOMAIN 하나면 된다.
-            VAULT_ALLOWED_ORIGINS: https://${DOMAIN}
-            CORS_ORIGIN: https://${DOMAIN}
-            # 패스키 첫 등록 게이트 토큰. 미설정 시 기동을 거부한다(첫 등록 fail-closed).
-            BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:?BOOTSTRAP_TOKEN 을 .env 에 설정하세요}
         depends_on:
             postgres:
                 condition: service_healthy

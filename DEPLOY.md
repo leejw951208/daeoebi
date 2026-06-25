@@ -39,8 +39,12 @@ sudo ufw enable
 
 ```bash
 git clone <repo> /opt/daeoebi && cd /opt/daeoebi
-cp .env.example .env
-# .env 편집: DOMAIN, POSTGRES_PASSWORD(openssl rand -base64 24), R2_BUCKET 등
+cp apps/api/.env.example apps/api/.env.production
+# apps/api/.env.production 편집: [운영 환경] 블록만 남기고 주석 풀어 값 채우기
+#   - POSTGRES_PASSWORD(openssl rand -base64 24) + DATABASE_URL 의 비밀번호를 동일하게
+#   - WEBAUTHN_RP_ID=<도메인>, VAULT_ALLOWED_ORIGINS·CORS_ORIGIN=https://<도메인>
+#   - BOOTSTRAP_TOKEN(길고 무작위인 1회용 게이트 토큰)
+# 개발·운영 모두 .env.{NODE_ENV} 한 파일을 출처로 쓴다. 운영은 compose 가 env_file 로 주입한다.
 ```
 
 ---
@@ -149,12 +153,17 @@ make prod-backup    # 즉시 백업
 
 ## 환경 변수 요약
 
+운영 값은 모두 `apps/api/.env.production` 한 파일에 둔다(compose 가 env_file 로 주입).
+`NODE_ENV=production` 만 docker-compose 가 정적으로 넣는다.
+
 | 변수 | 설명 | 예시 |
 |------|------|------|
-| `DOMAIN` | 운영 apex 도메인. RP_ID·오리진 기준 | `vault.example.com` |
-| `POSTGRES_PASSWORD` | DB 비밀번호(강한 임의값) | `openssl rand -base64 24` |
-| `API_GLOBAL_PREFIX` | API 경로 프리픽스(compose 고정) | `api` |
-| `TRUST_PROXY` | 프록시 신뢰 홉 수(compose 고정) | `1` |
-| `COOKIE_SECURE` | secure 쿠키 강제(compose 고정) | `true` |
-| `VAULT_ALLOWED_ORIGINS` | WebAuthn·CSRF 허용 오리진(compose 자동) | `https://DOMAIN` |
-| `RCLONE_REMOTE` / `R2_BUCKET` | 백업 대상 | `r2` / `daeoebi-backups` |
+| `DATABASE_URL` | 컨테이너 내부 postgres 연결 문자열 | `postgresql://secrets:…@postgres:5432/daeoebi?schema=public` |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | postgres 컨테이너 자격증명(`${}` 치환에도 사용) | `secrets` / `openssl rand -base64 24` / `daeoebi` |
+| `HOST` / `PORT` | API 바인딩 | `0.0.0.0` / `4000` |
+| `API_GLOBAL_PREFIX` | API 경로 프리픽스 | `api` |
+| `TRUST_PROXY` / `COOKIE_SECURE` | 프록시 신뢰 홉 / secure 쿠키 강제 | `1` / `true` |
+| `WEBAUTHN_RP_ID` / `WEBAUTHN_RP_NAME` | WebAuthn RP 식별자(도메인) / 표시명 | `vault.example.com` / `대외비` |
+| `VAULT_ALLOWED_ORIGINS` / `CORS_ORIGIN` | WebAuthn·CSRF 허용 오리진 | `https://vault.example.com` |
+| `BOOTSTRAP_TOKEN` | 패스키 첫 등록 1회용 게이트 토큰(길고 무작위) | `openssl rand -hex 24` |
+| `RCLONE_REMOTE` / `R2_BUCKET` | (선택) R2 백업 대상 | `r2` / `daeoebi-backups` |

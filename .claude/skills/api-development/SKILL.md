@@ -25,8 +25,8 @@ description: NestJS 백엔드 모듈·컨트롤러·서비스·DTO 작성과 Pri
 - 세션·쿠키 취급은 `vault/vault-cookies.ts`, `pin/pin-cookies.ts` 패턴을 따른다 (httpOnly·sameSite·secure 유지).
 
 ## Prisma 스키마 변경
-- 스키마 수정 후 **새 마이그레이션을 생성**한다: `make migrate` (= `prisma migrate dev`). `apps/api/prisma/migrations/`의 기존 파일은 절대 수정하지 않는다.
-- 스키마만 바꾸고 클라이언트 타입이 필요하면 `make generate`.
+- 스키마 수정 후 **새 마이그레이션을 생성**한다: `make dev-migrate` (= `prisma migrate dev`). `apps/api/prisma/migrations/`의 기존 파일은 절대 수정하지 않는다.
+- 스키마만 바꾸고 클라이언트 타입이 필요하면 `make dev-generate`.
 - 마이그레이션 충돌·데이터 손실 위험이 보이면 멈추고 리더에게 보고한다.
 
 ## 검증

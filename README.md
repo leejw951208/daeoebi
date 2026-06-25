@@ -45,17 +45,17 @@ cp apps/web/.env.example apps/web/.env.development
 ### 2. 개발 서버 실행
 
 ```bash
-make dev          # DB(도커) 기동 + 마이그레이션 + 웹·API(http://localhost:3000 / :4000) 동시 실행
+make dev-up       # DB(도커) 기동 + 마이그레이션 + 웹·API(http://localhost:3000 / :4000) 동시 실행
 ```
 
 자주 쓰는 명령은 다음과 같다.
 
 ```bash
-make migrate      # DB 마이그레이션
+make dev-migrate  # DB 마이그레이션
 make typecheck    # 타입 검증
 make lint         # 린트
 make test         # 전체 테스트
-make down         # 서버·DB 종료 (데이터 유지)
+make dev-down     # 서버·DB 종료 (데이터 유지)
 ```
 
 전체 명령은 `make help` 로 확인한다.

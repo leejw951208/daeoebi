@@ -3,17 +3,6 @@
 ## 1. 프로젝트 한 줄 설명
 대외비는 사용자의 개인 비밀번호를 관리하는 서비스이다.
 
-## 하네스: 기능 개발
-
-**목표:** 백엔드·프론트엔드·보안검토·QA 4개 에이전트 팀으로 대외비 기능을 안전하게 개발한다.
-
-**트리거:** 기능 추가·수정, 화면+API 동시 작업, 구현·재실행·보완 요청 시 `feature-build` 스킬을 사용하라. 단순 단일 파일 수정이나 질문은 직접 응답 가능.
-
-**변경 이력:**
-| 날짜 | 변경 내용 | 대상 | 사유 |
-|------|----------|------|------|
-| 2026-06-24 | 초기 구성 (4개 풀팀) | 전체 | - |
-
 ## 2. 건드리지 말 것
 - `node_modules/`, `dist/` — 빌드 산출물
 - `pnpm-lock.yaml` — 직접 편집 금지, `pnpm install`로만 갱신
@@ -23,12 +12,12 @@
 ## 3. 자주 쓰는 명령
 ```bash
 pnpm install                                        # 의존성 설치
-make dev                                            # DB(도커) + 마이그레이션 + 웹·API 개발 서버
+make dev-up                                         # DB(도커) + 마이그레이션 + 웹·API 개발 서버
 make typecheck                                      # 변경 후 기본 검증
 make lint                                           # ESLint
 make test                                           # 전체 테스트
-make migrate                                        # DB 마이그레이션 (migrate dev)
-make generate                                       # schema.prisma 변경 후 필수
+make dev-migrate                                    # DB 마이그레이션 (migrate dev)
+make dev-generate                                   # schema.prisma 변경 후 필수
 ```
 
 ## 4. 의미 단위로 커밋
