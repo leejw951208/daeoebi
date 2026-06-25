@@ -1,7 +1,8 @@
-# 단일 VPS(Vultr) self-host 운영 스택. Cloudflare Tunnel 뒤에서 동작한다.
-# 외부 공개 포트를 열지 않는다(인바운드 0). 모든 진입은 cloudflared 의 outbound 터널로만 들어온다.
+# 단일 VPS(Vultr) self-host 앱 스택(postgres·api·web). 외부 공개 포트 없음(인바운드 0).
+# cloudflared 는 이 스택에 두지 않고 별도 compose(docker-compose.cloudflared.yml)로 분리 운영한다 —
+# 앱 재배포·중단·크래시와 무관하게 터널·SSH 가 유지된다. 두 스택은 외부 네트워크 daeoebi-net 을 공유한다(DEPLOY.md).
 #
-# 사전 준비:  cp apps/api/.env.example apps/api/.env.production  &&  [운영 환경] 블록 값 채우기  &&  cloudflared/ 에 config.yml·credentials.json 배치
+# 사전 준비:  docker network create daeoebi-net (1회)  &&  cp apps/api/.env.example apps/api/.env.production  &&  [운영 환경] 블록 값 채우기
 # 실행:       make prod-up        (= docker compose --env-file apps/api/.env.production up -d --build)
 # 갱신:       git pull && make prod-up
 # 주의:       직접 docker compose 를 쓸 땐 --env-file apps/api/.env.production 을 반드시 붙인다(${} 치환 출처).
@@ -76,21 +77,13 @@ services:
         depends_on:
             - api
 
-    # Cloudflare Tunnel. 웹·API·SSH 인그레스를 cloudflared/config.yml 로 라우팅한다.
-    cloudflared:
-        image: cloudflare/cloudflared:latest
-        container_name: daeoebi-cloudflared
-        restart: unless-stopped
-        command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
-        volumes:
-            # config.yml 과 credentials.json 을 읽기 전용으로 마운트한다.
-            - ./cloudflared:/etc/cloudflared:ro
-        extra_hosts:
-            # 컨테이너에서 호스트의 SSH(22)로 접근하기 위한 매핑(Linux: host-gateway).
-            - "host.docker.internal:host-gateway"
-        depends_on:
-            - web
-            - api
+# cloudflared 는 이 스택에 없다 — docker-compose.cloudflared.yml 로 분리(같은 외부 네트워크 daeoebi-net 공유).
+
+networks:
+    # 앱·터널 스택이 공유하는 외부 네트워크. 사전에 `docker network create daeoebi-net` 필요.
+    default:
+        name: daeoebi-net
+        external: true
 
 volumes:
     postgres-data:

@@ -1,5 +1,7 @@
 # Cloudflare Tunnel 인그레스 라우팅. 웹·API·SSH 를 하나의 터널로 받는다.
-# <TUNNEL_UUID> 는 `cloudflared tunnel create` 로 받는 실제 UUID 로 바꾼다(DEPLOY.md 참고).
+# cloudflared 는 별도 compose(docker-compose.cloudflared.yml)로 앱 스택과 분리 실행한다.
+# 두 스택이 외부 네트워크 daeoebi-net 을 공유하므로 서비스명(web/api)으로 라우팅한다. DEPLOY.md 참고.
+# <TUNNEL_UUID> 는 `cloudflared tunnel create` 로 받는 실제 UUID 로 바꾼다.
 # credentials.json 은 그 과정에서 생성되며 절대 커밋하지 않는다(.gitignore).
 
 tunnel: bdc09f11-99ee-4a52-ac6a-4242a8eb9481
@@ -10,11 +12,11 @@ protocol: http2
 
 # 인그레스 규칙은 위에서 아래로 매칭된다. 더 구체적인 규칙(SSH·/api)을 먼저 둔다.
 ingress:
-    # SSH → 호스트의 22 포트. Cloudflare Access 정책으로 보호한다(이메일/IdP 인증 게이트).
+    # SSH → 호스트의 22 포트(컨테이너→호스트 host-gateway 매핑). Cloudflare Access 정책으로 보호한다.
     - hostname: ssh.leejw.dev
       service: ssh://host.docker.internal:22
 
-    # /api/* → NestJS(api). cloudflared 는 경로를 strip 하지 않으므로 서버는 API_GLOBAL_PREFIX=api 로 받는다.
+    # /api/* → NestJS(api). 공유 네트워크 daeoebi-net 의 서비스명. 경로 strip 안 함 → API_GLOBAL_PREFIX=api.
     - hostname: vault.leejw.dev
       path: ^/api(/|$)
       service: http://api:4000

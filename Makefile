@@ -1,12 +1,14 @@
 # 개발 환경 전용 명령 모음. (운영 배포는 docker-compose.yml 로 별도 관리)
 # 개발 구성: DB 는 도커(docker-compose.dev.yml), web·API 는 호스트에서 직접 실행.
 # 명명 규칙: 개발 환경 타깃은 dev-, 운영 배포 타깃은 prod- 프리픽스. 검증(lint/typecheck/test/build/clean)은 환경 무관.
-.PHONY: help dev-db-down dev-db-reset dev-migrate dev-generate dev-up dev-stop-app dev-down dev-down-reset lint typecheck test build clean prod-up prod-down prod-logs prod-ps prod-backup
+.PHONY: help dev-db-down dev-db-reset dev-migrate dev-generate dev-up dev-stop-app dev-down dev-down-reset lint typecheck test build clean prod-up prod-down prod-logs prod-ps prod-backup tunnel-up tunnel-down tunnel-restart tunnel-logs
 
 # 개발 DB 컨테이너 자격증명도 apps/api/.env.development 를 ${} 치환 출처로 쓴다(운영과 동일 패턴).
 DEV_COMPOSE := docker compose -f docker-compose.dev.yml --env-file apps/api/.env.development
 # 운영은 apps/api/.env.production 을 env_file 주입 + ${} 치환 출처로 함께 사용한다.
 PROD_COMPOSE := docker compose -f docker-compose.yml --env-file apps/api/.env.production
+# 터널(cloudflared)은 앱과 분리된 별도 compose 로 운영한다(앱 재배포와 무관하게 유지).
+TUNNEL_COMPOSE := docker compose -f docker-compose.cloudflared.yml
 
 help:
 	@echo "개발 환경 명령:"
@@ -32,6 +34,12 @@ help:
 	@echo "  make prod-logs   로그 추적"
 	@echo "  make prod-ps     서비스 상태"
 	@echo "  make prod-backup DB 즉시 백업 (R2)"
+	@echo ""
+	@echo "터널(cloudflared, 앱과 분리된 별도 스택):"
+	@echo "  make tunnel-up      cloudflared 기동 (사전: docker network create daeoebi-net)"
+	@echo "  make tunnel-down    cloudflared 종료"
+	@echo "  make tunnel-restart cloudflared 재시작"
+	@echo "  make tunnel-logs    터널 엣지 연결 로그"
 
 # ── DB (도커) ──────────────────────────────────────────
 dev-db-down:
@@ -102,3 +110,16 @@ prod-ps:
 
 prod-backup:
 	./scripts/backup-db.sh
+
+# ── 터널 (cloudflared, 별도 스택) ──────────────────────
+tunnel-up:
+	$(TUNNEL_COMPOSE) up -d
+
+tunnel-down:
+	$(TUNNEL_COMPOSE) down
+
+tunnel-restart:
+	$(TUNNEL_COMPOSE) restart
+
+tunnel-logs:
+	$(TUNNEL_COMPOSE) logs -f

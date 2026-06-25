@@ -1,0 +1,29 @@
+# Cloudflare Tunnel 전용 스택. 앱(docker-compose.yml)과 분리된 별도 프로젝트로 띄운다.
+# 목적: 앱 재배포·중단·크래시와 무관하게 터널·SSH 라이프라인을 유지한다(앱 down 이 터널을 안 건드림).
+#
+# 사전 준비:  docker network create daeoebi-net (1회)  &&  cloudflared/ 에 config.yml·credentials.json 배치
+# 기동:       docker compose -f docker-compose.cloudflared.yml up -d   (= make tunnel-up)
+# 로그:       docker compose -f docker-compose.cloudflared.yml logs -f (= make tunnel-logs)
+#
+# 앱 스택과 외부 네트워크 daeoebi-net 을 공유하므로 config.yml 은 web:3000·api:4000 서비스명으로 라우팅한다.
+name: daeoebi-tunnel
+
+services:
+    cloudflared:
+        image: cloudflare/cloudflared:latest
+        container_name: daeoebi-cloudflared
+        # always: 앱과 독립적으로 항상 떠 있게 한다(재부팅·크래시 자동 복구).
+        restart: always
+        command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+        volumes:
+            # config.yml 과 credentials.json 을 읽기 전용으로 마운트한다.
+            - ./cloudflared:/etc/cloudflared:ro
+        extra_hosts:
+            # 컨테이너에서 호스트의 SSH(22)로 접근하기 위한 매핑(Linux: host-gateway).
+            - "host.docker.internal:host-gateway"
+
+networks:
+    # 앱 스택(docker-compose.yml)과 공유하는 외부 네트워크. 사전에 `docker network create daeoebi-net` 필요.
+    default:
+        name: daeoebi-net
+        external: true

@@ -3,7 +3,7 @@
 보안 우선 single-VPS 운영 구성이다. **공개 인바운드 포트 0** — 웹·API·SSH 모두 Cloudflare Tunnel(outbound)로만 들어온다.
 
 ```
-브라우저 ──TLS──▶ Cloudflare 엣지 ──암호화 터널──▶ cloudflared(VPS) ──▶ web / api / ssh
+브라우저 ──TLS──▶ Cloudflare 엣지 ──암호화 터널──▶ cloudflared(호스트 systemd) ──▶ 127.0.0.1 → web / api / ssh
 ```
 
 - `https://DOMAIN/` → web (Next.js)
@@ -49,29 +49,27 @@ cp apps/api/.env.example apps/api/.env.production
 
 ---
 
-## 3. Cloudflare Tunnel 생성
+## 3. Cloudflare Tunnel 생성 (cloudflared 는 별도 compose)
 
-브라우저가 있는 환경에서 1회 수행한다(서버에서 해도 됨).
+cloudflared 는 앱 docker 스택과 **분리된 별도 compose**(`docker-compose.cloudflared.yml`)로 돌린다.
+그래야 앱이 죽거나 재배포돼도 터널·SSH 가 끊기지 않는다(라이프라인 분리). 두 스택은 외부 네트워크
+`daeoebi-net` 을 공유하므로 cloudflared 가 `web:3000`·`api:4000` 서비스명으로 라우팅한다.
 
 ```bash
-cloudflared tunnel login                       # 브라우저로 도메인 인가
-cloudflared tunnel create daeoebi      # 터널 + credentials.json(UUID) 생성
+cloudflared tunnel login                   # 브라우저로 도메인 인가
+cloudflared tunnel create daeoebi          # 터널 + ~/.cloudflared/<UUID>.json 생성
 cloudflared tunnel route dns daeoebi DOMAIN
 cloudflared tunnel route dns daeoebi ssh.DOMAIN
 ```
 
-생성된 자격증명을 서버의 `cloudflared/` 로 옮긴다.
+자격증명을 프로젝트 `cloudflared/` 로 옮기고 config 를 편집한다(기동은 6단계).
 
 ```bash
 cp ~/.cloudflared/<UUID>.json /opt/daeoebi/cloudflared/credentials.json
+# cloudflared/config.yml 편집: tunnel:<UUID>, example.com→DOMAIN, ssh.example.com→ssh.DOMAIN
 ```
 
-`cloudflared/config.yml` 을 편집한다.
-
-- `tunnel:` → 위 `<UUID>` (또는 `daeoebi`)
-- `example.com` → 실제 `DOMAIN`, `ssh.example.com` → `ssh.DOMAIN`
-
-> `credentials.json` 과 `*.pem` 은 `.gitignore` 로 추적 제외된다. 절대 커밋하지 않는다.
+> `credentials.json` 과 `*.pem` 은 `.gitignore` 추적 제외. 절대 커밋하지 않는다.
 
 ---
 
@@ -101,16 +99,19 @@ Host ssh.DOMAIN
 
 ---
 
-## 6. 기동
+## 6. 기동 (앱 + 터널, 분리된 두 스택)
 
 ```bash
-docker compose up -d --build
-docker compose ps          # 모든 서비스 healthy 확인
-docker compose logs -f cloudflared
+docker network create daeoebi-net          # 1회: 두 스택이 공유할 외부 네트워크
+make prod-up                               # 앱 스택: postgres·api·web
+make tunnel-up                             # 터널 스택: cloudflared (별도 프로젝트)
+docker compose ps                          # 앱 상태
+make tunnel-logs                           # 터널 엣지 연결 로그
 ```
 
 `https://DOMAIN` 접속 → passkey 등록 흐름 확인.
 
+> 앱 재배포는 `git pull && make prod-up` — **터널은 건드리지 않으므로 SSH 유지**. 터널만 재시작은 `make tunnel-restart`.
 > 도메인을 바꿔도 web 빌드 인자 `NEXT_PUBLIC_API_BASE_URL=/api` 는 그대로 둔다(상대경로 same-origin).
 
 ---
