@@ -200,7 +200,7 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                             style={{
                                 fontSize: 11,
                                 fontWeight: 700,
-                                color: "#bcbcbc",
+                                color: "var(--color-text-muted)",
                                 marginBottom: 4,
                             }}
                         >
@@ -277,7 +277,7 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                                 style={{
                                     fontSize: 11,
                                     fontWeight: 700,
-                                    color: "#bcbcbc",
+                                    color: "var(--color-text-muted)",
                                     marginBottom: 5,
                                 }}
                             >
@@ -379,7 +379,7 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                 <div className="form-row" style={{ margin: 0 }}>
                     <label htmlFor="secret-label">
                         제목{" "}
-                        <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
+                        <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>
                             · 평문 저장
                         </span>
                     </label>
@@ -418,11 +418,11 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                             }}
                         >
                             필드{" "}
-                            <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
+                            <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>
                                 · 암호화
                             </span>
                         </span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#bcbcbc" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--color-text-muted)" }}>
                             {usedNames.size}/{MAX_FIELDS}
                         </span>
                     </legend>
@@ -443,7 +443,7 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                             style={{
                                 flexShrink: 0,
                                 fontSize: 11,
-                                color: "#bbb",
+                                color: "var(--color-text-muted)",
                                 alignSelf: "center",
                                 fontWeight: 600,
                             }}
@@ -583,7 +583,7 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                 <div className="form-row" style={{ margin: 0 }}>
                     <label htmlFor="secret-memo">
                         메모{" "}
-                        <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
+                        <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>
                             · 암호화 · 선택
                         </span>
                     </label>

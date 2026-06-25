@@ -16,7 +16,8 @@
     /* Color — Text */
     --color-text-primary: #171717;
     --color-text-secondary: #444444;
-    --color-text-muted: #9a9a9a;
+    /* WCAG AA: 흰 배경 대비 4.5:1 이상(약 5.1:1). 가독성 위해 경계(#767676)보다 여유. */
+    --color-text-muted: #6e6e6e;
     --color-text-inverse: #ffffff; /* 검정 위 흰 글자 */
 
     /* Color — Border */
@@ -811,7 +812,7 @@ textarea.field-control {
 .entry-sub {
     font-size: 12.5px;
     font-weight: 500;
-    color: #a3a3a3;
+    color: var(--color-text-muted); /* WCAG AA: #a3a3a3(2.5:1) → 토큰(5.1:1) */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

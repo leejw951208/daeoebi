@@ -72,7 +72,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                     style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        color: "#999",
+                        color: "var(--color-text-muted)",
                         letterSpacing: "0.08em",
                         marginBottom: 14,
                     }}

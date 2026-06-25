@@ -114,7 +114,7 @@ export function BackupPanel({ onImported }: Props) {
                     style={{
                         fontSize: 13.5,
                         lineHeight: 1.55,
-                        color: "#777",
+                        color: "var(--color-text-muted)",
                         margin: "0 0 16px",
                     }}
                 >
@@ -141,7 +141,7 @@ export function BackupPanel({ onImported }: Props) {
                     style={{
                         fontSize: 13.5,
                         lineHeight: 1.55,
-                        color: "#777",
+                        color: "var(--color-text-muted)",
                         margin: "0 0 14px",
                     }}
                 >
@@ -168,7 +168,7 @@ export function BackupPanel({ onImported }: Props) {
                     >
                         ⤓
                     </div>
-                    <div style={{ fontSize: 13.5, color: "#999", fontWeight: 500 }}>
+                    <div style={{ fontSize: 13.5, color: "var(--color-text-muted)", fontWeight: 500 }}>
                         {pendingName ?? "파일을 선택하세요"}
                     </div>
                     <input
@@ -252,7 +252,7 @@ export function BackupPanel({ onImported }: Props) {
                                         style={{
                                             display: "block",
                                             fontSize: 12,
-                                            color: "#999",
+                                            color: "var(--color-text-muted)",
                                             marginTop: 1,
                                         }}
                                     >
