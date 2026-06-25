@@ -5,12 +5,12 @@ import type { NextConfig } from "next"
 const PRETENDARD_CDN = "https://cdn.jsdelivr.net"
 
 // 개발(next dev)은 HMR/react-refresh 가 eval 을 사용하고, API 를 별도 오리진
-// (NEXT_PUBLIC_API_BASE_URL, 예: http://localhost:4000/api)으로 호출하며 HMR 웹소켓을 연다.
+// (NEXT_PUBLIC_API_BASE_URL, 예: http://localhost:4010/api)으로 호출하며 HMR 웹소켓을 연다.
 // 운영 빌드는 same-origin(/api) + eval 없음이라 아래 완화는 불필요하므로 dev 에서만 적용한다.
 const isDev = process.env.NODE_ENV !== "production"
 // connect-src 는 경로가 아니라 오리진만 받는다(base URL 에 /api 가 붙어도 오리진만 추출).
-const apiBaseRaw = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"
-let devApiOrigin = "http://localhost:4000"
+const apiBaseRaw = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4010"
+let devApiOrigin = "http://localhost:4010"
 try {
     devApiOrigin = new URL(apiBaseRaw, "http://localhost").origin
 } catch {

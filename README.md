@@ -21,8 +21,8 @@
 ```
 daeoebi/
 ├─ apps/
-│  ├─ web/   Next.js 15 (App Router) — http://localhost:3000
-│  └─ api/   NestJS 10 + Prisma + PostgreSQL — http://localhost:4000
+│  ├─ web/   Next.js 15 (App Router) — http://localhost:3010
+│  └─ api/   NestJS 10 + Prisma + PostgreSQL — http://localhost:4010
 ├─ docs/
 │  ├─ PRD.md      제품 요구사항 정의서
 │  └─ DEPLOY.md   운영 배포 가이드(Cloudflare Tunnel + 단일 VPS)
@@ -45,7 +45,7 @@ cp apps/web/.env.example apps/web/.env.development
 ### 2. 개발 서버 실행
 
 ```bash
-make dev-up       # DB(도커) 기동 + 마이그레이션 + 웹·API(http://localhost:3000 / :4000) 동시 실행
+make dev-up       # DB(도커) 기동 + 마이그레이션 + 웹·API(http://localhost:3010 / :4010) 동시 실행
 ```
 
 자주 쓰는 명령은 다음과 같다.

@@ -57,11 +57,11 @@ dev-up:
 	pnpm -r --parallel run dev
 
 # ── 종료 ───────────────────────────────────────────────
-# 호스트에서 떠 있는 web(:3000)·API(:4000) 개발 서버를 포트 점유 프로세스 기준으로 종료한다.
+# 호스트에서 떠 있는 web(:3010)·API(:4010) 개발 서버를 포트 점유 프로세스 기준으로 종료한다.
 # 프로세스가 없어도 실패하지 않는다.
 dev-stop-app:
 	@echo "▶ web·API 개발 서버 종료"
-	@pids="$$(lsof -ti tcp:3000 2>/dev/null; lsof -ti tcp:4000 2>/dev/null)"; \
+	@pids="$$(lsof -ti tcp:3010 2>/dev/null; lsof -ti tcp:4010 2>/dev/null)"; \
 		if [ -n "$$pids" ]; then kill $$pids 2>/dev/null || true; else echo "  (실행 중인 개발 서버 없음)"; fi
 
 # 서비스(web·API) + DB 를 함께 내린다. DB 데이터는 유지한다.
