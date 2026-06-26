@@ -1,5 +1,6 @@
-// 대외비 PWA service worker. 앱 셸(HTML/정적자산)만 캐시한다. /api/* 는 절대 캐시하지 않는다.
-const CACHE_VERSION = "daeoebi-v6"
+// 대외비 PWA service worker. 콘텐츠 해시가 박힌 정적 자산만 캐시한다.
+// /api/* 와 Next.js RSC·동적 요청은 절대 캐시하지 않는다(SW 가 라우팅에 끼어들지 않게 한다).
+const CACHE_VERSION = "daeoebi-v7"
 // 아이콘 PNG 는 사용자가 추후 추가하므로 precache 에 포함하지 않는다.
 // addAll 은 단 하나의 404 로도 전체 install 이 실패하므로 핵심 셸만 등록한다.
 const APP_SHELL = ["/", "/manifest.webmanifest"]
@@ -44,30 +45,26 @@ self.addEventListener("fetch", (event) => {
     // 같은 origin 만 처리
     if (url.origin !== self.location.origin) return
 
-    // 내비게이션(HTML 문서)은 network-first. 항상 최신 셸을 받고, 오프라인일 때만 캐시로 폴백한다.
-    // (cache-first 로 두면 새 배포 후에도 옛 셸이 영구히 서빙되는 stale 문제가 생긴다.)
+    // 내비게이션(HTML 문서)은 network-first. 캐시에 저장하지 않고, 오프라인일 때만 앱 셸("/")로 폴백한다.
+    // (HTML/RSC 를 캐시하면 새 배포 후 stale 응답이 신선한 빌드와 충돌해 App Router 가 하드 내비게이션으로
+    //  폴백하고, 그 순간 메모리의 VK 가 폐기돼 잠금화면이 다시 뜨는(재인증) 버그가 난다.)
     if (event.request.mode === "navigate") {
         event.respondWith(
-            fetch(event.request)
-                .then((response) => {
-                    if (response.ok && response.type === "basic") {
-                        const clone = response.clone()
-                        caches
-                            .open(CACHE_VERSION)
-                            .then((cache) => cache.put(event.request, clone))
-                    }
-                    return response
-                })
-                .catch(() =>
-                    caches
-                        .match(event.request)
-                        .then((cached) => cached ?? caches.match("/")),
-                ),
+            fetch(event.request).catch(() =>
+                caches.match("/").then((cached) => cached ?? Response.error()),
+            ),
         )
         return
     }
 
-    // 정적 자산(해시 파일명)은 cache-first
+    // 콘텐츠 해시가 박힌 불변 정적 자산만 cache-first 로 캐시한다(파일명에 해시가 있어 stale 위험이 없다).
+    // RSC 페이로드·기타 동적 GET 은 SW 가 가로채지 않고 네트워크로 통과시킨다 — 라우팅 충돌을 원천 차단한다.
+    const isImmutableAsset =
+        url.pathname.startsWith("/_next/static/") ||
+        url.pathname.startsWith("/icons/") ||
+        url.pathname === "/manifest.webmanifest"
+    if (!isImmutableAsset) return
+
     event.respondWith(
         caches.match(event.request).then(
             (cached) =>
