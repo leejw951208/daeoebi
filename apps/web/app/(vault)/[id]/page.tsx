@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { deleteSecret, getSecret } from "@/lib/vault-client"
+import { deleteSecret, getSecret, updateSecret } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { SkeletonCard } from "@/components/Skeleton"
 import { CopyField } from "../CopyField"
 import { SecretForm, type SecretFormInitial } from "../SecretForm"
 import { useVault, type SecretField } from "../vault-context"
-import { openPayload } from "../secret-payload"
+import { openPayload, sealPayload } from "../secret-payload"
 import { isSensitiveFieldName } from "../field-suggestions"
 
 type LoadState = "idle" | "loading" | "loaded" | "missing" | "error"
@@ -36,6 +36,9 @@ export default function SecretDetailPage() {
     const [error, setError] = useState<string | null>(null)
     const [mode, setMode] = useState<"view" | "edit">("view")
     const [confirmDelete, setConfirmDelete] = useState(false)
+    // 삭제 확인 중인 필드 인덱스(null 이면 다이얼로그 닫힘). 필드 단위 삭제용.
+    const [fieldToDelete, setFieldToDelete] = useState<number | null>(null)
+    const [fieldBusy, setFieldBusy] = useState(false)
     const [, startTransition] = useTransition()
 
     const reload = useCallback(async () => {
@@ -94,6 +97,33 @@ export default function SecretDetailPage() {
             startTransition(() => router.refresh())
         } catch (e) {
             setError((e as Error).message)
+        }
+    }
+
+    // 단일 필드 삭제. 나머지 필드·메모만 다시 암호화해 저장한 뒤 재조회한다.
+    async function handleDeleteField(idx: number) {
+        if (!data) return
+        setFieldToDelete(null)
+        setFieldBusy(true)
+        setError(null)
+        try {
+            const nextFields = data.fields.filter((_, i) => i !== idx)
+            const blob = await sealPayload(vaultKey, {
+                fields: nextFields,
+                memo: data.memo,
+            })
+            await updateSecret(data.id, {
+                label: data.label,
+                categoryId: data.categoryId,
+                iv: blob.iv,
+                ciphertext: blob.ciphertext,
+                authTag: blob.authTag,
+            })
+            await reload()
+        } catch (e) {
+            setError(isApiError(e) ? e.message : (e as Error).message)
+        } finally {
+            setFieldBusy(false)
         }
     }
 
@@ -249,6 +279,14 @@ export default function SecretDetailPage() {
                                 isSensitiveFieldName(field.name)
                             }
                             onActivity={resetIdle}
+                            onDelete={
+                                fieldBusy
+                                    ? undefined
+                                    : () => {
+                                          resetIdle()
+                                          setFieldToDelete(idx)
+                                      }
+                            }
                         />
                     ))}
                     {data.memo && (
@@ -303,6 +341,22 @@ export default function SecretDetailPage() {
                 destructive
                 onConfirm={handleDelete}
                 onCancel={() => setConfirmDelete(false)}
+            />
+
+            <ConfirmDialog
+                open={fieldToDelete !== null}
+                title="필드 삭제"
+                message={
+                    fieldToDelete !== null && data.fields[fieldToDelete]
+                        ? `"${data.fields[fieldToDelete].name}" 필드를 삭제하시겠습니까?`
+                        : "이 필드를 삭제하시겠습니까?"
+                }
+                confirmLabel="삭제"
+                destructive
+                onConfirm={() => {
+                    if (fieldToDelete !== null) void handleDeleteField(fieldToDelete)
+                }}
+                onCancel={() => setFieldToDelete(null)}
             />
         </section>
     )

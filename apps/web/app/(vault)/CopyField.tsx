@@ -9,11 +9,19 @@ interface Props {
     sensitive?: boolean
     // 복사·보기 등 사용자 활동 시 자동잠금 타이머를 초기화하는 콜백.
     onActivity?: () => void
+    // 지정 시 이 필드만 삭제하는 휴지통 버튼을 노출한다(상세 화면 전용).
+    onDelete?: () => void
 }
 
 const CLEAR_AFTER_MS = 30_000
 
-export function CopyField({ label, value, sensitive, onActivity }: Props) {
+export function CopyField({
+    label,
+    value,
+    sensitive,
+    onActivity,
+    onDelete,
+}: Props) {
     const [revealed, setRevealed] = useState(false)
     const [status, setStatus] = useState<string>("")
     const [remaining, setRemaining] = useState<number | null>(null)
@@ -87,6 +95,20 @@ export function CopyField({ label, value, sensitive, onActivity }: Props) {
                     >
                         {remaining !== null ? `복사됨 ${remaining}s` : "복사"}
                     </button>
+                    {onDelete && (
+                        <button
+                            type="button"
+                            className="secret-btn"
+                            style={{ color: "#d99" }}
+                            onClick={() => {
+                                onActivity?.()
+                                onDelete()
+                            }}
+                            aria-label={`${label} 필드 삭제`}
+                        >
+                            삭제
+                        </button>
+                    )}
                 </span>
             </div>
             <span
