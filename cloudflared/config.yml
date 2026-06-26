@@ -17,12 +17,12 @@ ingress:
       service: ssh://host.docker.internal:22
 
     # /api/* → NestJS(api). 공유 네트워크 daeoebi-net 의 서비스명. 경로 strip 안 함 → API_GLOBAL_PREFIX=api.
-    - hostname: vault.leejw.dev
+    - hostname: daeoebi.leejw.dev
       path: ^/api(/|$)
       service: http://api:4000
 
     # 그 외 모든 경로 → Next.js(web). same-origin 이라 CORS 불필요.
-    - hostname: vault.leejw.dev
+    - hostname: daeoebi.leejw.dev
       service: http://web:3000
 
     # 매칭되지 않는 요청은 404.
