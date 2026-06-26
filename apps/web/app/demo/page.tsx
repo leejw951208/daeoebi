@@ -3,7 +3,6 @@
 // 실제 금고와 완전히 분리된다 — vault-client·실제 인증·실제 데이터를 일절 쓰지 않고
 // 메모리상 가짜 데이터(demo-data)로만 목록 → 상세 → 폼 흐름을 재현한다.
 import { useMemo, useState } from "react"
-import Link from "next/link"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { CopyField } from "../(vault)/CopyField"
 import { isSensitiveFieldName } from "../(vault)/field-suggestions"
@@ -311,17 +310,15 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     )
 }
 
-// 데모임을 알리는 상단 배너. 실제 금고로 가는 링크를 함께 둔다.
+// 데모임을 알리는 상단 배너. 실제 금고로 가는 링크는 두지 않는다(데모는 폐쇄적으로 둘러보기만).
 function DemoBanner() {
     return (
         <div
             role="note"
             style={{
                 display: "flex",
-                flexWrap: "wrap",
                 alignItems: "center",
                 gap: 8,
-                justifyContent: "space-between",
                 padding: "10px 14px",
                 marginBottom: 14,
                 borderRadius: 12,
@@ -335,9 +332,6 @@ function DemoBanner() {
                 <strong style={{ color: "#333" }}>데모 모드</strong> · 아래 데이터는 모두 예시이며 실제
                 비밀번호가 아닙니다. 변경 사항은 저장되지 않습니다.
             </span>
-            <Link href="/" className="btn-text" style={{ color: "var(--ac)", fontWeight: 700, whiteSpace: "nowrap" }}>
-                실제 대외비 →
-            </Link>
         </div>
     )
 }

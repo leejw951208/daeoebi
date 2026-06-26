@@ -9,6 +9,8 @@ const TABS = [{ href: "/", label: "대외비", icon: KeyRound }] as const
 
 export function BottomTabBar() {
     const pathname = usePathname()
+    // 데모 모드에서는 실제 대외비로 가는 탭을 노출하지 않는다(폐쇄적 둘러보기).
+    if (pathname.startsWith("/demo")) return null
     return (
         <nav className="bottom-tab-bar" aria-label="모바일 네비게이션">
             {TABS.map((tab) => {
