@@ -35,6 +35,8 @@ export class SearchService {
                     siteId: true,
                     categoryId: true,
                     label: true,
+                    createdAt: true,
+                    updatedAt: true,
                 },
             }),
         ])

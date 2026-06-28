@@ -262,12 +262,20 @@ export async function deleteSecret(id: string): Promise<void> {
     await vaultClient.delete(`/secrets/${id}`)
 }
 
-// 라벨 검색. 메타만 반환한다.
+// /search 응답. 서버는 사이트·카테고리·비밀번호 라벨 일치 결과를 묶어서 돌려준다(search.service.ts).
+interface SearchResult {
+    sites: unknown[]
+    categories: unknown[]
+    secrets: SecretMeta[]
+}
+
+// 라벨 검색. 비밀번호 메타만 추려서 반환한다.
+// (서버는 {sites,categories,secrets} 객체를 주므로 secrets 만 꺼낸다 — 과거 배열로 오인해 검색이 항상 빈 화면이던 버그.)
 export async function searchSecrets(q: string): Promise<SecretMeta[]> {
-    const { data } = await vaultClient.get<SecretMeta[]>("/search", {
+    const { data } = await vaultClient.get<SearchResult>("/search", {
         params: { q },
     })
-    return data
+    return data.secrets
 }
 
 // ─── 백업/복원(/store) ─────────────────────────────────────────
