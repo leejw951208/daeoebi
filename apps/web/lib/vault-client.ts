@@ -115,6 +115,11 @@ export async function postLogout(): Promise<void> {
     await vaultClient.post("/auth/logout", {})
 }
 
+// 비운영 전용 dev 세션 발급(패스키 우회). 운영에선 서버가 404 로 막는다. lib/dev-auth.ts 에서만 호출한다.
+export async function postDevLogin(): Promise<void> {
+    await vaultClient.post("/auth/dev/login", {})
+}
+
 // ─── store: 사이트(/sites) ─────────────────────────────────────
 
 export interface Site {

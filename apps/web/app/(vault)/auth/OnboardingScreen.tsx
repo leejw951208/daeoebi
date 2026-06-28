@@ -23,6 +23,7 @@ import {
     registerPasskey,
     supportsWebAuthn,
 } from "@/lib/webauthn"
+import { DEV_AUTH, devUnlock } from "@/lib/dev-auth"
 import { RecoveryCodeDisplay } from "./RecoveryCodeDisplay"
 
 type Phase = "intro" | "registering" | "recovery"
@@ -43,6 +44,18 @@ export function OnboardingScreen({ onUnlocked }: Props) {
     } | null>(null)
 
     async function handleRegister() {
+        // 비운영: 패스키 대신 dev 우회로 즉시 진입(부트스트랩 토큰·복구코드 단계 생략).
+        if (DEV_AUTH) {
+            setPhase("registering")
+            setError(null)
+            try {
+                onUnlocked(await devUnlock())
+            } catch (e) {
+                setPhase("intro")
+                setError(resolveError(e))
+            }
+            return
+        }
         if (!supportsWebAuthn()) {
             setError("이 브라우저는 passkey(WebAuthn)를 지원하지 않습니다.")
             return

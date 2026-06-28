@@ -5,6 +5,7 @@ import {
     Controller,
     Get,
     HttpCode,
+    NotFoundException,
     Post,
     Req,
     Res,
@@ -107,6 +108,20 @@ export class AuthController {
         const result = await this.service.recoveryVerify(dto.recoveryCode)
         issueRecoveryCookie(res, this.session.issueRecovery())
         return result
+    }
+
+    // 비운영 전용 dev 진입. WebAuthn 검증 없이 일반 세션을 발급한다(로컬 UI 확인용).
+    // 운영(NODE_ENV=production)에선 라우트가 존재하지 않는 것처럼 404로 막는다(fail-closed).
+    // NODE_ENV 는 호출 시점에 읽는다(top-level 캡처 금지 — ConfigModule 로드 순서 때문).
+    @Post("dev/login")
+    @HttpCode(200)
+    @Public()
+    devLogin(@Res({ passthrough: true }) res: Response): { ok: true } {
+        if (process.env.NODE_ENV === "production") {
+            throw new NotFoundException()
+        }
+        issueSessionCookie(res, this.session.issue())
+        return { ok: true }
     }
 
     @Post("logout")

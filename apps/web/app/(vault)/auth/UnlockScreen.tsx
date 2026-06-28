@@ -28,6 +28,7 @@ import {
     registerPasskey,
     supportsWebAuthn,
 } from "@/lib/webauthn"
+import { DEV_AUTH, devUnlock } from "@/lib/dev-auth"
 
 type Mode = "passkey" | "recovery"
 type Busy = "idle" | "unlocking" | "recovering"
@@ -46,6 +47,19 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
 
     // passkey 로그인 → PRF 출력으로 wrappedVkPrf 언랩 → VK 확보.
     async function handlePasskeyUnlock() {
+        // 비운영: 패스키 대신 dev 우회로 즉시 진입.
+        if (DEV_AUTH) {
+            setBusy("unlocking")
+            setError(null)
+            setRetryAfter(null)
+            try {
+                onUnlocked(await devUnlock())
+            } catch (e) {
+                handleFailure(e)
+                setBusy("idle")
+            }
+            return
+        }
         if (!supportsWebAuthn()) {
             setError("이 브라우저는 passkey(WebAuthn)를 지원하지 않습니다.")
             return
