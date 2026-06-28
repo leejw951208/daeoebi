@@ -257,6 +257,56 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
         })
     })
 
+    describe("검색(/search)", () => {
+        it("무세션 GET /search 는 401", async () => {
+            const res = await request(app.getHttpServer())
+                .get("/search?q=x")
+                .expect(401)
+            expect(res.body.code).toBe("SESSION_REQUIRED")
+        })
+
+        it("라벨 부분 일치하는 secret 을 secrets 배열로 반환한다", async () => {
+            const cookie = await registerFirst()
+            const site = await write("post", "/sites")
+                .set("Cookie", cookie)
+                .send({ label: "내 보관함" })
+                .expect(201)
+            await write("post", "/secrets")
+                .set("Cookie", cookie)
+                .send({
+                    siteId: site.body.id,
+                    label: "PASS 앱",
+                    iv: b64(12),
+                    ciphertext: b64(64),
+                    authTag: b64(16),
+                })
+                .expect(201)
+
+            const res = await request(app.getHttpServer())
+                .get("/search?q=pass")
+                .set("Cookie", cookie)
+                .expect(200)
+            // 응답은 {sites,categories,secrets} 객체이며 secrets 에 메타(블롭 없음)가 담긴다.
+            expect(res.body).toHaveProperty("secrets")
+            expect(res.body.secrets).toHaveLength(1)
+            expect(res.body.secrets[0]).toMatchObject({
+                label: "PASS 앱",
+                siteId: site.body.id,
+            })
+            expect(res.body.secrets[0].iv).toBeUndefined()
+            expect(res.body.secrets[0].createdAt).toBeDefined()
+        })
+
+        it("일치하는 라벨이 없으면 secrets 가 빈 배열이다", async () => {
+            const cookie = await registerFirst()
+            const res = await request(app.getHttpServer())
+                .get("/search?q=존재하지않는라벨")
+                .set("Cookie", cookie)
+                .expect(200)
+            expect(res.body.secrets).toEqual([])
+        })
+    })
+
     describe("복구 검증", () => {
         it("verifier 불일치는 401 VERIFICATION_FAILED", async () => {
             await registerFirst()
