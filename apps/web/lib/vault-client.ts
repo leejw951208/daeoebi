@@ -321,3 +321,108 @@ export async function importStore(
     )
     return data
 }
+
+// ─── 자산 관리(/income·/expenses·/recurring) ───────────────────
+// 금액·항목·카테고리는 클라이언트 E2E 암호문 블롭(iv/ciphertext/authTag, base64url)으로 주고받는다.
+
+export interface SealedBlobDto {
+    iv: string
+    ciphertext: string
+    authTag: string
+}
+
+export interface IncomeView extends SealedBlobDto {
+    updatedAt: string
+}
+
+export interface ExpenseView extends SealedBlobDto {
+    id: string
+    date: string // "YYYY-MM-DD"
+    recurringId: string | null
+    period: string | null
+}
+
+export interface RecurringView extends SealedBlobDto {
+    id: string
+    dayOfMonth: number
+    active: boolean
+}
+
+export async function getIncome(): Promise<IncomeView | null> {
+    const { data } = await vaultClient.get<IncomeView | null>("/income")
+    return data
+}
+
+export async function putIncome(
+    blob: SealedBlobDto,
+): Promise<{ ok: true; updatedAt: string }> {
+    const { data } = await vaultClient.put("/income", blob)
+    return data
+}
+
+export async function listExpenses(month: string): Promise<ExpenseView[]> {
+    const { data } = await vaultClient.get<ExpenseView[]>("/expenses", {
+        params: { month },
+    })
+    return data
+}
+
+export async function getExpense(id: string): Promise<ExpenseView> {
+    const { data } = await vaultClient.get<ExpenseView>(`/expenses/${id}`)
+    return data
+}
+
+export interface CreateExpenseInput extends SealedBlobDto {
+    date: string
+    recurringId?: string
+    period?: string
+}
+
+export async function createExpense(
+    input: CreateExpenseInput,
+): Promise<ExpenseView> {
+    const { data } = await vaultClient.post<ExpenseView>("/expenses", input)
+    return data
+}
+
+export async function updateExpense(
+    id: string,
+    input: Partial<SealedBlobDto> & { date?: string },
+): Promise<ExpenseView> {
+    const { data } = await vaultClient.patch<ExpenseView>(
+        `/expenses/${id}`,
+        input,
+    )
+    return data
+}
+
+export async function deleteExpense(id: string): Promise<void> {
+    await vaultClient.delete(`/expenses/${id}`)
+}
+
+export async function listRecurring(): Promise<RecurringView[]> {
+    const { data } = await vaultClient.get<RecurringView[]>("/recurring")
+    return data
+}
+
+export async function createRecurring(
+    input: SealedBlobDto & { dayOfMonth: number },
+): Promise<RecurringView> {
+    const { data } = await vaultClient.post<RecurringView>("/recurring", input)
+    return data
+}
+
+export async function updateRecurring(
+    id: string,
+    input: Partial<SealedBlobDto> & { dayOfMonth?: number; active?: boolean },
+): Promise<RecurringView> {
+    const { data } = await vaultClient.patch<RecurringView>(
+        `/recurring/${id}`,
+        input,
+    )
+    return data
+}
+
+export async function deleteRecurring(id: string): Promise<void> {
+    await vaultClient.delete(`/recurring/${id}`)
+}

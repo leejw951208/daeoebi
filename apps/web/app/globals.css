@@ -1336,6 +1336,170 @@ textarea.field-control {
     }
 }
 
+/* ── Asset (자산 관리) ───────────────────────────────── */
+.field-label {
+    color: var(--color-text-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-bottom: 7px;
+}
+
+/* 카테고리·결제방법 칩 안의 색 점 간격 */
+.chip > span[aria-hidden] {
+    margin-right: 6px;
+}
+
+/* 고정 지출 토글 행 */
+.asset-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 16px;
+    border: 1.5px solid #ececec;
+    border-radius: var(--radius-md);
+    background: var(--tint);
+    cursor: pointer;
+}
+.asset-toggle-row input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    accent-color: var(--ac);
+    flex-shrink: 0;
+}
+
+/* 자산 카드 공통 */
+.asset-card {
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
+    background: #fff;
+    padding: 18px;
+    font: inherit;
+    color: inherit;
+}
+.asset-card-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    margin-bottom: 5px;
+}
+.asset-card-value {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* 진행/비율 바 */
+.asset-bar {
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--soft);
+    overflow: hidden;
+}
+.asset-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width var(--motion-base) var(--ease);
+}
+
+/* 지출 달력 셀 */
+.cal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: var(--tint);
+    cursor: pointer;
+    font: inherit;
+    transition: transform var(--motion-fast) var(--ease);
+}
+.cal-cell:active {
+    transform: scale(0.9);
+}
+.cal-cell.active {
+    border-color: var(--ac);
+    background: var(--soft);
+}
+.cal-day {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+.cal-amt {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-danger-fg);
+    line-height: 1;
+}
+
+/* 고정 지출 배지 */
+.recur-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ac);
+    background: var(--soft);
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+/* 바텀시트(수입 설정) */
+.sheet {
+    width: 100%;
+    max-width: var(--app-max-width, 480px);
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 26px 26px 0 0;
+    padding: 10px 22px 26px;
+    animation: sheetUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sheet-grip {
+    width: 38px;
+    height: 5px;
+    border-radius: 3px;
+    background: #e3e3e6;
+    margin: 0 auto 18px;
+}
+.income-input {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1.5px solid #ececec;
+    border-radius: var(--radius-md);
+    background: var(--tint);
+    padding: 0 16px;
+    height: 60px;
+}
+.income-input span {
+    font-size: 24px;
+    font-weight: 800;
+    color: #cfcfcf;
+}
+.income-input input {
+    flex: 1;
+    border: none;
+    background: none;
+    outline: none;
+    font: inherit;
+    font-size: 24px;
+    font-weight: 800;
+    color: #171717;
+}
+
+@keyframes sheetUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
 /* ── prefers-reduced-motion ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     *,
