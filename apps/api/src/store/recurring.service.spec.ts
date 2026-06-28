@@ -1,0 +1,88 @@
+// RecurringService 단위 테스트(Prisma 모킹). 활성 템플릿 조회·생성·수정·삭제와 not-found 를 검증한다.
+import { NotFoundException } from "@nestjs/common"
+import { RecurringService } from "./recurring.service"
+import { STORE_ERRORS } from "./store.types"
+
+function makePrisma() {
+    return {
+        recurringExpense: {
+            findMany: jest.fn(),
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+        },
+    }
+}
+function makeService(prisma: ReturnType<typeof makePrisma>) {
+    return new RecurringService(prisma as unknown as never)
+}
+
+const IV = Buffer.alloc(12, 1)
+const CT = Buffer.alloc(48, 2)
+const TAG = Buffer.alloc(16, 3)
+const blob = {
+    iv: IV.toString("base64url"),
+    ciphertext: CT.toString("base64url"),
+    authTag: TAG.toString("base64url"),
+}
+const row = {
+    id: "r1",
+    dayOfMonth: 25,
+    active: true,
+    iv: IV,
+    ciphertext: CT,
+    authTag: TAG,
+}
+
+describe("RecurringService", () => {
+    it("listActive 는 active=true 만 조회한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.findMany.mockResolvedValue([row])
+        const out = await makeService(prisma).listActive()
+        expect(prisma.recurringExpense.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { active: true } }),
+        )
+        expect(out[0]).toMatchObject({ id: "r1", dayOfMonth: 25, active: true })
+    })
+
+    it("create 는 dayOfMonth + 디코드한 블롭으로 생성한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.create.mockResolvedValue(row)
+        await makeService(prisma).create({ dayOfMonth: 25, ...blob } as never)
+        const data = prisma.recurringExpense.create.mock.calls[0][0].data
+        expect(data.dayOfMonth).toBe(25)
+        expect(Buffer.from(data.iv)).toEqual(IV)
+    })
+
+    it("update 는 없으면 RECURRING_NOT_FOUND", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.findUnique.mockResolvedValue(null)
+        await expect(
+            makeService(prisma).update("x", { active: false } as never),
+        ).rejects.toMatchObject({ response: { code: STORE_ERRORS.RECURRING_NOT_FOUND } })
+    })
+
+    it("update 는 active 만 부분 갱신한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.findUnique.mockResolvedValue({ id: "r1" })
+        prisma.recurringExpense.update.mockResolvedValue({ ...row, active: false })
+        await makeService(prisma).update("r1", { active: false } as never)
+        const data = prisma.recurringExpense.update.mock.calls[0][0].data
+        expect(data).toEqual({ active: false })
+    })
+
+    it("remove 는 없으면 404, 있으면 삭제", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.findUnique.mockResolvedValueOnce(null)
+        await expect(makeService(prisma).remove("x")).rejects.toThrow(
+            NotFoundException,
+        )
+        prisma.recurringExpense.findUnique.mockResolvedValueOnce({ id: "r1" })
+        prisma.recurringExpense.delete.mockResolvedValue(row)
+        await makeService(prisma).remove("r1")
+        expect(prisma.recurringExpense.delete).toHaveBeenCalledWith({
+            where: { id: "r1" },
+        })
+    })
+})

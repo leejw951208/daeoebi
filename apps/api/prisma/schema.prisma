@@ -64,6 +64,52 @@ model Category {
   @@index([label])
 }
 
+// 월 수입(자산 관리). 단일 사용자라 싱글톤 1행이며 금액은 암호문 블롭({amount})이다.
+// 서버는 복호화하지 않는다(secret 과 동일 패스스루). RecoveryWrap 의 singleton id 패턴을 따른다.
+model Income {
+  id         String   @id @default("singleton")
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// 고정 지출 템플릿. 매월 자동 생성의 원본이다. dayOfMonth·active 는 스케줄용 평문,
+// 금액·항목·카테고리·결제방법은 암호문 블롭({item,amount,category,method})이다.
+model RecurringExpense {
+  id         String    @id @default(cuid())
+  dayOfMonth Int // 1-31. 말일 초과 시 클라가 해당 월 말일로 클램프한다.
+  active     Boolean   @default(true)
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  instances  Expense[]
+
+  @@index([active])
+}
+
+// 지출 1건. date 는 월 범위 조회·달력용 평문, 본문은 암호문 블롭이다.
+// recurringId/period 는 고정 지출 자동 생성의 멱등 키다(일반 지출은 둘 다 null).
+model Expense {
+  id          String            @id @default(cuid())
+  date        DateTime          @db.Date
+  recurringId String?
+  recurring   RecurringExpense? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
+  period      String? // "YYYY-MM". 고정 인스턴스 멱등 키.
+  iv          Bytes
+  ciphertext  Bytes
+  authTag     Bytes
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // 같은 템플릿·같은 달엔 1건만. null 끼리는 distinct 라 일반 지출엔 제약이 없다(멱등 머티리얼라이즈).
+  @@unique([recurringId, period])
+  @@index([date])
+}
+
 // 라벨 평문 + AEAD 암호화된 비밀번호 본문 1건.
 // categoryId 가 null 이면 사이트 직속이다. 카테고리 삭제 시 사이트 직속으로 남는다.
 model Secret {
