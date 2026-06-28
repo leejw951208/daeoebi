@@ -148,7 +148,7 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                     <span style={onboardCheckMark} aria-hidden="true">
                         <Icon icon={Check} size={11} />
                     </span>
-                    일정 시간 미사용 시 자동 재잠금
+                    3분간 미사용 시 자동 재잠금
                 </li>
             </ul>
 

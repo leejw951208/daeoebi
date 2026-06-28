@@ -1,28 +1,81 @@
 "use client"
-// 모바일 하단 탭바. 대외비 라우트로 thumb 영역 네비게이션 제공.
+// 모바일 하단 탭바. 보관함·자산 두 영역을 thumb 네비게이션으로 전환한다.
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { KeyRound } from "lucide-react"
-import { Icon } from "./Icon"
 
-const TABS = [{ href: "/", label: "대외비", icon: KeyRound }] as const
+// 디자인 프로토타입의 인라인 SVG 아이콘(돋보기+열쇠형 / 카드)을 그대로 사용한다.
+function VaultIcon() {
+    return (
+        <svg
+            width={23}
+            height={23}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <circle cx="8" cy="8" r="5.5" />
+            <path d="M11.8 11.8 19 19" />
+            <path d="M16.5 19l2-2" />
+            <path d="M14 16.5l2-2" />
+        </svg>
+    )
+}
+
+function AssetIcon() {
+    return (
+        <svg
+            width={23}
+            height={23}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <rect x="2.5" y="6" width="19" height="12" rx="2.5" />
+            <circle cx="12" cy="12" r="2.6" />
+        </svg>
+    )
+}
+
+const TABS = [
+    {
+        href: "/",
+        label: "보관함",
+        Icon: VaultIcon,
+        // 자산 영역이 아니면 보관함이 활성(목록·상세·신규·백업 등 모두 보관함 소속).
+        isActive: (pathname: string) => !pathname.startsWith("/asset"),
+    },
+    {
+        href: "/asset",
+        label: "자산",
+        Icon: AssetIcon,
+        isActive: (pathname: string) => pathname.startsWith("/asset"),
+    },
+] as const
 
 export function BottomTabBar() {
     const pathname = usePathname()
-    // 데모 모드에서는 실제 대외비로 가는 탭을 노출하지 않는다(폐쇄적 둘러보기).
+    // 데모 모드에서는 실제 보관함으로 가는 탭을 노출하지 않는다(폐쇄적 둘러보기).
     if (pathname.startsWith("/demo")) return null
     return (
         <nav className="bottom-tab-bar" aria-label="모바일 네비게이션">
             {TABS.map((tab) => {
-                const isActive = pathname.startsWith(tab.href)
+                const active = tab.isActive(pathname)
                 return (
                     <Link
                         key={tab.href}
                         href={tab.href}
-                        aria-current={isActive ? "page" : undefined}
+                        aria-current={active ? "page" : undefined}
                         aria-label={tab.label}
                     >
-                        <Icon icon={tab.icon} size={22} />
+                        <tab.Icon />
                     </Link>
                 )
             })}
