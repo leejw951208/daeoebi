@@ -58,7 +58,7 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
         return (set ?? []).map((c) => c.split(";")[0]).join("; ")
     }
 
-    function write(method: "post" | "patch" | "delete", url: string) {
+    function write(method: "post" | "patch" | "delete" | "put", url: string) {
         const agent = request(app.getHttpServer())
         return agent[method](url)
             .set("Origin", ORIGIN)
@@ -138,6 +138,9 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
         // registerFirst 가 429 로 연쇄 실패한다. 매 테스트 시작 시 격리한다.
         backoff.reset()
         // 단일 사용자 모델: 매 테스트마다 빈 DB 로 시작한다.
+        await prisma.expense.deleteMany()
+        await prisma.recurringExpense.deleteMany()
+        await prisma.income.deleteMany()
         await prisma.secret.deleteMany()
         await prisma.category.deleteMany()
         await prisma.site.deleteMany()
@@ -304,6 +307,71 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
                 .set("Cookie", cookie)
                 .expect(200)
             expect(res.body.secrets).toEqual([])
+        })
+    })
+
+    describe("자산(/income·/expenses·/recurring)", () => {
+        const blob = () => ({ iv: b64(12), ciphertext: b64(64), authTag: b64(16) })
+
+        it("무세션 GET /expenses 는 401", async () => {
+            const res = await request(app.getHttpServer())
+                .get("/expenses?month=2026-06")
+                .expect(401)
+            expect(res.body.code).toBe("SESSION_REQUIRED")
+        })
+
+        it("income upsert 후 동일 블롭을 반환한다(서버 복호화 없음)", async () => {
+            const cookie = await registerFirst()
+            const b = blob()
+            await write("put", "/income").set("Cookie", cookie).send(b).expect(200)
+            const res = await request(app.getHttpServer())
+                .get("/income")
+                .set("Cookie", cookie)
+                .expect(200)
+            expect(res.body).toMatchObject(b)
+        })
+
+        it("지출 생성 후 해당 월 목록에 블롭 포함해 조회된다", async () => {
+            const cookie = await registerFirst()
+            const created = await write("post", "/expenses")
+                .set("Cookie", cookie)
+                .send({ date: "2026-06-15", ...blob() })
+                .expect(201)
+            expect(created.body.date).toBe("2026-06-15")
+
+            const list = await request(app.getHttpServer())
+                .get("/expenses?month=2026-06")
+                .set("Cookie", cookie)
+                .expect(200)
+            expect(list.body).toHaveLength(1)
+            expect(list.body[0].id).toBe(created.body.id)
+
+            // 다른 달은 비어 있다.
+            const other = await request(app.getHttpServer())
+                .get("/expenses?month=2026-07")
+                .set("Cookie", cookie)
+                .expect(200)
+            expect(other.body).toEqual([])
+        })
+
+        it("같은 (recurringId, period) 고정 인스턴스는 1건만(멱등) — 중복은 409", async () => {
+            const cookie = await registerFirst()
+            const tmpl = await write("post", "/recurring")
+                .set("Cookie", cookie)
+                .send({ dayOfMonth: 25, ...blob() })
+                .expect(201)
+            const body = {
+                date: "2026-06-25",
+                recurringId: tmpl.body.id,
+                period: "2026-06",
+                ...blob(),
+            }
+            await write("post", "/expenses").set("Cookie", cookie).send(body).expect(201)
+            const dup = await write("post", "/expenses")
+                .set("Cookie", cookie)
+                .send(body)
+                .expect(409)
+            expect(dup.body.code).toBe("EXPENSE_DUPLICATE")
         })
     })
 
