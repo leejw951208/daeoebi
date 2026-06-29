@@ -44,3 +44,6 @@ cloudflared/credentials.json
 cloudflared/*.json
 cloudflared/cert.pem
 cloudflared/*.pem
+
+# Github Deploy
+.ssh

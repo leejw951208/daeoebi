@@ -76,8 +76,8 @@ cp ~/.cloudflared/<UUID>.json /opt/daeoebi/cloudflared/credentials.json
 ## 4. SSH 를 Tunnel + Access 로 보호
 
 1. Cloudflare Zero Trust 대시보드 → **Access → Applications → Add** → Self-hosted.
-   - Application domain: `ssh.DOMAIN`
-   - Policy: 본인 이메일(또는 IdP)만 Allow.
+    - Application domain: `ssh.DOMAIN`
+    - Policy: 본인 이메일(또는 IdP)만 Allow.
 2. 로컬 `~/.ssh/config` 에 추가.
 
 ```
@@ -162,6 +162,54 @@ echo <GHCR_PAT> | docker login ghcr.io -u leejw951208 --password-stdin
 
 ---
 
+## CD 배포 (GitHub Actions → VPS, 터널 SSH)
+
+`main` 푸시로 이미지가 GHCR 에 올라가면, 같은 워크플로(`build.yml`)의 `deploy` 잡이 VPS 에 접속해
+`git pull && make prod-deploy` 를 실행한다. api 컨테이너 CMD 가 기동 시 `prisma migrate deploy` 를
+돌리므로 **마이그레이션도 자동 적용**된다.
+
+공개 인바운드 0 구성을 깨지 않기 위해, 러너는 **Cloudflare Access 서비스 토큰**으로 터널 SSH
+(`ssh.DOMAIN`)에 비대화식 접속한다(브라우저 인증 없음).
+
+### 1회 준비 ① Cloudflare 서비스 토큰 + Access 정책
+
+1. Zero Trust → Access → **Service Auth → Create Service Token**. Client ID / Client Secret 발급(시크릿은 이때만 표시되므로 즉시 보관).
+2. SSH 애플리케이션(`ssh.DOMAIN`) 정책에 **Include → Service Token** 규칙을 추가해 위 토큰을 허용한다.
+   기존 본인 이메일 정책은 그대로 두면 사람·CI 둘 다 접속 가능하다.
+
+### 1회 준비 ② 배포용 SSH 키
+
+```bash
+ssh-keygen -t ed25519 -f deploy_key -N ""                        # 로컬에서 생성
+ssh user@ssh.DOMAIN 'cat >> ~/.ssh/authorized_keys' < deploy_key.pub   # 공개키를 서버에 등록
+# 개인키(deploy_key 내용)는 아래 SSH_PRIVATE_KEY 시크릿으로 넣고 로컬 파일은 폐기한다.
+```
+
+### 1회 준비 ③ GitHub Secrets (Settings → Secrets and variables → Actions)
+
+| 시크릿                    | 값                                    |
+| ------------------------- | ------------------------------------- |
+| `CF_ACCESS_CLIENT_ID`     | 서비스 토큰 Client ID (`xxxx.access`) |
+| `CF_ACCESS_CLIENT_SECRET` | 서비스 토큰 Client Secret             |
+| `SSH_PRIVATE_KEY`         | 배포용 개인키 전체(PEM)               |
+| `SSH_HOST`                | `ssh.DOMAIN`                          |
+| `SSH_USER`                | 서버 배포 사용자명                    |
+| `DEPLOY_PATH`             | (선택) 기본 `/opt/daeoebi`            |
+
+### 서버 전제
+
+- `/opt/daeoebi` 가 `main` 을 추적하는 git 클론이고 `git pull` 인증이 설정돼 있어야 한다(기존 수동 배포와 동일).
+- `docker network create daeoebi-net`·`docker login ghcr.io`·`apps/api/.env.production` 가 이미 준비된 상태(위 6단계).
+
+### 안전장치
+
+- `deploy` 잡은 GitHub **Environment `production`** 에 묶여 있다. 저장소 설정에서 이 환경에
+  **Required reviewers** 를 걸면 배포 직전 수동 승인 게이트가 된다(권장).
+- cloudflared 는 서비스 토큰 회귀(cloudflare/cloudflared#1673)를 피해 워크플로에서 버전을 고정한다 — 정상 동작 확인 후 상향 가능.
+- 배포는 직전에 빌드된 `:latest` 를 pull 한다. 푸시가 연달아 겹치면 의도와 다른 이미지가 배포될 수 있어 `deploy` 잡을 `concurrency` 로 직렬화한다.
+
+---
+
 ## 운영 명령 (Makefile)
 
 ```bash
@@ -182,14 +230,14 @@ make prod-backup    # 즉시 백업
 운영 값은 모두 `apps/api/.env.production` 한 파일에 둔다(compose 가 env_file 로 주입).
 `NODE_ENV=production` 만 docker-compose 가 정적으로 넣는다.
 
-| 변수 | 설명 | 예시 |
-|------|------|------|
-| `DATABASE_URL` | 컨테이너 내부 postgres 연결 문자열 | `postgresql://secrets:…@postgres:5432/daeoebi?schema=public` |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | postgres 컨테이너 자격증명(`${}` 치환에도 사용) | `secrets` / `openssl rand -base64 24` / `daeoebi` |
-| `HOST` / `PORT` | API 바인딩 | `0.0.0.0` / `4000` |
-| `API_GLOBAL_PREFIX` | API 경로 프리픽스 | `api` |
-| `TRUST_PROXY` / `COOKIE_SECURE` | 프록시 신뢰 홉 / secure 쿠키 강제 | `1` / `true` |
-| `WEBAUTHN_RP_ID` / `WEBAUTHN_RP_NAME` | WebAuthn RP 식별자(도메인) / 표시명 | `vault.example.com` / `대외비` |
-| `VAULT_ALLOWED_ORIGINS` / `CORS_ORIGIN` | WebAuthn·CSRF 허용 오리진 | `https://vault.example.com` |
-| `BOOTSTRAP_TOKEN` | 패스키 첫 등록 1회용 게이트 토큰(길고 무작위) | `openssl rand -hex 24` |
-| `RCLONE_REMOTE` / `R2_BUCKET` | (선택) R2 백업 대상 | `r2` / `daeoebi-backups` |
+| 변수                                                  | 설명                                            | 예시                                                         |
+| ----------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| `DATABASE_URL`                                        | 컨테이너 내부 postgres 연결 문자열              | `postgresql://secrets:…@postgres:5432/daeoebi?schema=public` |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | postgres 컨테이너 자격증명(`${}` 치환에도 사용) | `secrets` / `openssl rand -base64 24` / `daeoebi`            |
+| `HOST` / `PORT`                                       | API 바인딩                                      | `0.0.0.0` / `4000`                                           |
+| `API_GLOBAL_PREFIX`                                   | API 경로 프리픽스                               | `api`                                                        |
+| `TRUST_PROXY` / `COOKIE_SECURE`                       | 프록시 신뢰 홉 / secure 쿠키 강제               | `1` / `true`                                                 |
+| `WEBAUTHN_RP_ID` / `WEBAUTHN_RP_NAME`                 | WebAuthn RP 식별자(도메인) / 표시명             | `vault.example.com` / `대외비`                               |
+| `VAULT_ALLOWED_ORIGINS` / `CORS_ORIGIN`               | WebAuthn·CSRF 허용 오리진                       | `https://vault.example.com`                                  |
+| `BOOTSTRAP_TOKEN`                                     | 패스키 첫 등록 1회용 게이트 토큰(길고 무작위)   | `openssl rand -hex 24`                                       |
+| `RCLONE_REMOTE` / `R2_BUCKET`                         | (선택) R2 백업 대상                             | `r2` / `daeoebi-backups`                                     |

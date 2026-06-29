@@ -1,7 +1,8 @@
-# main 푸시 시 api·web 도커 이미지를 GHCR 에 빌드·푸시한다.
+# main 푸시 시 ① api·web 도커 이미지를 GHCR 에 빌드·푸시하고 ② VPS 에 배포한다.
 # 1코어 VPS 는 서버에서 빌드하지 않고 이 이미지를 pull 만 한다(make prod-deploy).
 # 빌드는 GitHub 러너에서 수행되고 buildx 캐시(type=gha)로 레이어를 재사용한다.
-name: build-and-push
+# 배포는 공개 인바운드 0 구성을 유지한 채 Cloudflare Access 서비스 토큰으로 터널 SSH 접속해 실행한다.
+name: build-and-deploy
 
 on:
     push:
@@ -63,3 +64,54 @@ jobs:
                       ${{ env.IMAGE_WEB }}:${{ github.sha }}
                   cache-from: type=gha,scope=daeoebi
                   cache-to: type=gha,scope=daeoebi,mode=max
+
+    # 빌드된 :latest 이미지를 VPS 에서 pull·기동한다. api 컨테이너가 기동 시
+    # `prisma migrate deploy` 를 실행하므로 마이그레이션은 자동 적용된다(Dockerfile CMD).
+    # 서버는 공개 SSH 포트가 없다 — Cloudflare Access 서비스 토큰으로 터널을 통해서만 접속한다(DEPLOY.md).
+    deploy:
+        needs: build
+        if: github.ref == 'refs/heads/main'
+        runs-on: ubuntu-latest
+        environment: production
+        # 같은 브랜치의 배포가 겹치지 않도록 직렬화한다(빌드는 막지 않음).
+        concurrency:
+            group: deploy-${{ github.ref }}
+            cancel-in-progress: false
+        steps:
+            # cloudflared 2026.6.0 은 서비스 토큰을 무시하고 브라우저 인증으로 빠지는 회귀가 있다
+            # (cloudflare/cloudflared#1673). 마지막으로 정상 동작이 확인된 버전으로 고정한다.
+            - name: Install cloudflared (버전 고정)
+              run: |
+                  CLOUDFLARED_VERSION=2026.5.1
+                  curl -fsSL -o cloudflared \
+                    "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64"
+                  sudo install -m 0755 cloudflared /usr/local/bin/cloudflared
+                  cloudflared --version
+
+            - name: SSH 키·설정 준비
+              run: |
+                  mkdir -p ~/.ssh
+                  chmod 700 ~/.ssh
+                  printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+                  chmod 600 ~/.ssh/id_deploy
+                  # ProxyCommand 로 cloudflared 터널을 경유한다. 서비스 토큰은 argv 노출을 피해
+                  # 환경변수(TUNNEL_SERVICE_TOKEN_ID/SECRET)로 넘기고, cloudflared 가 자동으로 읽는다.
+                  cat > ~/.ssh/config <<'EOF'
+                  Host deploy-target
+                    HostName __SSH_HOST__
+                    User __SSH_USER__
+                    IdentityFile ~/.ssh/id_deploy
+                    IdentitiesOnly yes
+                    StrictHostKeyChecking accept-new
+                    ProxyCommand cloudflared access ssh --hostname %h
+                  EOF
+                  sed -i "s|__SSH_HOST__|${{ secrets.SSH_HOST }}|; s|__SSH_USER__|${{ secrets.SSH_USER }}|" ~/.ssh/config
+                  chmod 600 ~/.ssh/config
+
+            - name: 원격 배포 (git pull + make prod-deploy)
+              env:
+                  TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+                  TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+                  DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/opt/daeoebi' }}
+              run: |
+                  ssh deploy-target "set -e; cd '${DEPLOY_PATH}' && git pull --ff-only && make prod-deploy && make prod-ps"
