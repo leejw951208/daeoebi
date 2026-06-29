@@ -6,7 +6,7 @@ import {
     MinLength,
     ValidateIf,
 } from "class-validator"
-import { IsBase64url } from "../../auth/base64url"
+import { IsBase64url } from "../../common/base64url"
 
 export class CreateSecretDto {
     @IsString()

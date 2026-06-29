@@ -7,9 +7,9 @@ import {
     NotFoundException,
 } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { fromBase64url, toBase64url } from "../auth/base64url"
+import { fromBase64url, toBase64url } from "../common/base64url"
 import { CreateExpenseDto, UpdateExpenseDto } from "./dto/expense.dto"
-import { STORE_ERRORS } from "./store.types"
+import { ASSET_ERRORS } from "./asset.types"
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 
@@ -52,7 +52,7 @@ export class ExpenseService {
     async listByMonth(month: string) {
         if (!MONTH_RE.test(month)) {
             throw new BadRequestException({
-                code: STORE_ERRORS.INVALID_MONTH,
+                code: ASSET_ERRORS.INVALID_MONTH,
                 message: "month 는 YYYY-MM 형식이어야 합니다.",
             })
         }
@@ -88,7 +88,7 @@ export class ExpenseService {
             // 같은 (recurringId, period) 중복 = 고정 인스턴스가 이미 있음(멱등 머티리얼라이즈).
             if (this.isUniqueViolation(e)) {
                 throw new ConflictException({
-                    code: STORE_ERRORS.EXPENSE_DUPLICATE,
+                    code: ASSET_ERRORS.EXPENSE_DUPLICATE,
                     message: "해당 월의 고정 지출이 이미 존재합니다.",
                 })
             }
@@ -112,7 +112,7 @@ export class ExpenseService {
         if (hasIv || hasCt || hasTag) {
             if (!hasIv || !hasCt || !hasTag) {
                 throw new BadRequestException({
-                    code: STORE_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET,
+                    code: ASSET_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET,
                     message: "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
                 })
             }
@@ -144,7 +144,7 @@ export class ExpenseService {
 
     private notFound(): NotFoundException {
         return new NotFoundException({
-            code: STORE_ERRORS.EXPENSE_NOT_FOUND,
+            code: ASSET_ERRORS.EXPENSE_NOT_FOUND,
             message: "지출을 찾을 수 없습니다.",
         })
     }

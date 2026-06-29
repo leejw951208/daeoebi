@@ -2,7 +2,7 @@
 // 부분 암호문 거부·not-found 경로를 검증한다.
 import { NotFoundException } from "@nestjs/common"
 import { ExpenseService } from "./expense.service"
-import { STORE_ERRORS } from "./store.types"
+import { ASSET_ERRORS } from "./asset.types"
 
 function makePrisma() {
     return {
@@ -44,7 +44,7 @@ describe("ExpenseService.listByMonth", () => {
     it("잘못된 month 형식은 INVALID_MONTH", async () => {
         const prisma = makePrisma()
         await expect(makeService(prisma).listByMonth("2026/6")).rejects.toMatchObject(
-            { response: { code: STORE_ERRORS.INVALID_MONTH } },
+            { response: { code: ASSET_ERRORS.INVALID_MONTH } },
         )
     })
 
@@ -85,7 +85,7 @@ describe("ExpenseService.create", () => {
                 period: "2026-06",
                 ...blob,
             } as never),
-        ).rejects.toMatchObject({ response: { code: STORE_ERRORS.EXPENSE_DUPLICATE } })
+        ).rejects.toMatchObject({ response: { code: ASSET_ERRORS.EXPENSE_DUPLICATE } })
     })
 })
 
@@ -104,7 +104,7 @@ describe("ExpenseService.update", () => {
         await expect(
             makeService(prisma).update("e1", { iv: blob.iv } as never),
         ).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET },
+            response: { code: ASSET_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET },
         })
     })
 

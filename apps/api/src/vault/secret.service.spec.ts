@@ -2,8 +2,8 @@
 // 부분 암호문 거부(CIPHERTEXT_INCOMPLETE), not-found 경로를 검증한다. 서버는 본문을 복호화하지 않는다.
 import { NotFoundException } from "@nestjs/common"
 import { SecretService } from "./secret.service"
-import { toBase64url } from "../auth/base64url"
-import { STORE_ERRORS } from "./store.types"
+import { toBase64url } from "../common/base64url"
+import { VAULT_ERRORS } from "./vault.types"
 
 function makePrisma() {
     return {
@@ -112,7 +112,7 @@ describe("SecretService.create", () => {
                 authTag: TAG,
             } as never),
         ).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.CATEGORY_SITE_MISMATCH },
+            response: { code: VAULT_ERRORS.CATEGORY_SITE_MISMATCH },
         })
     })
 
@@ -151,7 +151,7 @@ describe("SecretService.update", () => {
         await expect(
             makeService(prisma).update("s1", { iv: IV } as never),
         ).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.CIPHERTEXT_INCOMPLETE },
+            response: { code: VAULT_ERRORS.CIPHERTEXT_INCOMPLETE },
         })
     })
 

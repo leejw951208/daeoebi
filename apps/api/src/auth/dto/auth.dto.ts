@@ -7,7 +7,7 @@ import {
     MaxLength,
     ValidateNested,
 } from "class-validator"
-import { IsBase64url } from "../base64url"
+import { IsBase64url } from "../../common/base64url"
 
 // 복구코드로 래핑한 VK 블롭 + 복구코드 verifier. 첫 등록 시 필수, 기기 추가 시 생략.
 export class RecoveryWrapDto {

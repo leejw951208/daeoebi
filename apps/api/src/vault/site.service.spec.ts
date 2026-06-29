@@ -1,7 +1,7 @@
 // SiteService 단위 테스트(Prisma 모킹). 목록/조회(_count 포함)·생성·갱신·삭제와 not-found 경로를 검증한다.
 import { NotFoundException } from "@nestjs/common"
 import { SiteService } from "./site.service"
-import { STORE_ERRORS } from "./store.types"
+import { VAULT_ERRORS } from "./vault.types"
 
 function makePrisma() {
     return {
@@ -36,7 +36,7 @@ describe("SiteService.get", () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue(null)
         await expect(makeService(prisma).get("x")).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.SITE_NOT_FOUND },
+            response: { code: VAULT_ERRORS.SITE_NOT_FOUND },
         })
     })
 

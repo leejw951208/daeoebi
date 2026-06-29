@@ -2,8 +2,8 @@
 // 서버는 본문을 복호화하지 않고 암호문 블롭(base64url)을 패스스루한다.
 import { BadRequestException } from "@nestjs/common"
 import { BackupService } from "./backup.service"
-import { toBase64url } from "../auth/base64url"
-import { STORE_ERRORS } from "./store.types"
+import { toBase64url } from "../common/base64url"
+import { VAULT_ERRORS } from "./vault.types"
 import type { ImportBackupDto, ImportMode } from "./dto/backup.dto"
 
 const IV = Buffer.alloc(12, 1).toString("base64url")
@@ -134,7 +134,7 @@ describe("BackupService.import 무결성", () => {
             ],
         })
         await expect(service.import(dto, "reject")).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.IMPORT_INVALID },
+            response: { code: VAULT_ERRORS.IMPORT_INVALID },
         })
         expect(prisma.$transaction).not.toHaveBeenCalled()
     })
@@ -155,7 +155,7 @@ describe("BackupService.import 충돌 모드", () => {
         const service = new BackupService(prisma as unknown as never)
         const dto = importDto({ sites: [siteRow("site1")] })
         await expect(service.import(dto, "reject")).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.IMPORT_CONFLICT },
+            response: { code: VAULT_ERRORS.IMPORT_CONFLICT },
         })
     })
 

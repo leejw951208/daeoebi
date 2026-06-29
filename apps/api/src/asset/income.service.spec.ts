@@ -1,6 +1,6 @@
 // IncomeService 단위 테스트(Prisma 모킹). 싱글톤 조회(null/블롭)·upsert 패스스루를 검증한다.
 import { IncomeService } from "./income.service"
-import { toBase64url } from "../auth/base64url"
+import { toBase64url } from "../common/base64url"
 
 function makePrisma() {
     return { income: { findUnique: jest.fn(), upsert: jest.fn() } }

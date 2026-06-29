@@ -1,7 +1,7 @@
 // 월 수입(Income) 싱글톤 조회·upsert. 금액은 클라이언트 E2E 암호문이라 서버는 복호화 없이 패스스루한다.
 import { Injectable } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { fromBase64url, toBase64url } from "../auth/base64url"
+import { fromBase64url, toBase64url } from "../common/base64url"
 import { UpsertIncomeDto } from "./dto/income.dto"
 
 const SINGLETON = "singleton"

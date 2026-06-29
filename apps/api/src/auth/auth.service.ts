@@ -29,7 +29,7 @@ import { PrismaService } from "../prisma/prisma.service"
 import { ChallengeService } from "./challenge.service"
 import { SessionService } from "./session.service"
 import { BackoffService } from "./backoff.service"
-import { fromBase64url, isBase64url, toBase64url } from "./base64url"
+import { fromBase64url, isBase64url, toBase64url } from "../common/base64url"
 import { computeVerifier, RECOVERY_CODE_BYTES } from "./recovery-code"
 import {
     AUTH_ERRORS,

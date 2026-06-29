@@ -2,7 +2,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { CreateCategoryDto, UpdateCategoryDto } from "./dto/category.dto"
-import { STORE_ERRORS } from "./store.types"
+import { VAULT_ERRORS } from "./vault.types"
 
 @Injectable()
 export class CategoryService {
@@ -44,7 +44,7 @@ export class CategoryService {
         })
         if (!found) {
             throw new NotFoundException({
-                code: STORE_ERRORS.SITE_NOT_FOUND,
+                code: VAULT_ERRORS.SITE_NOT_FOUND,
                 message: "사이트를 찾을 수 없습니다.",
             })
         }
@@ -57,7 +57,7 @@ export class CategoryService {
         })
         if (!found) {
             throw new NotFoundException({
-                code: STORE_ERRORS.CATEGORY_NOT_FOUND,
+                code: VAULT_ERRORS.CATEGORY_NOT_FOUND,
                 message: "카테고리를 찾을 수 없습니다.",
             })
         }
