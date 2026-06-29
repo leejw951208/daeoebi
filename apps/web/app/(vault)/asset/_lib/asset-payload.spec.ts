@@ -20,11 +20,17 @@ describe("asset-payload seal/open", () => {
         await expect(openExpense(vk, blob)).resolves.toEqual(payload)
     })
 
-    it("수입 본문을 라운드트립한다", async () => {
+    it("수입 블롭을 seal→open 라운드트립한다", async () => {
         const vk = await generateVaultKey()
-        const blob = await sealIncome(vk, { amount: 3_200_000 })
-        await expect(openIncome(vk, blob)).resolves.toEqual({
+        const blob = await sealIncome(vk, {
+            item: "6월 월급",
             amount: 3_200_000,
+            category: "월급",
+        })
+        await expect(openIncome(vk, blob)).resolves.toEqual({
+            item: "6월 월급",
+            amount: 3_200_000,
+            category: "월급",
         })
     })
 

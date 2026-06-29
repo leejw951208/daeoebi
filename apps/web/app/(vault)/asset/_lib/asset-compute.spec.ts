@@ -4,8 +4,10 @@ import {
     byDay,
     remaining,
     spentPct,
+    totalIncome,
     totalSpent,
     type ComputedExpense,
+    type ComputedIncome,
 } from "./asset-compute"
 
 function exp(over: Partial<ComputedExpense>): ComputedExpense {
@@ -61,5 +63,25 @@ describe("asset-compute", () => {
         expect(spentPct(1000, 250)).toBe(25)
         expect(spentPct(0, 100)).toBe(100)
         expect(spentPct(1000, 5000)).toBe(100) // 클램프
+    })
+
+    it("totalIncome 은 수입 금액을 합산한다", () => {
+        const items: ComputedIncome[] = [
+            {
+                id: "a",
+                month: "2026-06",
+                item: "월급",
+                amount: 3_000_000,
+                category: "월급",
+            },
+            {
+                id: "b",
+                month: "2026-06",
+                item: "상여",
+                amount: 500_000,
+                category: "상여",
+            },
+        ]
+        expect(totalIncome(items)).toBe(3_500_000)
     })
 })

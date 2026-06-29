@@ -13,7 +13,9 @@ export interface ExpensePayload {
 }
 
 export interface IncomePayload {
+    item: string
     amount: number
+    category: string
 }
 
 export async function sealExpense(
@@ -52,5 +54,9 @@ export async function openIncome(
     const parsed = JSON.parse(
         await open(vaultKey, blob),
     ) as Partial<IncomePayload>
-    return { amount: typeof parsed.amount === "number" ? parsed.amount : 0 }
+    return {
+        item: String(parsed.item ?? ""),
+        amount: typeof parsed.amount === "number" ? parsed.amount : 0,
+        category: String(parsed.category ?? "기타"),
+    }
 }

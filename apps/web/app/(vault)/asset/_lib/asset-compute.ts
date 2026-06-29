@@ -69,3 +69,16 @@ export function spentPct(income: number, spent: number): number {
     if (income <= 0) return spent > 0 ? 100 : 0
     return Math.min(100, Math.round((spent / income) * 100))
 }
+
+// 복호화된 수입 1건(메타 + 본문).
+export interface ComputedIncome {
+    id: string
+    month: string // "YYYY-MM"
+    item: string
+    amount: number
+    category: string
+}
+
+export function totalIncome(items: ComputedIncome[]): number {
+    return items.reduce((sum, e) => sum + e.amount, 0)
+}

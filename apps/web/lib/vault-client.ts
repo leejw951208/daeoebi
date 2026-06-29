@@ -259,7 +259,10 @@ export async function updateSecret(
     id: string,
     input: Partial<Omit<SecretWriteInput, "siteId">>,
 ): Promise<SecretMeta> {
-    const { data } = await vaultClient.patch<SecretMeta>(`/secrets/${id}`, input)
+    const { data } = await vaultClient.patch<SecretMeta>(
+        `/secrets/${id}`,
+        input,
+    )
     return data
 }
 
@@ -332,7 +335,8 @@ export interface SealedBlobDto {
 }
 
 export interface IncomeView extends SealedBlobDto {
-    updatedAt: string
+    id: string
+    month: string
 }
 
 export interface ExpenseView extends SealedBlobDto {
@@ -348,16 +352,34 @@ export interface RecurringView extends SealedBlobDto {
     active: boolean
 }
 
-export async function getIncome(): Promise<IncomeView | null> {
-    const { data } = await vaultClient.get<IncomeView | null>("/income")
+export async function listIncomes(month: string): Promise<IncomeView[]> {
+    const { data } = await vaultClient.get<IncomeView[]>("/income", {
+        params: { month },
+    })
     return data
 }
 
-export async function putIncome(
-    blob: SealedBlobDto,
-): Promise<{ ok: true; updatedAt: string }> {
-    const { data } = await vaultClient.put("/income", blob)
+export interface CreateIncomeInput extends SealedBlobDto {
+    month: string
+}
+
+export async function createIncome(
+    input: CreateIncomeInput,
+): Promise<IncomeView> {
+    const { data } = await vaultClient.post<IncomeView>("/income", input)
     return data
+}
+
+export async function updateIncome(
+    id: string,
+    blob: SealedBlobDto,
+): Promise<IncomeView> {
+    const { data } = await vaultClient.patch<IncomeView>(`/income/${id}`, blob)
+    return data
+}
+
+export async function deleteIncome(id: string): Promise<void> {
+    await vaultClient.delete(`/income/${id}`)
 }
 
 export async function listExpenses(month: string): Promise<ExpenseView[]> {
