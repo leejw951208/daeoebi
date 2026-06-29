@@ -108,10 +108,12 @@ jobs:
                   sed -i "s|__SSH_HOST__|${{ secrets.SSH_HOST }}|; s|__SSH_USER__|${{ secrets.SSH_USER }}|" ~/.ssh/config
                   chmod 600 ~/.ssh/config
 
-            - name: 원격 배포 (git pull + make prod-deploy)
+            - name: 원격 배포 (git pull + make prod-deploy + 이미지 정리)
               env:
                   TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
                   TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
                   DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/opt/daeoebi' }}
+              # 배포 후 docker system prune -af 로 옛 이미지·정지 컨테이너·빌드 캐시를 정리한다(디스크 확보).
+              # --volumes 는 주지 않으므로 postgres 데이터 볼륨은 보존된다. 실행 중인 app·cloudflared 이미지는 사용 중이라 안전.
               run: |
-                  ssh deploy-target "set -e; cd '${DEPLOY_PATH}' && git pull --ff-only && make prod-deploy && make prod-ps"
+                  ssh deploy-target "set -e; cd '${DEPLOY_PATH}' && git pull --ff-only && make prod-deploy && docker system prune -af && make prod-ps"
