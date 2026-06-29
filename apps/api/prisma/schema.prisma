@@ -84,6 +84,7 @@ model RecurringExpense {
   id         String    @id @default(cuid())
   dayOfMonth Int // 1-31. 말일 초과 시 클라가 해당 월 말일로 클램프한다.
   startMonth String // "YYYY-MM". 평문. 이 달부터 인스턴스 생성(이전 달엔 미생성).
+  termMonths Int? // null = 무기한. N = startMonth 부터 N개월간만 생성.
   active     Boolean   @default(true)
   iv         Bytes
   ciphertext Bytes
