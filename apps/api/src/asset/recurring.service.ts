@@ -13,6 +13,7 @@ function prismaBytes(value: Uint8Array): Uint8Array<ArrayBuffer> {
 interface RecurringRow {
     id: string
     dayOfMonth: number
+    startMonth: string
     active: boolean
     iv: Uint8Array
     ciphertext: Uint8Array
@@ -23,6 +24,7 @@ function toView(row: RecurringRow) {
     return {
         id: row.id,
         dayOfMonth: row.dayOfMonth,
+        startMonth: row.startMonth,
         active: row.active,
         iv: toBase64url(row.iv),
         ciphertext: toBase64url(row.ciphertext),
@@ -47,6 +49,7 @@ export class RecurringService {
         const row = await this.prisma.recurringExpense.create({
             data: {
                 dayOfMonth: dto.dayOfMonth,
+                startMonth: dto.startMonth,
                 iv: prismaBytes(fromBase64url(dto.iv)),
                 ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
                 authTag: prismaBytes(fromBase64url(dto.authTag)),
