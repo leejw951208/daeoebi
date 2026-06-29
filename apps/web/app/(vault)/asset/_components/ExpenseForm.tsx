@@ -51,9 +51,7 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
     const [recurring, setRecurring] = useState(false)
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [pendingDelete, setPendingDelete] = useState<null | "one" | "series">(
-        null,
-    )
+    const [pendingDelete, setPendingDelete] = useState(false)
 
     const amountNum = Number(amount || "0")
 
@@ -109,11 +107,12 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
 
     async function handleDelete() {
         if (!initial) return
-        const mode = pendingDelete
-        setPendingDelete(null)
+        setPendingDelete(false)
         setBusy(true)
         try {
-            if (mode === "series" && initial.recurringId) {
+            // 고정 지출이면 규칙(템플릿)까지 삭제해 이후 자동 생성을 멈춘다.
+            // 인스턴스만 지우면 대시보드 진입 시 머티리얼라이즈가 다시 만들어 되살아난다.
+            if (initial.recurringId) {
                 await deleteRecurring(initial.recurringId)
             }
             await deleteExpense(initial.id)
@@ -362,49 +361,31 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                     </label>
                 )}
 
-                {/* 삭제(수정만) */}
+                {/* 삭제(수정만). 고정 지출이면 규칙까지 함께 삭제된다(handleDelete). */}
                 {isEdit && (
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                        }}
+                    <button
+                        type="button"
+                        className="btn danger"
+                        onClick={() => setPendingDelete(true)}
+                        disabled={busy}
                     >
-                        <button
-                            type="button"
-                            className="btn danger"
-                            onClick={() => setPendingDelete("one")}
-                            disabled={busy}
-                        >
-                            이 지출 삭제
-                        </button>
-                        {initial.recurringId && (
-                            <button
-                                type="button"
-                                className="btn danger"
-                                onClick={() => setPendingDelete("series")}
-                                disabled={busy}
-                            >
-                                고정 지출 해지(이후 자동 생성 중단)
-                            </button>
-                        )}
-                    </div>
+                        이 지출 삭제
+                    </button>
                 )}
             </div>
 
             <ConfirmDialog
-                open={pendingDelete !== null}
+                open={pendingDelete}
                 title="삭제"
                 message={
-                    pendingDelete === "series"
-                        ? "이 지출을 삭제하고 고정 지출을 해지합니다. 다음 달부터 자동 생성되지 않습니다."
+                    initial?.recurringId
+                        ? "고정 지출입니다. 삭제하면 다음 달부터 자동 생성되지 않습니다. 삭제할까요?"
                         : "이 지출을 삭제할까요?"
                 }
                 confirmLabel="삭제"
                 destructive
                 onConfirm={handleDelete}
-                onCancel={() => setPendingDelete(null)}
+                onCancel={() => setPendingDelete(false)}
             />
         </section>
     )
