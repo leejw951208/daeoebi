@@ -2,7 +2,7 @@
 // 부분 암호문 거부(CIPHERTEXT_INCOMPLETE), not-found 경로를 검증한다. 서버는 본문을 복호화하지 않는다.
 import { NotFoundException } from "@nestjs/common"
 import { SecretService } from "./secret.service"
-import { toBase64url } from "../auth/base64url"
+import { toBase64url } from "../common/base64url"
 import { STORE_ERRORS } from "./store.types"
 
 function makePrisma() {

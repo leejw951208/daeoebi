@@ -5,7 +5,7 @@ import {
     NotFoundException,
 } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { fromBase64url, toBase64url } from "../auth/base64url"
+import { fromBase64url, toBase64url } from "../common/base64url"
 import { CreateSecretDto, UpdateSecretDto } from "./dto/secret.dto"
 import { STORE_ERRORS } from "./store.types"
 

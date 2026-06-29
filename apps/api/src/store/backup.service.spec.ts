@@ -2,7 +2,7 @@
 // 서버는 본문을 복호화하지 않고 암호문 블롭(base64url)을 패스스루한다.
 import { BadRequestException } from "@nestjs/common"
 import { BackupService } from "./backup.service"
-import { toBase64url } from "../auth/base64url"
+import { toBase64url } from "../common/base64url"
 import { STORE_ERRORS } from "./store.types"
 import type { ImportBackupDto, ImportMode } from "./dto/backup.dto"
 

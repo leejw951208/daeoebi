@@ -2,7 +2,7 @@
 // date 는 평문(월 범위·달력용), recurringId/period 는 고정 지출 자동 생성 멱등 키다.
 import {
     IsBase64url,
-} from "../../auth/base64url"
+} from "../../common/base64url"
 import {
     IsISO8601,
     IsOptional,
