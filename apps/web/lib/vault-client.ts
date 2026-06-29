@@ -349,6 +349,7 @@ export interface ExpenseView extends SealedBlobDto {
 export interface RecurringView extends SealedBlobDto {
     id: string
     dayOfMonth: number
+    startMonth: string
     active: boolean
 }
 
@@ -409,7 +410,7 @@ export async function createExpense(
 
 export async function updateExpense(
     id: string,
-    input: Partial<SealedBlobDto> & { date?: string },
+    input: Partial<SealedBlobDto> & { date?: string; removed?: boolean },
 ): Promise<ExpenseView> {
     const { data } = await vaultClient.patch<ExpenseView>(
         `/expenses/${id}`,
@@ -428,7 +429,7 @@ export async function listRecurring(): Promise<RecurringView[]> {
 }
 
 export async function createRecurring(
-    input: SealedBlobDto & { dayOfMonth: number },
+    input: SealedBlobDto & { dayOfMonth: number; startMonth: string },
 ): Promise<RecurringView> {
     const { data } = await vaultClient.post<RecurringView>("/recurring", input)
     return data

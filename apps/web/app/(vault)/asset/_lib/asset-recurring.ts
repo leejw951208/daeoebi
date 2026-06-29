@@ -23,6 +23,7 @@ export async function materializeRecurring(
     )
     const created: ExpenseView[] = []
     for (const t of templates) {
+        if (month < t.startMonth) continue // 시작월 이전 달엔 생성하지 않는다.
         if (present.has(`${t.id}|${month}`)) continue
         const payload = await openExpense(vaultKey, t)
         const blob = await sealExpense(vaultKey, payload)
