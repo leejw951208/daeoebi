@@ -7,11 +7,14 @@ import { deleteSecret, getSecret, updateSecret } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { SkeletonCard } from "@/components/Skeleton"
-import { CopyField } from "../CopyField"
-import { SecretForm, type SecretFormInitial } from "../SecretForm"
-import { useVault, type SecretField } from "../vault-context"
-import { openPayload, sealPayload } from "../secret-payload"
-import { isSensitiveFieldName } from "../field-suggestions"
+import { CopyField } from "../_components/CopyField"
+import {
+    SecretForm,
+    type SecretFormInitial,
+} from "../_components/secret-form/SecretForm"
+import { useVault, type SecretField } from "../_lib/vault-context"
+import { openPayload, sealPayload } from "../_lib/secret-payload"
+import { isSensitiveFieldName } from "../_lib/field-suggestions"
 
 type LoadState = "idle" | "loading" | "loaded" | "missing" | "error"
 
@@ -167,10 +170,15 @@ export default function SecretDetailPage() {
                 </h1>
                 <p
                     className="muted"
-                    style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 240, marginBottom: 28 }}
+                    style={{
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        maxWidth: 240,
+                        marginBottom: 28,
+                    }}
                 >
-                    삭제되었거나 주소가 잘못되었을 수 있어요. 대외비로 돌아가 다시
-                    찾아보세요.
+                    삭제되었거나 주소가 잘못되었을 수 있어요. 대외비로 돌아가
+                    다시 찾아보세요.
                 </p>
                 <Link className="btn" href="/">
                     대외비로 돌아가기
@@ -291,7 +299,10 @@ export default function SecretDetailPage() {
                     ))}
                     {data.memo && (
                         <div className="secret-plate">
-                            <div className="secret-label" style={{ marginBottom: 6 }}>
+                            <div
+                                className="secret-label"
+                                style={{ marginBottom: 6 }}
+                            >
                                 메모
                             </div>
                             <div className="secret-memo">{data.memo}</div>
@@ -354,7 +365,8 @@ export default function SecretDetailPage() {
                 confirmLabel="삭제"
                 destructive
                 onConfirm={() => {
-                    if (fieldToDelete !== null) void handleDeleteField(fieldToDelete)
+                    if (fieldToDelete !== null)
+                        void handleDeleteField(fieldToDelete)
                 }}
                 onCancel={() => setFieldToDelete(null)}
             />

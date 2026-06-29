@@ -2,7 +2,7 @@
 // 지출 추가/수정 폼(디자인 화면 12). 금액·항목·카테고리·결제방법을 VK 로 봉인해 저장한다.
 // 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만들고 당월 인스턴스를 함께 생성한다(이후 달 자동 생성).
 import { useState } from "react"
-import { useVault } from "../vault-context"
+import { useVault } from "../../_lib/vault-context"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { isApiError } from "@/lib/api-error"
 import {
@@ -17,9 +17,9 @@ import {
     METHODS,
     categoryColor,
     formatAmount,
-} from "./asset-categories"
-import { sealExpense, type ExpensePayload } from "./asset-payload"
-import { monthOf, todayISO } from "./asset-dates"
+} from "../_lib/asset-categories"
+import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
+import { monthOf, todayISO } from "../_lib/asset-dates"
 
 export interface ExpenseFormInitial {
     id: string
@@ -100,7 +100,9 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
         } catch (e) {
             setBusy(false)
             setError(
-                isApiError(e) ? e.message : "저장에 실패했습니다. 다시 시도하세요.",
+                isApiError(e)
+                    ? e.message
+                    : "저장에 실패했습니다. 다시 시도하세요.",
             )
         }
     }
@@ -182,7 +184,11 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                         }}
                     >
                         <span
-                            style={{ fontSize: 30, fontWeight: 800, color: "#cfcfcf" }}
+                            style={{
+                                fontSize: 30,
+                                fontWeight: 800,
+                                color: "#cfcfcf",
+                            }}
                             aria-hidden="true"
                         >
                             ₩
@@ -324,7 +330,13 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                 {!isEdit && (
                     <label className="asset-toggle-row">
                         <span>
-                            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#222" }}>
+                            <span
+                                style={{
+                                    fontSize: 14.5,
+                                    fontWeight: 700,
+                                    color: "#222",
+                                }}
+                            >
                                 고정 지출
                             </span>
                             <span
@@ -352,7 +364,13 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
 
                 {/* 삭제(수정만) */}
                 {isEdit && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                        }}
+                    >
                         <button
                             type="button"
                             className="btn danger"

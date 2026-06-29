@@ -1,6 +1,6 @@
 "use client"
 // 자산 대시보드(디자인 화면 11). 수입·월 지출·고정 템플릿을 불러와 머티리얼라이즈한 뒤
-// VK 로 복호화·집계해 남은 돈·카테고리별·지출 달력·선택일 상세를 보여준다. FAB → 새 지출.
+// VK 로 복호화·집계해 대시보드를 그린다. 상태·로드·수입 저장만 담당하고 본문은 AssetDashboard 가 그린다.
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
@@ -12,50 +12,26 @@ import {
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
-import { useVault } from "../vault-context"
+import { useVault } from "../_lib/vault-context"
+import { openExpense, openIncome, sealIncome } from "./_lib/asset-payload"
+import { byDay, type ComputedExpense } from "./_lib/asset-compute"
+import { materializeRecurring } from "./_lib/asset-recurring"
 import {
-    formatAmount,
-    formatWon,
-    categoryColor,
-} from "./asset-categories"
-import {
-    openExpense,
-    openIncome,
-    sealIncome,
-} from "./asset-payload"
-import {
-    byCategory,
-    byDay,
-    remaining,
-    spentPct,
-    totalSpent,
-    type ComputedExpense,
-} from "./asset-compute"
-import { materializeRecurring } from "./asset-recurring"
-import {
-    WEEKDAYS,
     addMonth,
-    buildCalendar,
     currentMonth,
     monthLabel,
     todayISO,
-} from "./asset-dates"
+} from "./_lib/asset-dates"
+import {
+    AssetDashboard,
+    type Loaded,
+} from "./_components/dashboard/AssetDashboard"
+import { IncomeSheet } from "./_components/IncomeSheet"
 
-interface Loaded {
-    incomeAmount: number
-    expenses: ComputedExpense[]
-}
 type State =
     | { status: "loading" }
     | { status: "error"; message: string }
     | { status: "ready"; data: Loaded }
-
-// 달력 셀 금액 축약(8500→"8.5천", 142000→"14만").
-function abbrev(n: number): string {
-    if (n >= 10000) return `${Math.round(n / 10000)}만`
-    if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}천`
-    return String(n)
-}
 
 function formatMmSs(total: number): string {
     const m = Math.floor(total / 60)
@@ -138,7 +114,8 @@ export default function AssetPage() {
     }, [month])
 
     const dayTotals = useMemo(
-        () => (state.status === "ready" ? byDay(state.data.expenses) : new Map()),
+        () =>
+            state.status === "ready" ? byDay(state.data.expenses) : new Map(),
         [state],
     )
 
@@ -254,424 +231,14 @@ export default function AssetPage() {
             </Link>
 
             {sheetOpen && (
-                <div
-                    className="dialog-backdrop"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="월 수입 설정"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) setSheetOpen(false)
-                    }}
-                >
-                    <div className="sheet">
-                        <div className="sheet-grip" aria-hidden="true" />
-                        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
-                            월 수입 설정
-                        </div>
-                        <p
-                            className="muted"
-                            style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 18 }}
-                        >
-                            매달 들어오는 월급을 입력하면 남는 돈이 자동으로 계산됩니다.
-                        </p>
-                        <div className="income-input">
-                            <span aria-hidden="true">₩</span>
-                            <input
-                                inputMode="numeric"
-                                value={
-                                    incomeDraft
-                                        ? formatAmount(
-                                              Number(
-                                                  incomeDraft.replace(/[^\d]/g, "") ||
-                                                      "0",
-                                              ),
-                                          )
-                                        : ""
-                                }
-                                onChange={(e) =>
-                                    setIncomeDraft(
-                                        e.target.value.replace(/[^\d]/g, "").slice(0, 12),
-                                    )
-                                }
-                                placeholder="0"
-                                aria-label="월 수입"
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            className="btn"
-                            style={{ width: "100%", marginTop: 18 }}
-                            onClick={saveIncome}
-                            disabled={savingIncome}
-                        >
-                            저장
-                        </button>
-                    </div>
-                </div>
+                <IncomeSheet
+                    draft={incomeDraft}
+                    saving={savingIncome}
+                    onChange={setIncomeDraft}
+                    onSave={saveIncome}
+                    onClose={() => setSheetOpen(false)}
+                />
             )}
         </section>
-    )
-}
-
-function AssetDashboard({
-    month,
-    data,
-    dayTotals,
-    selectedDay,
-    onSelectDay,
-    onOpenIncome,
-}: {
-    month: string
-    data: Loaded
-    dayTotals: Map<string, number>
-    selectedDay: string | null
-    onSelectDay: (d: string) => void
-    onOpenIncome: () => void
-}) {
-    const spent = totalSpent(data.expenses)
-    const left = remaining(data.incomeAmount, spent)
-    const pct = spentPct(data.incomeAmount, spent)
-    const cats = byCategory(data.expenses)
-    const cells = buildCalendar(month)
-    const dayExpenses = selectedDay
-        ? data.expenses
-              .filter((e) => e.date === selectedDay)
-              .sort((a, b) => b.amount - a.amount)
-        : []
-
-    return (
-        <div
-            className="stagger"
-            style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 4 }}
-        >
-            {/* 남은 돈 hero */}
-            <div className="asset-card" style={{ borderRadius: 20 }}>
-                <div
-                    style={{
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        color: "var(--color-text-muted)",
-                        marginBottom: 7,
-                    }}
-                >
-                    이번 달 남은 돈
-                </div>
-                <div
-                    style={{
-                        fontSize: 34,
-                        fontWeight: 800,
-                        letterSpacing: "-0.03em",
-                        color: left < 0 ? "var(--color-danger-fg)" : "#171717",
-                    }}
-                >
-                    {formatWon(left)}
-                </div>
-                <div className="asset-bar" style={{ margin: "16px 0 10px" }}>
-                    <div
-                        className="asset-bar-fill"
-                        style={{
-                            width: `${pct}%`,
-                            background:
-                                pct >= 100 ? "var(--color-danger-fg)" : "var(--ac)",
-                        }}
-                    />
-                </div>
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "var(--color-text-muted)",
-                    }}
-                >
-                    <span>지출 {pct}%</span>
-                    <span>예산 {formatWon(data.incomeAmount)}</span>
-                </div>
-            </div>
-
-            {/* 수입 / 지출 */}
-            <div style={{ display: "flex", gap: 12 }}>
-                <button
-                    type="button"
-                    className="asset-card"
-                    style={{ flex: 1, textAlign: "left", cursor: "pointer" }}
-                    onClick={onOpenIncome}
-                >
-                    <div className="asset-card-label">수입 · 월급</div>
-                    <div className="asset-card-value">
-                        {data.incomeAmount ? formatWon(data.incomeAmount) : "설정하기"}
-                    </div>
-                    <div
-                        style={{
-                            fontSize: 11,
-                            color: "var(--ac)",
-                            fontWeight: 700,
-                            marginTop: 5,
-                        }}
-                    >
-                        수정 ›
-                    </div>
-                </button>
-                <div className="asset-card" style={{ flex: 1 }}>
-                    <div className="asset-card-label">지출</div>
-                    <div
-                        className="asset-card-value"
-                        style={{ color: "var(--color-danger-fg)" }}
-                    >
-                        {formatWon(spent)}
-                    </div>
-                    <div
-                        style={{
-                            fontSize: 11,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                            marginTop: 5,
-                        }}
-                    >
-                        {data.expenses.length}건
-                    </div>
-                </div>
-            </div>
-
-            {/* 카테고리별 지출 */}
-            {cats.length > 0 && (
-                <div className="asset-card">
-                    <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 15 }}>
-                        카테고리별 지출
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                        {cats.map((c) => (
-                            <div key={c.key}>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        marginBottom: 7,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                        }}
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            style={{
-                                                width: 9,
-                                                height: 9,
-                                                borderRadius: "50%",
-                                                background: c.color,
-                                            }}
-                                        />
-                                        <span
-                                            style={{
-                                                fontSize: 13.5,
-                                                fontWeight: 700,
-                                                color: "#333",
-                                            }}
-                                        >
-                                            {c.key}
-                                        </span>
-                                        <span
-                                            style={{
-                                                fontSize: 11.5,
-                                                color: "var(--color-text-muted)",
-                                                fontWeight: 600,
-                                            }}
-                                        >
-                                            {c.pct}%
-                                        </span>
-                                    </div>
-                                    <span
-                                        style={{
-                                            fontSize: 13,
-                                            fontWeight: 700,
-                                            color: "#444",
-                                        }}
-                                    >
-                                        {formatWon(c.amount)}
-                                    </span>
-                                </div>
-                                <div className="asset-bar">
-                                    <div
-                                        className="asset-bar-fill"
-                                        style={{
-                                            width: `${c.pct}%`,
-                                            background: c.color,
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* 지출 달력 */}
-            <div className="asset-card">
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 14,
-                    }}
-                >
-                    <span style={{ fontSize: 13, fontWeight: 800 }}>지출 달력</span>
-                    <span
-                        style={{
-                            fontSize: 12,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                        }}
-                    >
-                        {data.expenses.length}건
-                    </span>
-                </div>
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(7, 1fr)",
-                        marginBottom: 6,
-                    }}
-                >
-                    {WEEKDAYS.map((w) => (
-                        <div
-                            key={w}
-                            style={{
-                                textAlign: "center",
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color: "var(--color-text-muted)",
-                            }}
-                        >
-                            {w}
-                        </div>
-                    ))}
-                </div>
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(7, 1fr)",
-                        gap: 4,
-                    }}
-                >
-                    {cells.map((cell, i) => {
-                        if (cell.day === null)
-                            return <div key={`b${i}`} aria-hidden="true" />
-                        const amount = dayTotals.get(cell.date!) ?? 0
-                        const active = cell.date === selectedDay
-                        return (
-                            <button
-                                key={cell.date}
-                                type="button"
-                                onClick={() => onSelectDay(cell.date!)}
-                                aria-pressed={active}
-                                className={`cal-cell${active ? " active" : ""}`}
-                            >
-                                <span className="cal-day">{cell.day}</span>
-                                {amount > 0 && (
-                                    <span className="cal-amt">{abbrev(amount)}</span>
-                                )}
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-
-            {/* 선택일 상세 */}
-            {selectedDay && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            margin: "6px 2px 0",
-                        }}
-                    >
-                        <span style={{ fontSize: 13, fontWeight: 800 }}>
-                            {Number(selectedDay.slice(8, 10))}일
-                        </span>
-                        <span
-                            style={{
-                                fontSize: 13,
-                                fontWeight: 800,
-                                color: "var(--color-danger-fg)",
-                            }}
-                        >
-                            {formatWon(totalSpent(dayExpenses))}
-                        </span>
-                    </div>
-                    {dayExpenses.length === 0 ? (
-                        <div
-                            style={{
-                                textAlign: "center",
-                                padding: "22px 0",
-                                fontSize: 13,
-                                color: "var(--color-text-muted)",
-                                fontWeight: 600,
-                            }}
-                        >
-                            이 날은 지출이 없어요
-                        </div>
-                    ) : (
-                        dayExpenses.map((e) => (
-                            <Link
-                                key={e.id}
-                                href={`/asset/${e.id}`}
-                                className="entry-card"
-                                style={{ display: "flex", alignItems: "center", gap: 13 }}
-                            >
-                                <span
-                                    className="avatar"
-                                    aria-hidden="true"
-                                    style={{ background: categoryColor(e.category) }}
-                                >
-                                    {e.category.slice(0, 1)}
-                                </span>
-                                <span className="entry-main" style={{ minWidth: 0 }}>
-                                    <span
-                                        className="entry-label"
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 6,
-                                        }}
-                                    >
-                                        {e.item || e.category}
-                                        {e.recurringId && (
-                                            <span className="recur-badge">고정</span>
-                                        )}
-                                    </span>
-                                    <span
-                                        style={{
-                                            fontSize: 12,
-                                            color: "var(--color-text-muted)",
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {e.category} · {e.method}
-                                    </span>
-                                </span>
-                                <span
-                                    style={{
-                                        fontSize: 15,
-                                        fontWeight: 800,
-                                        letterSpacing: "-0.02em",
-                                    }}
-                                >
-                                    {formatWon(e.amount)}
-                                </span>
-                            </Link>
-                        ))
-                    )}
-                </div>
-            )}
-        </div>
     )
 }

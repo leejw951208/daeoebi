@@ -1,5 +1,5 @@
 // 설치 안내 배너의 dismiss 기간 판정을 회귀 방지한다.
-import { shouldShowInstallBanner } from "../../components/install-banner-visibility"
+import { shouldShowInstallBanner } from "@/components/install-banner-visibility"
 
 describe("shouldShowInstallBanner", () => {
     const now = 1_000_000

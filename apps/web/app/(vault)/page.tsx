@@ -2,7 +2,7 @@
 import { cookies } from "next/headers"
 import { InstallBanner } from "@/components/InstallBanner"
 import { INSTALL_BANNER_DISMISS_COOKIE } from "@/components/install-banner-visibility"
-import { EntriesScreen } from "./EntriesScreen"
+import { EntriesScreen } from "./_components/EntriesScreen"
 
 export const dynamic = "force-dynamic"
 

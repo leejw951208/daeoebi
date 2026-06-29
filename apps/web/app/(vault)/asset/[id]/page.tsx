@@ -4,9 +4,12 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { getExpense } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
-import { useVault } from "../../vault-context"
-import { openExpense } from "../asset-payload"
-import { ExpenseForm, type ExpenseFormInitial } from "../ExpenseForm"
+import { useVault } from "../../_lib/vault-context"
+import { openExpense } from "../_lib/asset-payload"
+import {
+    ExpenseForm,
+    type ExpenseFormInitial,
+} from "../_components/ExpenseForm"
 
 type State =
     | { status: "loading" }

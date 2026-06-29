@@ -1,7 +1,7 @@
 "use client"
 // vault 백업·복원 라우트. 기존 BackupPanel 컴포넌트를 단독 페이지로 mount 한다.
 import Link from "next/link"
-import { BackupPanel } from "../BackupPanel"
+import { BackupPanel } from "../_components/BackupPanel"
 
 export default function VaultBackupPage() {
     return (
@@ -13,7 +13,13 @@ export default function VaultBackupPage() {
                 <Link className="btn-text" href="/" aria-label="대외비로">
                     ←
                 </Link>
-                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em" }}>
+                <div
+                    style={{
+                        fontSize: 17,
+                        fontWeight: 800,
+                        letterSpacing: "-0.02em",
+                    }}
+                >
                     백업 · 복원
                 </div>
             </div>

@@ -23,7 +23,9 @@ function exp(over: Partial<ComputedExpense>): ComputedExpense {
 
 describe("asset-compute", () => {
     it("totalSpent 는 금액 합", () => {
-        expect(totalSpent([exp({ amount: 8500 }), exp({ amount: 1500 })])).toBe(10000)
+        expect(totalSpent([exp({ amount: 8500 }), exp({ amount: 1500 })])).toBe(
+            10000,
+        )
         expect(totalSpent([])).toBe(0)
     })
 

@@ -2,8 +2,8 @@
 // 시크릿 신규 추가 라우트. 기본 사이트를 해석한 뒤 SecretForm 을 빈 상태로 mount 한다.
 // 단계별 sticky 헤더(취소/제목/다음, ← 수정/저장 전 확인)는 SecretForm 이 직접 그린다.
 import { useRouter } from "next/navigation"
-import { SecretForm } from "../SecretForm"
-import { useDefaultSite } from "../use-default-site"
+import { SecretForm } from "../_components/secret-form/SecretForm"
+import { useDefaultSite } from "../_lib/use-default-site"
 
 export default function NewSecretPage() {
     const router = useRouter()
