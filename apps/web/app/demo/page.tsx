@@ -4,8 +4,8 @@
 // 메모리상 가짜 데이터(demo-data)로만 목록 → 상세 → 폼 흐름을 재현한다.
 import { useMemo, useState } from "react"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
-import { CopyField } from "../(vault)/CopyField"
-import { isSensitiveFieldName } from "../(vault)/field-suggestions"
+import { CopyField } from "../(vault)/_components/CopyField"
+import { isSensitiveFieldName } from "../(vault)/_lib/field-suggestions"
 import { DemoSecretForm } from "./DemoSecretForm"
 import { DEMO_SEED, type DemoField, type DemoSecret } from "./demo-data"
 
@@ -35,14 +35,16 @@ export default function DemoPage() {
         return secrets.filter((s) => s.label.toLowerCase().includes(q))
     }, [secrets, query])
 
-    function saveSecret(input: { label: string; fields: DemoField[]; memo: string }) {
+    function saveSecret(input: {
+        label: string
+        fields: DemoField[]
+        memo: string
+    }) {
         if (view.kind === "edit") {
             const id = view.id
             setSecrets((prev) =>
                 prev.map((s) =>
-                    s.id === id
-                        ? { ...s, ...input, updatedAt: nowIso() }
-                        : s,
+                    s.id === id ? { ...s, ...input, updatedAt: nowIso() } : s,
                 ),
             )
             setView({ kind: "detail", id })
@@ -108,7 +110,11 @@ export default function DemoPage() {
                 <section>
                     <DemoBanner />
                     <p className="muted">항목을 찾을 수 없습니다.</p>
-                    <button type="button" className="btn" onClick={() => setView({ kind: "list" })}>
+                    <button
+                        type="button"
+                        className="btn"
+                        onClick={() => setView({ kind: "list" })}
+                    >
                         데모 목록으로
                     </button>
                 </section>
@@ -119,9 +125,17 @@ export default function DemoPage() {
                 <DemoBanner />
                 <div
                     className="sticky-header"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    }}
                 >
-                    <button type="button" className="btn-text" onClick={() => setView({ kind: "list" })}>
+                    <button
+                        type="button"
+                        className="btn-text"
+                        onClick={() => setView({ kind: "list" })}
+                    >
                         ← 대외비
                     </button>
                     <span className="lock-timer" aria-hidden="true">
@@ -131,7 +145,14 @@ export default function DemoPage() {
                 </div>
 
                 <div className="stagger">
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 14,
+                            marginBottom: 22,
+                        }}
+                    >
                         <span className="avatar lg" aria-hidden="true">
                             {current.label.trim()[0] ?? "·"}
                         </span>
@@ -141,29 +162,52 @@ export default function DemoPage() {
                     </div>
 
                     <div style={{ display: "grid", gap: 9 }}>
-                        {current.fields.length === 0 && <p className="muted">등록된 필드가 없습니다.</p>}
+                        {current.fields.length === 0 && (
+                            <p className="muted">등록된 필드가 없습니다.</p>
+                        )}
                         {current.fields.map((field, idx) => (
                             <CopyField
                                 key={`${field.name}-${idx}`}
                                 label={field.name}
                                 value={field.value}
-                                sensitive={field.sensitive ?? isSensitiveFieldName(field.name)}
+                                sensitive={
+                                    field.sensitive ??
+                                    isSensitiveFieldName(field.name)
+                                }
                                 onDelete={() => setFieldToDelete(idx)}
                             />
                         ))}
                         {current.memo && (
                             <div className="secret-plate">
-                                <div className="secret-label" style={{ marginBottom: 6 }}>
+                                <div
+                                    className="secret-label"
+                                    style={{ marginBottom: 6 }}
+                                >
                                     메모
                                 </div>
-                                <div className="secret-memo">{current.memo}</div>
+                                <div className="secret-memo">
+                                    {current.memo}
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    <dl className="secret-plate" style={{ marginTop: 9, display: "grid", gap: 8 }}>
-                        <DetailRow label="생성" value={new Date(current.createdAt).toLocaleString("ko-KR")} />
-                        <DetailRow label="수정" value={new Date(current.updatedAt).toLocaleString("ko-KR")} />
+                    <dl
+                        className="secret-plate"
+                        style={{ marginTop: 9, display: "grid", gap: 8 }}
+                    >
+                        <DetailRow
+                            label="생성"
+                            value={new Date(current.createdAt).toLocaleString(
+                                "ko-KR",
+                            )}
+                        />
+                        <DetailRow
+                            label="수정"
+                            value={new Date(current.updatedAt).toLocaleString(
+                                "ko-KR",
+                            )}
+                        />
                     </dl>
 
                     <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
@@ -171,7 +215,9 @@ export default function DemoPage() {
                             type="button"
                             className="btn secondary"
                             style={{ flex: 1, minHeight: 48 }}
-                            onClick={() => setView({ kind: "edit", id: current.id })}
+                            onClick={() =>
+                                setView({ kind: "edit", id: current.id })
+                            }
                         >
                             수정
                         </button>
@@ -192,7 +238,9 @@ export default function DemoPage() {
                     message="정말 삭제하시겠습니까?"
                     confirmLabel="삭제"
                     destructive
-                    onConfirm={() => confirmDeleteId && deleteSecret(confirmDeleteId)}
+                    onConfirm={() =>
+                        confirmDeleteId && deleteSecret(confirmDeleteId)
+                    }
                     onCancel={() => setConfirmDeleteId(null)}
                 />
                 <ConfirmDialog
@@ -205,7 +253,9 @@ export default function DemoPage() {
                     }
                     confirmLabel="삭제"
                     destructive
-                    onConfirm={() => fieldToDelete !== null && deleteField(fieldToDelete)}
+                    onConfirm={() =>
+                        fieldToDelete !== null && deleteField(fieldToDelete)
+                    }
                     onCancel={() => setFieldToDelete(null)}
                 />
             </section>
@@ -217,10 +267,31 @@ export default function DemoPage() {
         <section>
             <DemoBanner />
             <div className="sticky-header">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 12,
+                    }}
+                >
                     <div>
-                        <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: "-0.03em" }}>대외비</div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-muted)", fontWeight: 500 }}>
+                        <div
+                            style={{
+                                fontSize: 21,
+                                fontWeight: 800,
+                                letterSpacing: "-0.03em",
+                            }}
+                        >
+                            대외비
+                        </div>
+                        <div
+                            style={{
+                                fontSize: 12,
+                                color: "var(--color-text-muted)",
+                                fontWeight: 500,
+                            }}
+                        >
                             {filtered.length}개 항목
                         </div>
                     </div>
@@ -231,7 +302,10 @@ export default function DemoPage() {
                 </div>
 
                 <div className="search-bar">
-                    <span aria-hidden="true" style={{ color: "#aaa", fontSize: 15 }}>
+                    <span
+                        aria-hidden="true"
+                        style={{ color: "#aaa", fontSize: 15 }}
+                    >
                         ⌕
                     </span>
                     <input
@@ -255,11 +329,28 @@ export default function DemoPage() {
                         textAlign: "center",
                     }}
                 >
-                    <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
-                        {query.trim() ? "검색 결과가 없어요" : "아직 항목이 없어요"}
+                    <div
+                        style={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            marginBottom: 6,
+                        }}
+                    >
+                        {query.trim()
+                            ? "검색 결과가 없어요"
+                            : "아직 항목이 없어요"}
                     </div>
-                    <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.5, maxWidth: 220 }}>
-                        {query.trim() ? "다른 검색어로 다시 시도해 보세요." : "우하단 + 로 항목을 추가해 보세요."}
+                    <p
+                        className="muted"
+                        style={{
+                            fontSize: 13.5,
+                            lineHeight: 1.5,
+                            maxWidth: 220,
+                        }}
+                    >
+                        {query.trim()
+                            ? "다른 검색어로 다시 시도해 보세요."
+                            : "우하단 + 로 항목을 추가해 보세요."}
                     </p>
                 </div>
             ) : (
@@ -269,17 +360,30 @@ export default function DemoPage() {
                             <button
                                 type="button"
                                 className="entry-card"
-                                style={{ width: "100%", textAlign: "left", background: "none", font: "inherit", cursor: "pointer" }}
-                                onClick={() => setView({ kind: "detail", id: secret.id })}
+                                style={{
+                                    width: "100%",
+                                    textAlign: "left",
+                                    background: "none",
+                                    font: "inherit",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() =>
+                                    setView({ kind: "detail", id: secret.id })
+                                }
                             >
                                 <span className="avatar" aria-hidden="true">
                                     {secret.label.trim()[0] ?? "·"}
                                 </span>
                                 <span className="entry-main">
-                                    <span className="entry-label">{secret.label}</span>
+                                    <span className="entry-label">
+                                        {secret.label}
+                                    </span>
                                 </span>
                                 <span className="entry-side">
-                                    <span className="entry-chevron" aria-hidden="true">
+                                    <span
+                                        className="entry-chevron"
+                                        aria-hidden="true"
+                                    >
                                         ›
                                     </span>
                                 </span>
@@ -329,8 +433,9 @@ function DemoBanner() {
             }}
         >
             <span>
-                <strong style={{ color: "#333" }}>데모 모드</strong> · 아래 데이터는 모두 예시이며 실제
-                비밀번호가 아닙니다. 변경 사항은 저장되지 않습니다.
+                <strong style={{ color: "#333" }}>데모 모드</strong> · 아래
+                데이터는 모두 예시이며 실제 비밀번호가 아닙니다. 변경 사항은
+                저장되지 않습니다.
             </span>
         </div>
     )

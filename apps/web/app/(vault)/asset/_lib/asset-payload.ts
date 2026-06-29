@@ -27,7 +27,9 @@ export async function openExpense(
     vaultKey: CryptoKey,
     blob: SealedBlob,
 ): Promise<ExpensePayload> {
-    const parsed = JSON.parse(await open(vaultKey, blob)) as Partial<ExpensePayload>
+    const parsed = JSON.parse(
+        await open(vaultKey, blob),
+    ) as Partial<ExpensePayload>
     return {
         item: String(parsed.item ?? ""),
         amount: typeof parsed.amount === "number" ? parsed.amount : 0,
@@ -47,6 +49,8 @@ export async function openIncome(
     vaultKey: CryptoKey,
     blob: SealedBlob,
 ): Promise<IncomePayload> {
-    const parsed = JSON.parse(await open(vaultKey, blob)) as Partial<IncomePayload>
+    const parsed = JSON.parse(
+        await open(vaultKey, blob),
+    ) as Partial<IncomePayload>
     return { amount: typeof parsed.amount === "number" ? parsed.amount : 0 }
 }

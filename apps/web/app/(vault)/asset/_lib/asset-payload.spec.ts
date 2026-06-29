@@ -23,7 +23,9 @@ describe("asset-payload seal/open", () => {
     it("수입 본문을 라운드트립한다", async () => {
         const vk = await generateVaultKey()
         const blob = await sealIncome(vk, { amount: 3_200_000 })
-        await expect(openIncome(vk, blob)).resolves.toEqual({ amount: 3_200_000 })
+        await expect(openIncome(vk, blob)).resolves.toEqual({
+            amount: 3_200_000,
+        })
     })
 
     it("다른 키로는 복호화되지 않는다", async () => {

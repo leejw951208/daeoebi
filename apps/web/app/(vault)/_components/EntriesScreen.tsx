@@ -3,14 +3,10 @@
 // 상세는 /[id], 신규는 /new(우하단 FAB), 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import {
-    listSecrets,
-    searchSecrets,
-    type SecretMeta,
-} from "@/lib/vault-client"
+import { listSecrets, searchSecrets, type SecretMeta } from "@/lib/vault-client"
 import { SkeletonCard } from "@/components/Skeleton"
-import { useVault } from "./vault-context"
-import { useDefaultSite } from "./use-default-site"
+import { useVault } from "../_lib/vault-context"
+import { useDefaultSite } from "../_lib/use-default-site"
 
 type ListState = "idle" | "loading" | "loaded" | "error"
 
@@ -44,18 +40,16 @@ export function EntriesScreen() {
         const load = query.trim()
             ? searchSecrets(query.trim())
             : listSecrets(siteId)
-        load
-            .then((items) => {
-                if (cancelled) return
-                setSecrets(items)
-                setState("loaded")
-                setError(null)
-            })
-            .catch((e) => {
-                if (cancelled) return
-                setState("error")
-                setError(e instanceof Error ? e.message : "알 수 없는 오류")
-            })
+        load.then((items) => {
+            if (cancelled) return
+            setSecrets(items)
+            setState("loaded")
+            setError(null)
+        }).catch((e) => {
+            if (cancelled) return
+            setState("error")
+            setError(e instanceof Error ? e.message : "알 수 없는 오류")
+        })
         return () => {
             cancelled = true
         }
@@ -104,10 +98,22 @@ export function EntriesScreen() {
                     }}
                 >
                     <div>
-                        <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: "-0.03em" }}>
+                        <div
+                            style={{
+                                fontSize: 21,
+                                fontWeight: 800,
+                                letterSpacing: "-0.03em",
+                            }}
+                        >
                             대외비
                         </div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-muted)", fontWeight: 500 }}>
+                        <div
+                            style={{
+                                fontSize: 12,
+                                color: "var(--color-text-muted)",
+                                fontWeight: 500,
+                            }}
+                        >
                             {secrets.length}개 항목
                         </div>
                     </div>
@@ -123,7 +129,10 @@ export function EntriesScreen() {
                 </div>
 
                 <div className="search-bar">
-                    <span aria-hidden="true" style={{ color: "#aaa", fontSize: 15 }}>
+                    <span
+                        aria-hidden="true"
+                        style={{ color: "#aaa", fontSize: 15 }}
+                    >
                         ⌕
                     </span>
                     <input
@@ -143,7 +152,11 @@ export function EntriesScreen() {
             )}
 
             <nav aria-label="대외비 관리" className="toolbar">
-                <Link className="btn secondary" style={{ minHeight: 42 }} href="/backup">
+                <Link
+                    className="btn secondary"
+                    style={{ minHeight: 42 }}
+                    href="/backup"
+                >
                     백업·복원
                 </Link>
             </nav>
@@ -187,12 +200,24 @@ export function EntriesScreen() {
                         >
                             +
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
-                            {query.trim() ? "검색 결과가 없어요" : "아직 항목이 없어요"}
+                        <div
+                            style={{
+                                fontSize: 16,
+                                fontWeight: 700,
+                                marginBottom: 6,
+                            }}
+                        >
+                            {query.trim()
+                                ? "검색 결과가 없어요"
+                                : "아직 항목이 없어요"}
                         </div>
                         <p
                             className="muted"
-                            style={{ fontSize: 13.5, lineHeight: 1.5, maxWidth: 220 }}
+                            style={{
+                                fontSize: 13.5,
+                                lineHeight: 1.5,
+                                maxWidth: 220,
+                            }}
                         >
                             {query.trim()
                                 ? "다른 검색어로 다시 시도해 보세요."
@@ -204,7 +229,10 @@ export function EntriesScreen() {
                     <ul className="entry-list stagger">
                         {secrets.map((secret) => (
                             <li key={secret.id}>
-                                <Link href={`/${secret.id}`} className="entry-card">
+                                <Link
+                                    href={`/${secret.id}`}
+                                    className="entry-card"
+                                >
                                     <span className="avatar" aria-hidden="true">
                                         {firstChar(secret.label)}
                                     </span>
@@ -228,11 +256,7 @@ export function EntriesScreen() {
                 )}
             </div>
 
-            <Link
-                className="fab"
-                href="/new"
-                aria-label="새 항목 추가"
-            >
+            <Link className="fab" href="/new" aria-label="새 항목 추가">
                 <span aria-hidden="true">+</span>
             </Link>
         </section>

@@ -32,7 +32,10 @@ export function byCategory(items: ComputedExpense[]): CategoryBreakdown[] {
         sums.set(e.category, (sums.get(e.category) ?? 0) + e.amount)
     }
     // 알려진 카테고리 순서를 기준으로 모으되, 미지의 키도 포함한다.
-    const keys = new Set<string>([...CATEGORIES.map((c) => c.key), ...sums.keys()])
+    const keys = new Set<string>([
+        ...CATEGORIES.map((c) => c.key),
+        ...sums.keys(),
+    ])
     return [...keys]
         .filter((key) => (sums.get(key) ?? 0) > 0)
         .map((key) => {

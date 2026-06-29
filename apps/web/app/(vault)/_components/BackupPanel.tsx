@@ -1,11 +1,7 @@
 "use client"
 // 백업/복원 패널. E2E 암호문 패스스루이므로 별도 마스터 입력이 없다. export 다운로드 + import 업로드 + 충돌 모드 선택.
 import { ChangeEvent, useRef, useState } from "react"
-import {
-    exportStore,
-    importStore,
-    type ImportMode,
-} from "@/lib/vault-client"
+import { exportStore, importStore, type ImportMode } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 
 interface Props {
@@ -107,7 +103,9 @@ export function BackupPanel({ onImported }: Props) {
                 className="card"
                 style={{ background: "var(--tint)", padding: 20 }}
             >
-                <h2 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}>
+                <h2
+                    style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}
+                >
                     암호화 백업 내보내기
                 </h2>
                 <p
@@ -118,8 +116,8 @@ export function BackupPanel({ onImported }: Props) {
                         margin: "0 0 16px",
                     }}
                 >
-                    모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의 대외비
-                    키로만 가능합니다.
+                    모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의
+                    대외비 키로만 가능합니다.
                 </p>
                 <button
                     type="button"
@@ -134,7 +132,9 @@ export function BackupPanel({ onImported }: Props) {
 
             {/* 가져오기 카드 */}
             <section className="card" style={{ padding: 20 }}>
-                <h2 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}>
+                <h2
+                    style={{ fontSize: 16, fontWeight: 800, margin: "0 0 6px" }}
+                >
                     복원 가져오기
                 </h2>
                 <p
@@ -168,7 +168,13 @@ export function BackupPanel({ onImported }: Props) {
                     >
                         ⤓
                     </div>
-                    <div style={{ fontSize: 13.5, color: "var(--color-text-muted)", fontWeight: 500 }}>
+                    <div
+                        style={{
+                            fontSize: 13.5,
+                            color: "var(--color-text-muted)",
+                            fontWeight: 500,
+                        }}
+                    >
                         {pendingName ?? "파일을 선택하세요"}
                     </div>
                     <input

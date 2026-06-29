@@ -57,7 +57,8 @@ export function buildCalendar(month: string): CalendarCell[] {
     const firstWeekday = new Date(y, m - 1, 1).getDay() // 0=일
     const total = daysInMonth(month)
     const cells: CalendarCell[] = []
-    for (let i = 0; i < firstWeekday; i += 1) cells.push({ day: null, date: null })
+    for (let i = 0; i < firstWeekday; i += 1)
+        cells.push({ day: null, date: null })
     for (let d = 1; d <= total; d += 1) {
         cells.push({ day: d, date: `${month}-${pad2(d)}` })
     }

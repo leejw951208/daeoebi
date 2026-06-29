@@ -38,7 +38,9 @@ export async function openPayload(
                   value: String(f.value ?? ""),
                   // 구버전 데이터엔 sensitive 가 없다. 그대로 undefined 로 두어 상세에서 이름 휴리스틱으로 폴백시킨다.
                   sensitive:
-                      typeof f.sensitive === "boolean" ? f.sensitive : undefined,
+                      typeof f.sensitive === "boolean"
+                          ? f.sensitive
+                          : undefined,
               }))
             : [],
         memo: typeof parsed.memo === "string" ? parsed.memo : "",

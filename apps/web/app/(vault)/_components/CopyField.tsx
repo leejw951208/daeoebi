@@ -1,7 +1,7 @@
 "use client"
 // 민감 필드 표시·클립보드 복사 + 30초 자동 클리어. aria-live 영역으로 진행 상황을 안내한다.
 import { useEffect, useRef, useState } from "react"
-import { scheduleClipboardClear } from "./clipboard-clear"
+import { scheduleClipboardClear } from "../_lib/clipboard-clear"
 
 interface Props {
     label: string
