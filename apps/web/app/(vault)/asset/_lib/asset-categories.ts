@@ -12,6 +12,8 @@ export const CATEGORIES: AssetCategory[] = [
     { key: "주거·공과금", color: "#9b6bd6" },
     { key: "쇼핑", color: "#e0689a" },
     { key: "문화", color: "#3bb273" },
+    { key: "저축", color: "#14b8a6" },
+    { key: "투자", color: "#eab308" },
     { key: "기타", color: "#98a0a8" },
 ]
 
