@@ -49,6 +49,7 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
     const [method, setMethod] = useState(initial?.payload.method ?? METHODS[0])
     const [date, setDate] = useState(initial?.date ?? todayISO())
     const [recurring, setRecurring] = useState(false)
+    const [termMonths, setTermMonths] = useState("")
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [deleteMenu, setDeleteMenu] = useState(false)
@@ -79,9 +80,14 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                 await updateExpense(initial.id, { date, ...blob })
             } else if (recurring) {
                 const tmplBlob = await sealExpense(vaultKey, payload)
+                const term = Number(termMonths)
                 const tmpl = await createRecurring({
                     dayOfMonth: Number(date.slice(8, 10)),
                     startMonth: monthOf(date),
+                    // 1 이상 정수면 기간 제한, 비었거나 0 이면 무기한(미전송).
+                    ...(Number.isInteger(term) && term >= 1
+                        ? { termMonths: term }
+                        : {}),
                     ...tmplBlob,
                 })
                 const instBlob = await sealExpense(vaultKey, payload)
@@ -382,6 +388,39 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                             aria-label="고정 지출"
                         />
                     </label>
+                )}
+
+                {/* 개월 수(고정 ON 일 때만, 선택) */}
+                {!isEdit && recurring && (
+                    <div className="form-row" style={{ margin: 0 }}>
+                        <label htmlFor="term-months">
+                            개월 수{" "}
+                            <span
+                                style={{
+                                    color: "var(--color-text-muted)",
+                                    fontWeight: 600,
+                                }}
+                            >
+                                · 선택
+                            </span>
+                        </label>
+                        <input
+                            id="term-months"
+                            inputMode="numeric"
+                            className="field-control"
+                            placeholder="비우면 무기한"
+                            value={termMonths}
+                            onChange={(e) => {
+                                resetIdle()
+                                setTermMonths(
+                                    e.target.value
+                                        .replace(/[^\d]/g, "")
+                                        .slice(0, 3),
+                                )
+                            }}
+                            aria-label="개월 수"
+                        />
+                    </div>
                 )}
 
                 {/* 액션(수정만) */}
