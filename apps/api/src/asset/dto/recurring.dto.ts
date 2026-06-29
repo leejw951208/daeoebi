@@ -21,6 +21,12 @@ export class CreateRecurringDto {
     @Matches(MONTH_RE, { message: "startMonth 는 YYYY-MM 형식이어야 합니다." })
     startMonth!: string
 
+    // 개월 수(기간 제한). 미지정 = 무기한.
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    termMonths?: number
+
     @IsBase64url()
     iv!: string
 

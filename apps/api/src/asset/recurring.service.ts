@@ -14,6 +14,7 @@ interface RecurringRow {
     id: string
     dayOfMonth: number
     startMonth: string
+    termMonths: number | null
     active: boolean
     iv: Uint8Array
     ciphertext: Uint8Array
@@ -25,6 +26,7 @@ function toView(row: RecurringRow) {
         id: row.id,
         dayOfMonth: row.dayOfMonth,
         startMonth: row.startMonth,
+        termMonths: row.termMonths,
         active: row.active,
         iv: toBase64url(row.iv),
         ciphertext: toBase64url(row.ciphertext),
@@ -50,6 +52,7 @@ export class RecurringService {
             data: {
                 dayOfMonth: dto.dayOfMonth,
                 startMonth: dto.startMonth,
+                termMonths: dto.termMonths ?? null,
                 iv: prismaBytes(fromBase64url(dto.iv)),
                 ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
                 authTag: prismaBytes(fromBase64url(dto.authTag)),
