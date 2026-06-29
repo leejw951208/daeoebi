@@ -81,7 +81,6 @@ export function SecretEditStep({
             </div>
 
             <div
-                className="stagger"
                 // 프로토타입과 동일하게 flex 컬럼으로 배치한다. grid 암묵적 auto 컬럼은
                 // 가장 넓은 자식(가로 스크롤 추천칩 묶음)에 맞춰 늘어나 입력들이 컨테이너를 벗어난다.
                 style={{
