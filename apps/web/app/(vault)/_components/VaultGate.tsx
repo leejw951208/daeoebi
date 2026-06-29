@@ -2,11 +2,11 @@
 // vault 세그먼트의 인증·잠금 상태 머신. status → 온보딩/잠금해제/잠금해제됨을 분기한다.
 // VK 는 이 컴포넌트의 메모리 state 로만 보관하며 새로고침·탭종료 시 자동 폐기된다.
 // 레이아웃(layout.tsx)은 서버 컴포넌트로 두고, 클라이언트 경계는 이 게이트로 좁힌다.
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { getAuthStatus, postLogout, type AuthStatus } from "@/lib/vault-client"
 import { OnboardingScreen } from "../auth/OnboardingScreen"
 import { UnlockScreen } from "../auth/UnlockScreen"
-import { VaultProvider } from "../_lib/vault-context"
+import { VaultProvider, type VaultContextValue } from "../_lib/vault-context"
 
 type View =
     | { state: "loading" }
@@ -85,6 +85,14 @@ export function VaultGate({ children }: { children: React.ReactNode }) {
         return () => clearInterval(id)
     }, [view.state])
 
+    // 안정값은 메모이즈해 매초 idle 갱신 시에도 동일 참조를 유지한다 —
+    // useVault() 소비자(폼·목록·대시보드)가 카운트다운 때문에 리렌더되지 않게 한다.
+    const vaultKey = view.state === "unlocked" ? view.vaultKey : null
+    const vaultValue = useMemo<VaultContextValue | null>(
+        () => (vaultKey ? { vaultKey, resetIdle, onLock: handleLock } : null),
+        [vaultKey, resetIdle, handleLock],
+    )
+
     if (view.state === "loading" || view.state === "error") {
         return (
             <section
@@ -124,15 +132,11 @@ export function VaultGate({ children }: { children: React.ReactNode }) {
         )
     }
 
+    // unlocked 분기에서는 항상 non-null 이다(타입 좁히기용 가드).
+    if (!vaultValue) return null
+
     return (
-        <VaultProvider
-            value={{
-                vaultKey: view.vaultKey,
-                idleSecondsRemaining: idleRemaining,
-                resetIdle,
-                onLock: handleLock,
-            }}
-        >
+        <VaultProvider value={vaultValue} idleSeconds={idleRemaining}>
             {children}
         </VaultProvider>
     )
