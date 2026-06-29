@@ -43,9 +43,11 @@ function row(over: Record<string, unknown> = {}) {
 describe("ExpenseService.listByMonth", () => {
     it("잘못된 month 형식은 INVALID_MONTH", async () => {
         const prisma = makePrisma()
-        await expect(makeService(prisma).listByMonth("2026/6")).rejects.toMatchObject(
-            { response: { code: ASSET_ERRORS.INVALID_MONTH } },
-        )
+        await expect(
+            makeService(prisma).listByMonth("2026/6"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_MONTH },
+        })
     })
 
     it("해당 월 범위[start, nextMonth)로 조회하고 view 로 매핑한다", async () => {
@@ -69,7 +71,10 @@ describe("ExpenseService.create", () => {
     it("암호문 블롭을 디코드해 저장하고 view 를 반환한다", async () => {
         const prisma = makePrisma()
         prisma.expense.create.mockResolvedValue(row())
-        await makeService(prisma).create({ date: "2026-06-27", ...blob } as never)
+        await makeService(prisma).create({
+            date: "2026-06-27",
+            ...blob,
+        } as never)
         const data = prisma.expense.create.mock.calls[0][0].data
         expect(Buffer.from(data.iv)).toEqual(IV)
         expect(data.recurringId).toBeNull()
@@ -85,7 +90,9 @@ describe("ExpenseService.create", () => {
                 period: "2026-06",
                 ...blob,
             } as never),
-        ).rejects.toMatchObject({ response: { code: ASSET_ERRORS.EXPENSE_DUPLICATE } })
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.EXPENSE_DUPLICATE },
+        })
     })
 })
 
@@ -111,10 +118,43 @@ describe("ExpenseService.update", () => {
     it("날짜만 갱신하면 본문은 건드리지 않는다", async () => {
         const prisma = makePrisma()
         prisma.expense.findUnique.mockResolvedValue({ id: "e1" })
-        prisma.expense.update.mockResolvedValue(row({ date: new Date("2026-06-01") }))
+        prisma.expense.update.mockResolvedValue(
+            row({ date: new Date("2026-06-01") }),
+        )
         await makeService(prisma).update("e1", { date: "2026-06-01" } as never)
         const data = prisma.expense.update.mock.calls[0][0].data
         expect(Object.keys(data)).toEqual(["date"])
+    })
+})
+
+describe("ExpenseService.listByMonth — removed 필터", () => {
+    it("listByMonth 는 removed=false 만 조회한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findMany.mockResolvedValue([])
+        await makeService(prisma).listByMonth("2026-06")
+        expect(prisma.expense.findMany.mock.calls[0][0].where).toMatchObject({
+            removed: false,
+        })
+    })
+})
+
+describe("ExpenseService.update — removed", () => {
+    it("update 는 removed 를 설정한다(소프트 삭제)", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue({ id: "e1" })
+        prisma.expense.update.mockResolvedValue({
+            id: "e1",
+            date: new Date("2026-06-10"),
+            recurringId: null,
+            period: null,
+            iv: IV,
+            ciphertext: CT,
+            authTag: TAG,
+        })
+        await makeService(prisma).update("e1", { removed: true } as never)
+        expect(prisma.expense.update.mock.calls[0][0].data).toMatchObject({
+            removed: true,
+        })
     })
 })
 
@@ -128,6 +168,8 @@ describe("ExpenseService.remove", () => {
         prisma.expense.findUnique.mockResolvedValueOnce({ id: "e1" })
         prisma.expense.delete.mockResolvedValue(row())
         await makeService(prisma).remove("e1")
-        expect(prisma.expense.delete).toHaveBeenCalledWith({ where: { id: "e1" } })
+        expect(prisma.expense.delete).toHaveBeenCalledWith({
+            where: { id: "e1" },
+        })
     })
 })

@@ -1,9 +1,8 @@
 // 지출(Expense) 생성·수정 DTO. 본문은 클라이언트 E2E 암호문 블롭({item,amount,category,method}).
 // date 는 평문(월 범위·달력용), recurringId/period 는 고정 지출 자동 생성 멱등 키다.
+import { IsBase64url } from "../../common/base64url"
 import {
-    IsBase64url,
-} from "../../common/base64url"
-import {
+    IsBoolean,
     IsISO8601,
     IsOptional,
     IsString,
@@ -55,4 +54,8 @@ export class UpdateExpenseDto {
     @IsOptional()
     @IsBase64url()
     authTag?: string
+
+    @IsOptional()
+    @IsBoolean()
+    removed?: boolean
 }
