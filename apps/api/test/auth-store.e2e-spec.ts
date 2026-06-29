@@ -402,7 +402,7 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
             const cookie = await registerFirst()
             const tmpl = await write("post", "/recurring")
                 .set("Cookie", cookie)
-                .send({ dayOfMonth: 25, ...blob() })
+                .send({ dayOfMonth: 25, startMonth: "2026-06", ...blob() })
                 .expect(201)
             const body = {
                 date: "2026-06-25",
@@ -419,6 +419,89 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
                 .send(body)
                 .expect(409)
             expect(dup.body.code).toBe("EXPENSE_DUPLICATE")
+        })
+
+        it("소프트 삭제된 고정 인스턴스는 목록에서 제외되고 재생성 시 409", async () => {
+            const cookie = await registerFirst()
+            const tmpl = await write("post", "/recurring")
+                .set("Cookie", cookie)
+                .send({ dayOfMonth: 10, startMonth: "2026-06", ...blob() })
+                .expect(201)
+            const inst = await write("post", "/expenses")
+                .set("Cookie", cookie)
+                .send({
+                    date: "2026-06-10",
+                    recurringId: tmpl.body.id,
+                    period: "2026-06",
+                    ...blob(),
+                })
+                .expect(201)
+
+            // 이번 달만 소프트 삭제
+            await write("patch", `/expenses/${inst.body.id}`)
+                .set("Cookie", cookie)
+                .send({ removed: true })
+                .expect(200)
+
+            // 목록에서 제외됨
+            await request(app.getHttpServer())
+                .get("/expenses?month=2026-06")
+                .set("Cookie", cookie)
+                .expect(200)
+                .expect((r) =>
+                    expect(
+                        r.body.find(
+                            (e: { id: string }) => e.id === inst.body.id,
+                        ),
+                    ).toBeUndefined(),
+                )
+
+            // 재생성 → 409(소프트 삭제여도 슬롯 점유 유지)
+            const dup = await write("post", "/expenses")
+                .set("Cookie", cookie)
+                .send({
+                    date: "2026-06-10",
+                    recurringId: tmpl.body.id,
+                    period: "2026-06",
+                    ...blob(),
+                })
+                .expect(409)
+            expect(dup.body.code).toBe("EXPENSE_DUPLICATE")
+        })
+
+        it("고정 지출 템플릿 삭제 시 인스턴스도 Cascade 삭제된다", async () => {
+            const cookie = await registerFirst()
+            const tmpl = await write("post", "/recurring")
+                .set("Cookie", cookie)
+                .send({ dayOfMonth: 10, startMonth: "2026-07", ...blob() })
+                .expect(201)
+            const inst = await write("post", "/expenses")
+                .set("Cookie", cookie)
+                .send({
+                    date: "2026-07-10",
+                    recurringId: tmpl.body.id,
+                    period: "2026-07",
+                    ...blob(),
+                })
+                .expect(201)
+
+            // 템플릿 삭제
+            await write("delete", `/recurring/${tmpl.body.id}`)
+                .set("Cookie", cookie)
+                .expect(204)
+
+            // 인스턴스도 Cascade 삭제되어 목록에 없음
+            await request(app.getHttpServer())
+                .get("/expenses?month=2026-07")
+                .set("Cookie", cookie)
+                .expect(200)
+                .expect((r) =>
+                    expect(
+                        r.body.find(
+                            (e: { id: string }) => e.id === inst.body.id,
+                        ),
+                    ).toBeUndefined(),
+                )
         })
     })
 
