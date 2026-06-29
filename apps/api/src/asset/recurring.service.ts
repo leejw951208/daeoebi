@@ -77,7 +77,8 @@ export class RecurringService {
         return toView(row)
     }
 
-    // 템플릿 삭제 = 고정 지출 해지. 기존 인스턴스의 recurringId 는 SetNull 로 남는다(과거 기록 보존).
+    // 템플릿 삭제 = 고정 지출 "전체 삭제". FK onDelete Cascade 라 이 템플릿의 모든 인스턴스도 함께 삭제된다.
+    // (앞으로 자동 생성만 멈추고 기록은 남기는 "해제"는 update({active:false}) 로 별도 처리한다.)
     async remove(id: string): Promise<void> {
         await this.ensureExists(id)
         await this.prisma.recurringExpense.delete({ where: { id } })
