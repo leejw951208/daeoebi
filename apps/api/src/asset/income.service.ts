@@ -1,45 +1,112 @@
-// 월 수입(Income) 싱글톤 조회·upsert. 금액은 클라이언트 E2E 암호문이라 서버는 복호화 없이 패스스루한다.
-import { Injectable } from "@nestjs/common"
+// 월 수입(Income) CRUD. 본문은 클라이언트 E2E 암호문이라 서버는 복호화 없이 패스스루한다.
+// month 만 평문 메타로 다룬다(월 범위 조회 귀속).
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { fromBase64url, toBase64url } from "../common/base64url"
-import { UpsertIncomeDto } from "./dto/income.dto"
+import { CreateIncomeDto, UpdateIncomeDto } from "./dto/income.dto"
+import { ASSET_ERRORS } from "./asset.types"
 
-const SINGLETON = "singleton"
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 
-// Prisma Bytes 입력은 Uint8Array<ArrayBuffer> 를 기대하므로 복사해 변환한다.
 function prismaBytes(value: Uint8Array): Uint8Array<ArrayBuffer> {
     return new Uint8Array(value)
+}
+
+interface IncomeRow {
+    id: string
+    month: string
+    iv: Uint8Array
+    ciphertext: Uint8Array
+    authTag: Uint8Array
+}
+
+function toView(row: IncomeRow) {
+    return {
+        id: row.id,
+        month: row.month,
+        iv: toBase64url(row.iv),
+        ciphertext: toBase64url(row.ciphertext),
+        authTag: toBase64url(row.authTag),
+    }
 }
 
 @Injectable()
 export class IncomeService {
     constructor(private readonly prisma: PrismaService) {}
 
-    // 미설정이면 null. 설정돼 있으면 암호문 블롭(base64url)을 반환한다.
-    async get() {
-        const row = await this.prisma.income.findUnique({
-            where: { id: SINGLETON },
-        })
-        if (!row) return null
-        return {
-            iv: toBase64url(row.iv),
-            ciphertext: toBase64url(row.ciphertext),
-            authTag: toBase64url(row.authTag),
-            updatedAt: row.updatedAt,
+    async listByMonth(month: string) {
+        if (!MONTH_RE.test(month)) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_MONTH,
+                message: "month 는 YYYY-MM 형식이어야 합니다.",
+            })
         }
+        const rows = await this.prisma.income.findMany({
+            where: { month },
+            orderBy: { createdAt: "asc" },
+        })
+        return rows.map(toView)
     }
 
-    async upsert(dto: UpsertIncomeDto) {
-        const data = {
-            iv: prismaBytes(fromBase64url(dto.iv)),
-            ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
-            authTag: prismaBytes(fromBase64url(dto.authTag)),
-        }
-        const row = await this.prisma.income.upsert({
-            where: { id: SINGLETON },
-            create: { id: SINGLETON, ...data },
-            update: data,
+    async create(dto: CreateIncomeDto) {
+        const row = await this.prisma.income.create({
+            data: {
+                month: dto.month,
+                iv: prismaBytes(fromBase64url(dto.iv)),
+                ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
+                authTag: prismaBytes(fromBase64url(dto.authTag)),
+            },
         })
-        return { ok: true as const, updatedAt: row.updatedAt }
+        return toView(row)
+    }
+
+    async update(id: string, dto: UpdateIncomeDto) {
+        const found = await this.prisma.income.findUnique({
+            where: { id },
+            select: { id: true },
+        })
+        if (!found) throw this.notFound()
+
+        const hasIv = dto.iv !== undefined
+        const hasCt = dto.ciphertext !== undefined
+        const hasTag = dto.authTag !== undefined
+        if (!hasIv || !hasCt || !hasTag) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET,
+                message:
+                    "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
+            })
+        }
+        const row = await this.prisma.income.update({
+            where: { id },
+            data: {
+                iv: prismaBytes(fromBase64url(dto.iv as string)),
+                ciphertext: prismaBytes(
+                    fromBase64url(dto.ciphertext as string),
+                ),
+                authTag: prismaBytes(fromBase64url(dto.authTag as string)),
+            },
+        })
+        return toView(row)
+    }
+
+    async remove(id: string): Promise<void> {
+        const found = await this.prisma.income.findUnique({
+            where: { id },
+            select: { id: true },
+        })
+        if (!found) throw this.notFound()
+        await this.prisma.income.delete({ where: { id } })
+    }
+
+    private notFound(): NotFoundException {
+        return new NotFoundException({
+            code: ASSET_ERRORS.INCOME_NOT_FOUND,
+            message: "수입을 찾을 수 없습니다.",
+        })
     }
 }

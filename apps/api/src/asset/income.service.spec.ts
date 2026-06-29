@@ -1,9 +1,17 @@
-// IncomeService 단위 테스트(Prisma 모킹). 싱글톤 조회(null/블롭)·upsert 패스스루를 검증한다.
+// IncomeService 단위 테스트(Prisma 모킹). 월 조회 필터·생성/수정/삭제·base64url 패스스루를 검증한다.
 import { IncomeService } from "./income.service"
 import { toBase64url } from "../common/base64url"
 
 function makePrisma() {
-    return { income: { findUnique: jest.fn(), upsert: jest.fn() } }
+    return {
+        income: {
+            findMany: jest.fn(),
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+        },
+    }
 }
 function makeService(prisma: ReturnType<typeof makePrisma>) {
     return new IncomeService(prisma as unknown as never)
@@ -19,35 +27,53 @@ const B = {
 }
 
 describe("IncomeService", () => {
-    it("미설정이면 null 을 반환한다", async () => {
+    it("listByMonth 는 그 달만 조회해 블롭을 base64url 로 반환한다", async () => {
         const prisma = makePrisma()
-        prisma.income.findUnique.mockResolvedValue(null)
-        await expect(makeService(prisma).get()).resolves.toBeNull()
+        prisma.income.findMany.mockResolvedValue([
+            {
+                id: "i1",
+                month: "2026-06",
+                iv: IV,
+                ciphertext: CT,
+                authTag: TAG,
+            },
+        ])
+        const out = await makeService(prisma).listByMonth("2026-06")
+        expect(prisma.income.findMany.mock.calls[0][0]).toMatchObject({
+            where: { month: "2026-06" },
+        })
+        expect(out[0]).toMatchObject({
+            id: "i1",
+            month: "2026-06",
+            iv: toBase64url(IV),
+        })
     })
 
-    it("설정돼 있으면 암호문 블롭을 base64url 로 반환한다", async () => {
+    it("listByMonth 는 잘못된 month 형식을 거부한다", async () => {
         const prisma = makePrisma()
-        prisma.income.findUnique.mockResolvedValue({
+        await expect(
+            makeService(prisma).listByMonth("2026/6"),
+        ).rejects.toThrow()
+    })
+
+    it("create 는 month 와 디코드한 바이트를 저장한다", async () => {
+        const prisma = makePrisma()
+        prisma.income.create.mockResolvedValue({
+            id: "i9",
+            month: "2026-06",
             iv: IV,
             ciphertext: CT,
             authTag: TAG,
-            updatedAt: new Date(0),
         })
-        const out = await makeService(prisma).get()
-        expect(out).toMatchObject({
-            iv: toBase64url(IV),
-            ciphertext: toBase64url(CT),
-            authTag: toBase64url(TAG),
-        })
+        await makeService(prisma).create({ month: "2026-06", ...B } as never)
+        const arg = prisma.income.create.mock.calls[0][0]
+        expect(arg.data.month).toBe("2026-06")
+        expect(Buffer.from(arg.data.iv)).toEqual(IV)
     })
 
-    it("upsert 는 싱글톤 id 로 디코드한 바이트를 저장한다", async () => {
+    it("remove 는 없는 id 면 NotFound 를 던진다", async () => {
         const prisma = makePrisma()
-        prisma.income.upsert.mockResolvedValue({ updatedAt: new Date(0) })
-        await makeService(prisma).upsert(B as never)
-        const arg = prisma.income.upsert.mock.calls[0][0]
-        expect(arg.where).toEqual({ id: "singleton" })
-        expect(Buffer.from(arg.create.iv)).toEqual(IV)
-        expect(Buffer.from(arg.update.ciphertext)).toEqual(CT)
+        prisma.income.findUnique.mockResolvedValue(null)
+        await expect(makeService(prisma).remove("nope")).rejects.toThrow()
     })
 })
