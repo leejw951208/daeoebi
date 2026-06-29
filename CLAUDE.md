@@ -10,16 +10,13 @@
 - `.env.*` — 시크릿
 
 ## 3. 금지 명령어
-- `rm`
+- `rm` - 파일/폴더 삭제
+- `*install` - 사용자 동의없는 의존 패키지 설치
 
-## 4. 자주 쓰는 명령
-```bash
-pnpm install                                        # 의존성 설치
-make dev-up                                         # DB(도커) + 마이그레이션 + 웹·API 개발 서버
-make typecheck                                      # 변경 후 기본 검증
-make lint                                           # ESLint
-make test                                           # 전체 테스트
-```
+## 4. 브랜치 전략
+- **main 브랜치 머지는 사용자가 직접 진행**
+- develop 브랜치를 기준으로 feat, fix, chore... 브랜치를 생성하여 작업
+- develop 브랜치에 머지 시 사용자 동의 후 진행
 
 ## 5. 의미 단위로 커밋
 - 사용자가 커밋을 요청한 경우에만 커밋한다.
