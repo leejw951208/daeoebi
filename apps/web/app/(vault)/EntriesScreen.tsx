@@ -3,7 +3,6 @@
 // 상세는 /[id], 신규는 /new(우하단 FAB), 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
 import {
     listSecrets,
     searchSecrets,
@@ -16,26 +15,19 @@ import { useDefaultSite } from "./use-default-site"
 type ListState = "idle" | "loading" | "loaded" | "error"
 
 export function EntriesScreen() {
-    const router = useRouter()
-    const search = useSearchParams()
     const { idleSecondsRemaining, onLock, resetIdle } = useVault()
     const { state: siteState, retry: retrySite } = useDefaultSite()
 
-    const query = search.get("q") ?? ""
-
-    // 입력 박스는 로컬 state 로 즉시 반영한다. URL(q) 반영·검색 요청은 디바운스해
-    // 매 글자마다 router.replace + 네트워크 요청이 겹쳐 입력이 지연되던 문제를 막는다.
-    const [input, setInput] = useState(query)
+    // 검색은 전적으로 로컬 상태로 구동한다(URL 미사용). input 은 입력 박스가 즉시 반영하고,
+    // query 는 디바운스된 검색어다. URL(q)·router.replace 를 쓰면 (1) 매 커밋마다 RSC 왕복으로
+    // 느려지고 (2) q→input 되돌림 동기화가 빠른 타이핑·한글 IME 조합과 충돌해 글자가 사라졌다.
+    const [input, setInput] = useState("")
+    const [query, setQuery] = useState("")
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const [secrets, setSecrets] = useState<SecretMeta[]>([])
     const [state, setState] = useState<ListState>("idle")
     const [error, setError] = useState<string | null>(null)
-
-    // 뒤로가기 등 외부 요인으로 q 가 바뀌면 입력 박스도 맞춘다(사용자 입력 중이 아닌 경우).
-    useEffect(() => {
-        setInput(query)
-    }, [query])
 
     useEffect(() => {
         return () => {
@@ -69,19 +61,11 @@ export function EntriesScreen() {
         }
     }, [siteId, query])
 
-    function commitQuery(value: string) {
-        const params = new URLSearchParams(search.toString())
-        if (!value) params.delete("q")
-        else params.set("q", value)
-        const qs = params.toString()
-        router.replace(qs ? `/?${qs}` : "/", { scroll: false })
-    }
-
     function onSearchChange(value: string) {
         resetIdle()
         setInput(value)
         if (debounceRef.current) clearTimeout(debounceRef.current)
-        debounceRef.current = setTimeout(() => commitQuery(value.trim()), 250)
+        debounceRef.current = setTimeout(() => setQuery(value.trim()), 250)
     }
 
     const idleWarning = useMemo(() => {
