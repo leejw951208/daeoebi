@@ -1331,8 +1331,16 @@ textarea.field-control {
         border-right: 1px solid var(--color-border);
     }
 
+    /* 데스크탑에선 백드롭을 480px 프레임 폭으로 가두되 뷰포트에 고정한다.
+       position: absolute 로 두면 내용이 긴 화면(자산 대시보드 등)에서 프레임 끝까지
+       늘어나 시트가 화면 밖 아래에 생기므로, fixed 로 뷰포트 하단에 고정한다. */
     .phone-frame .dialog-backdrop {
-        position: absolute;
+        position: fixed;
+        left: 50%;
+        right: auto;
+        width: 480px;
+        max-width: 100%;
+        transform: translateX(-50%);
     }
 }
 
