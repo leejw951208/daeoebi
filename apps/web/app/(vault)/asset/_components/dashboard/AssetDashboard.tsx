@@ -6,6 +6,7 @@ import {
     spentPct,
     totalSpent,
     type ComputedExpense,
+    type ComputedIncome,
 } from "../../_lib/asset-compute"
 import { RemainingHero } from "./RemainingHero"
 import { IncomeExpenseCards } from "./IncomeExpenseCards"
@@ -15,6 +16,7 @@ import { DayDetail } from "./DayDetail"
 
 export interface Loaded {
     incomeAmount: number
+    incomes: ComputedIncome[]
     expenses: ComputedExpense[]
 }
 
@@ -58,6 +60,7 @@ export function AssetDashboard({
             <RemainingHero left={left} pct={pct} income={data.incomeAmount} />
             <IncomeExpenseCards
                 income={data.incomeAmount}
+                incomeCount={data.incomes.length}
                 spent={spent}
                 count={data.expenses.length}
                 onOpenIncome={onOpenIncome}

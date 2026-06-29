@@ -1,20 +1,25 @@
 "use client"
 // 자산 대시보드(디자인 화면 11). 수입·월 지출·고정 템플릿을 불러와 머티리얼라이즈한 뒤
-// VK 로 복호화·집계해 대시보드를 그린다. 상태·로드·수입 저장만 담당하고 본문은 AssetDashboard 가 그린다.
+// VK 로 복호화·집계해 대시보드를 그린다. 상태·로드만 담당하고 본문은 AssetDashboard 가 그린다.
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
-    getIncome,
+    listIncomes,
     listExpenses,
     listRecurring,
-    putIncome,
     type ExpenseView,
+    type IncomeView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "../_lib/vault-context"
-import { openExpense, openIncome, sealIncome } from "./_lib/asset-payload"
-import { byDay, type ComputedExpense } from "./_lib/asset-compute"
+import { openExpense, openIncome } from "./_lib/asset-payload"
+import {
+    byDay,
+    totalIncome,
+    type ComputedExpense,
+    type ComputedIncome,
+} from "./_lib/asset-compute"
 import { materializeRecurring } from "./_lib/asset-recurring"
 import {
     addMonth,
@@ -26,7 +31,7 @@ import {
     AssetDashboard,
     type Loaded,
 } from "./_components/dashboard/AssetDashboard"
-import { IncomeSheet } from "./_components/IncomeSheet"
+import { IncomeSheet } from "./_components/income/IncomeSheet"
 import { LockTimer } from "../_components/LockTimer"
 
 type State =
@@ -40,14 +45,12 @@ export default function AssetPage() {
     const [state, setState] = useState<State>({ status: "loading" })
     const [selectedDay, setSelectedDay] = useState<string | null>(null)
     const [sheetOpen, setSheetOpen] = useState(false)
-    const [incomeDraft, setIncomeDraft] = useState("")
-    const [savingIncome, setSavingIncome] = useState(false)
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
         try {
-            const [incomeView, expensesView, templates] = await Promise.all([
-                getIncome(),
+            const [incomeViews, expensesView, templates] = await Promise.all([
+                listIncomes(month),
                 listExpenses(month),
                 listRecurring(),
             ])
@@ -60,12 +63,28 @@ export default function AssetPage() {
             )
             const allViews: ExpenseView[] = [...expensesView, ...created]
 
-            const incomeAmount = incomeView
-                ? await openIncome(vaultKey, incomeView).then(
-                      (p) => p.amount,
-                      () => 0,
-                  )
-                : 0
+            // 수입 복호화(실패분 스킵) → 합계
+            const incomeSettled = await Promise.allSettled(
+                incomeViews.map(
+                    async (v: IncomeView): Promise<ComputedIncome> => {
+                        const p = await openIncome(vaultKey, v)
+                        return {
+                            id: v.id,
+                            month: v.month,
+                            item: p.item,
+                            amount: p.amount,
+                            category: p.category,
+                        }
+                    },
+                ),
+            )
+            const incomes = incomeSettled
+                .filter(
+                    (r): r is PromiseFulfilledResult<ComputedIncome> =>
+                        r.status === "fulfilled",
+                )
+                .map((r) => r.value)
+            const incomeAmount = totalIncome(incomes)
 
             // 복호화 실패 건(예: 다른 VK 로 만든 잔여 데이터)은 건너뛴다.
             const settled = await Promise.allSettled(
@@ -89,7 +108,10 @@ export default function AssetPage() {
                 )
                 .map((r) => r.value)
 
-            setState({ status: "ready", data: { incomeAmount, expenses } })
+            setState({
+                status: "ready",
+                data: { incomeAmount, incomes, expenses },
+            })
         } catch (e) {
             setState({
                 status: "error",
@@ -113,21 +135,6 @@ export default function AssetPage() {
             state.status === "ready" ? byDay(state.data.expenses) : new Map(),
         [state],
     )
-
-    async function saveIncome() {
-        const amount = Number(incomeDraft.replace(/[^\d]/g, "") || "0")
-        setSavingIncome(true)
-        try {
-            const blob = await sealIncome(vaultKey, { amount })
-            await putIncome(blob)
-            setSheetOpen(false)
-            await load()
-        } catch {
-            // 저장 실패해도 시트는 유지한다.
-        } finally {
-            setSavingIncome(false)
-        }
-    }
 
     return (
         <section style={{ minHeight: "100%" }}>
@@ -203,11 +210,6 @@ export default function AssetPage() {
                     }}
                     onOpenIncome={() => {
                         resetIdle()
-                        setIncomeDraft(
-                            state.data.incomeAmount
-                                ? String(state.data.incomeAmount)
-                                : "",
-                        )
                         setSheetOpen(true)
                     }}
                 />
@@ -217,12 +219,12 @@ export default function AssetPage() {
                 <span aria-hidden="true">+</span>
             </Link>
 
-            {sheetOpen && (
+            {sheetOpen && state.status === "ready" && (
                 <IncomeSheet
-                    draft={incomeDraft}
-                    saving={savingIncome}
-                    onChange={setIncomeDraft}
-                    onSave={saveIncome}
+                    month={month}
+                    monthLabel={monthLabel(month)}
+                    incomes={state.data.incomes}
+                    onChanged={load}
                     onClose={() => setSheetOpen(false)}
                 />
             )}

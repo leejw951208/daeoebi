@@ -4,6 +4,7 @@ import { formatWon } from "../../_lib/asset-categories"
 
 interface Props {
     income: number
+    incomeCount: number
     spent: number
     count: number
     onOpenIncome: () => void
@@ -11,6 +12,7 @@ interface Props {
 
 export function IncomeExpenseCards({
     income,
+    incomeCount,
     spent,
     count,
     onOpenIncome,
@@ -35,7 +37,7 @@ export function IncomeExpenseCards({
                         marginTop: 5,
                     }}
                 >
-                    수정 ›
+                    {income ? `${incomeCount}건 · 수정 ›` : "수정 ›"}
                 </div>
             </button>
             <div className="asset-card" style={{ flex: 1 }}>
