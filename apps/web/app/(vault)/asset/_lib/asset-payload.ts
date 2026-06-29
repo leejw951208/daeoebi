@@ -36,7 +36,7 @@ export async function openExpense(
         item: String(parsed.item ?? ""),
         amount: typeof parsed.amount === "number" ? parsed.amount : 0,
         category: String(parsed.category ?? "기타"),
-        method: String(parsed.method ?? "카드"),
+        method: String(parsed.method ?? "신용카드"),
     }
 }
 

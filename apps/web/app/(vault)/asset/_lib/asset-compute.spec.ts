@@ -21,7 +21,7 @@ function exp(over: Partial<ComputedExpense>): ComputedExpense {
         item: "x",
         amount: 1000,
         category: "식비",
-        method: "카드",
+        method: "신용카드",
         ...over,
     }
 }

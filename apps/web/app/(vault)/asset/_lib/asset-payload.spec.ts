@@ -14,7 +14,7 @@ describe("asset-payload seal/open", () => {
             item: "점심 김밥천국",
             amount: 8500,
             category: "식비",
-            method: "카드",
+            method: "신용카드",
         }
         const blob = await sealExpense(vk, payload)
         await expect(openExpense(vk, blob)).resolves.toEqual(payload)
