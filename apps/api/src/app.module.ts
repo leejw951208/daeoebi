@@ -3,7 +3,7 @@ import { Module } from "@nestjs/common"
 import { ConfigModule } from "@nestjs/config"
 import { PrismaModule } from "./prisma/prisma.module"
 import { AuthModule } from "./auth/auth.module"
-import { StoreModule } from "./store/store.module"
+import { VaultModule } from "./vault/vault.module"
 import { AssetModule } from "./asset/asset.module"
 
 @Module({
@@ -22,7 +22,7 @@ import { AssetModule } from "./asset/asset.module"
         }),
         PrismaModule,
         AuthModule,
-        StoreModule,
+        VaultModule,
         AssetModule,
     ],
 })

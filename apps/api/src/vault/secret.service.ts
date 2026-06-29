@@ -7,7 +7,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service"
 import { fromBase64url, toBase64url } from "../common/base64url"
 import { CreateSecretDto, UpdateSecretDto } from "./dto/secret.dto"
-import { STORE_ERRORS } from "./store.types"
+import { VAULT_ERRORS } from "./vault.types"
 
 const LIST_SELECT = {
     id: true,
@@ -111,7 +111,7 @@ export class SecretService {
         if (hasIv || hasCt || hasTag) {
             if (!hasIv || !hasCt || !hasTag) {
                 throw new BadRequestException({
-                    code: STORE_ERRORS.CIPHERTEXT_INCOMPLETE,
+                    code: VAULT_ERRORS.CIPHERTEXT_INCOMPLETE,
                     message: "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
                 })
             }
@@ -143,7 +143,7 @@ export class SecretService {
         })
         if (!found) {
             throw new NotFoundException({
-                code: STORE_ERRORS.SITE_NOT_FOUND,
+                code: VAULT_ERRORS.SITE_NOT_FOUND,
                 message: "사이트를 찾을 수 없습니다.",
             })
         }
@@ -159,13 +159,13 @@ export class SecretService {
         })
         if (!category) {
             throw new NotFoundException({
-                code: STORE_ERRORS.CATEGORY_NOT_FOUND,
+                code: VAULT_ERRORS.CATEGORY_NOT_FOUND,
                 message: "카테고리를 찾을 수 없습니다.",
             })
         }
         if (category.siteId !== siteId) {
             throw new BadRequestException({
-                code: STORE_ERRORS.CATEGORY_SITE_MISMATCH,
+                code: VAULT_ERRORS.CATEGORY_SITE_MISMATCH,
                 message: "카테고리가 사이트에 속하지 않습니다.",
             })
         }
@@ -173,7 +173,7 @@ export class SecretService {
 
     private notFound(): NotFoundException {
         return new NotFoundException({
-            code: STORE_ERRORS.SECRET_NOT_FOUND,
+            code: VAULT_ERRORS.SECRET_NOT_FOUND,
             message: "비밀번호를 찾을 수 없습니다.",
         })
     }

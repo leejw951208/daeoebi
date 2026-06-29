@@ -1,7 +1,7 @@
 // CategoryService 단위 테스트(Prisma 모킹). 사이트 검증·존재 검증·CRUD 위임을 검증한다.
 import { NotFoundException } from "@nestjs/common"
 import { CategoryService } from "./category.service"
-import { STORE_ERRORS } from "./store.types"
+import { VAULT_ERRORS } from "./vault.types"
 
 function makePrisma() {
     return {
@@ -25,7 +25,7 @@ describe("CategoryService.listBySite", () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue(null)
         await expect(makeService(prisma).listBySite("nope")).rejects.toMatchObject(
-            { response: { code: STORE_ERRORS.SITE_NOT_FOUND } },
+            { response: { code: VAULT_ERRORS.SITE_NOT_FOUND } },
         )
     })
 
@@ -68,7 +68,7 @@ describe("CategoryService.update", () => {
         await expect(
             makeService(prisma).update("x", { label: "y" } as never),
         ).rejects.toMatchObject({
-            response: { code: STORE_ERRORS.CATEGORY_NOT_FOUND },
+            response: { code: VAULT_ERRORS.CATEGORY_NOT_FOUND },
         })
     })
 

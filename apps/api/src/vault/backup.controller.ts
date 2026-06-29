@@ -10,7 +10,7 @@ import {
 } from "@nestjs/common"
 import { BackupService } from "./backup.service"
 import { ImportBackupDto, type ImportMode } from "./dto/backup.dto"
-import { STORE_ERRORS } from "./store.types"
+import { VAULT_ERRORS } from "./vault.types"
 
 const VALID_MODES: ImportMode[] = ["reject", "skip", "replace"]
 
@@ -28,7 +28,7 @@ export class BackupController {
     import(@Body() dto: ImportBackupDto, @Query("mode") mode = "reject") {
         if (!VALID_MODES.includes(mode as ImportMode)) {
             throw new BadRequestException({
-                code: STORE_ERRORS.IMPORT_INVALID,
+                code: VAULT_ERRORS.IMPORT_INVALID,
                 message: "mode 는 reject·skip·replace 중 하나여야 합니다.",
             })
         }

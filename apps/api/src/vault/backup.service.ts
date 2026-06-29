@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { fromBase64url, toBase64url } from "../common/base64url"
-import { STORE_ERRORS } from "./store.types"
+import { VAULT_ERRORS } from "./vault.types"
 import type { ImportBackupDto, ImportMode } from "./dto/backup.dto"
 
 // Prisma Bytes 입력은 Uint8Array<ArrayBuffer> 를 기대하므로 복사해 변환한다.
@@ -73,7 +73,7 @@ export class BackupService {
         for (const c of dto.categories) {
             if (!siteIds.has(c.siteId)) {
                 throw new BadRequestException({
-                    code: STORE_ERRORS.IMPORT_INVALID,
+                    code: VAULT_ERRORS.IMPORT_INVALID,
                     message: "카테고리가 참조하는 사이트가 백업에 없습니다.",
                 })
             }
@@ -81,13 +81,13 @@ export class BackupService {
         for (const s of dto.secrets) {
             if (!siteIds.has(s.siteId)) {
                 throw new BadRequestException({
-                    code: STORE_ERRORS.IMPORT_INVALID,
+                    code: VAULT_ERRORS.IMPORT_INVALID,
                     message: "비밀번호가 참조하는 사이트가 백업에 없습니다.",
                 })
             }
             if (s.categoryId && !categoryIds.has(s.categoryId)) {
                 throw new BadRequestException({
-                    code: STORE_ERRORS.IMPORT_INVALID,
+                    code: VAULT_ERRORS.IMPORT_INVALID,
                     message: "비밀번호가 참조하는 카테고리가 백업에 없습니다.",
                 })
             }
@@ -110,7 +110,7 @@ export class BackupService {
                     dto.secrets.some((s) => haveSecrets.has(s.id))
                 if (conflict) {
                     throw new ConflictException({
-                        code: STORE_ERRORS.IMPORT_CONFLICT,
+                        code: VAULT_ERRORS.IMPORT_CONFLICT,
                         message:
                             "기존 항목과 id 가 충돌합니다. skip 또는 replace 모드를 사용하세요.",
                     })

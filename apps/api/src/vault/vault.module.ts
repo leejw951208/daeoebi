@@ -31,7 +31,7 @@ import { CsrfMiddleware } from "../common/csrf.middleware"
         BackupService,
     ],
 })
-export class StoreModule implements NestModule {
+export class VaultModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {
         consumer
             .apply(CsrfMiddleware)
