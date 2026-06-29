@@ -13,11 +13,24 @@
         "format:check": "prettier --check .",
         "lint": "pnpm -r run lint",
         "typecheck": "pnpm -r run typecheck",
-        "test": "pnpm -r run test"
+        "test": "pnpm -r run test",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{ts,tsx}": [
+            "eslint --fix --max-warnings=0",
+            "prettier --write"
+        ],
+        "*.{js,mjs,cjs,json,css,md,yml,yaml}": [
+            "prettier --write"
+        ]
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "eslint": "^9.39.4",
         "globals": "^17.6.0",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.0.8",
         "prettier": "^3.8.3",
         "typescript-eslint": "^8.59.3"
     }

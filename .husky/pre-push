@@ -1,0 +1,19 @@
+# main 으로 푸시할 때만 typecheck + 단위테스트를 실행한다.
+# pre-push 는 stdin 으로 "<local ref> <local sha> <remote ref> <remote sha>" 줄들을 받는다.
+run=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+    case "$remote_ref" in
+        refs/heads/main) run=1 ;;
+    esac
+done
+
+if [ "$run" -eq 0 ]; then
+    echo "pre-push: main 대상 푸시가 아니므로 검사 생략"
+    exit 0
+fi
+
+set -e
+echo "pre-push: main 대상 푸시 — typecheck + 단위테스트 실행"
+pnpm typecheck
+pnpm --filter @daeoebi/api test:unit
+pnpm --filter @daeoebi/web test
