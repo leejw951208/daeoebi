@@ -3,7 +3,6 @@
 // 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만들고 당월 인스턴스를 함께 생성한다(이후 달 자동 생성).
 import { useState } from "react"
 import { useVault } from "../../_lib/vault-context"
-import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { isApiError } from "@/lib/api-error"
 import {
     createExpense,
@@ -11,6 +10,7 @@ import {
     deleteExpense,
     deleteRecurring,
     updateExpense,
+    updateRecurring,
 } from "@/lib/vault-client"
 import {
     CATEGORIES,
@@ -51,7 +51,7 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
     const [recurring, setRecurring] = useState(false)
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [pendingDelete, setPendingDelete] = useState(false)
+    const [deleteMenu, setDeleteMenu] = useState(false)
 
     const amountNum = Number(amount || "0")
 
@@ -81,6 +81,7 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                 const tmplBlob = await sealExpense(vaultKey, payload)
                 const tmpl = await createRecurring({
                     dayOfMonth: Number(date.slice(8, 10)),
+                    startMonth: monthOf(date),
                     ...tmplBlob,
                 })
                 const instBlob = await sealExpense(vaultKey, payload)
@@ -105,17 +106,39 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
         }
     }
 
-    async function handleDelete() {
-        if (!initial) return
-        setPendingDelete(false)
+    async function handleDeactivate() {
+        if (!initial?.recurringId) return
         setBusy(true)
         try {
-            // 고정 지출이면 규칙(템플릿)까지 삭제해 이후 자동 생성을 멈춘다.
-            // 인스턴스만 지우면 대시보드 진입 시 머티리얼라이즈가 다시 만들어 되살아난다.
+            await updateRecurring(initial.recurringId, { active: false })
+            onDeleted()
+        } catch (e) {
+            setBusy(false)
+            setError(isApiError(e) ? e.message : "해제에 실패했습니다.")
+        }
+    }
+
+    async function handleDeleteAll() {
+        if (!initial?.recurringId) return
+        setBusy(true)
+        try {
+            await deleteRecurring(initial.recurringId) // FK Cascade 로 인스턴스까지 삭제
+            onDeleted()
+        } catch (e) {
+            setBusy(false)
+            setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
+        }
+    }
+
+    async function handleDeleteThisMonth() {
+        if (!initial) return
+        setBusy(true)
+        try {
             if (initial.recurringId) {
-                await deleteRecurring(initial.recurringId)
+                await updateExpense(initial.id, { removed: true }) // 소프트 삭제(재생성 차단)
+            } else {
+                await deleteExpense(initial.id) // 일반 지출은 하드 삭제
             }
-            await deleteExpense(initial.id)
             onDeleted()
         } catch (e) {
             setBusy(false)
@@ -361,32 +384,115 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                     </label>
                 )}
 
-                {/* 삭제(수정만). 고정 지출이면 규칙까지 함께 삭제된다(handleDelete). */}
+                {/* 액션(수정만) */}
                 {isEdit && (
-                    <button
-                        type="button"
-                        className="btn danger"
-                        onClick={() => setPendingDelete(true)}
-                        disabled={busy}
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                        }}
                     >
-                        이 지출 삭제
-                    </button>
+                        {initial?.recurringId ? (
+                            <>
+                                <button
+                                    type="button"
+                                    className="btn secondary"
+                                    onClick={handleDeactivate}
+                                    disabled={busy}
+                                >
+                                    고정 해제(이후 자동 생성 중단)
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn danger"
+                                    onClick={() => setDeleteMenu(true)}
+                                    disabled={busy}
+                                >
+                                    삭제
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                type="button"
+                                className="btn danger"
+                                onClick={handleDeleteThisMonth}
+                                disabled={busy}
+                            >
+                                이 지출 삭제
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
 
-            <ConfirmDialog
-                open={pendingDelete}
-                title="삭제"
-                message={
-                    initial?.recurringId
-                        ? "고정 지출입니다. 삭제하면 다음 달부터 자동 생성되지 않습니다. 삭제할까요?"
-                        : "이 지출을 삭제할까요?"
-                }
-                confirmLabel="삭제"
-                destructive
-                onConfirm={handleDelete}
-                onCancel={() => setPendingDelete(false)}
-            />
+            {deleteMenu && (
+                <div
+                    className="dialog-backdrop"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="고정 지출 삭제"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setDeleteMenu(false)
+                    }}
+                >
+                    <div className="sheet">
+                        <div className="sheet-grip" aria-hidden="true" />
+                        <div
+                            style={{
+                                fontSize: 17,
+                                fontWeight: 800,
+                                marginBottom: 4,
+                            }}
+                        >
+                            고정 지출 삭제
+                        </div>
+                        <p
+                            className="muted"
+                            style={{
+                                fontSize: 13,
+                                lineHeight: 1.5,
+                                marginBottom: 16,
+                            }}
+                        >
+                            무엇을 삭제할지 선택하세요.
+                        </p>
+                        <button
+                            type="button"
+                            className="btn danger"
+                            style={{ width: "100%", marginBottom: 8 }}
+                            onClick={() => {
+                                setDeleteMenu(false)
+                                void handleDeleteAll()
+                            }}
+                            disabled={busy}
+                        >
+                            이 고정 전체 삭제(모든 달 기록 제거)
+                        </button>
+                        <button
+                            type="button"
+                            className="btn danger"
+                            style={{ width: "100%", marginBottom: 8 }}
+                            onClick={() => {
+                                setDeleteMenu(false)
+                                void handleDeleteThisMonth()
+                            }}
+                            disabled={busy}
+                        >
+                            이번 달만 삭제
+                        </button>
+                        <button
+                            type="button"
+                            className="btn secondary"
+                            style={{ width: "100%" }}
+                            onClick={() => setDeleteMenu(false)}
+                            disabled={busy}
+                        >
+                            취소
+                        </button>
+                    </div>
+                </div>
+            )}
         </section>
     )
 }

@@ -60,7 +60,7 @@ export class ExpenseService {
         const start = new Date(Date.UTC(y, m - 1, 1))
         const end = new Date(Date.UTC(y, m, 1))
         const rows = await this.prisma.expense.findMany({
-            where: { date: { gte: start, lt: end } },
+            where: { date: { gte: start, lt: end }, removed: false },
             orderBy: { date: "desc" },
         })
         return rows.map(toView)
@@ -113,13 +113,18 @@ export class ExpenseService {
             if (!hasIv || !hasCt || !hasTag) {
                 throw new BadRequestException({
                     code: ASSET_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET,
-                    message: "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
+                    message:
+                        "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
                 })
             }
             data.iv = prismaBytes(fromBase64url(dto.iv as string))
-            data.ciphertext = prismaBytes(fromBase64url(dto.ciphertext as string))
+            data.ciphertext = prismaBytes(
+                fromBase64url(dto.ciphertext as string),
+            )
             data.authTag = prismaBytes(fromBase64url(dto.authTag as string))
         }
+
+        if (dto.removed !== undefined) data.removed = dto.removed
 
         const row = await this.prisma.expense.update({ where: { id }, data })
         return toView(row)

@@ -83,6 +83,7 @@ model Income {
 model RecurringExpense {
   id         String    @id @default(cuid())
   dayOfMonth Int // 1-31. 말일 초과 시 클라가 해당 월 말일로 클램프한다.
+  startMonth String // "YYYY-MM". 평문. 이 달부터 인스턴스 생성(이전 달엔 미생성).
   active     Boolean   @default(true)
   iv         Bytes
   ciphertext Bytes
@@ -100,8 +101,9 @@ model Expense {
   id          String            @id @default(cuid())
   date        DateTime          @db.Date
   recurringId String?
-  recurring   RecurringExpense? @relation(fields: [recurringId], references: [id], onDelete: SetNull)
+  recurring   RecurringExpense? @relation(fields: [recurringId], references: [id], onDelete: Cascade)
   period      String? // "YYYY-MM". 고정 인스턴스 멱등 키.
+  removed     Boolean           @default(false) // 이번 달만 삭제(소프트 삭제). 목록·집계 제외, 슬롯 유지로 재생성 차단.
   iv          Bytes
   ciphertext  Bytes
   authTag     Bytes
