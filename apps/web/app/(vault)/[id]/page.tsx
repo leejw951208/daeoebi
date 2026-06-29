@@ -15,6 +15,7 @@ import {
 import { useVault, type SecretField } from "../_lib/vault-context"
 import { openPayload, sealPayload } from "../_lib/secret-payload"
 import { isSensitiveFieldName } from "../_lib/field-suggestions"
+import { LockTimer } from "../_components/LockTimer"
 
 type LoadState = "idle" | "loading" | "loaded" | "missing" | "error"
 
@@ -33,7 +34,7 @@ export default function SecretDetailPage() {
     const params = useParams<{ id: string }>()
     const id = params?.id
     const router = useRouter()
-    const { vaultKey, resetIdle, idleSecondsRemaining, onLock } = useVault()
+    const { vaultKey, resetIdle } = useVault()
     const [data, setData] = useState<Loaded | null>(null)
     const [state, setState] = useState<LoadState>("idle")
     const [error, setError] = useState<string | null>(null)
@@ -239,15 +240,7 @@ export default function SecretDetailPage() {
                 <Link className="btn-text" href="/">
                     ← 대외비
                 </Link>
-                <button
-                    type="button"
-                    className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
-                    onClick={onLock}
-                    aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초. 지금 잠그기`}
-                >
-                    <span className="dot" aria-hidden="true" />
-                    {formatMmSs(Math.max(0, idleSecondsRemaining))}
-                </button>
+                <LockTimer compact />
             </div>
 
             {error && (
@@ -381,11 +374,4 @@ function DetailRow({ label, value }: { label: string; value: string }) {
             <dd>{value}</dd>
         </div>
     )
-}
-
-// 초 → m:ss. 자동 잠금 타이머 표시용.
-function formatMmSs(totalSeconds: number): string {
-    const m = Math.floor(totalSeconds / 60)
-    const s = totalSeconds % 60
-    return `${m}:${String(s).padStart(2, "0")}`
 }

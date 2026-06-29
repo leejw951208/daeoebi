@@ -1,17 +1,19 @@
 "use client"
 // 대외비 목록 화면. 기본 사이트의 시크릿 메타를 나열하고 제목 검색을 제공한다.
 // 상세는 /[id], 신규는 /new(우하단 FAB), 백업은 /backup 라우트에서 처리한다. 자동잠금 카운트다운·수동 잠그기 포함.
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { listSecrets, searchSecrets, type SecretMeta } from "@/lib/vault-client"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "../_lib/vault-context"
 import { useDefaultSite } from "../_lib/use-default-site"
+import { LockTimer } from "./LockTimer"
+import { IdleWarning } from "./IdleWarning"
 
 type ListState = "idle" | "loading" | "loaded" | "error"
 
 export function EntriesScreen() {
-    const { idleSecondsRemaining, onLock, resetIdle } = useVault()
+    const { resetIdle } = useVault()
     const { state: siteState, retry: retrySite } = useDefaultSite()
 
     // 검색은 전적으로 로컬 상태로 구동한다(URL 미사용). input 은 입력 박스가 즉시 반영하고,
@@ -61,11 +63,6 @@ export function EntriesScreen() {
         if (debounceRef.current) clearTimeout(debounceRef.current)
         debounceRef.current = setTimeout(() => setQuery(value.trim()), 250)
     }
-
-    const idleWarning = useMemo(() => {
-        if (idleSecondsRemaining > 60) return null
-        return `${idleSecondsRemaining}초 후 자동 잠금됩니다.`
-    }, [idleSecondsRemaining])
 
     if (siteState.status === "error") {
         return (
@@ -117,15 +114,7 @@ export function EntriesScreen() {
                             {secrets.length}개 항목
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
-                        onClick={onLock}
-                        aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초. 지금 잠그기`}
-                    >
-                        <span className="dot" aria-hidden="true" />
-                        {formatMmSs(Math.max(0, idleSecondsRemaining))} 잠그기
-                    </button>
+                    <LockTimer />
                 </div>
 
                 <div className="search-bar">
@@ -145,11 +134,7 @@ export function EntriesScreen() {
                 </div>
             </div>
 
-            {idleWarning && (
-                <div role="alert" className="error-box">
-                    {idleWarning}
-                </div>
-            )}
+            <IdleWarning />
 
             <nav aria-label="대외비 관리" className="toolbar">
                 <Link
@@ -266,11 +251,4 @@ export function EntriesScreen() {
 // 라벨의 첫 글자(아바타 이니셜). 비어 있으면 자물쇠 기호로 대체한다.
 function firstChar(label: string): string {
     return label.trim()[0] ?? "·"
-}
-
-// 초 → m:ss. 자동 잠금 타이머 표시용.
-function formatMmSs(totalSeconds: number): string {
-    const m = Math.floor(totalSeconds / 60)
-    const s = totalSeconds % 60
-    return `${m}:${String(s).padStart(2, "0")}`
 }

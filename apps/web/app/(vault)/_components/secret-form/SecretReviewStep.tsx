@@ -59,7 +59,6 @@ export function SecretReviewStep({
             )}
 
             <div
-                className="stagger"
                 style={{
                     display: "flex",
                     flexDirection: "column",

@@ -27,20 +27,15 @@ import {
     type Loaded,
 } from "./_components/dashboard/AssetDashboard"
 import { IncomeSheet } from "./_components/IncomeSheet"
+import { LockTimer } from "../_components/LockTimer"
 
 type State =
     | { status: "loading" }
     | { status: "error"; message: string }
     | { status: "ready"; data: Loaded }
 
-function formatMmSs(total: number): string {
-    const m = Math.floor(total / 60)
-    const s = total % 60
-    return `${m}:${String(s).padStart(2, "0")}`
-}
-
 export default function AssetPage() {
-    const { vaultKey, idleSecondsRemaining, onLock, resetIdle } = useVault()
+    const { vaultKey, resetIdle } = useVault()
     const [month, setMonth] = useState(currentMonth())
     const [state, setState] = useState<State>({ status: "loading" })
     const [selectedDay, setSelectedDay] = useState<string | null>(null)
@@ -185,15 +180,7 @@ export default function AssetPage() {
                             </button>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        className={`lock-timer${idleSecondsRemaining <= 60 ? " urgent" : ""}`}
-                        onClick={onLock}
-                        aria-label={`자동 잠금까지 ${Math.max(0, idleSecondsRemaining)}초. 지금 잠그기`}
-                    >
-                        <span className="dot" aria-hidden="true" />
-                        {formatMmSs(Math.max(0, idleSecondsRemaining))} 잠그기
-                    </button>
+                    <LockTimer />
                 </div>
             </div>
 
