@@ -1,7 +1,7 @@
 // RecurringService 단위 테스트(Prisma 모킹). 활성 템플릿 조회·생성·수정·삭제와 not-found 를 검증한다.
 import { NotFoundException } from "@nestjs/common"
 import { RecurringService } from "./recurring.service"
-import { STORE_ERRORS } from "./store.types"
+import { ASSET_ERRORS } from "./asset.types"
 
 function makePrisma() {
     return {
@@ -60,7 +60,7 @@ describe("RecurringService", () => {
         prisma.recurringExpense.findUnique.mockResolvedValue(null)
         await expect(
             makeService(prisma).update("x", { active: false } as never),
-        ).rejects.toMatchObject({ response: { code: STORE_ERRORS.RECURRING_NOT_FOUND } })
+        ).rejects.toMatchObject({ response: { code: ASSET_ERRORS.RECURRING_NOT_FOUND } })
     })
 
     it("update 는 active 만 부분 갱신한다", async () => {

@@ -4,7 +4,7 @@ import { Injectable, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { fromBase64url, toBase64url } from "../common/base64url"
 import { CreateRecurringDto, UpdateRecurringDto } from "./dto/recurring.dto"
-import { STORE_ERRORS } from "./store.types"
+import { ASSET_ERRORS } from "./asset.types"
 
 function prismaBytes(value: Uint8Array): Uint8Array<ArrayBuffer> {
     return new Uint8Array(value)
@@ -87,7 +87,7 @@ export class RecurringService {
         })
         if (!found) {
             throw new NotFoundException({
-                code: STORE_ERRORS.RECURRING_NOT_FOUND,
+                code: ASSET_ERRORS.RECURRING_NOT_FOUND,
                 message: "고정 지출을 찾을 수 없습니다.",
             })
         }
