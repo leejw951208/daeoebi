@@ -2,6 +2,7 @@
 import {
     byCategory,
     byDay,
+    billedInMonth,
     remaining,
     spentPct,
     totalIncome,
@@ -11,9 +12,11 @@ import {
 } from "./asset-compute"
 
 function exp(over: Partial<ComputedExpense>): ComputedExpense {
+    const date = over.date ?? "2026-06-10"
     return {
         id: "e",
-        date: "2026-06-10",
+        date,
+        billingDate: date, // 기본은 구매일과 동일(비카드)
         recurringId: null,
         item: "x",
         amount: 1000,
@@ -56,6 +59,34 @@ describe("asset-compute", () => {
         ])
         expect(map.get("2026-06-10")).toBe(3000)
         expect(map.get("2026-06-11")).toBe(500)
+    })
+
+    it("billedInMonth 는 결제월 기준으로 추린다", () => {
+        const items = [
+            exp({ id: "a", billingDate: "2026-06-05" }), // 6월 결제 포함
+            exp({ id: "b", billingDate: "2026-07-01" }), // 7월 결제 제외
+            exp({ id: "c", billingDate: "2026-06-30" }), // 6월 결제 포함
+        ]
+        expect(billedInMonth(items, "2026-06").map((e) => e.id)).toEqual([
+            "a",
+            "c",
+        ])
+    })
+
+    it("byDay 는 결제일(billingDate) 기준으로 합산한다", () => {
+        const map = byDay([
+            exp({
+                date: "2026-05-17",
+                billingDate: "2026-06-17",
+                amount: 30000,
+            }), // 카드 이월
+            exp({
+                date: "2026-06-17",
+                billingDate: "2026-06-17",
+                amount: 8000,
+            }),
+        ])
+        expect(map.get("2026-06-17")).toBe(38000)
     })
 
     it("remaining·spentPct", () => {

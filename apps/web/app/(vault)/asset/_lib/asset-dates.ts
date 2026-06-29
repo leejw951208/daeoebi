@@ -46,6 +46,13 @@ export function clampedDate(month: string, dayOfMonth: number): string {
     return `${month}-${pad2(day)}`
 }
 
+// 결제일. deferred(카드)면 구매일의 다음 달 같은 일(말일 클램프), 그 외 구매일 그대로.
+export function billingDate(dateISO: string, deferred: boolean): string {
+    if (!deferred) return dateISO
+    const day = Number(dateISO.slice(8, 10))
+    return clampedDate(addMonth(monthOf(dateISO), 1), day)
+}
+
 export interface CalendarCell {
     day: number | null // null = 앞 빈칸
     date: string | null // "YYYY-MM-DD"

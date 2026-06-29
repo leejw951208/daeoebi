@@ -86,6 +86,9 @@ export function DayDetail({ selectedDay, dayExpenses }: Props) {
                                 }}
                             >
                                 {e.category} · {e.method}
+                                {e.billingDate !== e.date
+                                    ? ` · ${e.date.slice(5).replace("-", "/")} 구매`
+                                    : ""}
                             </span>
                         </span>
                         <span

@@ -43,7 +43,7 @@ export function AssetDashboard({
     const cats = byCategory(data.expenses)
     const dayExpenses = selectedDay
         ? data.expenses
-              .filter((e) => e.date === selectedDay)
+              .filter((e) => e.billingDate === selectedDay)
               .sort((a, b) => b.amount - a.amount)
         : []
 

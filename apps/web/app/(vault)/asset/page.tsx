@@ -16,6 +16,7 @@ import { useVault } from "../_lib/vault-context"
 import { openExpense, openIncome } from "./_lib/asset-payload"
 import {
     byDay,
+    billedInMonth,
     totalIncome,
     type ComputedExpense,
     type ComputedIncome,
@@ -23,10 +24,12 @@ import {
 import { materializeRecurring } from "./_lib/asset-recurring"
 import {
     addMonth,
+    billingDate,
     currentMonth,
     monthLabel,
     todayISO,
 } from "./_lib/asset-dates"
+import { CARD_METHOD } from "./_lib/asset-categories"
 import {
     AssetDashboard,
     type Loaded,
@@ -49,19 +52,33 @@ export default function AssetPage() {
     const load = useCallback(async () => {
         setState({ status: "loading" })
         try {
-            const [incomeViews, expensesView, templates] = await Promise.all([
+            // 결제월 M 화면 = M 결제분(= M 구매 비카드 + M-1 구매 카드). 두 달치를 가져온다.
+            const prev = addMonth(month, -1)
+            const [incomeViews, expM, expPrev, templates] = await Promise.all([
                 listIncomes(month),
                 listExpenses(month),
+                listExpenses(prev),
                 listRecurring(),
             ])
-            // 고정 지출 자동 생성(미생성분만). 생성됐으면 목록에 합친다.
-            const created = await materializeRecurring(
+            // 고정 지출 머티리얼라이즈를 M·M-1 둘 다(M-1 카드 고정분이 M 에 청구). 멱등.
+            const createdM = await materializeRecurring(
                 vaultKey,
                 month,
                 templates,
-                expensesView,
+                expM,
             )
-            const allViews: ExpenseView[] = [...expensesView, ...created]
+            const createdPrev = await materializeRecurring(
+                vaultKey,
+                prev,
+                templates,
+                expPrev,
+            )
+            const allViews: ExpenseView[] = [
+                ...expM,
+                ...createdM,
+                ...expPrev,
+                ...createdPrev,
+            ]
 
             // 수입 복호화(실패분 스킵) → 합계
             const incomeSettled = await Promise.allSettled(
@@ -86,13 +103,17 @@ export default function AssetPage() {
                 .map((r) => r.value)
             const incomeAmount = totalIncome(incomes)
 
-            // 복호화 실패 건(예: 다른 VK 로 만든 잔여 데이터)은 건너뛴다.
+            // 지출 복호화(실패분 스킵) → 결제일 부여 → 결제월 M 만 추림.
             const settled = await Promise.allSettled(
                 allViews.map(async (v): Promise<ComputedExpense> => {
                     const p = await openExpense(vaultKey, v)
                     return {
                         id: v.id,
                         date: v.date,
+                        billingDate: billingDate(
+                            v.date,
+                            p.method === CARD_METHOD,
+                        ),
                         recurringId: v.recurringId,
                         item: p.item,
                         amount: p.amount,
@@ -101,12 +122,13 @@ export default function AssetPage() {
                     }
                 }),
             )
-            const expenses = settled
+            const decrypted = settled
                 .filter(
                     (r): r is PromiseFulfilledResult<ComputedExpense> =>
                         r.status === "fulfilled",
                 )
                 .map((r) => r.value)
+            const expenses = billedInMonth(decrypted, month)
 
             setState({
                 status: "ready",

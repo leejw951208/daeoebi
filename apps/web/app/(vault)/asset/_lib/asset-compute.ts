@@ -1,11 +1,13 @@
 // 자산 대시보드 집계(순수 함수). 복호화된 지출 목록에서 월 합계·카테고리별·일별·남은 돈을 계산한다.
 // E2E 라 서버 집계가 불가하므로 클라가 메모리에서 계산한다(월 수십~수백 건 규모).
 import { CATEGORIES, categoryColor } from "./asset-categories"
+import { monthOf } from "./asset-dates"
 
 // 복호화된 지출 1건(메타 + 본문).
 export interface ComputedExpense {
     id: string
-    date: string // "YYYY-MM-DD"
+    date: string // 구매일 "YYYY-MM-DD"
+    billingDate: string // 결제일 "YYYY-MM-DD"(카드=익월)
     recurringId: string | null
     item: string
     amount: number
@@ -50,13 +52,21 @@ export function byCategory(items: ComputedExpense[]): CategoryBreakdown[] {
         .sort((a, b) => b.amount - a.amount)
 }
 
-// 일자("YYYY-MM-DD") → 그 날 지출 합계.
+// 일자(결제일) → 그 날 결제 합계.
 export function byDay(items: ComputedExpense[]): Map<string, number> {
     const map = new Map<string, number>()
     for (const e of items) {
-        map.set(e.date, (map.get(e.date) ?? 0) + e.amount)
+        map.set(e.billingDate, (map.get(e.billingDate) ?? 0) + e.amount)
     }
     return map
+}
+
+// 결제월이 month 인 지출만. (구매 두 달치에서 그 달 결제분 추림)
+export function billedInMonth(
+    items: ComputedExpense[],
+    month: string,
+): ComputedExpense[] {
+    return items.filter((e) => monthOf(e.billingDate) === month)
 }
 
 // 남은 돈 = 수입 − 지출(음수 가능).
