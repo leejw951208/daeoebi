@@ -350,6 +350,7 @@ export interface RecurringView extends SealedBlobDto {
     id: string
     dayOfMonth: number
     startMonth: string
+    termMonths: number | null
     active: boolean
 }
 
@@ -429,7 +430,11 @@ export async function listRecurring(): Promise<RecurringView[]> {
 }
 
 export async function createRecurring(
-    input: SealedBlobDto & { dayOfMonth: number; startMonth: string },
+    input: SealedBlobDto & {
+        dayOfMonth: number
+        startMonth: string
+        termMonths?: number
+    },
 ): Promise<RecurringView> {
     const { data } = await vaultClient.post<RecurringView>("/recurring", input)
     return data

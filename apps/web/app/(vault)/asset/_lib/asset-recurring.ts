@@ -7,7 +7,7 @@ import {
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { openExpense, sealExpense } from "./asset-payload"
-import { clampedDate } from "./asset-dates"
+import { addMonth, clampedDate } from "./asset-dates"
 
 // month 의 미생성 고정 지출을 만들어 생성된 인스턴스 배열을 반환한다(없으면 빈 배열).
 export async function materializeRecurring(
@@ -24,6 +24,11 @@ export async function materializeRecurring(
     const created: ExpenseView[] = []
     for (const t of templates) {
         if (month < t.startMonth) continue // 시작월 이전 달엔 생성하지 않는다.
+        if (
+            t.termMonths != null &&
+            month > addMonth(t.startMonth, t.termMonths - 1)
+        )
+            continue // 기간(개월 수) 종료 후엔 생성하지 않는다.
         if (present.has(`${t.id}|${month}`)) continue
         const payload = await openExpense(vaultKey, t)
         const blob = await sealExpense(vaultKey, payload)
