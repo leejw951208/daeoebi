@@ -2,6 +2,7 @@
 // 잠금해제 화면. passkey 로그인으로 PRF→VK 언랩하거나, 복구코드로 VK 확보 후 새 passkey 를 재등록한다.
 import { useState } from "react"
 import { Lock } from "lucide-react"
+import { Button } from "@/components/Button"
 import { Icon } from "@/components/Icon"
 import {
     getLoginOptions,
@@ -90,7 +91,9 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
         const recoveryBytes = parseRecoveryCode(recoveryInput)
         // L-2. 정확히 160bit(20B)인지 조기 검증해 잘못된 입력을 서버 전송 전에 거른다.
         if (!isValidRecoveryLength(recoveryBytes)) {
-            setError("복구코드 형식이 올바르지 않습니다. 32자 코드를 확인하세요.")
+            setError(
+                "복구코드 형식이 올바르지 않습니다. 32자 코드를 확인하세요.",
+            )
             return
         }
         if (!supportsWebAuthn()) {
@@ -115,10 +118,17 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
             // prfSalt 를 먼저 만들어 등록 세레모니의 PRF eval 로 주입한다.
             const prfSalt = randomSalt()
             const options = await getRegisterOptions()
-            const { response, prfOutput } = await registerPasskey(options, prfSalt)
+            const { response, prfOutput } = await registerPasskey(
+                options,
+                prfSalt,
+            )
             if (!prfOutput) throw new PrfUnsupportedError()
 
-            const wrappedVkPrf = await wrapVkWithPrf(vaultKey, prfOutput, prfSalt)
+            const wrappedVkPrf = await wrapVkWithPrf(
+                vaultKey,
+                prfOutput,
+                prfSalt,
+            )
             await postRegisterVerify({
                 response,
                 prfSalt: toBase64Url(prfSalt),
@@ -172,7 +182,8 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
     // ── passkey 모드: 중앙 링 + 상태별 문구 ──
     if (mode === "passkey") {
         const failed = error !== null
-        const ringState = busy === "unlocking" ? "authing" : failed ? "fail" : "idle"
+        const ringState =
+            busy === "unlocking" ? "authing" : failed ? "fail" : "idle"
         const title =
             busy === "unlocking"
                 ? "인증 중…"
@@ -199,16 +210,30 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     minHeight: "70vh",
                 }}
             >
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+                <div
+                    style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
                     <div
                         className={`unlock-ring ${ringState}`}
                         role="img"
                         aria-label={title}
                     >
                         {ringState !== "authing" && (
-                            <div className={`unlock-dot${failed ? " fail" : ""}`}>
+                            <div
+                                className={`unlock-dot${failed ? " fail" : ""}`}
+                            >
                                 {failed ? (
-                                    <span style={{ fontSize: 30, lineHeight: 1 }}>!</span>
+                                    <span
+                                        style={{ fontSize: 30, lineHeight: 1 }}
+                                    >
+                                        !
+                                    </span>
                                 ) : (
                                     <Icon icon={Lock} size={28} />
                                 )}
@@ -218,14 +243,23 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     <h1 style={{ marginTop: 30 }}>{title}</h1>
                     <p
                         className="muted"
-                        style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6, maxWidth: 260 }}
+                        style={{
+                            marginTop: 8,
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            maxWidth: 260,
+                        }}
                     >
                         {sub}
                     </p>
                 </div>
 
                 {error && (
-                    <div role="alert" className="error-box" style={{ width: "100%" }}>
+                    <div
+                        role="alert"
+                        className="error-box"
+                        style={{ width: "100%" }}
+                    >
                         {error}
                         {retryAfter !== null && (
                             <> {retryAfter}초 후 다시 시도할 수 있습니다.</>
@@ -233,23 +267,17 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     </div>
                 )}
 
-                <button
-                    type="button"
-                    className="btn"
+                <Button
+                    variant="primary"
                     style={{ width: "100%" }}
                     onClick={handlePasskeyUnlock}
-                    disabled={busy !== "idle" || retryAfter !== null}
-                    aria-busy={busy === "unlocking"}
+                    loading={busy === "unlocking"}
+                    disabled={retryAfter !== null}
                 >
-                    {busy === "unlocking"
-                        ? "인증 중…"
-                        : failed
-                          ? "다시 시도"
-                          : "패스키로 잠금해제"}
-                </button>
-                <button
-                    type="button"
-                    className="btn-text"
+                    {failed ? "다시 시도" : "패스키로 잠금해제"}
+                </Button>
+                <Button
+                    variant="text"
                     style={{ marginTop: 6 }}
                     onClick={() => {
                         setMode("recovery")
@@ -259,7 +287,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     disabled={busy !== "idle"}
                 >
                     복구코드로 접근
-                </button>
+                </Button>
             </section>
         )
     }
@@ -281,9 +309,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 ← 잠금해제로
             </button>
             <h1>복구코드로 접근</h1>
-            <p className="muted" style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
-                발급받은 복구코드를 입력하면 접근을 복구하고 이 기기에 새 패스키를
-                등록합니다.
+            <p
+                className="muted"
+                style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}
+            >
+                발급받은 복구코드를 입력하면 접근을 복구하고 이 기기에 새
+                패스키를 등록합니다.
             </p>
 
             <form
@@ -325,15 +356,14 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     </div>
                 )}
 
-                <button
+                <Button
                     type="submit"
-                    className="btn"
+                    variant="primary"
                     style={{ width: "100%", marginTop: 8 }}
-                    disabled={busy !== "idle"}
-                    aria-busy={busy === "recovering"}
+                    loading={busy === "recovering"}
                 >
-                    {busy === "recovering" ? "복구 중…" : "검증하고 복구"}
-                </button>
+                    검증하고 복구
+                </Button>
             </form>
         </section>
     )
