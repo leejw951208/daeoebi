@@ -17,12 +17,6 @@ export const CATEGORIES: AssetCategory[] = [
     { key: "기타", color: "#98a0a8" },
 ]
 
-export const METHODS = ["신용카드", "체크카드", "자동이체", "현금"] as const
-export type Method = (typeof METHODS)[number]
-
-// 결제월 이연(익월 결제) 대상 결제수단. 체크카드·자동이체·현금은 당월(즉시 출금).
-export const CARD_METHOD: Method = "신용카드"
-
 const FALLBACK_COLOR = "#98a0a8"
 
 export function categoryColor(key: string): string {

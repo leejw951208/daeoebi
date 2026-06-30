@@ -1,20 +1,36 @@
 // asset-dates 순수 함수 테스트.
-import { billingDate } from "./asset-dates"
+import { addMonth, clampedDate, monthOf } from "./asset-dates"
 
-describe("billingDate", () => {
-    it("비카드(deferred=false)는 구매일 그대로", () => {
-        expect(billingDate("2026-06-17", false)).toBe("2026-06-17")
+describe("monthOf", () => {
+    it("YYYY-MM-DD 에서 YYYY-MM 만 취한다", () => {
+        expect(monthOf("2026-06-17")).toBe("2026-06")
+    })
+})
+
+describe("addMonth", () => {
+    it("다음 달", () => {
+        expect(addMonth("2026-06", 1)).toBe("2026-07")
     })
 
-    it("카드는 다음 달 같은 일", () => {
-        expect(billingDate("2026-06-17", true)).toBe("2026-07-17")
+    it("이전 달", () => {
+        expect(addMonth("2026-06", -1)).toBe("2026-05")
     })
 
-    it("카드 말일 구매는 다음 달 말일로 클램프", () => {
-        expect(billingDate("2026-01-31", true)).toBe("2026-02-28")
+    it("연말은 다음 해 1월로 롤오버", () => {
+        expect(addMonth("2026-12", 1)).toBe("2027-01")
+    })
+})
+
+describe("clampedDate", () => {
+    it("해당 월에 존재하는 날은 그대로", () => {
+        expect(clampedDate("2026-06", 17)).toBe("2026-06-17")
     })
 
-    it("카드 연말 구매는 다음 해 1월로 롤오버", () => {
-        expect(billingDate("2026-12-10", true)).toBe("2027-01-10")
+    it("말일을 넘는 날은 그 달 말일로 클램프", () => {
+        expect(clampedDate("2026-02", 31)).toBe("2026-02-28")
+    })
+
+    it("1 미만은 1일로 클램프", () => {
+        expect(clampedDate("2026-06", 0)).toBe("2026-06-01")
     })
 })

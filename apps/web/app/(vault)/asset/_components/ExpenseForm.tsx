@@ -14,7 +14,6 @@ import {
 } from "@/lib/vault-client"
 import {
     CATEGORIES,
-    METHODS,
     categoryColor,
     formatAmount,
 } from "../_lib/asset-categories"
@@ -46,7 +45,6 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
     const [category, setCategory] = useState(
         initial?.payload.category ?? CATEGORIES[0].key,
     )
-    const [method, setMethod] = useState(initial?.payload.method ?? METHODS[0])
     const [date, setDate] = useState(initial?.date ?? todayISO())
     const [recurring, setRecurring] = useState(false)
     const [termMonths, setTermMonths] = useState("")
@@ -73,7 +71,6 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                 item: item.trim(),
                 amount: amountNum,
                 category,
-                method,
             }
             if (isEdit) {
                 const blob = await sealExpense(vaultKey, payload)
@@ -298,41 +295,6 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                                         }}
                                     />
                                     {c.key}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-
-                {/* 결제방법 */}
-                <div>
-                    <div className="field-label" style={{ marginBottom: 10 }}>
-                        결제방법
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {METHODS.map((m) => {
-                            const active = m === method
-                            return (
-                                <button
-                                    key={m}
-                                    type="button"
-                                    onClick={() => {
-                                        resetIdle()
-                                        setMethod(m)
-                                    }}
-                                    aria-pressed={active}
-                                    className="chip"
-                                    style={
-                                        active
-                                            ? {
-                                                  borderColor: "var(--ac)",
-                                                  background: "var(--soft)",
-                                                  color: "#222",
-                                              }
-                                            : undefined
-                                    }
-                                >
-                                    {m}
                                 </button>
                             )
                         })}

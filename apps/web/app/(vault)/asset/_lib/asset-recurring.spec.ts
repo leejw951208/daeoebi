@@ -14,7 +14,6 @@ jest.mock("./asset-payload", () => ({
         item: "x",
         amount: 1,
         category: "기타",
-        method: "현금",
     }),
     sealExpense: jest
         .fn()
