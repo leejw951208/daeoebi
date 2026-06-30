@@ -55,9 +55,9 @@ describe("RecurringService", () => {
         expect(Buffer.from(data.iv)).toEqual(IV)
     })
 
-    it("update 는 없으면 RECURRING_NOT_FOUND", async () => {
+    it("update 는 없으면 RECURRING_NOT_FOUND(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.recurringExpense.findUnique.mockResolvedValue(null)
+        prisma.recurringExpense.update.mockRejectedValue({ code: "P2025" })
         await expect(
             makeService(prisma).update("x", { active: false } as never),
         ).rejects.toMatchObject({
@@ -67,7 +67,6 @@ describe("RecurringService", () => {
 
     it("update 는 active 만 부분 갱신한다", async () => {
         const prisma = makePrisma()
-        prisma.recurringExpense.findUnique.mockResolvedValue({ id: "r1" })
         prisma.recurringExpense.update.mockResolvedValue({
             ...row,
             active: false,
@@ -189,14 +188,13 @@ describe("RecurringService", () => {
         ).toBeNull()
     })
 
-    it("remove 는 없으면 404, 있으면 삭제", async () => {
+    it("remove 는 없으면 404(delete 가 P2025 로 거부), 있으면 삭제", async () => {
         const prisma = makePrisma()
-        prisma.recurringExpense.findUnique.mockResolvedValueOnce(null)
+        prisma.recurringExpense.delete.mockRejectedValueOnce({ code: "P2025" })
         await expect(makeService(prisma).remove("x")).rejects.toThrow(
             NotFoundException,
         )
-        prisma.recurringExpense.findUnique.mockResolvedValueOnce({ id: "r1" })
-        prisma.recurringExpense.delete.mockResolvedValue(row)
+        prisma.recurringExpense.delete.mockResolvedValueOnce(undefined)
         await makeService(prisma).remove("r1")
         expect(prisma.recurringExpense.delete).toHaveBeenCalledWith({
             where: { id: "r1" },

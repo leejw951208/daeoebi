@@ -60,9 +60,9 @@ describe("AssetCategoryService", () => {
         expect(result).toEqual({ id: "9" })
     })
 
-    it("update 는 존재하지 않으면 404", async () => {
+    it("update 는 존재하지 않으면 404(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.assetCategory.findUnique.mockResolvedValue(null)
+        prisma.assetCategory.update.mockRejectedValue({ code: "P2025" })
         const svc = new AssetCategoryService(prisma as never)
 
         await expect(svc.update("x", { name: "a" })).rejects.toMatchObject({
@@ -72,7 +72,6 @@ describe("AssetCategoryService", () => {
 
     it("update 는 이름·색으로 수정한다", async () => {
         const prisma = makePrisma()
-        prisma.assetCategory.findUnique.mockResolvedValue({ id: "1" })
         prisma.assetCategory.update.mockResolvedValue({
             id: "1",
             name: "여행",
@@ -90,7 +89,6 @@ describe("AssetCategoryService", () => {
 
     it("update 는 부분 업데이트를 지원한다", async () => {
         const prisma = makePrisma()
-        prisma.assetCategory.findUnique.mockResolvedValue({ id: "1" })
         prisma.assetCategory.update.mockResolvedValue({ id: "1", name: "여행" })
         const svc = new AssetCategoryService(prisma as never)
 
@@ -102,15 +100,24 @@ describe("AssetCategoryService", () => {
         })
     })
 
-    it("remove 는 존재 확인 후 삭제한다", async () => {
+    it("remove 는 삭제한다", async () => {
         const prisma = makePrisma()
-        prisma.assetCategory.findUnique.mockResolvedValue({ id: "1" })
         const svc = new AssetCategoryService(prisma as never)
 
         await svc.remove("1")
 
         expect(prisma.assetCategory.delete).toHaveBeenCalledWith({
             where: { id: "1" },
+        })
+    })
+
+    it("remove 는 존재하지 않으면 404(delete 가 P2025 로 거부)", async () => {
+        const prisma = makePrisma()
+        prisma.assetCategory.delete.mockRejectedValue({ code: "P2025" })
+        const svc = new AssetCategoryService(prisma as never)
+
+        await expect(svc.remove("x")).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.ASSET_CATEGORY_NOT_FOUND },
         })
     })
 })

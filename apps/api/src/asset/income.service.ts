@@ -65,12 +65,6 @@ export class IncomeService {
     }
 
     async update(id: string, dto: UpdateIncomeDto) {
-        const found = await this.prisma.income.findUnique({
-            where: { id },
-            select: { id: true },
-        })
-        if (!found) throw this.notFound()
-
         const hasIv = dto.iv !== undefined
         const hasCt = dto.ciphertext !== undefined
         const hasTag = dto.authTag !== undefined
@@ -81,26 +75,39 @@ export class IncomeService {
                     "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
             })
         }
-        const row = await this.prisma.income.update({
-            where: { id },
-            data: {
-                iv: prismaBytes(fromBase64url(dto.iv as string)),
-                ciphertext: prismaBytes(
-                    fromBase64url(dto.ciphertext as string),
-                ),
-                authTag: prismaBytes(fromBase64url(dto.authTag as string)),
-            },
-        })
-        return toView(row)
+        try {
+            const row = await this.prisma.income.update({
+                where: { id },
+                data: {
+                    iv: prismaBytes(fromBase64url(dto.iv as string)),
+                    ciphertext: prismaBytes(
+                        fromBase64url(dto.ciphertext as string),
+                    ),
+                    authTag: prismaBytes(fromBase64url(dto.authTag as string)),
+                },
+            })
+            return toView(row)
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     async remove(id: string): Promise<void> {
-        const found = await this.prisma.income.findUnique({
-            where: { id },
-            select: { id: true },
-        })
-        if (!found) throw this.notFound()
-        await this.prisma.income.delete({ where: { id } })
+        try {
+            await this.prisma.income.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
+    }
+
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
+        )
     }
 
     private notFound(): NotFoundException {

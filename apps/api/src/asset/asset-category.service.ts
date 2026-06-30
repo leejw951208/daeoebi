@@ -41,29 +41,42 @@ export class AssetCategoryService {
     }
 
     async update(id: string, dto: UpdateAssetCategoryDto) {
-        await this.ensureExists(id)
         const data: { name?: string; color?: string } = {}
         if (dto.name !== undefined) data.name = dto.name
         if (dto.color !== undefined) data.color = dto.color
-        return this.prisma.assetCategory.update({ where: { id }, data })
+        try {
+            return await this.prisma.assetCategory.update({
+                where: { id },
+                data,
+            })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     async remove(id: string): Promise<void> {
-        await this.ensureExists(id)
         // 하위 Expense·RecurringExpense 는 FK SetNull 로 미분류가 된다.
-        await this.prisma.assetCategory.delete({ where: { id } })
+        try {
+            await this.prisma.assetCategory.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
-    private async ensureExists(id: string): Promise<void> {
-        const found = await this.prisma.assetCategory.findUnique({
-            where: { id },
-            select: { id: true },
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
+        )
+    }
+
+    private notFound(): NotFoundException {
+        return new NotFoundException({
+            code: ASSET_ERRORS.ASSET_CATEGORY_NOT_FOUND,
+            message: "카테고리를 찾을 수 없습니다.",
         })
-        if (!found) {
-            throw new NotFoundException({
-                code: ASSET_ERRORS.ASSET_CATEGORY_NOT_FOUND,
-                message: "카테고리를 찾을 수 없습니다.",
-            })
-        }
     }
 }

@@ -26,7 +26,9 @@ describe("SiteService.list", () => {
         await makeService(prisma).list()
         expect(prisma.site.findMany).toHaveBeenCalledWith({
             orderBy: { label: "asc" },
-            include: { _count: { select: { categories: true, secrets: true } } },
+            include: {
+                _count: { select: { categories: true, secrets: true } },
+            },
         })
     })
 })
@@ -60,9 +62,9 @@ describe("SiteService.create", () => {
 })
 
 describe("SiteService.update", () => {
-    it("없으면 SITE_NOT_FOUND", async () => {
+    it("없으면 SITE_NOT_FOUND(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.site.findUnique.mockResolvedValue(null)
+        prisma.site.update.mockRejectedValue({ code: "P2025" })
         await expect(
             makeService(prisma).update("x", { label: "y" } as never),
         ).rejects.toThrow(NotFoundException)
@@ -70,7 +72,6 @@ describe("SiteService.update", () => {
 
     it("주어진 필드만 부분 갱신한다", async () => {
         const prisma = makePrisma()
-        prisma.site.findUnique.mockResolvedValue({ id: "site1" })
         prisma.site.update.mockResolvedValue({ id: "site1" })
         await makeService(prisma).update("site1", { label: "새이름" } as never)
         expect(prisma.site.update).toHaveBeenCalledWith({
@@ -81,9 +82,9 @@ describe("SiteService.update", () => {
 })
 
 describe("SiteService.remove", () => {
-    it("없으면 SITE_NOT_FOUND", async () => {
+    it("없으면 SITE_NOT_FOUND(delete 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.site.findUnique.mockResolvedValue(null)
+        prisma.site.delete.mockRejectedValue({ code: "P2025" })
         await expect(makeService(prisma).remove("x")).rejects.toThrow(
             NotFoundException,
         )
@@ -91,7 +92,6 @@ describe("SiteService.remove", () => {
 
     it("있으면 삭제한다", async () => {
         const prisma = makePrisma()
-        prisma.site.findUnique.mockResolvedValue({ id: "site1" })
         prisma.site.delete.mockResolvedValue({ id: "site1" })
         await makeService(prisma).remove("site1")
         expect(prisma.site.delete).toHaveBeenCalledWith({

@@ -110,9 +110,9 @@ describe("ExpenseService.create", () => {
 })
 
 describe("ExpenseService.update", () => {
-    it("없으면 EXPENSE_NOT_FOUND", async () => {
+    it("없으면 EXPENSE_NOT_FOUND(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.expense.findUnique.mockResolvedValue(null)
+        prisma.expense.update.mockRejectedValue({ code: "P2025" })
         await expect(
             makeService(prisma).update("x", { date: "2026-06-01" } as never),
         ).rejects.toThrow(NotFoundException)
@@ -120,7 +120,6 @@ describe("ExpenseService.update", () => {
 
     it("암호문 일부만 보내면 CIPHERTEXT_INCOMPLETE_ASSET", async () => {
         const prisma = makePrisma()
-        prisma.expense.findUnique.mockResolvedValue({ id: "e1" })
         await expect(
             makeService(prisma).update("e1", { iv: blob.iv } as never),
         ).rejects.toMatchObject({
@@ -130,7 +129,6 @@ describe("ExpenseService.update", () => {
 
     it("날짜만 갱신하면 본문은 건드리지 않는다", async () => {
         const prisma = makePrisma()
-        prisma.expense.findUnique.mockResolvedValue({ id: "e1" })
         prisma.expense.update.mockResolvedValue(
             row({ date: new Date("2026-06-01") }),
         )
@@ -154,7 +152,6 @@ describe("ExpenseService.listByMonth — removed 필터", () => {
 describe("ExpenseService.update — removed", () => {
     it("update 는 removed 를 설정한다(소프트 삭제)", async () => {
         const prisma = makePrisma()
-        prisma.expense.findUnique.mockResolvedValue({ id: "e1" })
         prisma.expense.update.mockResolvedValue({
             id: "e1",
             date: new Date("2026-06-10"),
@@ -172,14 +169,13 @@ describe("ExpenseService.update — removed", () => {
 })
 
 describe("ExpenseService.remove", () => {
-    it("없으면 404, 있으면 삭제", async () => {
+    it("없으면 404(delete 가 P2025 로 거부), 있으면 삭제", async () => {
         const prisma = makePrisma()
-        prisma.expense.findUnique.mockResolvedValueOnce(null)
+        prisma.expense.delete.mockRejectedValueOnce({ code: "P2025" })
         await expect(makeService(prisma).remove("x")).rejects.toThrow(
             NotFoundException,
         )
-        prisma.expense.findUnique.mockResolvedValueOnce({ id: "e1" })
-        prisma.expense.delete.mockResolvedValue(row())
+        prisma.expense.delete.mockResolvedValueOnce(undefined)
         await makeService(prisma).remove("e1")
         expect(prisma.expense.delete).toHaveBeenCalledWith({
             where: { id: "e1" },

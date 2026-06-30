@@ -65,7 +65,6 @@ export class RecurringService {
     }
 
     async update(id: string, dto: UpdateRecurringDto) {
-        await this.ensureExists(id)
         const data: Record<string, unknown> = {}
         if (dto.dayOfMonth !== undefined) data.dayOfMonth = dto.dayOfMonth
         if (dto.active !== undefined) data.active = dto.active
@@ -77,30 +76,41 @@ export class RecurringService {
         if (dto.authTag !== undefined) {
             data.authTag = prismaBytes(fromBase64url(dto.authTag))
         }
-        const row = await this.prisma.recurringExpense.update({
-            where: { id },
-            data,
-        })
-        return toView(row)
+        try {
+            const row = await this.prisma.recurringExpense.update({
+                where: { id },
+                data,
+            })
+            return toView(row)
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     // 템플릿 삭제 = 고정 지출 "전체 삭제". FK onDelete Cascade 라 이 템플릿의 모든 인스턴스도 함께 삭제된다.
     // (앞으로 자동 생성만 멈추고 기록은 남기는 "해제"는 update({active:false}) 로 별도 처리한다.)
     async remove(id: string): Promise<void> {
-        await this.ensureExists(id)
-        await this.prisma.recurringExpense.delete({ where: { id } })
+        try {
+            await this.prisma.recurringExpense.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
-    private async ensureExists(id: string): Promise<void> {
-        const found = await this.prisma.recurringExpense.findUnique({
-            where: { id },
-            select: { id: true },
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
+        )
+    }
+
+    private notFound(): NotFoundException {
+        return new NotFoundException({
+            code: ASSET_ERRORS.RECURRING_NOT_FOUND,
+            message: "고정 지출을 찾을 수 없습니다.",
         })
-        if (!found) {
-            throw new NotFoundException({
-                code: ASSET_ERRORS.RECURRING_NOT_FOUND,
-                message: "고정 지출을 찾을 수 없습니다.",
-            })
-        }
     }
 }

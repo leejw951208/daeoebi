@@ -36,27 +36,35 @@ export class SiteService {
     }
 
     async update(id: string, dto: UpdateSiteDto) {
-        await this.ensureExists(id)
-        return this.prisma.site.update({
-            where: { id },
-            data: {
-                ...(dto.label !== undefined ? { label: dto.label } : {}),
-                ...(dto.icon !== undefined ? { icon: dto.icon } : {}),
-            },
-        })
+        try {
+            return await this.prisma.site.update({
+                where: { id },
+                data: {
+                    ...(dto.label !== undefined ? { label: dto.label } : {}),
+                    ...(dto.icon !== undefined ? { icon: dto.icon } : {}),
+                },
+            })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     async remove(id: string): Promise<void> {
-        await this.ensureExists(id)
-        await this.prisma.site.delete({ where: { id } })
+        try {
+            await this.prisma.site.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
-    private async ensureExists(id: string): Promise<void> {
-        const found = await this.prisma.site.findUnique({
-            where: { id },
-            select: { id: true },
-        })
-        if (!found) throw this.notFound()
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
+        )
     }
 
     private notFound(): NotFoundException {

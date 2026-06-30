@@ -100,12 +100,6 @@ export class ExpenseService {
     }
 
     async update(id: string, dto: UpdateExpenseDto) {
-        const found = await this.prisma.expense.findUnique({
-            where: { id },
-            select: { id: true },
-        })
-        if (!found) throw this.notFound()
-
         const data: Record<string, unknown> = {}
         if (dto.date !== undefined) data.date = new Date(dto.date)
 
@@ -130,17 +124,25 @@ export class ExpenseService {
         if (dto.removed !== undefined) data.removed = dto.removed
         if (dto.categoryId !== undefined) data.categoryId = dto.categoryId
 
-        const row = await this.prisma.expense.update({ where: { id }, data })
-        return toView(row)
+        try {
+            const row = await this.prisma.expense.update({
+                where: { id },
+                data,
+            })
+            return toView(row)
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     async remove(id: string): Promise<void> {
-        const found = await this.prisma.expense.findUnique({
-            where: { id },
-            select: { id: true },
-        })
-        if (!found) throw this.notFound()
-        await this.prisma.expense.delete({ where: { id } })
+        try {
+            await this.prisma.expense.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     private isUniqueViolation(e: unknown): boolean {
@@ -148,6 +150,14 @@ export class ExpenseService {
             typeof e === "object" &&
             e !== null &&
             (e as { code?: string }).code === "P2002"
+        )
+    }
+
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
         )
     }
 

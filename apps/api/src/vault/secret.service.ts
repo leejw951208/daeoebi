@@ -89,16 +89,16 @@ export class SecretService {
     }
 
     async update(id: string, dto: UpdateSecretDto) {
-        const secret = await this.prisma.secret.findUnique({
-            where: { id },
-            select: { id: true, siteId: true },
-        })
-        if (!secret) throw this.notFound()
-
         const data: Record<string, unknown> = {}
         if (dto.label !== undefined) data.label = dto.label
         if (dto.categoryId !== undefined) {
             if (dto.categoryId) {
+                // siteId 가 카테고리 귀속 검증에 필요하므로 조회한다.
+                const secret = await this.prisma.secret.findUnique({
+                    where: { id },
+                    select: { siteId: true },
+                })
+                if (!secret) throw this.notFound()
                 await this.ensureCategoryInSite(dto.categoryId, secret.siteId)
             }
             data.categoryId = dto.categoryId
@@ -112,28 +112,36 @@ export class SecretService {
             if (!hasIv || !hasCt || !hasTag) {
                 throw new BadRequestException({
                     code: VAULT_ERRORS.CIPHERTEXT_INCOMPLETE,
-                    message: "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
+                    message:
+                        "암호문은 iv·ciphertext·authTag 를 모두 보내야 합니다.",
                 })
             }
             data.iv = prismaBytes(fromBase64url(dto.iv as string))
-            data.ciphertext = prismaBytes(fromBase64url(dto.ciphertext as string))
+            data.ciphertext = prismaBytes(
+                fromBase64url(dto.ciphertext as string),
+            )
             data.authTag = prismaBytes(fromBase64url(dto.authTag as string))
         }
 
-        return this.prisma.secret.update({
-            where: { id },
-            data,
-            select: LIST_SELECT,
-        })
+        try {
+            return await this.prisma.secret.update({
+                where: { id },
+                data,
+                select: LIST_SELECT,
+            })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     async remove(id: string): Promise<void> {
-        const found = await this.prisma.secret.findUnique({
-            where: { id },
-            select: { id: true },
-        })
-        if (!found) throw this.notFound()
-        await this.prisma.secret.delete({ where: { id } })
+        try {
+            await this.prisma.secret.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     private async ensureSite(siteId: string): Promise<void> {
@@ -169,6 +177,14 @@ export class SecretService {
                 message: "카테고리가 사이트에 속하지 않습니다.",
             })
         }
+    }
+
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
+        )
     }
 
     private notFound(): NotFoundException {

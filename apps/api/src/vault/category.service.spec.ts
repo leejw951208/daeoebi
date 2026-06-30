@@ -24,9 +24,11 @@ describe("CategoryService.listBySite", () => {
     it("사이트가 없으면 SITE_NOT_FOUND", async () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue(null)
-        await expect(makeService(prisma).listBySite("nope")).rejects.toMatchObject(
-            { response: { code: VAULT_ERRORS.SITE_NOT_FOUND } },
-        )
+        await expect(
+            makeService(prisma).listBySite("nope"),
+        ).rejects.toMatchObject({
+            response: { code: VAULT_ERRORS.SITE_NOT_FOUND },
+        })
     })
 
     it("사이트가 있으면 라벨 오름차순으로 조회한다", async () => {
@@ -46,7 +48,10 @@ describe("CategoryService.create", () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue(null)
         await expect(
-            makeService(prisma).create({ siteId: "nope", label: "메모" } as never),
+            makeService(prisma).create({
+                siteId: "nope",
+                label: "메모",
+            } as never),
         ).rejects.toThrow(NotFoundException)
     })
 
@@ -54,7 +59,10 @@ describe("CategoryService.create", () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue({ id: "site1" })
         prisma.category.create.mockResolvedValue({ id: "c1" })
-        await makeService(prisma).create({ siteId: "site1", label: "메모" } as never)
+        await makeService(prisma).create({
+            siteId: "site1",
+            label: "메모",
+        } as never)
         expect(prisma.category.create).toHaveBeenCalledWith({
             data: { siteId: "site1", label: "메모" },
         })
@@ -62,9 +70,9 @@ describe("CategoryService.create", () => {
 })
 
 describe("CategoryService.update", () => {
-    it("없으면 CATEGORY_NOT_FOUND", async () => {
+    it("없으면 CATEGORY_NOT_FOUND(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.category.findUnique.mockResolvedValue(null)
+        prisma.category.update.mockRejectedValue({ code: "P2025" })
         await expect(
             makeService(prisma).update("x", { label: "y" } as never),
         ).rejects.toMatchObject({
@@ -74,7 +82,6 @@ describe("CategoryService.update", () => {
 
     it("라벨이 없으면 빈 데이터로 호출한다(no-op 갱신)", async () => {
         const prisma = makePrisma()
-        prisma.category.findUnique.mockResolvedValue({ id: "c1" })
         prisma.category.update.mockResolvedValue({ id: "c1" })
         await makeService(prisma).update("c1", {} as never)
         expect(prisma.category.update).toHaveBeenCalledWith({
@@ -85,9 +92,9 @@ describe("CategoryService.update", () => {
 })
 
 describe("CategoryService.remove", () => {
-    it("없으면 CATEGORY_NOT_FOUND", async () => {
+    it("없으면 CATEGORY_NOT_FOUND(delete 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.category.findUnique.mockResolvedValue(null)
+        prisma.category.delete.mockRejectedValue({ code: "P2025" })
         await expect(makeService(prisma).remove("x")).rejects.toThrow(
             NotFoundException,
         )
@@ -95,7 +102,6 @@ describe("CategoryService.remove", () => {
 
     it("있으면 삭제한다", async () => {
         const prisma = makePrisma()
-        prisma.category.findUnique.mockResolvedValue({ id: "c1" })
         prisma.category.delete.mockResolvedValue({ id: "c1" })
         await makeService(prisma).remove("c1")
         expect(prisma.category.delete).toHaveBeenCalledWith({

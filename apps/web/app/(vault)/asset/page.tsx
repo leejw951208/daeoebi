@@ -42,6 +42,20 @@ type State =
     | { status: "error"; message: string }
     | { status: "ready"; data: Loaded }
 
+// localStorage 래퍼: SSR/서버 환경에서 안전하게 동작한다.
+function getMigrationGuard(month: string): boolean {
+    if (typeof window === "undefined") return false
+    return (
+        window.localStorage.getItem(`daeoebi:asset-cat-migrated:${month}`) !==
+        null
+    )
+}
+
+function setMigrationGuard(month: string): void {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(`daeoebi:asset-cat-migrated:${month}`, "1")
+}
+
 export default function AssetPage() {
     const { vaultKey, resetIdle } = useVault()
     const [month, setMonth] = useState(currentMonth())
@@ -61,19 +75,22 @@ export default function AssetPage() {
                     listRecurring(),
                     listAssetCategories(),
                 ])
-            // 기존 지출 카테고리 마이그레이션(이름→categoryId, 1회). 멱등.
-            // categoryId 없는 지출이 있으면 옛 블롭의 이름으로 매칭해 PATCH 하고,
+            // 기존 지출 카테고리 마이그레이션(이름→categoryId, 월별 1회). 멱등.
+            // localStorage 가드로 이미 처리한 달은 건너뛰고, 새로운 달만 실행한다.
+            // categoryId 없는 지출이 있고 가드가 없을 때만 실행하며,
             // 처리 건수>0 이면 재조회한다. 루프 방지: 이 load() 호출당 최대 1회만 재조회.
             const hasLegacy = expM.some((e) => e.categoryId === null)
             let freshExpM = expM
-            if (hasLegacy) {
-                const migrated = await migrateExpenseCategories(
-                    vaultKey,
-                    categories,
-                    expM,
-                )
+            if (hasLegacy && !getMigrationGuard(month)) {
+                const { migrated, pendingLegacy } =
+                    await migrateExpenseCategories(vaultKey, categories, expM)
                 if (migrated > 0) {
                     freshExpM = await listExpenses(month)
+                }
+                // 매칭 못 한 legacy 이름이 남아 있으면(카테고리 추가 후 재시도 필요)
+                // 가드하지 않는다. 진짜 미분류만 남았을 때만 영구 가드한다.
+                if (pendingLegacy === 0) {
+                    setMigrationGuard(month)
                 }
             }
 

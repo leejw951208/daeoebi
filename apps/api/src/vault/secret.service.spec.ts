@@ -137,9 +137,9 @@ describe("SecretService.create", () => {
 })
 
 describe("SecretService.update", () => {
-    it("없으면 404", async () => {
+    it("없으면 404(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.secret.findUnique.mockResolvedValue(null)
+        prisma.secret.update.mockRejectedValue({ code: "P2025" })
         await expect(
             makeService(prisma).update("x", { label: "y" } as never),
         ).rejects.toThrow(NotFoundException)
@@ -147,7 +147,6 @@ describe("SecretService.update", () => {
 
     it("암호문 일부만 보내면 CIPHERTEXT_INCOMPLETE 로 거부한다", async () => {
         const prisma = makePrisma()
-        prisma.secret.findUnique.mockResolvedValue({ id: "s1", siteId: "site1" })
         await expect(
             makeService(prisma).update("s1", { iv: IV } as never),
         ).rejects.toMatchObject({
@@ -157,7 +156,6 @@ describe("SecretService.update", () => {
 
     it("라벨만 갱신하면 본문은 건드리지 않는다", async () => {
         const prisma = makePrisma()
-        prisma.secret.findUnique.mockResolvedValue({ id: "s1", siteId: "site1" })
         prisma.secret.update.mockResolvedValue({ id: "s1" })
         await makeService(prisma).update("s1", { label: "새이름" } as never)
         const data = prisma.secret.update.mock.calls[0][0].data
@@ -166,7 +164,6 @@ describe("SecretService.update", () => {
 
     it("iv·ciphertext·authTag 가 모두 있으면 본문을 갱신한다", async () => {
         const prisma = makePrisma()
-        prisma.secret.findUnique.mockResolvedValue({ id: "s1", siteId: "site1" })
         prisma.secret.update.mockResolvedValue({ id: "s1" })
         await makeService(prisma).update("s1", {
             iv: IV,
@@ -181,9 +178,9 @@ describe("SecretService.update", () => {
 })
 
 describe("SecretService.remove", () => {
-    it("없으면 404", async () => {
+    it("없으면 404(delete 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.secret.findUnique.mockResolvedValue(null)
+        prisma.secret.delete.mockRejectedValue({ code: "P2025" })
         await expect(makeService(prisma).remove("x")).rejects.toThrow(
             NotFoundException,
         )
@@ -191,9 +188,10 @@ describe("SecretService.remove", () => {
 
     it("있으면 삭제한다", async () => {
         const prisma = makePrisma()
-        prisma.secret.findUnique.mockResolvedValue({ id: "s1" })
         prisma.secret.delete.mockResolvedValue({ id: "s1" })
         await makeService(prisma).remove("s1")
-        expect(prisma.secret.delete).toHaveBeenCalledWith({ where: { id: "s1" } })
+        expect(prisma.secret.delete).toHaveBeenCalledWith({
+            where: { id: "s1" },
+        })
     })
 })

@@ -28,6 +28,9 @@ export function CategoryManager({ onClose, onChanged }: Props) {
     const [pendingDelete, setPendingDelete] = useState<AssetCategory | null>(
         null,
     )
+    // 시트가 열려 있는 동안 쓰기가 1회 이상 발생했는지 추적한다.
+    // 닫힐 때만 onChanged 를 호출해 부모 리로드를 1회로 합친다.
+    const [dirty, setDirty] = useState(false)
 
     async function loadCategories() {
         setLoading(true)
@@ -46,12 +49,20 @@ export function CategoryManager({ onClose, onChanged }: Props) {
         void loadCategories()
     }, [])
 
+    // 닫힘 시 변경이 있었을 때만 부모 리로드를 1회 호출한다.
+    function handleClose() {
+        if (dirty) {
+            onChanged?.()
+        }
+        onClose()
+    }
+
     async function handleAdd(name: string, color: string) {
         setError(null)
         try {
             await createAssetCategory(name, color)
             await loadCategories()
-            onChanged?.()
+            setDirty(true)
         } catch (e) {
             setError(isApiError(e) ? e.message : "추가에 실패했습니다.")
             throw e
@@ -66,7 +77,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
         try {
             await updateAssetCategory(id, patch)
             await loadCategories()
-            onChanged?.()
+            setDirty(true)
         } catch (e) {
             setError(isApiError(e) ? e.message : "수정에 실패했습니다.")
             throw e
@@ -81,7 +92,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
         try {
             await deleteAssetCategory(target.id)
             await loadCategories()
-            onChanged?.()
+            setDirty(true)
         } catch (e) {
             setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         }
@@ -94,7 +105,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             aria-modal="true"
             aria-label="카테고리 관리"
             onClick={(e) => {
-                if (e.target === e.currentTarget) onClose()
+                if (e.target === e.currentTarget) handleClose()
             }}
         >
             <div className="sheet">
@@ -116,7 +127,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                         aria-label="닫기"
                         onClick={() => {
                             resetIdle()
-                            onClose()
+                            handleClose()
                         }}
                     >
                         ✕

@@ -1,6 +1,8 @@
 // IncomeService 단위 테스트(Prisma 모킹). 월 조회 필터·생성/수정/삭제·base64url 패스스루를 검증한다.
+import { NotFoundException } from "@nestjs/common"
 import { IncomeService } from "./income.service"
 import { toBase64url } from "../common/base64url"
+import { ASSET_ERRORS } from "./asset.types"
 
 function makePrisma() {
     return {
@@ -71,9 +73,21 @@ describe("IncomeService", () => {
         expect(Buffer.from(arg.data.iv)).toEqual(IV)
     })
 
-    it("remove 는 없는 id 면 NotFound 를 던진다", async () => {
+    it("update 는 존재하지 않으면 INCOME_NOT_FOUND(update 가 P2025 로 거부)", async () => {
         const prisma = makePrisma()
-        prisma.income.findUnique.mockResolvedValue(null)
-        await expect(makeService(prisma).remove("nope")).rejects.toThrow()
+        prisma.income.update.mockRejectedValue({ code: "P2025" })
+        await expect(
+            makeService(prisma).update("nope", B as never),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INCOME_NOT_FOUND },
+        })
+    })
+
+    it("remove 는 없는 id 면 NotFound 를 던진다(delete 가 P2025 로 거부)", async () => {
+        const prisma = makePrisma()
+        prisma.income.delete.mockRejectedValue({ code: "P2025" })
+        await expect(makeService(prisma).remove("nope")).rejects.toThrow(
+            NotFoundException,
+        )
     })
 })

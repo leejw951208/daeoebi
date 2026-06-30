@@ -24,17 +24,25 @@ export class CategoryService {
     }
 
     async update(id: string, dto: UpdateCategoryDto) {
-        await this.ensureExists(id)
-        return this.prisma.category.update({
-            where: { id },
-            data: dto.label !== undefined ? { label: dto.label } : {},
-        })
+        try {
+            return await this.prisma.category.update({
+                where: { id },
+                data: dto.label !== undefined ? { label: dto.label } : {},
+            })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     async remove(id: string): Promise<void> {
-        await this.ensureExists(id)
         // 하위 Secret 은 FK SetNull 로 사이트 직속이 된다.
-        await this.prisma.category.delete({ where: { id } })
+        try {
+            await this.prisma.category.delete({ where: { id } })
+        } catch (e: unknown) {
+            if (this.isRecordNotFound(e)) throw this.notFound()
+            throw e
+        }
     }
 
     private async ensureSite(siteId: string): Promise<void> {
@@ -50,16 +58,18 @@ export class CategoryService {
         }
     }
 
-    private async ensureExists(id: string): Promise<void> {
-        const found = await this.prisma.category.findUnique({
-            where: { id },
-            select: { id: true },
+    private isRecordNotFound(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2025"
+        )
+    }
+
+    private notFound(): NotFoundException {
+        return new NotFoundException({
+            code: VAULT_ERRORS.CATEGORY_NOT_FOUND,
+            message: "카테고리를 찾을 수 없습니다.",
         })
-        if (!found) {
-            throw new NotFoundException({
-                code: VAULT_ERRORS.CATEGORY_NOT_FOUND,
-                message: "카테고리를 찾을 수 없습니다.",
-            })
-        }
     }
 }

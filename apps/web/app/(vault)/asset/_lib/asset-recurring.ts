@@ -10,6 +10,7 @@ import { openExpense, sealExpense } from "./asset-payload"
 import { addMonth, clampedDate } from "./asset-dates"
 
 // month 의 미생성 고정 지출을 만들어 생성된 인스턴스 배열을 반환한다(없으면 빈 배열).
+// 생성 대상을 먼저 필터링한 뒤 Promise.all 로 병렬 실행해 K 직렬 요청을 제거한다.
 export async function materializeRecurring(
     vaultKey: CryptoKey,
     month: string,
@@ -21,31 +22,33 @@ export async function materializeRecurring(
             .filter((e) => e.recurringId)
             .map((e) => `${e.recurringId}|${e.period}`),
     )
-    const created: ExpenseView[] = []
-    for (const t of templates) {
-        if (month < t.startMonth) continue // 시작월 이전 달엔 생성하지 않는다.
+    const targets = templates.filter((t) => {
+        if (month < t.startMonth) return false // 시작월 이전 달엔 생성하지 않는다.
         if (
             t.termMonths != null &&
             month > addMonth(t.startMonth, t.termMonths - 1)
         )
-            continue // 기간(개월 수) 종료 후엔 생성하지 않는다.
-        if (present.has(`${t.id}|${month}`)) continue
-        const payload = await openExpense(vaultKey, t)
-        const blob = await sealExpense(vaultKey, payload)
-        try {
-            const inst = await createExpense({
-                date: clampedDate(month, t.dayOfMonth),
-                recurringId: t.id,
-                period: month,
-                categoryId: t.categoryId ?? undefined,
-                ...blob,
-            })
-            created.push(inst)
-        } catch (e) {
-            // 동시 로드 등으로 이미 생성됐으면(409 중복) 무시한다.
-            if (isApiError(e) && e.status === 409) continue
-            throw e
-        }
-    }
-    return created
+            return false // 기간(개월 수) 종료 후엔 생성하지 않는다.
+        return !present.has(`${t.id}|${month}`)
+    })
+    const results = await Promise.all(
+        targets.map(async (t): Promise<ExpenseView | null> => {
+            const payload = await openExpense(vaultKey, t)
+            const blob = await sealExpense(vaultKey, payload)
+            try {
+                return await createExpense({
+                    date: clampedDate(month, t.dayOfMonth),
+                    recurringId: t.id,
+                    period: month,
+                    categoryId: t.categoryId ?? undefined,
+                    ...blob,
+                })
+            } catch (e) {
+                // 동시 로드 등으로 이미 생성됐으면(409 중복) 무시한다.
+                if (isApiError(e) && e.status === 409) return null
+                throw e
+            }
+        }),
+    )
+    return results.filter((r): r is ExpenseView => r !== null)
 }

@@ -1,11 +1,13 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated/prisma"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  moduleFormat    = "cjs"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [pg_trgm]
 }
 
 // WebAuthn passkey 자격증명 + PRF 로 래핑한 vault 키. 다중 기기 등록을 허용한다.
@@ -47,6 +49,7 @@ model Site {
   secrets    Secret[]
 
   @@index([label])
+  @@index([label(ops: raw("gin_trgm_ops"))], type: Gin, map: "Site_label_trgm_idx")
 }
 
 // 사이트 하위의 선택적 1계층 묶음. 자유 입력 라벨이다.
@@ -60,8 +63,8 @@ model Category {
 
   secrets Secret[]
 
-  @@index([siteId])
-  @@index([label])
+  @@index([siteId, label])
+  @@index([label(ops: raw("gin_trgm_ops"))], type: Gin, map: "Category_label_trgm_idx")
 }
 
 // 자산(지출) 카테고리. 전역 평문(이름·색). 비밀번호 Category 패턴이되 부모(Site) 없음.
@@ -109,7 +112,7 @@ model RecurringExpense {
   updatedAt  DateTime  @updatedAt
   instances  Expense[]
 
-  @@index([active])
+  @@index([active, createdAt])
   @@index([categoryId])
 }
 
@@ -132,7 +135,7 @@ model Expense {
 
   // 같은 템플릿·같은 달엔 1건만. null 끼리는 distinct 라 일반 지출엔 제약이 없다(멱등 머티리얼라이즈).
   @@unique([recurringId, period])
-  @@index([date])
+  @@index([removed, date])
   @@index([categoryId])
 }
 
@@ -152,7 +155,7 @@ model Secret {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  @@index([siteId])
+  @@index([siteId, label])
   @@index([categoryId])
-  @@index([label])
+  @@index([label(ops: raw("gin_trgm_ops"))], type: Gin, map: "Secret_label_trgm_idx")
 }
