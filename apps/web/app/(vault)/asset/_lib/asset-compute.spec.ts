@@ -10,6 +10,11 @@ import {
     type ComputedIncome,
 } from "./asset-compute"
 
+const CATS = [
+    { id: "c1", name: "식비", color: "#f2994a", createdAt: "", updatedAt: "" },
+    { id: "c2", name: "교통", color: "#4a90d9", createdAt: "", updatedAt: "" },
+]
+
 function exp(over: Partial<ComputedExpense>): ComputedExpense {
     const date = over.date ?? "2026-06-10"
     return {
@@ -18,7 +23,7 @@ function exp(over: Partial<ComputedExpense>): ComputedExpense {
         recurringId: null,
         item: "x",
         amount: 1000,
-        category: "식비",
+        categoryId: null,
         ...over,
     }
 }
@@ -31,21 +36,26 @@ describe("asset-compute", () => {
         expect(totalSpent([])).toBe(0)
     })
 
-    it("byCategory 는 금액 내림차순 + 비율(%)", () => {
-        const rows = byCategory([
-            exp({ category: "식비", amount: 7000 }),
-            exp({ category: "교통", amount: 3000 }),
-            exp({ category: "식비", amount: 0 }), // 0 은 무시되지 않고 합산(여기선 7000 유지)
-        ])
-        expect(rows.map((r) => r.key)).toEqual(["식비", "교통"])
-        expect(rows[0]).toMatchObject({ key: "식비", amount: 7000, pct: 70 })
-        expect(rows[1]).toMatchObject({ key: "교통", amount: 3000, pct: 30 })
-        expect(rows[0].color).toBe("#f2994a")
+    it("byCategory 는 categoryId 로 합산하고 이름·색을 조인한다", () => {
+        const rows = byCategory(
+            [
+                exp({ categoryId: "c1", amount: 7000 }),
+                exp({ categoryId: "c2", amount: 3000 }),
+            ],
+            CATS,
+        )
+        expect(rows.map((r) => r.name)).toEqual(["식비", "교통"])
+        expect(rows[0]).toMatchObject({
+            name: "식비",
+            amount: 7000,
+            pct: 70,
+            color: "#f2994a",
+        })
     })
 
-    it("byCategory 는 지출 0 인 카테고리를 제외한다", () => {
-        const rows = byCategory([exp({ category: "식비", amount: 5000 })])
-        expect(rows).toHaveLength(1)
+    it("byCategory 는 categoryId=null 을 미분류로 묶는다", () => {
+        const rows = byCategory([exp({ categoryId: null, amount: 5000 })], CATS)
+        expect(rows[0]).toMatchObject({ name: "미분류", amount: 5000 })
     })
 
     it("byDay 는 일자별 합계", () => {
