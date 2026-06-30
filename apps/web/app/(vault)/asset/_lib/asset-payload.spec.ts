@@ -1,5 +1,5 @@
 // 자산 seal/open 라운드트립 테스트. WebCrypto(node global)로 실제 VK 를 생성해 암복호화한다.
-import { generateVaultKey } from "@/lib/vault-crypto"
+import { generateVaultKey, seal } from "@/lib/vault-crypto"
 import {
     openExpense,
     openIncome,
@@ -49,5 +49,15 @@ describe("asset-payload seal/open", () => {
         const blob = await sealExpense(vk, { item: "x", amount: 1 })
         // readLegacyCategory 는 category 없으면 null
         await expect(readLegacyCategory(vk, blob)).resolves.toBeNull()
+    })
+
+    it("옛 블롭에 category 가 있으면 그 이름을 읽는다", async () => {
+        const vk = await generateVaultKey()
+        // 옛 형식 블롭: category 포함 JSON 을 직접 봉인
+        const blob = await seal(
+            vk,
+            JSON.stringify({ v: 1, item: "x", amount: 1, category: "식비" }),
+        )
+        await expect(readLegacyCategory(vk, blob)).resolves.toBe("식비")
     })
 })
