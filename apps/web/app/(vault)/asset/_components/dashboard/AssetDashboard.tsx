@@ -8,6 +8,7 @@ import {
     type ComputedExpense,
     type ComputedIncome,
 } from "../../_lib/asset-compute"
+import type { AssetCategory } from "@/lib/vault-client"
 import { RemainingHero } from "./RemainingHero"
 import { IncomeExpenseCards } from "./IncomeExpenseCards"
 import { CategoryBreakdown } from "./CategoryBreakdown"
@@ -18,6 +19,7 @@ export interface Loaded {
     incomeAmount: number
     incomes: ComputedIncome[]
     expenses: ComputedExpense[]
+    categories: AssetCategory[]
 }
 
 interface Props {
@@ -40,7 +42,7 @@ export function AssetDashboard({
     const spent = totalSpent(data.expenses)
     const left = remaining(data.incomeAmount, spent)
     const pct = spentPct(data.incomeAmount, spent)
-    const cats = byCategory(data.expenses)
+    const cats = byCategory(data.expenses, data.categories)
     const dayExpenses = selectedDay
         ? data.expenses
               .filter((e) => e.date === selectedDay)
@@ -65,7 +67,9 @@ export function AssetDashboard({
                 count={data.expenses.length}
                 onOpenIncome={onOpenIncome}
             />
-            {cats.length > 0 && <CategoryBreakdown cats={cats} />}
+            {cats.length > 0 && (
+                <CategoryBreakdown cats={cats} categories={data.categories} />
+            )}
             <ExpenseCalendar
                 month={month}
                 dayTotals={dayTotals}
@@ -77,6 +81,7 @@ export function AssetDashboard({
                 <DayDetail
                     selectedDay={selectedDay}
                     dayExpenses={dayExpenses}
+                    categories={data.categories}
                 />
             )}
         </div>

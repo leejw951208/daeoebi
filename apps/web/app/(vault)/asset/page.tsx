@@ -7,6 +7,7 @@ import {
     listIncomes,
     listExpenses,
     listRecurring,
+    listAssetCategories,
     type ExpenseView,
     type IncomeView,
 } from "@/lib/vault-client"
@@ -50,11 +51,13 @@ export default function AssetPage() {
         setState({ status: "loading" })
         try {
             // 지출은 지출일(date) 기준으로 그 달 것만 집계한다. 해당 월 한 달치를 가져온다.
-            const [incomeViews, expM, templates] = await Promise.all([
-                listIncomes(month),
-                listExpenses(month),
-                listRecurring(),
-            ])
+            const [incomeViews, expM, templates, categories] =
+                await Promise.all([
+                    listIncomes(month),
+                    listExpenses(month),
+                    listRecurring(),
+                    listAssetCategories(),
+                ])
             // 고정 지출 머티리얼라이즈(멱등). 해당 월 분만 생성한다.
             const createdM = await materializeRecurring(
                 vaultKey,
@@ -97,7 +100,7 @@ export default function AssetPage() {
                         recurringId: v.recurringId,
                         item: p.item,
                         amount: p.amount,
-                        category: p.category,
+                        categoryId: v.categoryId,
                     }
                 }),
             )
@@ -110,7 +113,7 @@ export default function AssetPage() {
 
             setState({
                 status: "ready",
-                data: { incomeAmount, incomes, expenses },
+                data: { incomeAmount, incomes, expenses, categories },
             })
         } catch (e) {
             setState({
