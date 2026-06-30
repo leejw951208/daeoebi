@@ -64,6 +64,20 @@ model Category {
   @@index([label])
 }
 
+// 자산(지출) 카테고리. 전역 평문(이름·색). 비밀번호 Category 패턴이되 부모(Site) 없음.
+model AssetCategory {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses  Expense[]
+  recurring RecurringExpense[]
+
+  @@index([name])
+}
+
 // 월 수입(자산 관리). 월별 다건 저장이며 금액은 암호문 블롭({amount})이다.
 // 서버는 복호화하지 않는다(secret 과 동일 패스스루). month 는 "YYYY-MM" 평문으로 월 범위 조회용이다.
 model Income {
@@ -86,6 +100,8 @@ model RecurringExpense {
   startMonth String // "YYYY-MM". 평문. 이 달부터 인스턴스 생성(이전 달엔 미생성).
   termMonths Int? // null = 무기한. N = startMonth 부터 N개월간만 생성.
   active     Boolean   @default(true)
+  categoryId String?
+  category   AssetCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   iv         Bytes
   ciphertext Bytes
   authTag    Bytes
@@ -94,6 +110,7 @@ model RecurringExpense {
   instances  Expense[]
 
   @@index([active])
+  @@index([categoryId])
 }
 
 // 지출 1건. date 는 월 범위 조회·달력용 평문, 본문은 암호문 블롭이다.
@@ -105,6 +122,8 @@ model Expense {
   recurring   RecurringExpense? @relation(fields: [recurringId], references: [id], onDelete: Cascade)
   period      String? // "YYYY-MM". 고정 인스턴스 멱등 키.
   removed     Boolean           @default(false) // 이번 달만 삭제(소프트 삭제). 목록·집계 제외, 슬롯 유지로 재생성 차단.
+  categoryId  String?
+  category    AssetCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   iv          Bytes
   ciphertext  Bytes
   authTag     Bytes
@@ -114,6 +133,7 @@ model Expense {
   // 같은 템플릿·같은 달엔 1건만. null 끼리는 distinct 라 일반 지출엔 제약이 없다(멱등 머티리얼라이즈).
   @@unique([recurringId, period])
   @@index([date])
+  @@index([categoryId])
 }
 
 // 라벨 평문 + AEAD 암호화된 비밀번호 본문 1건.
