@@ -2,6 +2,7 @@
 // 서버엔 기본 사이트 자동 생성/표식이 없으므로(api-engineer 확정) 클라가 멱등하게 보장한다.
 import { useCallback, useEffect, useState } from "react"
 import { createSite, listSites } from "@/lib/vault-client"
+import { pickDefaultSiteId } from "./default-site"
 
 // 기본 사이트 라벨. 평면 목록 UX 에서 사용자에게 노출되지 않는다.
 const DEFAULT_SITE_LABEL = "내 대외비"
@@ -9,12 +10,14 @@ const DEFAULT_SITE_LABEL = "내 대외비"
 // 단일 in-flight promise. strict mode 이중 effect·동시 마운트에서 createSite 중복 호출을 막는다.
 let inflight: Promise<string> | null = null
 
-// 사이트가 있으면 첫 번째(createdAt asc)를, 없으면 1개 생성한 id 를 반환한다. 멱등.
+// 사이트가 있으면 결정적으로 가장 오래된(원본) 사이트를, 없으면 1개 생성한 id 를 반환한다. 멱등.
+// 중복 라벨 사이트가 여럿이어도 pickDefaultSiteId 가 항상 같은 원본을 고른다(표시 뒤집힘 방지).
 async function ensureDefaultSite(): Promise<string> {
     if (inflight) return inflight
     inflight = (async () => {
         const sites = await listSites()
-        if (sites.length > 0) return sites[0].id
+        const existing = pickDefaultSiteId(sites)
+        if (existing !== null) return existing
         const created = await createSite({ label: DEFAULT_SITE_LABEL })
         return created.id
     })()
