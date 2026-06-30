@@ -5,9 +5,11 @@ import {
     IsBoolean,
     IsInt,
     IsOptional,
+    IsString,
     Matches,
     Max,
     Min,
+    MinLength,
 } from "class-validator"
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
@@ -26,6 +28,11 @@ export class CreateRecurringDto {
     @IsInt()
     @Min(1)
     termMonths?: number
+
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    categoryId?: string
 
     @IsBase64url()
     iv!: string
@@ -59,4 +66,9 @@ export class UpdateRecurringDto {
     @IsOptional()
     @IsBase64url()
     authTag?: string
+
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    categoryId?: string
 }

@@ -143,6 +143,52 @@ describe("RecurringService", () => {
         ).toBeNull()
     })
 
+    it("create 는 categoryId 를 저장하고(없으면 null) 뷰에 포함한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.create.mockResolvedValue({
+            id: "r1",
+            dayOfMonth: 25,
+            startMonth: "2026-06",
+            termMonths: null,
+            categoryId: "c1",
+            active: true,
+            iv: IV,
+            ciphertext: CT,
+            authTag: TAG,
+        })
+        const out = await makeService(prisma).create({
+            dayOfMonth: 25,
+            startMonth: "2026-06",
+            categoryId: "c1",
+            ...blob,
+        } as never)
+        expect(
+            prisma.recurringExpense.create.mock.calls[0][0].data.categoryId,
+        ).toBe("c1")
+        expect(out).toMatchObject({ categoryId: "c1" })
+
+        const prisma2 = makePrisma()
+        prisma2.recurringExpense.create.mockResolvedValue({
+            id: "r2",
+            dayOfMonth: 1,
+            startMonth: "2026-06",
+            termMonths: null,
+            categoryId: null,
+            active: true,
+            iv: IV,
+            ciphertext: CT,
+            authTag: TAG,
+        })
+        await makeService(prisma2).create({
+            dayOfMonth: 1,
+            startMonth: "2026-06",
+            ...blob,
+        } as never)
+        expect(
+            prisma2.recurringExpense.create.mock.calls[0][0].data.categoryId,
+        ).toBeNull()
+    })
+
     it("remove 는 없으면 404, 있으면 삭제", async () => {
         const prisma = makePrisma()
         prisma.recurringExpense.findUnique.mockResolvedValueOnce(null)
