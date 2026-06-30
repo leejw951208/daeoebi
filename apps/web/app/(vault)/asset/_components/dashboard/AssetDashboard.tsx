@@ -67,9 +67,7 @@ export function AssetDashboard({
                 count={data.expenses.length}
                 onOpenIncome={onOpenIncome}
             />
-            {cats.length > 0 && (
-                <CategoryBreakdown cats={cats} categories={data.categories} />
-            )}
+            {cats.length > 0 && <CategoryBreakdown cats={cats} />}
             <ExpenseCalendar
                 month={month}
                 dayTotals={dayTotals}
