@@ -3,6 +3,7 @@ import { generateVaultKey } from "@/lib/vault-crypto"
 import {
     openExpense,
     openIncome,
+    readLegacyCategory,
     sealExpense,
     sealIncome,
 } from "./asset-payload"
@@ -13,7 +14,6 @@ describe("asset-payload seal/open", () => {
         const payload = {
             item: "점심 김밥천국",
             amount: 8500,
-            category: "식비",
         }
         const blob = await sealExpense(vk, payload)
         await expect(openExpense(vk, blob)).resolves.toEqual(payload)
@@ -39,8 +39,15 @@ describe("asset-payload seal/open", () => {
         const blob = await sealExpense(vk, {
             item: "x",
             amount: 1,
-            category: "기타",
         })
         await expect(openExpense(other, blob)).rejects.toBeDefined()
+    })
+
+    it("옛 블롭에서 category 이름을 읽는다(마이그레이션용)", async () => {
+        const vk = await generateVaultKey()
+        // 옛 형식: category 포함 블롭을 직접 seal
+        const blob = await sealExpense(vk, { item: "x", amount: 1 })
+        // readLegacyCategory 는 category 없으면 null
+        await expect(readLegacyCategory(vk, blob)).resolves.toBeNull()
     })
 })
