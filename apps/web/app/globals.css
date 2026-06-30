@@ -704,6 +704,15 @@ textarea.field-control {
     min-width: 140px;
 }
 
+/* iOS Safari 의 input[type="date"] 는 네이티브 컨트롤 내재 최소너비가 width:100% 를
+   무시해 컨테이너 밖으로 넘친다. appearance 해제 + min-width:0 으로 width(border-box)가
+   실제 적용되게 한다. (Chromium 은 정상이라 이 버그는 iOS 전용) */
+input[type="date"].field-control {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+}
+
 /* ── Toolbar / header ───────────────────────────────── */
 .toolbar {
     display: flex;
