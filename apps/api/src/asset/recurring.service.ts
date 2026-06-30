@@ -15,6 +15,7 @@ interface RecurringRow {
     dayOfMonth: number
     startMonth: string
     termMonths: number | null
+    categoryId: string | null
     active: boolean
     iv: Uint8Array
     ciphertext: Uint8Array
@@ -27,6 +28,7 @@ function toView(row: RecurringRow) {
         dayOfMonth: row.dayOfMonth,
         startMonth: row.startMonth,
         termMonths: row.termMonths,
+        categoryId: row.categoryId,
         active: row.active,
         iv: toBase64url(row.iv),
         ciphertext: toBase64url(row.ciphertext),
@@ -53,6 +55,7 @@ export class RecurringService {
                 dayOfMonth: dto.dayOfMonth,
                 startMonth: dto.startMonth,
                 termMonths: dto.termMonths ?? null,
+                categoryId: dto.categoryId ?? null,
                 iv: prismaBytes(fromBase64url(dto.iv)),
                 ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
                 authTag: prismaBytes(fromBase64url(dto.authTag)),
@@ -66,6 +69,7 @@ export class RecurringService {
         const data: Record<string, unknown> = {}
         if (dto.dayOfMonth !== undefined) data.dayOfMonth = dto.dayOfMonth
         if (dto.active !== undefined) data.active = dto.active
+        if (dto.categoryId !== undefined) data.categoryId = dto.categoryId
         if (dto.iv !== undefined) data.iv = prismaBytes(fromBase64url(dto.iv))
         if (dto.ciphertext !== undefined) {
             data.ciphertext = prismaBytes(fromBase64url(dto.ciphertext))

@@ -1,15 +1,17 @@
 "use client"
 // 자산 대시보드의 선택일 상세. 그 날 지출 합계와 항목 목록(고정 배지 포함)을 그린다.
 import Link from "next/link"
-import { categoryColor, formatWon } from "../../_lib/asset-categories"
+import { resolveCategory, formatWon } from "../../_lib/asset-categories"
 import { totalSpent, type ComputedExpense } from "../../_lib/asset-compute"
+import type { AssetCategory } from "@/lib/vault-client"
 
 interface Props {
     selectedDay: string
     dayExpenses: ComputedExpense[]
+    categories: AssetCategory[]
 }
 
-export function DayDetail({ selectedDay, dayExpenses }: Props) {
+export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div
@@ -46,62 +48,67 @@ export function DayDetail({ selectedDay, dayExpenses }: Props) {
                     이 날은 지출이 없어요
                 </div>
             ) : (
-                dayExpenses.map((e) => (
-                    <Link
-                        key={e.id}
-                        href={`/asset/${e.id}`}
-                        className="entry-card"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 13,
-                        }}
-                    >
-                        <span
-                            className="avatar"
-                            aria-hidden="true"
-                            style={{ background: categoryColor(e.category) }}
-                        >
-                            {e.category.slice(0, 1)}
-                        </span>
-                        <span className="entry-main" style={{ minWidth: 0 }}>
-                            <span
-                                className="entry-label"
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                }}
-                            >
-                                {e.item || e.category}
-                                {e.recurringId && (
-                                    <span className="recur-badge">고정</span>
-                                )}
-                            </span>
-                            <span
-                                style={{
-                                    fontSize: 12,
-                                    color: "var(--color-text-muted)",
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {e.category} · {e.method}
-                                {e.billingDate !== e.date
-                                    ? ` · ${e.date.slice(5).replace("-", "/")} 구매`
-                                    : ""}
-                            </span>
-                        </span>
-                        <span
+                dayExpenses.map((e) => {
+                    const resolved = resolveCategory(e.categoryId, categories)
+                    return (
+                        <Link
+                            key={e.id}
+                            href={`/asset/${e.id}`}
+                            className="entry-card"
                             style={{
-                                fontSize: 15,
-                                fontWeight: 800,
-                                letterSpacing: "-0.02em",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 13,
                             }}
                         >
-                            {formatWon(e.amount)}
-                        </span>
-                    </Link>
-                ))
+                            <span
+                                className="avatar"
+                                aria-hidden="true"
+                                style={{ background: resolved.color }}
+                            >
+                                {resolved.name.slice(0, 1)}
+                            </span>
+                            <span
+                                className="entry-main"
+                                style={{ minWidth: 0 }}
+                            >
+                                <span
+                                    className="entry-label"
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 6,
+                                    }}
+                                >
+                                    {e.item || resolved.name}
+                                    {e.recurringId && (
+                                        <span className="recur-badge">
+                                            고정
+                                        </span>
+                                    )}
+                                </span>
+                                <span
+                                    style={{
+                                        fontSize: 12,
+                                        color: "var(--color-text-muted)",
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {resolved.name}
+                                </span>
+                            </span>
+                            <span
+                                style={{
+                                    fontSize: 15,
+                                    fontWeight: 800,
+                                    letterSpacing: "-0.02em",
+                                }}
+                            >
+                                {formatWon(e.amount)}
+                            </span>
+                        </Link>
+                    )
+                })
             )}
         </div>
     )

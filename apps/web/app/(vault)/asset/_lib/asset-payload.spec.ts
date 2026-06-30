@@ -1,8 +1,9 @@
 // 자산 seal/open 라운드트립 테스트. WebCrypto(node global)로 실제 VK 를 생성해 암복호화한다.
-import { generateVaultKey } from "@/lib/vault-crypto"
+import { generateVaultKey, seal } from "@/lib/vault-crypto"
 import {
     openExpense,
     openIncome,
+    readLegacyCategory,
     sealExpense,
     sealIncome,
 } from "./asset-payload"
@@ -13,8 +14,6 @@ describe("asset-payload seal/open", () => {
         const payload = {
             item: "점심 김밥천국",
             amount: 8500,
-            category: "식비",
-            method: "신용카드",
         }
         const blob = await sealExpense(vk, payload)
         await expect(openExpense(vk, blob)).resolves.toEqual(payload)
@@ -40,9 +39,25 @@ describe("asset-payload seal/open", () => {
         const blob = await sealExpense(vk, {
             item: "x",
             amount: 1,
-            category: "기타",
-            method: "현금",
         })
         await expect(openExpense(other, blob)).rejects.toBeDefined()
+    })
+
+    it("옛 블롭에서 category 이름을 읽는다(마이그레이션용)", async () => {
+        const vk = await generateVaultKey()
+        // 옛 형식: category 포함 블롭을 직접 seal
+        const blob = await sealExpense(vk, { item: "x", amount: 1 })
+        // readLegacyCategory 는 category 없으면 null
+        await expect(readLegacyCategory(vk, blob)).resolves.toBeNull()
+    })
+
+    it("옛 블롭에 category 가 있으면 그 이름을 읽는다", async () => {
+        const vk = await generateVaultKey()
+        // 옛 형식 블롭: category 포함 JSON 을 직접 봉인
+        const blob = await seal(
+            vk,
+            JSON.stringify({ v: 1, item: "x", amount: 1, category: "식비" }),
+        )
+        await expect(readLegacyCategory(vk, blob)).resolves.toBe("식비")
     })
 })

@@ -14,7 +14,6 @@ jest.mock("./asset-payload", () => ({
         item: "x",
         amount: 1,
         category: "기타",
-        method: "현금",
     }),
     sealExpense: jest
         .fn()
@@ -32,6 +31,7 @@ const tmpl: RecurringView = {
     iv: "AA",
     ciphertext: "BB",
     authTag: "CC",
+    categoryId: null,
 }
 const termTmpl: RecurringView = {
     id: "r2",
@@ -42,6 +42,7 @@ const termTmpl: RecurringView = {
     iv: "AA",
     ciphertext: "BB",
     authTag: "CC",
+    categoryId: null,
 }
 const key = {} as CryptoKey
 

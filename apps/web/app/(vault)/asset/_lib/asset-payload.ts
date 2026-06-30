@@ -1,15 +1,14 @@
-// 자산(수입·지출) 본문 평문 구조의 seal/open 헬퍼. 금액·항목·카테고리·결제방법을 VK 로 암호화한다.
+// 자산(수입·지출) 본문 평문 구조의 seal/open 헬퍼. 지출 블롭은 항목·금액만, 수입 블롭은 항목·금액·카테고리를 VK 로 암호화한다.
 // secret-payload 와 동일하게 vault-crypto 의 seal/open(AES-256-GCM)을 사용한다(서버는 복호화 안 함).
 import { open, seal, type SealedBlob } from "@/lib/vault-crypto"
 
 const PAYLOAD_VERSION = 1
 
 // 지출 1건의 평문 본문. date·recurring 메타는 서버 컬럼이라 여기 포함하지 않는다.
+// category 는 서버 FK 컬럼으로 이전되어 블롭에서 제거됨.
 export interface ExpensePayload {
     item: string
     amount: number
-    category: string
-    method: string
 }
 
 export interface IncomePayload {
@@ -35,8 +34,21 @@ export async function openExpense(
     return {
         item: String(parsed.item ?? ""),
         amount: typeof parsed.amount === "number" ? parsed.amount : 0,
-        category: String(parsed.category ?? "기타"),
-        method: String(parsed.method ?? "신용카드"),
+    }
+}
+
+// 옛 블롭에 남아 있을 수 있는 평문 category 이름을 읽는다(없으면 null). 마이그레이션 전용.
+export async function readLegacyCategory(
+    vaultKey: CryptoKey,
+    blob: SealedBlob,
+): Promise<string | null> {
+    try {
+        const parsed = JSON.parse(await open(vaultKey, blob)) as {
+            category?: unknown
+        }
+        return typeof parsed.category === "string" ? parsed.category : null
+    } catch {
+        return null
     }
 }
 

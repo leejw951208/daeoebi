@@ -6,19 +6,36 @@ import { CsrfMiddleware } from "../common/csrf.middleware"
 import { IncomeController } from "./income.controller"
 import { ExpenseController } from "./expense.controller"
 import { RecurringController } from "./recurring.controller"
+import { AssetCategoryController } from "./asset-category.controller"
 import { IncomeService } from "./income.service"
 import { ExpenseService } from "./expense.service"
 import { RecurringService } from "./recurring.service"
+import { AssetCategoryService } from "./asset-category.service"
 
 @Module({
     imports: [PrismaModule],
-    controllers: [IncomeController, ExpenseController, RecurringController],
-    providers: [IncomeService, ExpenseService, RecurringService],
+    controllers: [
+        IncomeController,
+        ExpenseController,
+        RecurringController,
+        AssetCategoryController,
+    ],
+    providers: [
+        IncomeService,
+        ExpenseService,
+        RecurringService,
+        AssetCategoryService,
+    ],
 })
 export class AssetModule implements NestModule {
     configure(consumer: MiddlewareConsumer): void {
         consumer
             .apply(CsrfMiddleware)
-            .forRoutes(IncomeController, ExpenseController, RecurringController)
+            .forRoutes(
+                IncomeController,
+                ExpenseController,
+                RecurringController,
+                AssetCategoryController,
+            )
     }
 }

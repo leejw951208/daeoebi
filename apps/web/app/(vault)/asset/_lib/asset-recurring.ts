@@ -37,6 +37,7 @@ export async function materializeRecurring(
                 date: clampedDate(month, t.dayOfMonth),
                 recurringId: t.id,
                 period: month,
+                categoryId: t.categoryId ?? undefined,
                 ...blob,
             })
             created.push(inst)

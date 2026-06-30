@@ -7,6 +7,7 @@ import {
     listIncomes,
     listExpenses,
     listRecurring,
+    listAssetCategories,
     type ExpenseView,
     type IncomeView,
 } from "@/lib/vault-client"
@@ -14,9 +15,9 @@ import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "../_lib/vault-context"
 import { openExpense, openIncome } from "./_lib/asset-payload"
+import { migrateExpenseCategories } from "./_lib/asset-migrate-categories"
 import {
     byDay,
-    billedInMonth,
     totalIncome,
     type ComputedExpense,
     type ComputedIncome,
@@ -24,17 +25,16 @@ import {
 import { materializeRecurring } from "./_lib/asset-recurring"
 import {
     addMonth,
-    billingDate,
     currentMonth,
     monthLabel,
     todayISO,
 } from "./_lib/asset-dates"
-import { CARD_METHOD } from "./_lib/asset-categories"
 import {
     AssetDashboard,
     type Loaded,
 } from "./_components/dashboard/AssetDashboard"
 import { IncomeSheet } from "./_components/income/IncomeSheet"
+import { CategoryManager } from "./_components/CategoryManager"
 import { LockTimer } from "../_components/LockTimer"
 
 type State =
@@ -48,37 +48,43 @@ export default function AssetPage() {
     const [state, setState] = useState<State>({ status: "loading" })
     const [selectedDay, setSelectedDay] = useState<string | null>(null)
     const [sheetOpen, setSheetOpen] = useState(false)
+    const [categorySheetOpen, setCategorySheetOpen] = useState(false)
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
         try {
-            // 결제월 M 화면 = M 결제분(= M 구매 비카드 + M-1 구매 카드). 두 달치를 가져온다.
-            const prev = addMonth(month, -1)
-            const [incomeViews, expM, expPrev, templates] = await Promise.all([
-                listIncomes(month),
-                listExpenses(month),
-                listExpenses(prev),
-                listRecurring(),
-            ])
-            // 고정 지출 머티리얼라이즈를 M·M-1 둘 다(M-1 카드 고정분이 M 에 청구). 멱등.
+            // 지출은 지출일(date) 기준으로 그 달 것만 집계한다. 해당 월 한 달치를 가져온다.
+            const [incomeViews, expM, templates, categories] =
+                await Promise.all([
+                    listIncomes(month),
+                    listExpenses(month),
+                    listRecurring(),
+                    listAssetCategories(),
+                ])
+            // 기존 지출 카테고리 마이그레이션(이름→categoryId, 1회). 멱등.
+            // categoryId 없는 지출이 있으면 옛 블롭의 이름으로 매칭해 PATCH 하고,
+            // 처리 건수>0 이면 재조회한다. 루프 방지: 이 load() 호출당 최대 1회만 재조회.
+            const hasLegacy = expM.some((e) => e.categoryId === null)
+            let freshExpM = expM
+            if (hasLegacy) {
+                const migrated = await migrateExpenseCategories(
+                    vaultKey,
+                    categories,
+                    expM,
+                )
+                if (migrated > 0) {
+                    freshExpM = await listExpenses(month)
+                }
+            }
+
+            // 고정 지출 머티리얼라이즈(멱등). 해당 월 분만 생성한다.
             const createdM = await materializeRecurring(
                 vaultKey,
                 month,
                 templates,
-                expM,
+                freshExpM,
             )
-            const createdPrev = await materializeRecurring(
-                vaultKey,
-                prev,
-                templates,
-                expPrev,
-            )
-            const allViews: ExpenseView[] = [
-                ...expM,
-                ...createdM,
-                ...expPrev,
-                ...createdPrev,
-            ]
+            const allViews: ExpenseView[] = [...freshExpM, ...createdM]
 
             // 수입 복호화(실패분 스킵) → 합계
             const incomeSettled = await Promise.allSettled(
@@ -103,36 +109,30 @@ export default function AssetPage() {
                 .map((r) => r.value)
             const incomeAmount = totalIncome(incomes)
 
-            // 지출 복호화(실패분 스킵) → 결제일 부여 → 결제월 M 만 추림.
+            // 지출 복호화(실패분 스킵).
             const settled = await Promise.allSettled(
                 allViews.map(async (v): Promise<ComputedExpense> => {
                     const p = await openExpense(vaultKey, v)
                     return {
                         id: v.id,
                         date: v.date,
-                        billingDate: billingDate(
-                            v.date,
-                            p.method === CARD_METHOD,
-                        ),
                         recurringId: v.recurringId,
                         item: p.item,
                         amount: p.amount,
-                        category: p.category,
-                        method: p.method,
+                        categoryId: v.categoryId,
                     }
                 }),
             )
-            const decrypted = settled
+            const expenses = settled
                 .filter(
                     (r): r is PromiseFulfilledResult<ComputedExpense> =>
                         r.status === "fulfilled",
                 )
                 .map((r) => r.value)
-            const expenses = billedInMonth(decrypted, month)
 
             setState({
                 status: "ready",
-                data: { incomeAmount, incomes, expenses },
+                data: { incomeAmount, incomes, expenses, categories },
             })
         } catch (e) {
             setState({
@@ -209,7 +209,26 @@ export default function AssetPage() {
                             </button>
                         </div>
                     </div>
-                    <LockTimer />
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                        }}
+                    >
+                        <button
+                            type="button"
+                            className="btn-text"
+                            style={{ fontSize: 12 }}
+                            onClick={() => {
+                                resetIdle()
+                                setCategorySheetOpen(true)
+                            }}
+                        >
+                            카테고리 관리
+                        </button>
+                        <LockTimer />
+                    </div>
                 </div>
             </div>
 
@@ -248,6 +267,13 @@ export default function AssetPage() {
                     incomes={state.data.incomes}
                     onChanged={load}
                     onClose={() => setSheetOpen(false)}
+                />
+            )}
+
+            {categorySheetOpen && (
+                <CategoryManager
+                    onChanged={load}
+                    onClose={() => setCategorySheetOpen(false)}
                 />
             )}
         </section>

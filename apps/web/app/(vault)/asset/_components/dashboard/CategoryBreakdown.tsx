@@ -48,7 +48,7 @@ export function CategoryBreakdown({ cats }: Props) {
                                         color: "#333",
                                     }}
                                 >
-                                    {c.key}
+                                    {c.name}
                                 </span>
                                 <span
                                     style={{

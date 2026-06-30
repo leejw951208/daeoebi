@@ -27,6 +27,7 @@ interface ExpenseRow {
     date: Date
     recurringId: string | null
     period: string | null
+    categoryId: string | null
     iv: Uint8Array
     ciphertext: Uint8Array
     authTag: Uint8Array
@@ -38,6 +39,7 @@ function toView(row: ExpenseRow) {
         date: toDateStr(row.date),
         recurringId: row.recurringId,
         period: row.period,
+        categoryId: row.categoryId,
         iv: toBase64url(row.iv),
         ciphertext: toBase64url(row.ciphertext),
         authTag: toBase64url(row.authTag),
@@ -77,6 +79,7 @@ export class ExpenseService {
             date: new Date(dto.date),
             recurringId: dto.recurringId ?? null,
             period: dto.period ?? null,
+            categoryId: dto.categoryId ?? null,
             iv: prismaBytes(fromBase64url(dto.iv)),
             ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
             authTag: prismaBytes(fromBase64url(dto.authTag)),
@@ -125,6 +128,7 @@ export class ExpenseService {
         }
 
         if (dto.removed !== undefined) data.removed = dto.removed
+        if (dto.categoryId !== undefined) data.categoryId = dto.categoryId
 
         const row = await this.prisma.expense.update({ where: { id }, data })
         return toView(row)

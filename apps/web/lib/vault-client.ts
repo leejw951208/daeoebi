@@ -328,6 +328,49 @@ export async function importStore(
 // ─── 자산 관리(/income·/expenses·/recurring) ───────────────────
 // 금액·항목·카테고리는 클라이언트 E2E 암호문 블롭(iv/ciphertext/authTag, base64url)으로 주고받는다.
 
+// ─── 자산 카테고리(/asset-categories) — 평문 이름·색 ─────────────
+export interface AssetCategory {
+    id: string
+    name: string
+    color: string
+    createdAt: string
+    updatedAt: string
+}
+
+export async function listAssetCategories(): Promise<AssetCategory[]> {
+    const { data } = await vaultClient.get<AssetCategory[]>("/asset-categories")
+    return data
+}
+
+export async function createAssetCategory(
+    name: string,
+    color: string,
+): Promise<AssetCategory> {
+    const { data } = await vaultClient.post<AssetCategory>(
+        "/asset-categories",
+        {
+            name,
+            color,
+        },
+    )
+    return data
+}
+
+export async function updateAssetCategory(
+    id: string,
+    patch: { name?: string; color?: string },
+): Promise<AssetCategory> {
+    const { data } = await vaultClient.patch<AssetCategory>(
+        `/asset-categories/${id}`,
+        patch,
+    )
+    return data
+}
+
+export async function deleteAssetCategory(id: string): Promise<void> {
+    await vaultClient.delete(`/asset-categories/${id}`)
+}
+
 export interface SealedBlobDto {
     iv: string
     ciphertext: string
@@ -344,6 +387,7 @@ export interface ExpenseView extends SealedBlobDto {
     date: string // "YYYY-MM-DD"
     recurringId: string | null
     period: string | null
+    categoryId: string | null
 }
 
 export interface RecurringView extends SealedBlobDto {
@@ -352,6 +396,7 @@ export interface RecurringView extends SealedBlobDto {
     startMonth: string
     termMonths: number | null
     active: boolean
+    categoryId: string | null
 }
 
 export async function listIncomes(month: string): Promise<IncomeView[]> {
@@ -400,6 +445,7 @@ export interface CreateExpenseInput extends SealedBlobDto {
     date: string
     recurringId?: string
     period?: string
+    categoryId?: string
 }
 
 export async function createExpense(
@@ -411,7 +457,11 @@ export async function createExpense(
 
 export async function updateExpense(
     id: string,
-    input: Partial<SealedBlobDto> & { date?: string; removed?: boolean },
+    input: Partial<SealedBlobDto> & {
+        date?: string
+        removed?: boolean
+        categoryId?: string
+    },
 ): Promise<ExpenseView> {
     const { data } = await vaultClient.patch<ExpenseView>(
         `/expenses/${id}`,
@@ -434,6 +484,7 @@ export async function createRecurring(
         dayOfMonth: number
         startMonth: string
         termMonths?: number
+        categoryId?: string
     },
 ): Promise<RecurringView> {
     const { data } = await vaultClient.post<RecurringView>("/recurring", input)
@@ -442,7 +493,11 @@ export async function createRecurring(
 
 export async function updateRecurring(
     id: string,
-    input: Partial<SealedBlobDto> & { dayOfMonth?: number; active?: boolean },
+    input: Partial<SealedBlobDto> & {
+        dayOfMonth?: number
+        active?: boolean
+        categoryId?: string
+    },
 ): Promise<RecurringView> {
     const { data } = await vaultClient.patch<RecurringView>(
         `/recurring/${id}`,

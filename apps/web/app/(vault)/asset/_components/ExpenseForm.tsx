@@ -1,7 +1,7 @@
 "use client"
 // 지출 추가/수정 폼(디자인 화면 12). 금액·항목·카테고리·결제방법을 VK 로 봉인해 저장한다.
 // 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만들고 당월 인스턴스를 함께 생성한다(이후 달 자동 생성).
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useVault } from "../../_lib/vault-context"
 import { isApiError } from "@/lib/api-error"
 import {
@@ -11,13 +11,9 @@ import {
     deleteRecurring,
     updateExpense,
     updateRecurring,
+    type AssetCategory,
 } from "@/lib/vault-client"
-import {
-    CATEGORIES,
-    METHODS,
-    categoryColor,
-    formatAmount,
-} from "../_lib/asset-categories"
+import { formatAmount } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
 import { monthOf, todayISO } from "../_lib/asset-dates"
 
@@ -26,16 +22,24 @@ export interface ExpenseFormInitial {
     date: string
     recurringId: string | null
     payload: ExpensePayload
+    categoryId: string | null
 }
 
 interface Props {
+    categories: AssetCategory[]
     initial: ExpenseFormInitial | null
     onSaved: () => void
     onCancel: () => void
     onDeleted: () => void
 }
 
-export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
+export function ExpenseForm({
+    categories,
+    initial,
+    onSaved,
+    onCancel,
+    onDeleted,
+}: Props) {
     const { vaultKey, resetIdle } = useVault()
     const isEdit = initial !== null
 
@@ -43,16 +47,23 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
         initial ? String(initial.payload.amount) : "",
     )
     const [item, setItem] = useState(initial?.payload.item ?? "")
-    const [category, setCategory] = useState(
-        initial?.payload.category ?? CATEGORIES[0].key,
+    const [categoryId, setCategoryId] = useState<string | null>(
+        initial?.categoryId ?? categories[0]?.id ?? null,
     )
-    const [method, setMethod] = useState(initial?.payload.method ?? METHODS[0])
     const [date, setDate] = useState(initial?.date ?? todayISO())
     const [recurring, setRecurring] = useState(false)
     const [termMonths, setTermMonths] = useState("")
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [deleteMenu, setDeleteMenu] = useState(false)
+
+    // 신규 폼에서 카테고리 목록이 비동기로 도착했을 때 첫 항목을 자동 선택한다.
+    // categoryId 가 이미 설정된 경우(수정 모드 또는 사용자가 직접 선택)에는 동작하지 않는다.
+    useEffect(() => {
+        if (initial === null && categoryId === null && categories.length > 0) {
+            setCategoryId(categories[0].id)
+        }
+    }, [categories, categoryId, initial])
 
     const amountNum = Number(amount || "0")
 
@@ -72,18 +83,21 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
             const payload: ExpensePayload = {
                 item: item.trim(),
                 amount: amountNum,
-                category,
-                method,
             }
             if (isEdit) {
                 const blob = await sealExpense(vaultKey, payload)
-                await updateExpense(initial.id, { date, ...blob })
+                await updateExpense(initial.id, {
+                    date,
+                    categoryId: categoryId ?? undefined,
+                    ...blob,
+                })
             } else if (recurring) {
                 const tmplBlob = await sealExpense(vaultKey, payload)
                 const term = Number(termMonths)
                 const tmpl = await createRecurring({
                     dayOfMonth: Number(date.slice(8, 10)),
                     startMonth: monthOf(date),
+                    categoryId: categoryId ?? undefined,
                     // 1 이상 정수면 기간 제한, 비었거나 0 이면 무기한(미전송).
                     ...(Number.isInteger(term) && term >= 1
                         ? { termMonths: term }
@@ -95,11 +109,16 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                     date,
                     recurringId: tmpl.id,
                     period: monthOf(date),
+                    categoryId: categoryId ?? undefined,
                     ...instBlob,
                 })
             } else {
                 const blob = await sealExpense(vaultKey, payload)
-                await createExpense({ date, ...blob })
+                await createExpense({
+                    date,
+                    categoryId: categoryId ?? undefined,
+                    ...blob,
+                })
             }
             onSaved()
         } catch (e) {
@@ -265,15 +284,15 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                         카테고리
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {CATEGORIES.map((c) => {
-                            const active = c.key === category
+                        {categories.map((c) => {
+                            const active = c.id === categoryId
                             return (
                                 <button
-                                    key={c.key}
+                                    key={c.id}
                                     type="button"
                                     onClick={() => {
                                         resetIdle()
-                                        setCategory(c.key)
+                                        setCategoryId(c.id)
                                     }}
                                     aria-pressed={active}
                                     className="chip"
@@ -293,46 +312,11 @@ export function ExpenseForm({ initial, onSaved, onCancel, onDeleted }: Props) {
                                             width: 9,
                                             height: 9,
                                             borderRadius: "50%",
-                                            background: categoryColor(c.key),
+                                            background: c.color,
                                             display: "inline-block",
                                         }}
                                     />
-                                    {c.key}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-
-                {/* 결제방법 */}
-                <div>
-                    <div className="field-label" style={{ marginBottom: 10 }}>
-                        결제방법
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {METHODS.map((m) => {
-                            const active = m === method
-                            return (
-                                <button
-                                    key={m}
-                                    type="button"
-                                    onClick={() => {
-                                        resetIdle()
-                                        setMethod(m)
-                                    }}
-                                    aria-pressed={active}
-                                    className="chip"
-                                    style={
-                                        active
-                                            ? {
-                                                  borderColor: "var(--ac)",
-                                                  background: "var(--soft)",
-                                                  color: "#222",
-                                              }
-                                            : undefined
-                                    }
-                                >
-                                    {m}
+                                    {c.name}
                                 </button>
                             )
                         })}

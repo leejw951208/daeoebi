@@ -27,6 +27,11 @@ export class CreateExpenseDto {
     @Matches(MONTH_RE, { message: "period 는 YYYY-MM 형식이어야 합니다." })
     period?: string
 
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    categoryId?: string
+
     @IsBase64url()
     iv!: string
 
@@ -58,4 +63,9 @@ export class UpdateExpenseDto {
     @IsOptional()
     @IsBoolean()
     removed?: boolean
+
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    categoryId?: string
 }
