@@ -24,14 +24,15 @@ export async function migrateExpenseCategories(
     let migrated = 0
     for (const e of expenses) {
         if (e.categoryId !== null) continue
-        const legacyName = await readLegacyCategory(vaultKey, e)
-        const id = matchCategoryId(legacyName, categories)
-        if (id === null) continue
         try {
-            await updateExpense(e.id, { categoryId: id })
-            migrated += 1
+            const legacyName = await readLegacyCategory(vaultKey, e)
+            const id = matchCategoryId(legacyName, categories)
+            if (id !== null) {
+                await updateExpense(e.id, { categoryId: id })
+                migrated += 1
+            }
         } catch {
-            // 개별 실패는 스킵(다음 로드에서 재시도 가능, 멱등).
+            // 개별 실패(복호화/네트워크)는 스킵하고 다음 항목으로 진행한다.
         }
     }
     return migrated
