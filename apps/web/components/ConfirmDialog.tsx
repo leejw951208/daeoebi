@@ -36,7 +36,8 @@ export function ConfirmDialog({
         confirmRef.current?.focus()
         const onKey = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
-                onCancel()
+                // 진행 중(삭제 등)엔 Esc 로 닫지 않는다(스피너 숨김·취소 혼선 방지).
+                if (!confirmLoading) onCancel()
                 return
             }
             if (e.key !== "Tab") return
@@ -59,7 +60,7 @@ export function ConfirmDialog({
         }
         document.addEventListener("keydown", onKey)
         return () => document.removeEventListener("keydown", onKey)
-    }, [open, onCancel])
+    }, [open, onCancel, confirmLoading])
 
     if (!open) return null
 
@@ -70,7 +71,8 @@ export function ConfirmDialog({
             aria-modal="true"
             aria-labelledby="dialog-title"
             onClick={(e) => {
-                if (e.target === e.currentTarget) onCancel()
+                // 진행 중엔 배경 클릭으로 닫지 않는다.
+                if (e.target === e.currentTarget && !confirmLoading) onCancel()
             }}
         >
             <div className="dialog" ref={dialogRef}>
