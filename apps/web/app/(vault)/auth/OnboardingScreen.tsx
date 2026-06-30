@@ -2,11 +2,9 @@
 // 온보딩/passkey 등록 화면. passkey 생성 → VK·복구코드 생성 → PRF·복구코드로 래핑 → register/verify → 복구코드 발급.
 import { useState } from "react"
 import { Lock, Check } from "lucide-react"
+import { Button } from "@/components/Button"
 import { Icon } from "@/components/Icon"
-import {
-    getRegisterOptions,
-    postRegisterVerify,
-} from "@/lib/vault-client"
+import { getRegisterOptions, postRegisterVerify } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import {
     generateRecoveryCode,
@@ -71,14 +69,21 @@ export function OnboardingScreen({ onUnlocked }: Props) {
             // prfSalt 를 먼저 만들어 등록 세레모니의 PRF eval 로 주입한다(출력은 이 salt 에 묶인다).
             const prfSalt = randomSalt()
             const options = await getRegisterOptions()
-            const { response, prfOutput } = await registerPasskey(options, prfSalt)
+            const { response, prfOutput } = await registerPasskey(
+                options,
+                prfSalt,
+            )
             if (!prfOutput) throw new PrfUnsupportedError()
 
             // VK·복구코드 생성 후 PRF·복구코드로 각각 래핑한다.
             const vaultKey = await generateVaultKey()
             const recovery = generateRecoveryCode()
             const rcSalt = randomSalt()
-            const wrappedVkPrf = await wrapVkWithPrf(vaultKey, prfOutput, prfSalt)
+            const wrappedVkPrf = await wrapVkWithPrf(
+                vaultKey,
+                prfOutput,
+                prfSalt,
+            )
             const wrappedVkRc = await wrapVkWithRecovery(
                 vaultKey,
                 recovery.bytes,
@@ -127,7 +132,14 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 minHeight: "70vh",
             }}
         >
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div
+                style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                }}
+            >
                 <span className="vault-emblem pop">
                     <Icon icon={Lock} size={26} />
                 </span>
@@ -135,9 +147,12 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 <h1 style={{ fontSize: 30, marginTop: 10, lineHeight: 1.25 }}>
                     비밀번호를 안전하게 잠가두고, 필요할 때만 엽니다
                 </h1>
-                <p className="muted" style={{ marginTop: 14, fontSize: 15, lineHeight: 1.6 }}>
-                    패스키 하나로 잠금해제합니다. 마스터 비밀번호도, PIN도 없습니다.
-                    암호화 키는 이 기기를 벗어나지 않습니다.
+                <p
+                    className="muted"
+                    style={{ marginTop: 14, fontSize: 15, lineHeight: 1.6 }}
+                >
+                    패스키 하나로 잠금해제합니다. 마스터 비밀번호도, PIN도
+                    없습니다. 암호화 키는 이 기기를 벗어나지 않습니다.
                 </p>
             </div>
 
@@ -180,27 +195,32 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 <p
                     id="bootstrap-token-hint"
                     className="muted"
-                    style={{ margin: "2px 0 0", fontSize: 12.5, lineHeight: 1.5 }}
+                    style={{
+                        margin: "2px 0 0",
+                        fontSize: 12.5,
+                        lineHeight: 1.5,
+                    }}
                 >
                     첫 등록에만 필요합니다. 배포 시 설정한 토큰을 입력하세요.
                 </p>
             </div>
 
-            <button
-                type="button"
-                className="btn"
+            <Button
+                variant="primary"
                 style={{ width: "100%" }}
                 onClick={handleRegister}
-                disabled={phase === "registering" || !token.trim()}
-                aria-busy={phase === "registering"}
+                loading={phase === "registering"}
+                disabled={!token.trim()}
             >
-                {phase === "registering"
-                    ? "패스키 만드는 중..."
-                    : "패스키 만들기"}
-            </button>
+                패스키 만들기
+            </Button>
 
             {error && (
-                <div role="alert" className="error-box" style={{ marginTop: 16 }}>
+                <div
+                    role="alert"
+                    className="error-box"
+                    style={{ marginTop: 16 }}
+                >
                     {error}
                 </div>
             )}

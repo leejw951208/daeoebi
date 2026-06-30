@@ -225,6 +225,61 @@ test("D. regression — 지출 폼에 결제방법 필드가 없다", async ({ p
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// F. Loading state — 추가 버튼이 진행 중에 aria-busy 됨
+// ─────────────────────────────────────────────────────────────────────────────
+test("F. loading — 추가 버튼이 진행 중에 aria-busy 됨", async ({ page }) => {
+    test.setTimeout(60_000)
+
+    const uniqueName = `QA로딩${Date.now()}`
+
+    await enterVaultAt(page, "/asset")
+
+    await expect(
+        page
+            .locator("div")
+            .filter({ hasText: /^자산$/ })
+            .first(),
+    ).toBeVisible({ timeout: 30_000 })
+
+    // Open CategoryManager.
+    await page.getByRole("button", { name: "카테고리 관리" }).click()
+    const dialog = page.getByRole("dialog", { name: "카테고리 관리" })
+    await expect(dialog).toBeVisible({ timeout: 10_000 })
+
+    // Intercept POST /asset-categories with a 300 ms delay so the loading
+    // state is observable before the response arrives.
+    await page.route("**/asset-categories", async (route) => {
+        if (route.request().method() === "POST") {
+            await new Promise<void>((resolve) => setTimeout(resolve, 300))
+        }
+        await route.continue()
+    })
+
+    // Fill the form.
+    await dialog.getByPlaceholder("이름 (최대 20자)").fill(uniqueName)
+    await dialog.getByRole("button", { name: "#4a90d9" }).click({ force: true })
+
+    // Click the add button and immediately assert aria-busy (while the
+    // delayed request is in-flight).
+    const addBtn = dialog.getByRole("button", { name: "+ 추가" })
+    await addBtn.click()
+    await expect(addBtn).toHaveAttribute("aria-busy", "true", { timeout: 500 })
+
+    // Wait for the new category to appear (request completes after delay).
+    await expect(dialog.getByText(uniqueName)).toBeVisible({ timeout: 10_000 })
+
+    // Remove the route interception.
+    await page.unroute("**/asset-categories")
+
+    // Clean up: delete the category that was created.
+    await dialog.getByRole("button", { name: "삭제" }).last().click()
+    const confirmDialog = page.getByRole("dialog", { name: "카테고리 삭제" })
+    await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
+    await confirmDialog.getByRole("button", { name: "삭제" }).click()
+    await expect(dialog.getByText(uniqueName)).toBeHidden({ timeout: 10_000 })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // E. Category chips are dynamic (API-backed)
 // ─────────────────────────────────────────────────────────────────────────────
 test("E. category chips — API 기반 카테고리가 동적으로 렌더된다", async ({

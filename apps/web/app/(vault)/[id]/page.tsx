@@ -40,6 +40,7 @@ export default function SecretDetailPage() {
     const [error, setError] = useState<string | null>(null)
     const [mode, setMode] = useState<"view" | "edit">("view")
     const [confirmDelete, setConfirmDelete] = useState(false)
+    const [deleteBusy, setDeleteBusy] = useState(false)
     // 삭제 확인 중인 필드 인덱스(null 이면 다이얼로그 닫힘). 필드 단위 삭제용.
     const [fieldToDelete, setFieldToDelete] = useState<number | null>(null)
     const [fieldBusy, setFieldBusy] = useState(false)
@@ -93,7 +94,7 @@ export default function SecretDetailPage() {
 
     async function handleDelete() {
         if (!data) return
-        setConfirmDelete(false)
+        setDeleteBusy(true)
         setError(null)
         try {
             await deleteSecret(data.id)
@@ -101,13 +102,15 @@ export default function SecretDetailPage() {
             startTransition(() => router.refresh())
         } catch (e) {
             setError((e as Error).message)
+        } finally {
+            setDeleteBusy(false)
+            setConfirmDelete(false)
         }
     }
 
     // 단일 필드 삭제. 나머지 필드·메모만 다시 암호화해 저장한 뒤 재조회한다.
     async function handleDeleteField(idx: number) {
         if (!data) return
-        setFieldToDelete(null)
         setFieldBusy(true)
         setError(null)
         try {
@@ -128,6 +131,7 @@ export default function SecretDetailPage() {
             setError(isApiError(e) ? e.message : (e as Error).message)
         } finally {
             setFieldBusy(false)
+            setFieldToDelete(null)
         }
     }
 
@@ -343,6 +347,7 @@ export default function SecretDetailPage() {
                 message="정말 삭제하시겠습니까?"
                 confirmLabel="삭제"
                 destructive
+                confirmLoading={deleteBusy}
                 onConfirm={handleDelete}
                 onCancel={() => setConfirmDelete(false)}
             />
@@ -357,6 +362,7 @@ export default function SecretDetailPage() {
                 }
                 confirmLabel="삭제"
                 destructive
+                confirmLoading={fieldBusy}
                 onConfirm={() => {
                     if (fieldToDelete !== null)
                         void handleDeleteField(fieldToDelete)

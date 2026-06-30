@@ -13,6 +13,7 @@ import {
     updateRecurring,
     type AssetCategory,
 } from "@/lib/vault-client"
+import { Button } from "@/components/Button"
 import { formatAmount } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
 import { monthOf, todayISO } from "../_lib/asset-dates"
@@ -192,15 +193,14 @@ export function ExpenseForm({
                 <div style={{ fontSize: 15, fontWeight: 700 }}>
                     {isEdit ? "지출 수정" : "지출 추가"}
                 </div>
-                <button
-                    type="button"
-                    className="btn-text"
+                <Button
+                    variant="text"
                     onClick={handleSave}
-                    disabled={busy}
+                    loading={busy}
                     style={{ color: "var(--ac)", fontWeight: 700 }}
                 >
                     저장
-                </button>
+                </Button>
             </div>
 
             <div
@@ -418,32 +418,29 @@ export function ExpenseForm({
                     >
                         {initial?.recurringId ? (
                             <>
-                                <button
-                                    type="button"
-                                    className="btn secondary"
+                                <Button
+                                    variant="secondary"
                                     onClick={handleDeactivate}
-                                    disabled={busy}
+                                    loading={busy}
                                 >
                                     고정 해제(이후 자동 생성 중단)
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn danger"
+                                </Button>
+                                <Button
+                                    variant="danger"
                                     onClick={() => setDeleteMenu(true)}
                                     disabled={busy}
                                 >
                                     삭제
-                                </button>
+                                </Button>
                             </>
                         ) : (
-                            <button
-                                type="button"
-                                className="btn danger"
+                            <Button
+                                variant="danger"
                                 onClick={handleDeleteThisMonth}
-                                disabled={busy}
+                                loading={busy}
                             >
                                 이 지출 삭제
-                            </button>
+                            </Button>
                         )}
                     </div>
                 )}
@@ -480,30 +477,28 @@ export function ExpenseForm({
                         >
                             무엇을 삭제할지 선택하세요.
                         </p>
-                        <button
-                            type="button"
-                            className="btn danger"
+                        <Button
+                            variant="danger"
                             style={{ width: "100%", marginBottom: 8 }}
                             onClick={() => {
                                 setDeleteMenu(false)
                                 void handleDeleteAll()
                             }}
-                            disabled={busy}
+                            loading={busy}
                         >
                             이 고정 전체 삭제(모든 달 기록 제거)
-                        </button>
-                        <button
-                            type="button"
-                            className="btn danger"
+                        </Button>
+                        <Button
+                            variant="danger"
                             style={{ width: "100%", marginBottom: 8 }}
                             onClick={() => {
                                 setDeleteMenu(false)
                                 void handleDeleteThisMonth()
                             }}
-                            disabled={busy}
+                            loading={busy}
                         >
                             이번 달만 삭제
-                        </button>
+                        </Button>
                         <button
                             type="button"
                             className="btn secondary"

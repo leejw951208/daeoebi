@@ -1,6 +1,7 @@
 "use client"
 // 수입 추가·편집 인라인 폼. 금액·항목명·카테고리 칩. 저장/암호화는 상위(IncomeSheet)가 처리한다.
 import { useState } from "react"
+import { Button } from "@/components/Button"
 import { INCOME_CATEGORIES, formatAmount } from "../../_lib/asset-categories"
 
 export interface IncomeDraft {
@@ -123,15 +124,14 @@ export function IncomeEntryForm({
                 >
                     취소
                 </button>
-                <button
-                    type="button"
-                    className="btn"
+                <Button
+                    variant="primary"
                     style={{ flex: 2 }}
                     onClick={submit}
-                    disabled={saving}
+                    loading={saving}
                 >
-                    {saving ? "저장 중…" : "저장"}
-                </button>
+                    저장
+                </Button>
             </div>
         </div>
     )

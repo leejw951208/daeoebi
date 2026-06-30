@@ -39,6 +39,7 @@ export function IncomeSheet({
     const { vaultKey, resetIdle } = useVault()
     const [mode, setMode] = useState<Mode>({ kind: "list" })
     const [saving, setSaving] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const [pendingDelete, setPendingDelete] = useState<ComputedIncome | null>(
         null,
     )
@@ -107,13 +108,16 @@ export function IncomeSheet({
     async function confirmDelete() {
         if (!pendingDelete) return
         const target = pendingDelete
-        setPendingDelete(null)
+        setDeleting(true)
         try {
             await deleteIncome(target.id)
             setDirty(true)
             await refreshLocalIncomes()
         } catch {
             // 무시(목록 그대로).
+        } finally {
+            setDeleting(false)
+            setPendingDelete(null)
         }
     }
 
@@ -234,6 +238,7 @@ export function IncomeSheet({
                     message={`'${pendingDelete.item || pendingDelete.category}' 수입을 삭제할까요?`}
                     confirmLabel="삭제"
                     destructive
+                    confirmLoading={deleting}
                     onConfirm={confirmDelete}
                     onCancel={() => setPendingDelete(null)}
                 />

@@ -1,6 +1,7 @@
 "use client"
 // 새 카테고리 추가 폼. 이름 입력 + 색상 선택 + 추가 버튼.
 import { useState } from "react"
+import { Button } from "@/components/Button"
 import { CATEGORY_PALETTE } from "../_lib/asset-categories"
 import { CategoryColorPicker } from "./CategoryColorPicker"
 
@@ -65,14 +66,15 @@ export function CategoryAddSection({
                     setColor(c)
                 }}
             />
-            <button
+            <Button
                 type="submit"
-                className="btn"
-                disabled={!name.trim() || saving}
+                variant="primary"
+                loading={saving}
+                disabled={!name.trim()}
                 style={{ width: "100%", marginTop: 12 }}
             >
-                {saving ? "추가 중…" : "+ 추가"}
-            </button>
+                + 추가
+            </Button>
         </form>
     )
 }

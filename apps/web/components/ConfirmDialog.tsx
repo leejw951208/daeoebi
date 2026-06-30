@@ -1,6 +1,8 @@
 "use client"
 // 모바일 bottom-sheet · 데스크탑 modal 스타일의 확인 다이얼로그. native confirm() 대체.
 import { useEffect, useRef } from "react"
+import { Button } from "@/components/Button"
+import { Spinner } from "@/components/Spinner"
 
 interface Props {
     open: boolean
@@ -9,6 +11,8 @@ interface Props {
     confirmLabel?: string
     cancelLabel?: string
     destructive?: boolean
+    /** true 이면 확인 버튼에 스피너를 표시하고 양쪽 버튼을 비활성화한다. */
+    confirmLoading?: boolean
     onConfirm: () => void
     onCancel: () => void
 }
@@ -20,6 +24,7 @@ export function ConfirmDialog({
     confirmLabel = "확인",
     cancelLabel = "취소",
     destructive,
+    confirmLoading = false,
     onConfirm,
     onCancel,
 }: Props) {
@@ -31,7 +36,8 @@ export function ConfirmDialog({
         confirmRef.current?.focus()
         const onKey = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
-                onCancel()
+                // 진행 중(삭제 등)엔 Esc 로 닫지 않는다(스피너 숨김·취소 혼선 방지).
+                if (!confirmLoading) onCancel()
                 return
             }
             if (e.key !== "Tab") return
@@ -54,7 +60,7 @@ export function ConfirmDialog({
         }
         document.addEventListener("keydown", onKey)
         return () => document.removeEventListener("keydown", onKey)
-    }, [open, onCancel])
+    }, [open, onCancel, confirmLoading])
 
     if (!open) return null
 
@@ -65,7 +71,8 @@ export function ConfirmDialog({
             aria-modal="true"
             aria-labelledby="dialog-title"
             onClick={(e) => {
-                if (e.target === e.currentTarget) onCancel()
+                // 진행 중엔 배경 클릭으로 닫지 않는다.
+                if (e.target === e.currentTarget && !confirmLoading) onCancel()
             }}
         >
             <div className="dialog" ref={dialogRef}>
@@ -74,19 +81,27 @@ export function ConfirmDialog({
                 </h2>
                 <p className="dialog-message">{message}</p>
                 <div className="dialog-actions">
-                    <button
-                        type="button"
-                        className="btn secondary"
+                    <Button
+                        variant="secondary"
+                        disabled={confirmLoading}
                         onClick={onCancel}
                     >
                         {cancelLabel}
-                    </button>
+                    </Button>
+                    {/* ref 로 오토포커스가 필요하므로 raw <button> 유지.
+                        Button 이 forwardRef 를 구현하지 않기 때문에 ref 를 전달할 수 없다.
+                        대신 Spinner·disabled·aria-busy 를 직접 적용해 동일 효과를 낸다. */}
                     <button
                         ref={confirmRef}
                         type="button"
                         className={destructive ? "btn danger" : "btn"}
+                        disabled={confirmLoading}
+                        aria-busy={confirmLoading || undefined}
                         onClick={onConfirm}
                     >
+                        {confirmLoading && (
+                            <Spinner size={16} className="btn-spinner" />
+                        )}
                         {confirmLabel}
                     </button>
                 </div>

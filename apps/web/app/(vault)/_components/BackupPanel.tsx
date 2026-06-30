@@ -3,6 +3,7 @@
 import { ChangeEvent, useRef, useState } from "react"
 import { exportStore, importStore, type ImportMode } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
+import { Button } from "@/components/Button"
 
 interface Props {
     onImported: () => Promise<void> | void
@@ -119,15 +120,14 @@ export function BackupPanel({ onImported }: Props) {
                     모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의
                     대외비 키로만 가능합니다.
                 </p>
-                <button
-                    type="button"
-                    className="btn"
+                <Button
+                    variant="primary"
                     style={{ width: "100%", minHeight: 50 }}
                     onClick={handleExport}
-                    disabled={busy}
+                    loading={busy}
                 >
                     백업 파일 다운로드
-                </button>
+                </Button>
             </section>
 
             {/* 가져오기 카드 */}
@@ -270,15 +270,15 @@ export function BackupPanel({ onImported }: Props) {
                     })}
                 </fieldset>
 
-                <button
-                    type="button"
-                    className="btn"
+                <Button
+                    variant="primary"
                     style={{ width: "100%", marginTop: 16, minHeight: 50 }}
                     onClick={handleImport}
-                    disabled={busy || pendingPayload === null}
+                    loading={busy}
+                    disabled={pendingPayload === null}
                 >
                     복원 실행
-                </button>
+                </Button>
             </section>
 
             {status && (
