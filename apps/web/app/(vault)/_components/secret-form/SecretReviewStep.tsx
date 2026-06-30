@@ -2,6 +2,7 @@
 // 시크릿 폼 2단계: 저장 전 확인. 제목·필드(마스킹 반영)·메모를 요약해 보여주고
 // "암호화하여 저장"으로 확정한다. 상태 없이 상위가 내려준 값·콜백만 사용한다.
 import type { FieldRow } from "./types"
+import { Button } from "@/components/Button"
 
 interface Props {
     label: string
@@ -193,15 +194,14 @@ export function SecretReviewStep({
                         "linear-gradient(180deg, rgba(255,255,255,0), #fff 30%)",
                 }}
             >
-                <button
-                    type="button"
-                    className="btn"
+                <Button
+                    variant="primary"
                     style={{ width: "100%" }}
                     onClick={onConfirm}
-                    disabled={submitting}
+                    loading={submitting}
                 >
-                    {submitting ? "암호화하여 저장 중…" : "암호화하여 저장"}
-                </button>
+                    암호화하여 저장
+                </Button>
             </div>
         </div>
     )
