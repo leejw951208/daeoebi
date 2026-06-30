@@ -308,7 +308,9 @@ a:hover {
     margin: 0 auto;
     padding: var(--container-padding);
     padding-top: var(--space-5);
-    padding-bottom: calc(var(--bottom-tab-height) + var(--space-4));
+    /* 하단 탭바 + 그 위에 뜨는 FAB(56px) 높이만큼 비워, 마지막 항목 금액이
+       FAB 에 가리지 않고 위로 스크롤되게 한다. */
+    padding-bottom: calc(var(--bottom-tab-height) + 56px + var(--space-4) * 2);
 }
 
 .card {
