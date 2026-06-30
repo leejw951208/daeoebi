@@ -28,6 +28,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
     const [pendingDelete, setPendingDelete] = useState<AssetCategory | null>(
         null,
     )
+    const [deleting, setDeleting] = useState(false)
     // 시트가 열려 있는 동안 쓰기가 1회 이상 발생했는지 추적한다.
     // 닫힐 때만 onChanged 를 호출해 부모 리로드를 1회로 합친다.
     const [dirty, setDirty] = useState(false)
@@ -87,7 +88,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
     async function confirmDelete() {
         if (!pendingDelete) return
         const target = pendingDelete
-        setPendingDelete(null)
+        setDeleting(true)
         setError(null)
         try {
             await deleteAssetCategory(target.id)
@@ -95,6 +96,9 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             setDirty(true)
         } catch (e) {
             setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
+        } finally {
+            setDeleting(false)
+            setPendingDelete(null)
         }
     }
 
@@ -195,6 +199,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                     message="이 카테고리의 지출은 미분류가 됩니다."
                     confirmLabel="삭제"
                     destructive
+                    confirmLoading={deleting}
                     onConfirm={confirmDelete}
                     onCancel={() => {
                         resetIdle()

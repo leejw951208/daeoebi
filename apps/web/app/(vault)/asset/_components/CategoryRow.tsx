@@ -2,6 +2,7 @@
 // 카테고리 목록 한 행. 보기·인라인 편집·삭제 트리거 지원.
 import { useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"
+import { Button } from "@/components/Button"
 import { CategoryColorPicker } from "./CategoryColorPicker"
 
 interface CategoryRowProps {
@@ -85,15 +86,14 @@ export function CategoryRow({
                     >
                         취소
                     </button>
-                    <button
-                        type="button"
-                        className="btn"
+                    <Button
+                        variant="primary"
                         onClick={handleSave}
-                        disabled={saving}
+                        loading={saving}
                         style={{ flex: 1 }}
                     >
-                        {saving ? "저장 중…" : "저장"}
-                    </button>
+                        저장
+                    </Button>
                 </div>
             </div>
         )
