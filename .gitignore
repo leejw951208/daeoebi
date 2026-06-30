@@ -17,6 +17,7 @@ apps/api/generated/
 # Playwright 테스트 출력 (재생성됨)
 **/test-results/
 **/playwright-report/
+apps/web/tests/e2e/__screenshots__/
 
 # 환경 변수
 .env
