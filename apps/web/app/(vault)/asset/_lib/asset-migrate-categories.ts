@@ -16,24 +16,28 @@ export function matchCategoryId(
 }
 
 // 대상 지출 목록에서 categoryId 없는 건을 이름 매칭으로 PATCH. 처리 건수 반환.
+// 항목별 try/catch 로 개별 실패를 격리하고, 전체를 병렬 실행한다.
 export async function migrateExpenseCategories(
     vaultKey: CryptoKey,
     categories: AssetCategory[],
     expenses: ExpenseView[],
 ): Promise<number> {
-    let migrated = 0
-    for (const e of expenses) {
-        if (e.categoryId !== null) continue
-        try {
-            const legacyName = await readLegacyCategory(vaultKey, e)
-            const id = matchCategoryId(legacyName, categories)
-            if (id !== null) {
-                await updateExpense(e.id, { categoryId: id })
-                migrated += 1
+    const targets = expenses.filter((e) => e.categoryId === null)
+    const counts = await Promise.all(
+        targets.map(async (e): Promise<number> => {
+            try {
+                const legacyName = await readLegacyCategory(vaultKey, e)
+                const id = matchCategoryId(legacyName, categories)
+                if (id !== null) {
+                    await updateExpense(e.id, { categoryId: id })
+                    return 1
+                }
+                return 0
+            } catch {
+                // 개별 실패(복호화/네트워크)는 스킵하고 다음 항목으로 진행한다.
+                return 0
             }
-        } catch {
-            // 개별 실패(복호화/네트워크)는 스킵하고 다음 항목으로 진행한다.
-        }
-    }
-    return migrated
+        }),
+    )
+    return counts.reduce((acc, n) => acc + n, 0)
 }
