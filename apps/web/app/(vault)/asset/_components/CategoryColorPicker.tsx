@@ -27,7 +27,7 @@ export function CategoryColorPicker({
                         background: color,
                         border:
                             value === color
-                                ? "3px solid var(--color-text)"
+                                ? "3px solid var(--ac)"
                                 : "3px solid transparent",
                         cursor: "pointer",
                         padding: 0,

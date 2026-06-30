@@ -1505,6 +1505,11 @@ input[type="date"].field-control {
     border-radius: 26px 26px 0 0;
     padding: 10px 22px 26px;
     animation: sheetUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+    /* 내용이 길어지면(카테고리·수입 많을 때) 시트 위쪽이 화면 밖으로 잘리지 않도록
+       높이를 제한하고 내부 스크롤한다. dvh 로 모바일 브라우저 UI 높이 변화 대응. */
+    max-height: 88dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 .sheet-grip {
     width: 38px;
