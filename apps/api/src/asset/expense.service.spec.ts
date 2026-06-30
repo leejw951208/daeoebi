@@ -80,6 +80,19 @@ describe("ExpenseService.create", () => {
         expect(data.recurringId).toBeNull()
     })
 
+    it("create 는 categoryId 를 저장하고 뷰에 포함한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.create.mockResolvedValue(row({ categoryId: "c1" }))
+        const view = await makeService(prisma).create({
+            date: "2026-06-27",
+            categoryId: "c1",
+            ...blob,
+        } as never)
+        const data = prisma.expense.create.mock.calls[0][0].data
+        expect(data.categoryId).toBe("c1")
+        expect(view.categoryId).toBe("c1")
+    })
+
     it("고정 인스턴스 중복(P2002)은 EXPENSE_DUPLICATE 로 변환한다", async () => {
         const prisma = makePrisma()
         prisma.expense.create.mockRejectedValue({ code: "P2002" })
