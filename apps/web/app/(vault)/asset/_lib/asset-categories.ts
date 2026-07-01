@@ -15,6 +15,22 @@ export const CATEGORY_PALETTE: string[] = [
     "#98a0a8",
 ]
 
+// 색상 hex 검증(서버 DTO 규칙과 동일: #rrggbb).
+export const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+export function isValidHexColor(v: string): boolean {
+    return HEX_COLOR_RE.test(v)
+}
+
+// 입력 정규화: 허용문자(#·hex)만 남기고, 선행 # 하나 보장, 소문자화, 최대 7자(#rrggbb).
+export function normalizeHexInput(raw: string): string {
+    const cleaned = raw
+        .replace(/[^#0-9a-fA-F]/g, "")
+        .replace(/#/g, "")
+        .toLowerCase()
+    if (cleaned === "") return ""
+    return `#${cleaned}`.slice(0, 7)
+}
+
 // categoryId 가 null 이거나 목록에 없을 때의 표시값.
 export const UNCATEGORIZED = { name: "미분류", color: "#98a0a8" } as const
 

@@ -2,8 +2,8 @@
 // 새 카테고리 추가 폼. 이름 입력 + 색상 선택 + 추가 버튼.
 import { useState } from "react"
 import { Button } from "@/components/Button"
-import { CATEGORY_PALETTE } from "../_lib/asset-categories"
-import { CategoryColorPicker } from "./CategoryColorPicker"
+import { CATEGORY_PALETTE, isValidHexColor } from "../_lib/asset-categories"
+import { CategoryColorInput } from "./CategoryColorInput"
 
 interface CategoryAddSectionProps {
     onAdd: (name: string, color: string) => Promise<void>
@@ -37,29 +37,23 @@ export function CategoryAddSection({
 
     return (
         <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
-            <div
-                style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "var(--color-text-muted)",
-                    marginBottom: 8,
-                }}
-            >
-                새 카테고리
+            <div className="field-label" style={{ marginBottom: 8 }}>
+                이름
             </div>
             <input
                 type="text"
-                className="input"
-                placeholder="이름 (최대 20자)"
+                className="field-control"
+                placeholder="예: 식비"
                 value={name}
                 maxLength={20}
+                aria-label="카테고리 이름"
                 onChange={(e) => {
                     onActivity()
                     setName(e.target.value)
                 }}
-                style={{ marginBottom: 10 }}
+                style={{ marginBottom: 12 }}
             />
-            <CategoryColorPicker
+            <CategoryColorInput
                 value={color}
                 onChange={(c) => {
                     onActivity()
@@ -70,7 +64,7 @@ export function CategoryAddSection({
                 type="submit"
                 variant="primary"
                 loading={saving}
-                disabled={!name.trim()}
+                disabled={!name.trim() || !isValidHexColor(color)}
                 style={{ width: "100%", marginTop: 12 }}
             >
                 + 추가
