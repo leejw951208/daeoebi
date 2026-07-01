@@ -2,10 +2,12 @@
 // 공개 데모 화면(/demo). 인증 없이 누구나 들어와 구조를 둘러볼 수 있다.
 // 실제 금고와 완전히 분리된다 — vault-client·실제 인증·실제 데이터를 일절 쓰지 않고
 // 메모리상 가짜 데이터(demo-data)로만 목록 → 상세 → 폼 흐름을 재현한다.
-import { useMemo, useState } from "react"
+import { type CSSProperties, useMemo, useState } from "react"
+import { Button } from "@/components/Button"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { CopyField } from "../(vault)/_components/CopyField"
 import { isSensitiveFieldName } from "../(vault)/_lib/field-suggestions"
+import { DemoAssetScreen } from "./DemoAssetScreen"
 import { DemoSecretForm } from "./DemoSecretForm"
 import { DEMO_SEED, type DemoField, type DemoSecret } from "./demo-data"
 
@@ -18,6 +20,7 @@ type View =
 let newSeq = 0
 
 export default function DemoPage() {
+    const [tab, setTab] = useState<"secret" | "asset">("secret")
     const [secrets, setSecrets] = useState<DemoSecret[]>(DEMO_SEED)
     const [view, setView] = useState<View>({ kind: "list" })
     const [query, setQuery] = useState("")
@@ -83,11 +86,23 @@ export default function DemoPage() {
         )
     }
 
+    // ── 가계부 탭 ──
+    if (tab === "asset") {
+        return (
+            <section>
+                <DemoBanner />
+                <DemoTabs tab={tab} onTab={setTab} />
+                <DemoAssetScreen />
+            </section>
+        )
+    }
+
     // ── 폼(신규/수정) ──
     if (view.kind === "new" || view.kind === "edit") {
         return (
             <section>
                 <DemoBanner />
+                <DemoTabs tab={tab} onTab={setTab} />
                 <DemoSecretForm
                     initial={view.kind === "edit" ? current : null}
                     onSave={saveSecret}
@@ -109,20 +124,18 @@ export default function DemoPage() {
             return (
                 <section>
                     <DemoBanner />
+                    <DemoTabs tab={tab} onTab={setTab} />
                     <p className="muted">항목을 찾을 수 없습니다.</p>
-                    <button
-                        type="button"
-                        className="btn"
-                        onClick={() => setView({ kind: "list" })}
-                    >
+                    <Button onClick={() => setView({ kind: "list" })}>
                         데모 목록으로
-                    </button>
+                    </Button>
                 </section>
             )
         }
         return (
             <section>
                 <DemoBanner />
+                <DemoTabs tab={tab} onTab={setTab} />
                 <div
                     className="sticky-header"
                     style={{
@@ -211,24 +224,22 @@ export default function DemoPage() {
                     </dl>
 
                     <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-                        <button
-                            type="button"
-                            className="btn secondary"
+                        <Button
+                            variant="secondary"
                             style={{ flex: 1, minHeight: 48 }}
                             onClick={() =>
                                 setView({ kind: "edit", id: current.id })
                             }
                         >
                             수정
-                        </button>
-                        <button
-                            type="button"
-                            className="btn danger"
+                        </Button>
+                        <Button
+                            variant="danger"
                             style={{ flex: 1, minHeight: 48 }}
                             onClick={() => setConfirmDeleteId(current.id)}
                         >
                             삭제
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
@@ -266,6 +277,7 @@ export default function DemoPage() {
     return (
         <section>
             <DemoBanner />
+            <DemoTabs tab={tab} onTab={setTab} />
             <div className="sticky-header">
                 <div
                     style={{
@@ -444,4 +456,59 @@ function DemoBanner() {
 // 데모 항목 타임스탬프용. 실제 저장이 없으므로 표시 목적으로만 쓴다.
 function nowIso(): string {
     return new Date().toISOString()
+}
+
+// 비밀번호 ↔ 가계부 탭 토글.
+function DemoTabs({
+    tab,
+    onTab,
+}: {
+    tab: "secret" | "asset"
+    onTab: (t: "secret" | "asset") => void
+}) {
+    const base: CSSProperties = {
+        flex: 1,
+        padding: "8px 0",
+        fontSize: 13,
+        fontWeight: 700,
+        borderRadius: 10,
+        border: "none",
+        cursor: "pointer",
+    }
+    return (
+        <div
+            style={{
+                display: "flex",
+                gap: 6,
+                background: "var(--soft)",
+                padding: 4,
+                borderRadius: 12,
+                margin: "12px 0 16px",
+            }}
+        >
+            <button
+                type="button"
+                onClick={() => onTab("secret")}
+                style={{
+                    ...base,
+                    background: tab === "secret" ? "#fff" : "transparent",
+                    color:
+                        tab === "secret" ? "#222" : "var(--color-text-muted)",
+                }}
+            >
+                비밀번호
+            </button>
+            <button
+                type="button"
+                onClick={() => onTab("asset")}
+                style={{
+                    ...base,
+                    background: tab === "asset" ? "#fff" : "transparent",
+                    color: tab === "asset" ? "#222" : "var(--color-text-muted)",
+                }}
+            >
+                가계부
+            </button>
+        </div>
+    )
 }
