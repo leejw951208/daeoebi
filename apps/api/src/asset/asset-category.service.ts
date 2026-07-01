@@ -1,5 +1,9 @@
 // 자산(지출) 카테고리 CRUD. 전역 평문. 목록이 비면 기본 8종을 시드한다.
-import { Injectable, NotFoundException } from "@nestjs/common"
+import {
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import {
     CreateAssetCategoryDto,
@@ -35,6 +39,7 @@ export class AssetCategoryService {
     }
 
     async create(dto: CreateAssetCategoryDto) {
+        await this.assertNameAvailable(dto.name)
         return this.prisma.assetCategory.create({
             data: { name: dto.name, color: dto.color },
         })
@@ -42,7 +47,10 @@ export class AssetCategoryService {
 
     async update(id: string, dto: UpdateAssetCategoryDto) {
         const data: { name?: string; color?: string } = {}
-        if (dto.name !== undefined) data.name = dto.name
+        if (dto.name !== undefined) {
+            await this.assertNameAvailable(dto.name, id)
+            data.name = dto.name
+        }
         if (dto.color !== undefined) data.color = dto.color
         try {
             return await this.prisma.assetCategory.update({
@@ -62,6 +70,23 @@ export class AssetCategoryService {
         } catch (e: unknown) {
             if (this.isRecordNotFound(e)) throw this.notFound()
             throw e
+        }
+    }
+
+    // 같은 이름의 카테고리가 이미 있으면 거부한다(수정 시 자기 자신은 제외).
+    private async assertNameAvailable(
+        name: string,
+        excludeId?: string,
+    ): Promise<void> {
+        const existing = await this.prisma.assetCategory.findFirst({
+            where: excludeId ? { name, id: { not: excludeId } } : { name },
+            select: { id: true },
+        })
+        if (existing) {
+            throw new ConflictException({
+                code: ASSET_ERRORS.ASSET_CATEGORY_DUPLICATE,
+                message: "같은 이름의 카테고리가 이미 있습니다.",
+            })
         }
     }
 

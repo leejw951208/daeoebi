@@ -9,9 +9,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service"
 import { fromBase64url, toBase64url } from "../common/base64url"
 import { CreateExpenseDto, UpdateExpenseDto } from "./dto/expense.dto"
-import { ASSET_ERRORS } from "./asset.types"
-
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+import { ASSET_ERRORS, MONTH_RE } from "./asset.types"
 
 function prismaBytes(value: Uint8Array): Uint8Array<ArrayBuffer> {
     return new Uint8Array(value)

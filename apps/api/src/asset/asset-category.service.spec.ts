@@ -10,6 +10,7 @@ function makePrisma() {
             update: jest.fn(),
             delete: jest.fn(),
             findUnique: jest.fn(),
+            findFirst: jest.fn().mockResolvedValue(null),
         },
     }
 }
@@ -58,6 +59,34 @@ describe("AssetCategoryService", () => {
             data: { name: "여행", color: "#3bb273" },
         })
         expect(result).toEqual({ id: "9" })
+    })
+
+    it("create 는 같은 이름이 있으면 409 DUPLICATE", async () => {
+        const prisma = makePrisma()
+        prisma.assetCategory.findFirst.mockResolvedValue({ id: "existing" })
+        const svc = new AssetCategoryService(prisma as never)
+
+        await expect(
+            svc.create({ name: "식비", color: "#3bb273" }),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.ASSET_CATEGORY_DUPLICATE },
+        })
+        expect(prisma.assetCategory.create).not.toHaveBeenCalled()
+    })
+
+    it("update 는 다른 카테고리와 이름이 겹치면 409 DUPLICATE", async () => {
+        const prisma = makePrisma()
+        prisma.assetCategory.findFirst.mockResolvedValue({ id: "other" })
+        const svc = new AssetCategoryService(prisma as never)
+
+        await expect(svc.update("1", { name: "식비" })).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.ASSET_CATEGORY_DUPLICATE },
+        })
+        expect(prisma.assetCategory.findFirst).toHaveBeenCalledWith({
+            where: { name: "식비", id: { not: "1" } },
+            select: { id: true },
+        })
+        expect(prisma.assetCategory.update).not.toHaveBeenCalled()
     })
 
     it("update 는 존재하지 않으면 404(update 가 P2025 로 거부)", async () => {

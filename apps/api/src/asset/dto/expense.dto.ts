@@ -9,9 +9,7 @@ import {
     Matches,
     MinLength,
 } from "class-validator"
-
-// "YYYY-MM" 월 키. 목록 조회·고정 인스턴스 period 에 쓰인다.
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+import { MONTH_RE } from "../asset.types"
 
 export class CreateExpenseDto {
     // "YYYY-MM-DD" 또는 ISO 8601. 서버는 날짜(@db.Date)로 저장한다.

@@ -11,8 +11,7 @@ import {
     Min,
     MinLength,
 } from "class-validator"
-
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+import { MONTH_RE } from "../asset.types"
 
 export class CreateRecurringDto {
     @IsInt()
