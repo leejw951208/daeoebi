@@ -6,9 +6,17 @@
 
 ## 미리보기
 
+**비밀번호**
+
 | 시작 | 목록 | 상세 | 추가 |
 |:---:|:---:|:---:|:---:|
 | <img src="docs/images/onboarding.png" width="200" alt="패스키로 시작하는 온보딩 화면" /> | <img src="docs/images/list.png" width="200" alt="사이트별 비밀번호 목록" /> | <img src="docs/images/detail.png" width="200" alt="비밀번호 상세 화면" /> | <img src="docs/images/new.png" width="200" alt="새 항목 추가 화면" /> |
+
+**가계부**
+
+| 대시보드 | 카테고리 관리 | 지출 추가 |
+|:---:|:---:|:---:|
+| <img src="docs/images/asset-dashboard.png" width="200" alt="남은 돈·수입/지출·카테고리별 분해 대시보드" /> | <img src="docs/images/asset-category.png" width="200" alt="카테고리 관리(이름·HEX 색상)" /> | <img src="docs/images/asset-new.png" width="200" alt="지출 추가 화면" /> |
 
 ## 데모
 
