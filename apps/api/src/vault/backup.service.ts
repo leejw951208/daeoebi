@@ -122,83 +122,100 @@ export class BackupService {
             const secrets = { created: 0, skipped: 0, replaced: 0 }
 
             // 외래키 순서대로 사이트 → 카테고리 → 비밀번호 순으로 적재한다.
-            for (const s of dto.sites) {
-                if (haveSites.has(s.id)) {
-                    if (mode === "skip") {
-                        sites.skipped += 1
-                        continue
-                    }
+            // 신규 행은 테이블별 createMany 로 일괄 삽입(왕복 최소화), 충돌 행만 개별 update.
+            const newSites = dto.sites.filter((s) => !haveSites.has(s.id))
+            const conflictSites = dto.sites.filter((s) => haveSites.has(s.id))
+            if (mode === "skip") {
+                sites.skipped += conflictSites.length
+            } else {
+                for (const s of conflictSites) {
                     await tx.site.update({
                         where: { id: s.id },
                         data: { label: s.label, icon: s.icon ?? null },
                     })
                     sites.replaced += 1
-                } else {
-                    await tx.site.create({
-                        data: {
-                            id: s.id,
-                            label: s.label,
-                            icon: s.icon ?? null,
-                            createdAt: new Date(s.createdAt),
-                            updatedAt: new Date(s.updatedAt),
-                        },
-                    })
-                    sites.created += 1
                 }
             }
+            if (newSites.length > 0) {
+                await tx.site.createMany({
+                    data: newSites.map((s) => ({
+                        id: s.id,
+                        label: s.label,
+                        icon: s.icon ?? null,
+                        createdAt: new Date(s.createdAt),
+                        updatedAt: new Date(s.updatedAt),
+                    })),
+                })
+                sites.created += newSites.length
+            }
 
-            for (const c of dto.categories) {
-                if (haveCats.has(c.id)) {
-                    if (mode === "skip") {
-                        categories.skipped += 1
-                        continue
-                    }
+            const newCats = dto.categories.filter((c) => !haveCats.has(c.id))
+            const conflictCats = dto.categories.filter((c) =>
+                haveCats.has(c.id),
+            )
+            if (mode === "skip") {
+                categories.skipped += conflictCats.length
+            } else {
+                for (const c of conflictCats) {
                     await tx.category.update({
                         where: { id: c.id },
                         data: { siteId: c.siteId, label: c.label },
                     })
                     categories.replaced += 1
-                } else {
-                    await tx.category.create({
-                        data: {
-                            id: c.id,
-                            siteId: c.siteId,
-                            label: c.label,
-                            createdAt: new Date(c.createdAt),
-                            updatedAt: new Date(c.updatedAt),
-                        },
-                    })
-                    categories.created += 1
                 }
             }
+            if (newCats.length > 0) {
+                await tx.category.createMany({
+                    data: newCats.map((c) => ({
+                        id: c.id,
+                        siteId: c.siteId,
+                        label: c.label,
+                        createdAt: new Date(c.createdAt),
+                        updatedAt: new Date(c.updatedAt),
+                    })),
+                })
+                categories.created += newCats.length
+            }
 
-            for (const s of dto.secrets) {
-                const data = {
-                    siteId: s.siteId,
-                    categoryId: s.categoryId ?? null,
-                    label: s.label,
-                    iv: prismaBytes(fromBase64url(s.iv)),
-                    ciphertext: prismaBytes(fromBase64url(s.ciphertext)),
-                    authTag: prismaBytes(fromBase64url(s.authTag)),
-                }
-                if (haveSecrets.has(s.id)) {
-                    if (mode === "skip") {
-                        secrets.skipped += 1
-                        continue
-                    }
-                    await tx.secret.update({ where: { id: s.id }, data })
-                    secrets.replaced += 1
-                } else {
-                    await tx.secret.create({
+            const newSecrets = dto.secrets.filter((s) => !haveSecrets.has(s.id))
+            const conflictSecrets = dto.secrets.filter((s) =>
+                haveSecrets.has(s.id),
+            )
+            if (mode === "skip") {
+                secrets.skipped += conflictSecrets.length
+            } else {
+                for (const s of conflictSecrets) {
+                    await tx.secret.update({
+                        where: { id: s.id },
                         data: {
-                            id: s.id,
-                            ...data,
-                            createdAt: new Date(s.createdAt),
-                            updatedAt: new Date(s.updatedAt),
+                            siteId: s.siteId,
+                            categoryId: s.categoryId ?? null,
+                            label: s.label,
+                            iv: prismaBytes(fromBase64url(s.iv)),
+                            ciphertext: prismaBytes(
+                                fromBase64url(s.ciphertext),
+                            ),
+                            authTag: prismaBytes(fromBase64url(s.authTag)),
                         },
                     })
-                    secrets.created += 1
+                    secrets.replaced += 1
                 }
+            }
+            if (newSecrets.length > 0) {
+                await tx.secret.createMany({
+                    data: newSecrets.map((s) => ({
+                        id: s.id,
+                        siteId: s.siteId,
+                        categoryId: s.categoryId ?? null,
+                        label: s.label,
+                        iv: prismaBytes(fromBase64url(s.iv)),
+                        ciphertext: prismaBytes(fromBase64url(s.ciphertext)),
+                        authTag: prismaBytes(fromBase64url(s.authTag)),
+                        createdAt: new Date(s.createdAt),
+                        updatedAt: new Date(s.updatedAt),
+                    })),
+                })
+                secrets.created += newSecrets.length
             }
 
             return { sites, categories, secrets }

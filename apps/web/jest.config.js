@@ -26,10 +26,12 @@ module.exports = {
         {
             displayName: "jsdom",
             moduleFileExtensions: ["js", "json", "ts", "tsx"],
-            rootDir: "app",
+            // 웹 패키지 루트. app/ 뿐 아니라 components/ 의 .spec.tsx 도 잡는다.
+            rootDir: ".",
             testRegex: ".*\\.spec\\.tsx$",
+            testPathIgnorePatterns: ["/node_modules/", "/.next/"],
             moduleNameMapper: {
-                "^@/(.*)$": "<rootDir>/../$1",
+                "^@/(.*)$": "<rootDir>/$1",
             },
             transform: {
                 "^.+\\.(t|j)sx?$": [

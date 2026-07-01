@@ -58,6 +58,19 @@ describe("asset-compute", () => {
         expect(rows[0]).toMatchObject({ name: "미분류", amount: 5000 })
     })
 
+    it("byCategory 는 목록에 없는 categoryId 를 미분류로 합쳐 하나의 행으로 만든다", () => {
+        const rows = byCategory(
+            [
+                exp({ categoryId: "gone", amount: 4000 }),
+                exp({ categoryId: null, amount: 1000 }),
+            ],
+            CATS,
+        )
+        const uncategorized = rows.filter((r) => r.name === "미분류")
+        expect(uncategorized).toHaveLength(1)
+        expect(uncategorized[0]).toMatchObject({ amount: 5000 })
+    })
+
     it("byCategory 는 지출 0인 항목을 제외한다", () => {
         const rows = byCategory([exp({ categoryId: "c1", amount: 0 })], CATS)
         expect(rows).toHaveLength(0)

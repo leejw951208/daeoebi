@@ -12,7 +12,13 @@ const TAG = Buffer.alloc(16, 3).toString("base64url")
 const ISO = "2026-01-01T00:00:00.000Z"
 
 function siteRow(id: string): ImportBackupDto["sites"][number] {
-    return { id, label: `라벨-${id}`, icon: null, createdAt: ISO, updatedAt: ISO }
+    return {
+        id,
+        label: `라벨-${id}`,
+        icon: null,
+        createdAt: ISO,
+        updatedAt: ISO,
+    }
 }
 function secretRow(
     id: string,
@@ -42,17 +48,17 @@ function makeTx(existing: {
     return {
         site: {
             findMany: jest.fn().mockResolvedValue(ids(existing.sites)),
-            create: jest.fn().mockResolvedValue({}),
+            createMany: jest.fn().mockResolvedValue({ count: 0 }),
             update: jest.fn().mockResolvedValue({}),
         },
         category: {
             findMany: jest.fn().mockResolvedValue(ids(existing.categories)),
-            create: jest.fn().mockResolvedValue({}),
+            createMany: jest.fn().mockResolvedValue({ count: 0 }),
             update: jest.fn().mockResolvedValue({}),
         },
         secret: {
             findMany: jest.fn().mockResolvedValue(ids(existing.secrets)),
-            create: jest.fn().mockResolvedValue({}),
+            createMany: jest.fn().mockResolvedValue({ count: 0 }),
             update: jest.fn().mockResolvedValue({}),
         },
     }
@@ -66,9 +72,7 @@ function makePrismaForImport(existing: Parameters<typeof makeTx>[0]) {
     return { prisma, tx }
 }
 
-function importDto(
-    partial: Partial<ImportBackupDto> = {},
-): ImportBackupDto {
+function importDto(partial: Partial<ImportBackupDto> = {}): ImportBackupDto {
     return {
         version: "1",
         sites: [],
@@ -130,7 +134,13 @@ describe("BackupService.import 무결성", () => {
         const service = new BackupService(prisma as unknown as never)
         const dto = importDto({
             categories: [
-                { id: "c1", siteId: "ghost", label: "x", createdAt: ISO, updatedAt: ISO },
+                {
+                    id: "c1",
+                    siteId: "ghost",
+                    label: "x",
+                    createdAt: ISO,
+                    updatedAt: ISO,
+                },
             ],
         })
         await expect(service.import(dto, "reject")).rejects.toMatchObject({
@@ -165,7 +175,8 @@ describe("BackupService.import 충돌 모드", () => {
         const dto = importDto({ sites: [siteRow("site1"), siteRow("site2")] })
         const result = await service.import(dto, "skip" as ImportMode)
         expect(result.sites).toEqual({ created: 1, skipped: 1, replaced: 0 })
-        expect(tx.site.create).toHaveBeenCalledTimes(1)
+        expect(tx.site.createMany).toHaveBeenCalledTimes(1)
+        expect(tx.site.createMany.mock.calls[0][0].data).toHaveLength(1)
         expect(tx.site.update).not.toHaveBeenCalled()
     })
 
@@ -179,7 +190,8 @@ describe("BackupService.import 충돌 모드", () => {
         const result = await service.import(dto, "replace" as ImportMode)
         expect(result.secrets).toEqual({ created: 1, skipped: 0, replaced: 1 })
         expect(tx.secret.update).toHaveBeenCalledTimes(1)
-        expect(tx.secret.create).toHaveBeenCalledTimes(1)
+        expect(tx.secret.createMany).toHaveBeenCalledTimes(1)
+        expect(tx.secret.createMany.mock.calls[0][0].data).toHaveLength(1)
     })
 
     it("신규 전부면 created 카운트만 증가한다", async () => {
@@ -193,7 +205,7 @@ describe("BackupService.import 충돌 모드", () => {
         expect(result.sites.created).toBe(1)
         expect(result.secrets.created).toBe(1)
         // 신규 secret 은 암호문 블롭을 디코드해 저장한다.
-        const data = tx.secret.create.mock.calls[0][0].data
+        const data = tx.secret.createMany.mock.calls[0][0].data[0]
         expect(Buffer.from(data.iv)).toEqual(Buffer.alloc(12, 1))
     })
 })

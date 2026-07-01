@@ -8,11 +8,13 @@ import {
 } from "class-validator"
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/
+// 카테고리 이름 최대 길이. 클라이언트 입력 상한(maxLength=20)과 일치시킨다.
+const NAME_MAX = 20
 
 export class CreateAssetCategoryDto {
     @IsString()
     @MinLength(1)
-    @MaxLength(100)
+    @MaxLength(NAME_MAX)
     name!: string
 
     @Matches(HEX_RE, { message: "color 는 #rrggbb 형식이어야 합니다." })
@@ -23,7 +25,7 @@ export class UpdateAssetCategoryDto {
     @IsOptional()
     @IsString()
     @MinLength(1)
-    @MaxLength(100)
+    @MaxLength(NAME_MAX)
     name?: string
 
     @IsOptional()

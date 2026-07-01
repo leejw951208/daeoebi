@@ -2,7 +2,6 @@
 // 모바일 bottom-sheet · 데스크탑 modal 스타일의 확인 다이얼로그. native confirm() 대체.
 import { useEffect, useRef } from "react"
 import { Button } from "@/components/Button"
-import { Spinner } from "@/components/Spinner"
 
 interface Props {
     open: boolean
@@ -88,22 +87,14 @@ export function ConfirmDialog({
                     >
                         {cancelLabel}
                     </Button>
-                    {/* ref 로 오토포커스가 필요하므로 raw <button> 유지.
-                        Button 이 forwardRef 를 구현하지 않기 때문에 ref 를 전달할 수 없다.
-                        대신 Spinner·disabled·aria-busy 를 직접 적용해 동일 효과를 낸다. */}
-                    <button
+                    <Button
                         ref={confirmRef}
-                        type="button"
-                        className={destructive ? "btn danger" : "btn"}
-                        disabled={confirmLoading}
-                        aria-busy={confirmLoading || undefined}
+                        variant={destructive ? "danger" : "primary"}
+                        loading={confirmLoading}
                         onClick={onConfirm}
                     >
-                        {confirmLoading && (
-                            <Spinner size={16} className="btn-spinner" />
-                        )}
                         {confirmLabel}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
