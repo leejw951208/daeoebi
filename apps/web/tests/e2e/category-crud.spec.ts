@@ -164,11 +164,9 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // Fill name + pick second palette color (#4a90d9).
-        await dialog.getByPlaceholder("이름 (최대 20자)").fill(UNIQUE)
-        const addSwatch = dialog.getByRole("button", { name: "#4a90d9" })
-        await addSwatch.scrollIntoViewIfNeeded()
-        await addSwatch.click()
+        // 이름 입력 + HEX 색상 입력(팔레트 제거됨).
+        await dialog.getByLabel("카테고리 이름").fill(UNIQUE)
+        await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
         await dialog.getByRole("button", { name: "+ 추가" }).click()
 
         // Assert new category appears in the manager list.
@@ -225,20 +223,13 @@ test.describe.serial("카테고리 관리 CRUD", () => {
             .locator("xpath=../../div[2]/button[1]")
             .click()
 
-        // In edit mode the row has an input WITHOUT a placeholder (the add-form
-        // input has placeholder "이름 (최대 20자)").
+        // 편집 행의 이름 입력만 className="input"(추가 폼은 field-control).
         const editInput = dialog.locator("input.input:not([placeholder])")
         await editInput.clear()
         await editInput.fill(RENAMED)
 
-        // Change color to third palette color (#9b6bd6).
-        // In edit mode the dialog contains TWO color pickers (add form + edit row).
-        // Use .last() to target the edit row's palette, not the add form's.
-        const editSwatch = dialog
-            .getByRole("button", { name: "#9b6bd6" })
-            .last()
-        await editSwatch.scrollIntoViewIfNeeded()
-        await editSwatch.click()
+        // 색상 HEX 입력: 편집 모드엔 입력이 둘(추가 폼 + 편집 행)이므로 .last()=편집 행.
+        await dialog.getByLabel("색상 HEX 코드").last().fill("#9b6bd6")
 
         // Save.
         await dialog.getByRole("button", { name: "저장" }).click()
