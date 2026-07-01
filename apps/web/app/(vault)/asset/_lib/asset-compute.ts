@@ -33,9 +33,14 @@ export function byCategory(
     categories: AssetCategory[],
 ): CategoryBreakdown[] {
     const total = totalSpent(items)
+    // 목록에 없는(삭제됐거나 stale) categoryId 는 미분류로 합쳐 "미분류" 행이 쪼개지지 않게 한다.
+    const validIds = new Set(categories.map((c) => c.id))
     const sums = new Map<string, number>()
     for (const e of items) {
-        const key = e.categoryId ?? UNCATEGORIZED_KEY
+        const key =
+            e.categoryId && validIds.has(e.categoryId)
+                ? e.categoryId
+                : UNCATEGORIZED_KEY
         sums.set(key, (sums.get(key) ?? 0) + e.amount)
     }
     return [...sums.entries()]
