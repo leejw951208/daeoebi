@@ -1,3 +1,6 @@
+// 월 문자열 검증 정규식 "YYYY-MM"(01–12). DTO·서비스 공용.
+export const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+
 // 자산(가계부) 도메인 에러 코드.
 export const ASSET_ERRORS = {
     EXPENSE_NOT_FOUND: "EXPENSE_NOT_FOUND",

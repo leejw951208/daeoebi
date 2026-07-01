@@ -2,8 +2,7 @@
 // month 는 평문(월 범위 조회 귀속 키)이다.
 import { IsBase64url } from "../../common/base64url"
 import { IsOptional, Matches } from "class-validator"
-
-const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+import { MONTH_RE } from "../asset.types"
 
 export class CreateIncomeDto {
     @Matches(MONTH_RE, { message: "month 는 YYYY-MM 형식이어야 합니다." })
