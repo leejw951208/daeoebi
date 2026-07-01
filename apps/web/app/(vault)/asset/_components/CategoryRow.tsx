@@ -3,7 +3,8 @@
 import { useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
-import { CategoryColorPicker } from "./CategoryColorPicker"
+import { isValidHexColor } from "../_lib/asset-categories"
+import { CategoryColorInput } from "./CategoryColorInput"
 
 interface CategoryRowProps {
     category: AssetCategory
@@ -70,7 +71,7 @@ export function CategoryRow({
                     }}
                     style={{ marginBottom: 10 }}
                 />
-                <CategoryColorPicker
+                <CategoryColorInput
                     value={color}
                     onChange={(c) => {
                         onActivity()
@@ -90,6 +91,7 @@ export function CategoryRow({
                         variant="primary"
                         onClick={handleSave}
                         loading={saving}
+                        disabled={!isValidHexColor(color)}
                         style={{ flex: 1 }}
                     >
                         저장

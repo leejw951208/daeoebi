@@ -89,13 +89,11 @@ test("B. category CRUD — 추가·수정·삭제가 정상 동작한다", async
     await expect(dialog).toBeVisible({ timeout: 10_000 })
 
     // ── ADD ──────────────────────────────────────────────────────────────────
-    const nameInput = dialog.getByPlaceholder("이름 (최대 20자)")
+    const nameInput = dialog.getByLabel("카테고리 이름")
     await nameInput.fill(uniqueName)
 
-    // Pick the second palette color (#4a90d9).
-    // The sheet may be scrolled by the category list, so force-click to bypass
-    // the viewport check (the element is in the DOM, just possibly off-screen).
-    await dialog.getByRole("button", { name: "#4a90d9" }).click({ force: true })
+    // 색상은 HEX 입력으로 지정한다(팔레트 제거됨).
+    await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
 
     await dialog.getByRole("button", { name: "+ 추가" }).click()
 
@@ -107,8 +105,7 @@ test("B. category CRUD — 추가·수정·삭제가 정상 동작한다", async
     // Click the last "수정" button (corresponds to the just-added category).
     await dialog.getByRole("button", { name: "수정" }).last().click()
 
-    // Find the editing input: it has no placeholder, unlike the add-form input
-    // which has placeholder "이름 (최대 20자)".
+    // 편집 행의 이름 입력만 className="input" 을 쓴다(추가 폼은 field-control).
     const editInput = dialog.locator("input.input:not([placeholder])")
     await editInput.fill(editedName)
 
@@ -256,8 +253,8 @@ test("F. loading — 추가 버튼이 진행 중에 aria-busy 됨", async ({ pag
     })
 
     // Fill the form.
-    await dialog.getByPlaceholder("이름 (최대 20자)").fill(uniqueName)
-    await dialog.getByRole("button", { name: "#4a90d9" }).click({ force: true })
+    await dialog.getByLabel("카테고리 이름").fill(uniqueName)
+    await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
 
     // Click the add button and immediately assert aria-busy (while the
     // delayed request is in-flight).
