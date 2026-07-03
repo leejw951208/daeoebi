@@ -17,6 +17,10 @@ export interface IncomePayload {
     category: string
 }
 
+// 예산 행 마커. Income 블롭에 저장되는 평문 키라 변경하면 기존 데이터 해석이 갈라진다.
+export const BUDGET_ITEM = "월 예산"
+export const BUDGET_CATEGORY = "예산"
+
 export async function sealExpense(
     vaultKey: CryptoKey,
     payload: ExpensePayload,

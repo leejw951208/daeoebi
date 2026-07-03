@@ -70,18 +70,18 @@ export function byDay(items: ComputedExpense[]): Map<string, number> {
     return map
 }
 
-// 남은 돈 = 수입 − 지출(음수 가능).
-export function remaining(income: number, spent: number): number {
-    return income - spent
+// 남은 예산 = 예산 − 지출(음수 가능).
+export function remaining(budget: number, spent: number): number {
+    return budget - spent
 }
 
 // 지출 비율(0–100, 클램프). 진행 바 표시용.
-export function spentPct(income: number, spent: number): number {
-    if (income <= 0) return spent > 0 ? 100 : 0
-    return Math.min(100, Math.round((spent / income) * 100))
+export function spentPct(budget: number, spent: number): number {
+    if (budget <= 0) return spent > 0 ? 100 : 0
+    return Math.min(100, Math.round((spent / budget) * 100))
 }
 
-// 복호화된 수입 1건(메타 + 본문).
+// 복호화된 수입(Income) 1건(메타 + 본문). 예산은 이 모델을 재사용한다(월 1건이 그 달 예산).
 export interface ComputedIncome {
     id: string
     month: string // "YYYY-MM"
@@ -90,6 +90,21 @@ export interface ComputedIncome {
     category: string
 }
 
+// 그 달 예산 = Income 행 합계. 옛 다건 데이터(월급·상여)도 합산되어 깨지지 않는다.
 export function totalIncome(items: ComputedIncome[]): number {
     return items.reduce((sum, e) => sum + e.amount, 0)
+}
+
+// 예산 저장 계획. 행이 없으면 생성, 있으면 첫 행 수정 + 나머지 삭제로 단건에 수렴시킨다.
+export type BudgetSavePlan =
+    | { kind: "create" }
+    | { kind: "replace"; updateId: string; deleteIds: string[] }
+
+export function planBudgetSave(rows: { id: string }[]): BudgetSavePlan {
+    if (rows.length === 0) return { kind: "create" }
+    return {
+        kind: "replace",
+        updateId: rows[0].id,
+        deleteIds: rows.slice(1).map((r) => r.id),
+    }
 }

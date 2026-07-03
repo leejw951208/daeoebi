@@ -12,9 +12,9 @@ import {
 } from "../(vault)/asset/_lib/asset-compute"
 import {
     DEMO_ASSET_CATEGORIES,
+    DEMO_BUDGET_AMOUNT,
+    DEMO_BUDGET_ROWS,
     DEMO_EXPENSES,
-    DEMO_INCOMES,
-    DEMO_INCOME_AMOUNT,
     DEMO_MONTH,
 } from "./demo-asset-data"
 import { DemoCategoryManager } from "./DemoCategoryManager"
@@ -35,8 +35,8 @@ export function DemoAssetScreen() {
     const dayTotals = useMemo(() => byDay(expenses), [expenses])
 
     const data: Loaded = {
-        incomeAmount: DEMO_INCOME_AMOUNT,
-        incomes: DEMO_INCOMES,
+        budgetAmount: DEMO_BUDGET_AMOUNT,
+        budgetRows: DEMO_BUDGET_ROWS,
         expenses,
         categories,
     }
@@ -81,8 +81,8 @@ export function DemoAssetScreen() {
                 dayTotals={dayTotals}
                 selectedDay={selectedDay}
                 onSelectDay={(d) => setSelectedDay(d)}
-                onOpenIncome={() => {
-                    /* 데모: 수입은 표시만 */
+                onOpenBudget={() => {
+                    /* 데모: 예산은 표시만 */
                 }}
             />
 
