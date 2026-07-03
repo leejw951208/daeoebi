@@ -1,21 +1,19 @@
 "use client"
-// 자산 대시보드의 수입·지출 요약 카드 한 쌍. 수입 카드 탭 시 수입 설정 시트를 연다.
+// 자산 대시보드의 예산·지출 요약 카드 한 쌍. 예산 카드 탭 시 예산 설정 시트를 연다.
 import { formatWon } from "../../_lib/asset-categories"
 
 interface Props {
-    income: number
-    incomeCount: number
+    budget: number
     spent: number
     count: number
-    onOpenIncome: () => void
+    onOpenBudget: () => void
 }
 
-export function IncomeExpenseCards({
-    income,
-    incomeCount,
+export function BudgetExpenseCards({
+    budget,
     spent,
     count,
-    onOpenIncome,
+    onOpenBudget,
 }: Props) {
     return (
         <div style={{ display: "flex", gap: 12 }}>
@@ -23,11 +21,11 @@ export function IncomeExpenseCards({
                 type="button"
                 className="asset-card"
                 style={{ flex: 1, textAlign: "left", cursor: "pointer" }}
-                onClick={onOpenIncome}
+                onClick={onOpenBudget}
             >
-                <div className="asset-card-label">수입 · 월급</div>
+                <div className="asset-card-label">이번 달 예산</div>
                 <div className="asset-card-value">
-                    {income ? formatWon(income) : "설정하기"}
+                    {budget ? formatWon(budget) : "설정하기"}
                 </div>
                 <div
                     style={{
@@ -37,7 +35,7 @@ export function IncomeExpenseCards({
                         marginTop: 5,
                     }}
                 >
-                    {income ? `${incomeCount}건 · 수정 ›` : "수정 ›"}
+                    수정 ›
                 </div>
             </button>
             <div className="asset-card" style={{ flex: 1 }}>

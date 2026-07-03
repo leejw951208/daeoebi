@@ -1,14 +1,14 @@
 "use client"
-// 자산 대시보드의 "이번 달 남은 돈" hero 카드. 남은 돈·지출 진행 바·예산을 보여준다.
+// 자산 대시보드의 "이번 달 남은 예산" hero 카드. 남은 예산·지출 진행 바·예산을 보여준다.
 import { formatWon } from "../../_lib/asset-categories"
 
 interface Props {
     left: number
     pct: number
-    income: number
+    budget: number
 }
 
-export function RemainingHero({ left, pct, income }: Props) {
+export function RemainingHero({ left, pct, budget }: Props) {
     return (
         <div className="asset-card" style={{ borderRadius: 20 }}>
             <div
@@ -19,7 +19,7 @@ export function RemainingHero({ left, pct, income }: Props) {
                     marginBottom: 7,
                 }}
             >
-                이번 달 남은 돈
+                이번 달 남은 예산
             </div>
             <div
                 style={{
@@ -51,7 +51,7 @@ export function RemainingHero({ left, pct, income }: Props) {
                 }}
             >
                 <span>지출 {pct}%</span>
-                <span>예산 {formatWon(income)}</span>
+                <span>예산 {formatWon(budget)}</span>
             </div>
         </div>
     )
