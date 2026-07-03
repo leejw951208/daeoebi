@@ -4,6 +4,10 @@ import type {
     ComputedExpense,
     ComputedIncome,
 } from "../(vault)/asset/_lib/asset-compute"
+import {
+    BUDGET_CATEGORY,
+    BUDGET_ITEM,
+} from "../(vault)/asset/_lib/asset-payload"
 
 // 고정 표시 월(예시). 실제 오늘과 무관한 상수.
 export const DEMO_MONTH = "2026-06"
@@ -137,20 +141,13 @@ export const DEMO_EXPENSES: ComputedExpense[] = [
     },
 ]
 
-export const DEMO_INCOME_AMOUNT = 3_200_000
-export const DEMO_INCOMES: ComputedIncome[] = [
+export const DEMO_BUDGET_AMOUNT = 3_200_000
+export const DEMO_BUDGET_ROWS: ComputedIncome[] = [
     {
         id: "i1",
         month: DEMO_MONTH,
-        item: "6월 급여",
-        amount: 3_000_000,
-        category: "월급",
-    },
-    {
-        id: "i2",
-        month: DEMO_MONTH,
-        item: "상여",
-        amount: 200_000,
-        category: "상여",
+        item: BUDGET_ITEM,
+        amount: DEMO_BUDGET_AMOUNT,
+        category: BUDGET_CATEGORY,
     },
 ]

@@ -55,16 +55,3 @@ export function formatAmount(n: number): string {
 export function formatWon(n: number): string {
     return `₩${formatAmount(n)}`
 }
-
-const FALLBACK_COLOR = "#98a0a8"
-
-// 수입 고정 카테고리 3종. key 는 암호문 블롭에 저장된다.
-export const INCOME_CATEGORIES = [
-    { key: "월급", color: "#2f9e6e" },
-    { key: "상여", color: "#3d7dd6" },
-    { key: "기타", color: "#98a0a8" },
-]
-
-export function incomeCategoryColor(key: string): string {
-    return INCOME_CATEGORIES.find((c) => c.key === key)?.color ?? FALLBACK_COLOR
-}

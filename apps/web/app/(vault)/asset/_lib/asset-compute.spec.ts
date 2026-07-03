@@ -2,6 +2,7 @@
 import {
     byCategory,
     byDay,
+    planBudgetSave,
     remaining,
     spentPct,
     totalIncome,
@@ -91,6 +92,28 @@ describe("asset-compute", () => {
         expect(spentPct(1000, 250)).toBe(25)
         expect(spentPct(0, 100)).toBe(100)
         expect(spentPct(1000, 5000)).toBe(100) // 클램프
+    })
+
+    it("planBudgetSave 는 기존 행이 없으면 생성 계획을 만든다", () => {
+        expect(planBudgetSave([])).toEqual({ kind: "create" })
+    })
+
+    it("planBudgetSave 는 행이 1건이면 그 행을 수정하고 삭제는 없다", () => {
+        expect(planBudgetSave([{ id: "a" }])).toEqual({
+            kind: "replace",
+            updateId: "a",
+            deleteIds: [],
+        })
+    })
+
+    it("planBudgetSave 는 행이 여러 건이면 첫 행 수정 + 나머지 삭제로 단건 수렴한다", () => {
+        expect(planBudgetSave([{ id: "a" }, { id: "b" }, { id: "c" }])).toEqual(
+            {
+                kind: "replace",
+                updateId: "a",
+                deleteIds: ["b", "c"],
+            },
+        )
     })
 
     it("totalIncome 은 수입 금액을 합산한다", () => {

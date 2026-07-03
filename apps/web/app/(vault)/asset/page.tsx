@@ -1,6 +1,6 @@
 "use client"
-// 자산 대시보드(디자인 화면 11). 수입·월 지출·고정 템플릿을 불러와 머티리얼라이즈한 뒤
-// VK 로 복호화·집계해 대시보드를 그린다. 상태·로드만 담당하고 본문은 AssetDashboard 가 그린다.
+// 자산 대시보드(디자인 화면 11). 예산(서버 Income 재사용)·월 지출·고정 템플릿을 불러와
+// 머티리얼라이즈한 뒤 VK 로 복호화·집계해 대시보드를 그린다. 상태·로드만 담당하고 본문은 AssetDashboard 가 그린다.
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import {
@@ -33,7 +33,7 @@ import {
     AssetDashboard,
     type Loaded,
 } from "./_components/dashboard/AssetDashboard"
-import { IncomeSheet } from "./_components/income/IncomeSheet"
+import { BudgetSheet } from "./_components/budget/BudgetSheet"
 import { CategoryManager } from "./_components/CategoryManager"
 import { LockTimer } from "../_components/LockTimer"
 
@@ -68,7 +68,7 @@ export default function AssetPage() {
         setState({ status: "loading" })
         try {
             // 지출은 지출일(date) 기준으로 그 달 것만 집계한다. 해당 월 한 달치를 가져온다.
-            const [incomeViews, expM, templates, categories] =
+            const [budgetViews, expM, templates, categories] =
                 await Promise.all([
                     listIncomes(month),
                     listExpenses(month),
@@ -103,9 +103,9 @@ export default function AssetPage() {
             )
             const allViews: ExpenseView[] = [...freshExpM, ...createdM]
 
-            // 수입 복호화(실패분 스킵) → 합계
-            const incomeSettled = await Promise.allSettled(
-                incomeViews.map(
+            // 예산 행 복호화(실패분 스킵) → 합계가 그 달 예산
+            const budgetSettled = await Promise.allSettled(
+                budgetViews.map(
                     async (v: IncomeView): Promise<ComputedIncome> => {
                         const p = await openIncome(vaultKey, v)
                         return {
@@ -118,13 +118,13 @@ export default function AssetPage() {
                     },
                 ),
             )
-            const incomes = incomeSettled
+            const budgetRows = budgetSettled
                 .filter(
                     (r): r is PromiseFulfilledResult<ComputedIncome> =>
                         r.status === "fulfilled",
                 )
                 .map((r) => r.value)
-            const incomeAmount = totalIncome(incomes)
+            const budgetAmount = totalIncome(budgetRows)
 
             // 지출 복호화(실패분 스킵).
             const settled = await Promise.allSettled(
@@ -149,7 +149,7 @@ export default function AssetPage() {
 
             setState({
                 status: "ready",
-                data: { incomeAmount, incomes, expenses, categories },
+                data: { budgetAmount, budgetRows, expenses, categories },
             })
         } catch (e) {
             setState({
@@ -266,7 +266,7 @@ export default function AssetPage() {
                         resetIdle()
                         setSelectedDay(d)
                     }}
-                    onOpenIncome={() => {
+                    onOpenBudget={() => {
                         resetIdle()
                         setSheetOpen(true)
                     }}
@@ -278,10 +278,10 @@ export default function AssetPage() {
             </Link>
 
             {sheetOpen && state.status === "ready" && (
-                <IncomeSheet
+                <BudgetSheet
                     month={month}
                     monthLabel={monthLabel(month)}
-                    incomes={state.data.incomes}
+                    budgetRows={state.data.budgetRows}
                     onChanged={load}
                     onClose={() => setSheetOpen(false)}
                 />
