@@ -96,6 +96,18 @@ model Income {
   @@index([month])
 }
 
+// 저축 목표(단건 싱글톤). 금액은 클라이언트 E2E 암호문 블롭({amount}), name 은 평문 라벨.
+// 서버는 복호화하지 않는다(income·secret 패스스루와 동일).
+model SavingsGoal {
+  id         String   @id @default(cuid())
+  name       String
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 // 고정 지출 템플릿. 매월 자동 생성의 원본이다. dayOfMonth·active 는 스케줄용 평문,
 // 금액·항목·카테고리·결제방법은 암호문 블롭({item,amount,category,method})이다.
 model RecurringExpense {

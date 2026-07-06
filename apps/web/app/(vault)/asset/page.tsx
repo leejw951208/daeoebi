@@ -8,20 +8,25 @@ import {
     listExpenses,
     listRecurring,
     listAssetCategories,
+    listContributions,
+    getSavingsGoal,
     type ExpenseView,
     type IncomeView,
+    type SavingsGoalView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "../_lib/vault-context"
-import { openExpense, openIncome } from "./_lib/asset-payload"
+import { openExpense, openIncome, openGoal } from "./_lib/asset-payload"
 import { migrateExpenseCategories } from "./_lib/asset-migrate-categories"
 import {
     byDay,
     totalIncome,
+    savingsSummary,
     type ComputedExpense,
     type ComputedIncome,
 } from "./_lib/asset-compute"
+import { resolveCategory } from "./_lib/asset-categories"
 import { materializeRecurring } from "./_lib/asset-recurring"
 import {
     addMonth,
@@ -32,10 +37,41 @@ import {
 import {
     AssetDashboard,
     type Loaded,
+    type AssetTab,
+    type SavingsView,
+    type Contribution,
 } from "./_components/dashboard/AssetDashboard"
 import { BudgetSheet } from "./_components/budget/BudgetSheet"
 import { CategoryManager } from "./_components/CategoryManager"
+import { SavingsGoalSheet } from "./_components/SavingsGoalSheet"
 import { LockTimer } from "../_components/LockTimer"
+
+// 저축 목표(이름 + 복호화된 금액).
+interface Goal {
+    name: string
+    amount: number
+}
+
+// 저축·투자 탭 지연 로드 상태. 메인 State 와 동일한 패턴(idle 은 최초 진입 전).
+type SavingsState =
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "error"; message: string }
+    | { status: "ready"; contribAll: ComputedExpense[]; goal: Goal | null }
+
+// 저축 목표 블롭 복호화. 블롭이 없으면 null, 복호화 실패 시(손상된 블롭) 목표 없음으로 취급한다.
+async function resolveGoal(
+    vaultKey: CryptoKey,
+    view: SavingsGoalView | null,
+): Promise<Goal | null> {
+    if (!view) return null
+    try {
+        const { amount } = await openGoal(vaultKey, view)
+        return { name: view.name, amount }
+    } catch {
+        return null
+    }
+}
 
 type State =
     | { status: "loading" }
@@ -63,6 +99,11 @@ export default function AssetPage() {
     const [selectedDay, setSelectedDay] = useState<string | null>(null)
     const [sheetOpen, setSheetOpen] = useState(false)
     const [categorySheetOpen, setCategorySheetOpen] = useState(false)
+    const [assetTab, setAssetTab] = useState<AssetTab>("budget")
+    const [savingsState, setSavingsState] = useState<SavingsState>({
+        status: "idle",
+    })
+    const [goalSheetOpen, setGoalSheetOpen] = useState(false)
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
@@ -175,6 +216,124 @@ export default function AssetPage() {
         [state],
     )
 
+    // 저축/투자 카테고리 id(이름 기준). 카테고리 목록이 로드된 뒤에만 계산된다.
+    const savingsCategoryIds = useMemo(
+        () =>
+            state.status === "ready"
+                ? state.data.categories
+                      .filter((c) => c.name === "저축" || c.name === "투자")
+                      .map((c) => c.id)
+                : [],
+        [state],
+    )
+
+    // 저축·투자 탭 지연 로드: 전기간 적립(categoryIds 필터) + 저축 목표를 복호화한다.
+    const loadSavings = useCallback(
+        async (categoryIds: string[]) => {
+            setSavingsState({ status: "loading" })
+            try {
+                const [contribViews, goalView] = await Promise.all([
+                    listContributions(categoryIds),
+                    getSavingsGoal(),
+                ])
+                const settled = await Promise.allSettled(
+                    contribViews.map(async (v): Promise<ComputedExpense> => {
+                        const p = await openExpense(vaultKey, v)
+                        return {
+                            id: v.id,
+                            date: v.date,
+                            recurringId: v.recurringId,
+                            item: p.item,
+                            amount: p.amount,
+                            categoryId: v.categoryId,
+                        }
+                    }),
+                )
+                const contribAll = settled
+                    .filter(
+                        (r): r is PromiseFulfilledResult<ComputedExpense> =>
+                            r.status === "fulfilled",
+                    )
+                    .map((r) => r.value)
+                const goal = await resolveGoal(vaultKey, goalView)
+
+                setSavingsState({ status: "ready", contribAll, goal })
+            } catch (e) {
+                setSavingsState({
+                    status: "error",
+                    message: isApiError(e) ? e.message : "불러오지 못했습니다.",
+                })
+            }
+        },
+        [vaultKey],
+    )
+
+    // 세그먼트 전환. savings 로 처음 전환할 때만 지연 로드한다.
+    const handleAssetTab = useCallback(
+        (tab: AssetTab) => {
+            resetIdle()
+            setAssetTab(tab)
+            if (tab === "savings" && savingsState.status === "idle") {
+                void loadSavings(savingsCategoryIds)
+            }
+        },
+        [resetIdle, savingsState.status, loadSavings, savingsCategoryIds],
+    )
+
+    // 목표 시트 저장 후: 적립 내역은 그대로 두고 목표만 재조회한다(저장은 이미 성공했으므로
+    // 재조회 실패는 조용히 무시하고 다음 진입 때 다시 시도한다).
+    const reloadGoal = useCallback(async () => {
+        try {
+            const goalView = await getSavingsGoal()
+            const goal = await resolveGoal(vaultKey, goalView)
+            setSavingsState((prev) =>
+                prev.status === "ready" ? { ...prev, goal } : prev,
+            )
+        } catch {
+            // no-op: 다음 로드에서 재시도됨
+        }
+    }, [vaultKey])
+
+    // SavingsTab 에 넘길 뷰 모델. 누적 요약은 savingsSummary 전체 기간, 이번 달 적립은 month 로 필터.
+    const savingsView: SavingsView = useMemo((): SavingsView => {
+        if (savingsState.status !== "ready" || state.status !== "ready") {
+            return savingsState.status === "error"
+                ? { status: "error", message: savingsState.message }
+                : { status: "loading" }
+        }
+        const { categories } = state.data
+        const { contribAll, goal } = savingsState
+        const summary = savingsSummary(contribAll, categories)
+        const monthContribs = contribAll.filter((c) => c.date.startsWith(month))
+        const monthSummary = savingsSummary(monthContribs, categories)
+        const contributions: Contribution[] = monthContribs.map((c) => {
+            const { name } = resolveCategory(c.categoryId, categories)
+            return {
+                id: c.id,
+                item: c.item,
+                amount: c.amount,
+                categoryName: name,
+                date: c.date,
+            }
+        })
+        return {
+            status: "ready",
+            summary,
+            savedMonth: monthSummary.savedTotal,
+            investMonth: monthSummary.investTotal,
+            goalName: goal?.name ?? null,
+            goalAmount: goal?.amount ?? 0,
+            contributions,
+            onEditGoal: () => {
+                resetIdle()
+                setGoalSheetOpen(true)
+            },
+        }
+    }, [savingsState, state, month, resetIdle])
+
+    const currentGoal =
+        savingsState.status === "ready" ? savingsState.goal : null
+
     return (
         <section style={{ minHeight: "100%" }}>
             <div className="sticky-header">
@@ -270,6 +429,9 @@ export default function AssetPage() {
                         resetIdle()
                         setSheetOpen(true)
                     }}
+                    assetTab={assetTab}
+                    onTab={handleAssetTab}
+                    savings={savingsView}
                 />
             )}
 
@@ -291,6 +453,15 @@ export default function AssetPage() {
                 <CategoryManager
                     onChanged={load}
                     onClose={() => setCategorySheetOpen(false)}
+                />
+            )}
+
+            {goalSheetOpen && (
+                <SavingsGoalSheet
+                    initialName={currentGoal?.name ?? ""}
+                    initialAmount={currentGoal?.amount ?? 0}
+                    onSaved={reloadGoal}
+                    onClose={() => setGoalSheetOpen(false)}
                 />
             )}
         </section>

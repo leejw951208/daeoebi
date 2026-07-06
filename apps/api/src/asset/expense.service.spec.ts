@@ -168,6 +168,26 @@ describe("ExpenseService.update — removed", () => {
     })
 })
 
+describe("ExpenseService.listContributions", () => {
+    it("listContributions 는 categoryIds 로 필터하고 removed 를 제외한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findMany.mockResolvedValue([])
+        const svc = new ExpenseService(prisma as never)
+        await svc.listContributions(["s", "i"])
+        expect(prisma.expense.findMany).toHaveBeenCalledWith({
+            where: { removed: false, categoryId: { in: ["s", "i"] } },
+            orderBy: { date: "desc" },
+        })
+    })
+
+    it("listContributions 는 빈 ids 면 조회 없이 빈 배열", async () => {
+        const prisma = makePrisma()
+        const svc = new ExpenseService(prisma as never)
+        expect(await svc.listContributions([])).toEqual([])
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
+    })
+})
+
 describe("ExpenseService.remove", () => {
     it("없으면 404(delete 가 P2025 로 거부), 있으면 삭제", async () => {
         const prisma = makePrisma()
