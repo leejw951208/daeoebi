@@ -20,6 +20,8 @@ const SCREENSHOTS_DIR = path.join(__dirname, "__screenshots__")
 // Unique names fixed at module load time so serial tests share them.
 const UNIQUE = `QA-${Date.now()}`
 const RENAMED = `${UNIQUE.slice(0, 12)}-수정`
+// 카테고리 코드(카테고리 간 고유). UNIQUE 에서 파생해 매 실행마다 달라진다.
+const CODE = `C${UNIQUE.slice(3)}`
 
 // Tall viewport so the bottom sheet never extends above the visible area.
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
@@ -164,13 +166,16 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // 이름 입력 + HEX 색상 입력(팔레트 제거됨).
+        // 이름 입력 + HEX 색상 입력(팔레트 제거됨) + 코드 입력(선택·고유).
         await dialog.getByLabel("카테고리 이름").fill(UNIQUE)
         await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
+        await dialog.getByLabel("카테고리 코드").fill(CODE)
         await dialog.getByRole("button", { name: "+ 추가" }).click()
 
         // Assert new category appears in the manager list.
         await expect(dialog.getByText(UNIQUE)).toBeVisible({ timeout: 10_000 })
+        // 코드 배지가 목록 행에 노출된다.
+        await expect(dialog.getByText(CODE)).toBeVisible({ timeout: 10_000 })
 
         await page.screenshot({
             path: path.join(SCREENSHOTS_DIR, "cat-crud-02-create-manager.png"),
@@ -193,6 +198,35 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         await page.screenshot({
             path: path.join(SCREENSHOTS_DIR, "cat-crud-02-create-chip.png"),
+            fullPage: false,
+        })
+    })
+
+    // ── 2-1. 코드 중복 ──────────────────────────────────────────────────────────
+    test("2-1. 코드 중복 — 같은 코드로 추가하면 거부된다", async ({ page }) => {
+        test.setTimeout(120_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+
+        const dialog = await openCategoryManager(page)
+
+        // test 2 에서 CODE 를 가진 카테고리가 이미 존재한다. 같은 코드로 추가 시도.
+        const dupName = `${UNIQUE}-dup`
+        await dialog.getByLabel("카테고리 이름").fill(dupName)
+        await dialog.getByLabel("색상 HEX 코드").fill("#3bb273")
+        await dialog.getByLabel("카테고리 코드").fill(CODE)
+        await dialog.getByRole("button", { name: "+ 추가" }).click()
+
+        // 서버 409 → 에러 문구 노출, 새 카테고리는 추가되지 않는다.
+        await expect(
+            dialog.getByText("같은 코드의 카테고리가 이미 있습니다."),
+        ).toBeVisible({ timeout: 10_000 })
+        await expect(dialog.getByText(dupName)).toBeHidden()
+
+        await page.screenshot({
+            path: path.join(SCREENSHOTS_DIR, "cat-crud-02-1-code-dup.png"),
             fullPage: false,
         })
     })
@@ -237,6 +271,8 @@ test.describe.serial("카테고리 관리 CRUD", () => {
         // Assert renamed in manager; old name must be gone.
         await expect(dialog.getByText(RENAMED)).toBeVisible({ timeout: 10_000 })
         await expect(dialog.getByText(UNIQUE)).toBeHidden()
+        // 이름·색 수정이 코드는 보존한다(코드 배지 유지).
+        await expect(dialog.getByText(CODE)).toBeVisible({ timeout: 10_000 })
 
         await page.screenshot({
             path: path.join(SCREENSHOTS_DIR, "cat-crud-03-update-manager.png"),
