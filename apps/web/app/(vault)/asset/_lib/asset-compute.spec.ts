@@ -2,8 +2,11 @@
 import {
     byCategory,
     byDay,
+    filterByMonth,
+    goalProgress,
     planBudgetSave,
     remaining,
+    savingsSummary,
     spentPct,
     totalIncome,
     totalSpent,
@@ -148,5 +151,58 @@ describe("asset-compute", () => {
             },
         ]
         expect(totalIncome(items)).toBe(3_500_000)
+    })
+})
+
+describe("savingsSummary", () => {
+    const cats = [
+        { id: "s", name: "저축" },
+        { id: "i", name: "투자" },
+        { id: "f", name: "식비" },
+    ]
+    it("저축/투자를 분리 합산하고 순자산을 낸다", () => {
+        const r = savingsSummary(
+            [
+                { categoryId: "s", amount: 100000 },
+                { categoryId: "i", amount: 50000 },
+                { categoryId: "s", amount: 30000 },
+                { categoryId: "f", amount: 9000 },
+                { categoryId: null, amount: 1000 },
+            ],
+            cats,
+        )
+        expect(r).toEqual({
+            savedTotal: 130000,
+            investTotal: 50000,
+            netWorth: 180000,
+        })
+    })
+})
+
+describe("goalProgress", () => {
+    it("진행률은 정수·0~100 클램프", () => {
+        expect(goalProgress(50000, 100000)).toBe(50)
+        expect(goalProgress(150000, 100000)).toBe(100)
+        expect(goalProgress(1000, 0)).toBe(0)
+    })
+})
+
+describe("filterByMonth", () => {
+    const items = [
+        { id: "a", date: "2026-06-01" },
+        { id: "b", date: "2026-06-30" },
+        { id: "c", date: "2026-07-01" },
+        { id: "d", date: "2026-05-31" },
+    ]
+
+    it("해당 월(YYYY-MM)에 속하는 항목만 남긴다 (월 경계 포함)", () => {
+        expect(filterByMonth(items, "2026-06")).toEqual([
+            { id: "a", date: "2026-06-01" },
+            { id: "b", date: "2026-06-30" },
+        ])
+    })
+
+    it("해당 월 항목이 없으면 빈 배열", () => {
+        expect(filterByMonth(items, "2026-08")).toEqual([])
     })
 })

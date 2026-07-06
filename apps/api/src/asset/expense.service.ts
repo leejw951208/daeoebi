@@ -66,6 +66,16 @@ export class ExpenseService {
         return rows.map(toView)
     }
 
+    // 저축·투자 탭용: 전 기간(모든 달) 비삭제 지출을 카테고리로 필터해 반환(클라가 복호화·집계).
+    async listContributions(categoryIds: string[]) {
+        if (categoryIds.length === 0) return []
+        const rows = await this.prisma.expense.findMany({
+            where: { removed: false, categoryId: { in: categoryIds } },
+            orderBy: { date: "desc" },
+        })
+        return rows.map(toView)
+    }
+
     async detail(id: string) {
         const row = await this.prisma.expense.findUnique({ where: { id } })
         if (!row) throw this.notFound()

@@ -4,7 +4,9 @@ import { useMemo, useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"
 import {
     AssetDashboard,
+    type AssetTab,
     type Loaded,
+    type SavingsView,
 } from "../(vault)/asset/_components/dashboard/AssetDashboard"
 import {
     byDay,
@@ -31,8 +33,23 @@ export function DemoAssetScreen() {
         `${DEMO_MONTH}-08`,
     )
     const [overlay, setOverlay] = useState<Overlay>("none")
+    const [assetTab, setAssetTab] = useState<AssetTab>("budget")
 
     const dayTotals = useMemo(() => byDay(expenses), [expenses])
+
+    // 데모엔 저축/투자 카테고리·목표 데이터가 없다. 세그먼트 전환은 보여주되 내용은 빈 상태로 표시한다.
+    const demoSavings: SavingsView = {
+        status: "ready",
+        summary: { savedTotal: 0, investTotal: 0, netWorth: 0 },
+        savedMonth: 0,
+        investMonth: 0,
+        goalName: null,
+        goalAmount: 0,
+        contributions: [],
+        onEditGoal: () => {
+            /* 데모: 저축 목표 편집 미지원 */
+        },
+    }
 
     const data: Loaded = {
         budgetAmount: DEMO_BUDGET_AMOUNT,
@@ -84,6 +101,9 @@ export function DemoAssetScreen() {
                 onOpenBudget={() => {
                     /* 데모: 예산은 표시만 */
                 }}
+                assetTab={assetTab}
+                onTab={setAssetTab}
+                savings={demoSavings}
             />
 
             <button

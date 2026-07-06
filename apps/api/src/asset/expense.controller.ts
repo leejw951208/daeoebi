@@ -22,6 +22,15 @@ export class ExpenseController {
         return this.service.listByMonth(month)
     }
 
+    @Get("contributions")
+    contributions(@Query("categoryIds") categoryIds?: string) {
+        const ids = (categoryIds ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        return this.service.listContributions(ids)
+    }
+
     @Get(":id")
     detail(@Param("id") id: string) {
         return this.service.detail(id)

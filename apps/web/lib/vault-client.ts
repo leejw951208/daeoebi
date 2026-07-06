@@ -374,6 +374,40 @@ export async function deleteAssetCategory(id: string): Promise<void> {
     await vaultClient.delete(`/asset-categories/${id}`)
 }
 
+export interface SavingsGoalView extends SealedBlobDto {
+    id: string
+    name: string
+}
+
+export async function getSavingsGoal(): Promise<SavingsGoalView | null> {
+    const { data } = await vaultClient.get<SavingsGoalView | null>(
+        "/savings-goal",
+    )
+    return data ?? null
+}
+
+export async function saveSavingsGoal(
+    name: string,
+    blob: SealedBlobDto,
+): Promise<SavingsGoalView> {
+    const { data } = await vaultClient.put<SavingsGoalView>("/savings-goal", {
+        name,
+        ...blob,
+    })
+    return data
+}
+
+// 저축·투자 카테고리(저축/투자)의 전 기간 적립 지출.
+export async function listContributions(
+    categoryIds: string[],
+): Promise<ExpenseView[]> {
+    const { data } = await vaultClient.get<ExpenseView[]>(
+        "/expenses/contributions",
+        { params: { categoryIds: categoryIds.join(",") } },
+    )
+    return data
+}
+
 export interface SealedBlobDto {
     iv: string
     ciphertext: string

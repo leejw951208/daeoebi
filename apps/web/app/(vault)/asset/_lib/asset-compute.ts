@@ -108,3 +108,39 @@ export function planBudgetSave(rows: { id: string }[]): BudgetSavePlan {
         deleteIds: rows.slice(1).map((r) => r.id),
     }
 }
+
+export interface SavingsSummary {
+    savedTotal: number
+    investTotal: number
+    netWorth: number
+}
+
+// 저축/투자 카테고리 지출을 이름 기준으로 분리 합산한다. netWorth = 저축+투자.
+export function savingsSummary(
+    contribs: readonly { categoryId: string | null; amount: number }[],
+    categories: readonly { id: string; name: string }[],
+): SavingsSummary {
+    const nameById = new Map(categories.map((c) => [c.id, c.name]))
+    let savedTotal = 0
+    let investTotal = 0
+    for (const c of contribs) {
+        const name = c.categoryId ? nameById.get(c.categoryId) : undefined
+        if (name === "저축") savedTotal += c.amount
+        else if (name === "투자") investTotal += c.amount
+    }
+    return { savedTotal, investTotal, netWorth: savedTotal + investTotal }
+}
+
+// 저축 목표 진행률(%). 목표 0 이하면 0. 정수·0~100 클램프.
+export function goalProgress(savedTotal: number, goalAmount: number): number {
+    if (goalAmount <= 0) return 0
+    return Math.min(100, Math.round((savedTotal / goalAmount) * 100))
+}
+
+// "YYYY-MM" 월에 속하는 항목만 남긴다(평문 date "YYYY-MM-DD" 접두 매칭).
+export function filterByMonth<T extends { date: string }>(
+    items: readonly T[],
+    month: string,
+): T[] {
+    return items.filter((it) => it.date.startsWith(month))
+}
