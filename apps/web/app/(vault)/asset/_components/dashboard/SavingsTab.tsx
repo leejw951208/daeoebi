@@ -5,7 +5,7 @@ import type { SavingsSummary } from "../../_lib/asset-compute"
 import { goalProgress } from "../../_lib/asset-compute"
 import { formatWon } from "../../_lib/asset-categories"
 
-interface Contribution {
+export interface Contribution {
     id: string
     item: string
     amount: number
