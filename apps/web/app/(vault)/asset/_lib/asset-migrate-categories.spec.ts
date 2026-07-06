@@ -1,8 +1,22 @@
 import { matchCategoryId } from "./asset-migrate-categories"
 
 const CATS = [
-    { id: "c1", name: "식비", color: "#f2994a", createdAt: "", updatedAt: "" },
-    { id: "c2", name: "교통", color: "#4a90d9", createdAt: "", updatedAt: "" },
+    {
+        id: "c1",
+        name: "식비",
+        color: "#f2994a",
+        code: null,
+        createdAt: "",
+        updatedAt: "",
+    },
+    {
+        id: "c2",
+        name: "교통",
+        color: "#4a90d9",
+        code: null,
+        createdAt: "",
+        updatedAt: "",
+    },
 ]
 
 describe("matchCategoryId", () => {

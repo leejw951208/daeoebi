@@ -40,18 +40,34 @@ export class AssetCategoryService {
 
     async create(dto: CreateAssetCategoryDto) {
         await this.assertNameAvailable(dto.name)
-        return this.prisma.assetCategory.create({
-            data: { name: dto.name, color: dto.color },
-        })
+        const code = this.normalizeCode(dto.code)
+        if (code !== null) await this.assertCodeAvailable(code)
+        try {
+            return await this.prisma.assetCategory.create({
+                data: {
+                    name: dto.name,
+                    color: dto.color,
+                    ...(code !== null ? { code } : {}),
+                },
+            })
+        } catch (e: unknown) {
+            if (this.isUniqueViolation(e)) throw this.codeDuplicate()
+            throw e
+        }
     }
 
     async update(id: string, dto: UpdateAssetCategoryDto) {
-        const data: { name?: string; color?: string } = {}
+        const data: { name?: string; color?: string; code?: string | null } = {}
         if (dto.name !== undefined) {
             await this.assertNameAvailable(dto.name, id)
             data.name = dto.name
         }
         if (dto.color !== undefined) data.color = dto.color
+        if (dto.code !== undefined) {
+            const code = this.normalizeCode(dto.code)
+            if (code !== null) await this.assertCodeAvailable(code, id)
+            data.code = code // null 이면 코드 해제
+        }
         try {
             return await this.prisma.assetCategory.update({
                 where: { id },
@@ -59,6 +75,7 @@ export class AssetCategoryService {
             })
         } catch (e: unknown) {
             if (this.isRecordNotFound(e)) throw this.notFound()
+            if (this.isUniqueViolation(e)) throw this.codeDuplicate()
             throw e
         }
     }
@@ -90,11 +107,38 @@ export class AssetCategoryService {
         }
     }
 
+    // 같은 코드의 카테고리가 이미 있으면 거부한다(수정 시 자기 자신은 제외).
+    private async assertCodeAvailable(
+        code: string,
+        excludeId?: string,
+    ): Promise<void> {
+        const existing = await this.prisma.assetCategory.findFirst({
+            where: excludeId ? { code, id: { not: excludeId } } : { code },
+            select: { id: true },
+        })
+        if (existing) throw this.codeDuplicate()
+    }
+
+    // 빈 문자열·공백은 코드 미지정(null)으로 정규화한다. 그 외는 trim 값.
+    private normalizeCode(code?: string): string | null {
+        if (code === undefined) return null
+        const trimmed = code.trim()
+        return trimmed === "" ? null : trimmed
+    }
+
     private isRecordNotFound(e: unknown): boolean {
+        return this.hasPrismaCode(e, "P2025")
+    }
+
+    private isUniqueViolation(e: unknown): boolean {
+        return this.hasPrismaCode(e, "P2002")
+    }
+
+    private hasPrismaCode(e: unknown, code: string): boolean {
         return (
             typeof e === "object" &&
             e !== null &&
-            (e as { code?: string }).code === "P2025"
+            (e as { code?: string }).code === code
         )
     }
 
@@ -102,6 +146,13 @@ export class AssetCategoryService {
         return new NotFoundException({
             code: ASSET_ERRORS.ASSET_CATEGORY_NOT_FOUND,
             message: "카테고리를 찾을 수 없습니다.",
+        })
+    }
+
+    private codeDuplicate(): ConflictException {
+        return new ConflictException({
+            code: ASSET_ERRORS.ASSET_CATEGORY_CODE_DUPLICATE,
+            message: "같은 코드의 카테고리가 이미 있습니다.",
         })
     }
 }

@@ -10,7 +10,7 @@ interface CategoryRowProps {
     category: AssetCategory
     onEdit: (
         id: string,
-        patch: { name?: string; color?: string },
+        patch: { name?: string; color?: string; code?: string },
     ) => Promise<void>
     onDelete: (category: AssetCategory) => void
     onActivity: () => void
@@ -25,6 +25,7 @@ export function CategoryRow({
     const [editing, setEditing] = useState(false)
     const [name, setName] = useState(category.name)
     const [color, setColor] = useState(category.color)
+    const [code, setCode] = useState(category.code ?? "")
     const [saving, setSaving] = useState(false)
 
     function cancelEdit() {
@@ -32,6 +33,7 @@ export function CategoryRow({
         setEditing(false)
         setName(category.name)
         setColor(category.color)
+        setCode(category.code ?? "")
     }
 
     async function handleSave() {
@@ -42,6 +44,7 @@ export function CategoryRow({
             await onEdit(category.id, {
                 name: name.trim() || category.name,
                 color,
+                code: code.trim(),
             })
             // 성공 시에만 편집 모드 종료
             setEditing(false)
@@ -77,6 +80,19 @@ export function CategoryRow({
                         onActivity()
                         setColor(c)
                     }}
+                />
+                <input
+                    type="text"
+                    className="input"
+                    value={code}
+                    maxLength={32}
+                    placeholder="코드 · 선택 (예: FOOD)"
+                    aria-label="카테고리 코드"
+                    onChange={(e) => {
+                        onActivity()
+                        setCode(e.target.value)
+                    }}
+                    style={{ marginTop: 10 }}
                 />
                 <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                     <button
@@ -125,6 +141,21 @@ export function CategoryRow({
                 <span style={{ fontSize: 14, fontWeight: 600 }}>
                     {category.name}
                 </span>
+                {category.code && (
+                    <span
+                        style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "var(--color-text-muted)",
+                            background: "var(--color-surface-muted, #f1f1f1)",
+                            padding: "2px 7px",
+                            borderRadius: 6,
+                            letterSpacing: "0.02em",
+                        }}
+                    >
+                        {category.code}
+                    </span>
+                )}
             </div>
             <div style={{ display: "flex", gap: 12 }}>
                 <button
