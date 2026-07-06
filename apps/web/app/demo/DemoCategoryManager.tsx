@@ -39,6 +39,7 @@ export function DemoCategoryManager({
                 id: `demo-cat-${demoCatSeq}`,
                 name: name.trim(),
                 color,
+                code: null,
                 createdAt: ts,
                 updatedAt: ts,
             },

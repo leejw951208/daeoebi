@@ -333,6 +333,7 @@ export interface AssetCategory {
     id: string
     name: string
     color: string
+    code: string | null // 사용자 지정 분류 코드. null = 미지정.
     createdAt: string
     updatedAt: string
 }
@@ -345,12 +346,14 @@ export async function listAssetCategories(): Promise<AssetCategory[]> {
 export async function createAssetCategory(
     name: string,
     color: string,
+    code?: string,
 ): Promise<AssetCategory> {
     const { data } = await vaultClient.post<AssetCategory>(
         "/asset-categories",
         {
             name,
             color,
+            ...(code !== undefined ? { code } : {}),
         },
     )
     return data
@@ -358,7 +361,7 @@ export async function createAssetCategory(
 
 export async function updateAssetCategory(
     id: string,
-    patch: { name?: string; color?: string },
+    patch: { name?: string; color?: string; code?: string },
 ): Promise<AssetCategory> {
     const { data } = await vaultClient.patch<AssetCategory>(
         `/asset-categories/${id}`,

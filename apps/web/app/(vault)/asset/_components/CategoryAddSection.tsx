@@ -6,7 +6,7 @@ import { CATEGORY_PALETTE, isValidHexColor } from "../_lib/asset-categories"
 import { CategoryColorInput } from "./CategoryColorInput"
 
 interface CategoryAddSectionProps {
-    onAdd: (name: string, color: string) => Promise<void>
+    onAdd: (name: string, color: string, code: string) => Promise<void>
     onActivity: () => void
 }
 
@@ -16,6 +16,7 @@ export function CategoryAddSection({
 }: CategoryAddSectionProps) {
     const [name, setName] = useState("")
     const [color, setColor] = useState(CATEGORY_PALETTE[0] ?? "#f2994a")
+    const [code, setCode] = useState("")
     const [saving, setSaving] = useState(false)
 
     async function handleSubmit(e: React.FormEvent) {
@@ -24,10 +25,11 @@ export function CategoryAddSection({
         onActivity()
         setSaving(true)
         try {
-            await onAdd(name.trim(), color)
+            await onAdd(name.trim(), color, code.trim())
             // 성공 시에만 폼 초기화
             setName("")
             setColor(CATEGORY_PALETTE[0] ?? "#f2994a")
+            setCode("")
         } catch {
             // 오류는 부모(CategoryManager)가 setError로 표시. 입력 상태 유지.
         } finally {
@@ -58,6 +60,21 @@ export function CategoryAddSection({
                 onChange={(c) => {
                     onActivity()
                     setColor(c)
+                }}
+            />
+            <div className="field-label" style={{ margin: "12px 0 8px" }}>
+                코드 · 선택
+            </div>
+            <input
+                type="text"
+                className="field-control"
+                placeholder="예: FOOD (카테고리 간 고유)"
+                value={code}
+                maxLength={32}
+                aria-label="카테고리 코드"
+                onChange={(e) => {
+                    onActivity()
+                    setCode(e.target.value)
                 }}
             />
             <Button

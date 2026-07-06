@@ -58,10 +58,10 @@ export function CategoryManager({ onClose, onChanged }: Props) {
         onClose()
     }
 
-    async function handleAdd(name: string, color: string) {
+    async function handleAdd(name: string, color: string, code: string) {
         setError(null)
         try {
-            await createAssetCategory(name, color)
+            await createAssetCategory(name, color, code)
             await loadCategories()
             setDirty(true)
         } catch (e) {
@@ -72,7 +72,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
 
     async function handleEdit(
         id: string,
-        patch: { name?: string; color?: string },
+        patch: { name?: string; color?: string; code?: string },
     ) {
         setError(null)
         try {
