@@ -1,6 +1,7 @@
 "use client"
 // 저축·투자 탭. 저축/투자 순자산·이번 달 적립·저축 목표 진행률·적립 내역을 보여준다.
 // 데이터(누적/월별/목표)는 부모(asset/page)가 복호화해 props 로 넘긴다.
+import Link from "next/link"
 import type { SavingsSummary } from "../../_lib/asset-compute"
 import { goalProgress } from "../../_lib/asset-compute"
 import { formatWon } from "../../_lib/asset-categories"
@@ -175,8 +176,9 @@ export function SavingsTab({
                         }}
                     >
                         {contributions.map((c) => (
-                            <div
+                            <Link
                                 key={c.id}
+                                href={`/asset/${c.id}`}
                                 className="entry-card"
                                 style={{ justifyContent: "space-between" }}
                             >
@@ -194,7 +196,7 @@ export function SavingsTab({
                                 <span style={{ fontSize: 15, fontWeight: 800 }}>
                                     {formatWon(c.amount)}
                                 </span>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}

@@ -23,6 +23,7 @@ import {
     byDay,
     totalIncome,
     savingsSummary,
+    filterByMonth,
     type ComputedExpense,
     type ComputedIncome,
 } from "./_lib/asset-compute"
@@ -304,7 +305,7 @@ export default function AssetPage() {
         const { categories } = state.data
         const { contribAll, goal } = savingsState
         const summary = savingsSummary(contribAll, categories)
-        const monthContribs = contribAll.filter((c) => c.date.startsWith(month))
+        const monthContribs = filterByMonth(contribAll, month)
         const monthSummary = savingsSummary(monthContribs, categories)
         const contributions: Contribution[] = monthContribs.map((c) => {
             const { name } = resolveCategory(c.categoryId, categories)
