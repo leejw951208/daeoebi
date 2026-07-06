@@ -136,3 +136,11 @@ export function goalProgress(savedTotal: number, goalAmount: number): number {
     if (goalAmount <= 0) return 0
     return Math.min(100, Math.round((savedTotal / goalAmount) * 100))
 }
+
+// "YYYY-MM" 월에 속하는 항목만 남긴다(평문 date "YYYY-MM-DD" 접두 매칭).
+export function filterByMonth<T extends { date: string }>(
+    items: readonly T[],
+    month: string,
+): T[] {
+    return items.filter((it) => it.date.startsWith(month))
+}

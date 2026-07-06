@@ -2,6 +2,7 @@
 import {
     byCategory,
     byDay,
+    filterByMonth,
     goalProgress,
     planBudgetSave,
     remaining,
@@ -183,5 +184,25 @@ describe("goalProgress", () => {
         expect(goalProgress(50000, 100000)).toBe(50)
         expect(goalProgress(150000, 100000)).toBe(100)
         expect(goalProgress(1000, 0)).toBe(0)
+    })
+})
+
+describe("filterByMonth", () => {
+    const items = [
+        { id: "a", date: "2026-06-01" },
+        { id: "b", date: "2026-06-30" },
+        { id: "c", date: "2026-07-01" },
+        { id: "d", date: "2026-05-31" },
+    ]
+
+    it("해당 월(YYYY-MM)에 속하는 항목만 남긴다 (월 경계 포함)", () => {
+        expect(filterByMonth(items, "2026-06")).toEqual([
+            { id: "a", date: "2026-06-01" },
+            { id: "b", date: "2026-06-30" },
+        ])
+    })
+
+    it("해당 월 항목이 없으면 빈 배열", () => {
+        expect(filterByMonth(items, "2026-08")).toEqual([])
     })
 })
