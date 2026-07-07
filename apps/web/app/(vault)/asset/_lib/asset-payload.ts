@@ -77,27 +77,6 @@ export async function openIncome(
     }
 }
 
-export interface GoalPayload {
-    amount: number
-}
-
-export async function sealGoal(
-    vaultKey: CryptoKey,
-    payload: GoalPayload,
-): Promise<SealedBlob> {
-    return seal(vaultKey, JSON.stringify({ v: PAYLOAD_VERSION, ...payload }))
-}
-
-export async function openGoal(
-    vaultKey: CryptoKey,
-    blob: SealedBlob,
-): Promise<GoalPayload> {
-    const parsed = JSON.parse(await open(vaultKey, blob)) as {
-        amount?: unknown
-    }
-    return { amount: typeof parsed.amount === "number" ? parsed.amount : 0 }
-}
-
 // 적금 계좌 본문. base=초기 적립액, goal=목표 금액(0=미설정).
 export interface AccountPayload {
     base: number

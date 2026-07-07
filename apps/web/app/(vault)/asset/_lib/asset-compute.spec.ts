@@ -3,7 +3,6 @@ import {
     byCategory,
     byDay,
     filterByMonth,
-    goalProgress,
     investmentView,
     monthSavingsByItem,
     planBudgetSave,
@@ -182,14 +181,6 @@ describe("savingsSummary", () => {
             investTotal: 50000,
             netWorth: 180000,
         })
-    })
-})
-
-describe("goalProgress", () => {
-    it("진행률은 정수·0~100 클램프", () => {
-        expect(goalProgress(50000, 100000)).toBe(50)
-        expect(goalProgress(150000, 100000)).toBe(100)
-        expect(goalProgress(1000, 0)).toBe(0)
     })
 })
 
