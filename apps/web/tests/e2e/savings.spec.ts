@@ -19,6 +19,12 @@ const GOAL_NAME = `QA저축목표-${Date.now()}`
 const GOAL_AMOUNT = 1_000_000
 const GOAL_AMOUNT_FORMATTED = `₩${GOAL_AMOUNT.toLocaleString("ko-KR")}`
 
+// Unique 적금 계좌 이름(이름이 계좌 식별 앵커라 실행마다 고유해야 함).
+const ACCOUNT_NAME = `QA적금-${Date.now()}`
+const ACCOUNT_BASE = 200_000
+const ACCOUNT_GOAL = 2_000_000
+const ACCOUNT_GOAL_FORMATTED = `₩${ACCOUNT_GOAL.toLocaleString("ko-KR")}`
+
 // Tall viewport so the bottom sheet never extends above the visible area.
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
 
@@ -96,5 +102,47 @@ test.describe.serial("저축·투자 탭", () => {
         // 설정 완료 후엔 "설정하기" 대신 진행률(%) 이 노출된다.
         await expect(goalCardAfter.getByText("설정하기")).toBeHidden()
         await expect(goalCardAfter.getByText(/^\d+%$/)).toBeVisible()
+    })
+
+    test("적금 계좌 추가 → 적금 목록에 이름·목표 진행률 반영", async ({
+        page,
+    }) => {
+        test.setTimeout(120_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+
+        // ── 세그먼트 전환 ──
+        await page.getByRole("button", { name: "저축·투자" }).click()
+        await expect(
+            page.getByText("저축·투자 순자산", { exact: true }),
+        ).toBeVisible({ timeout: 20_000 })
+
+        // ── "+ 적금 추가" 로 시트 열기 ──
+        await page.getByRole("button", { name: "+ 적금 추가" }).click()
+
+        const sheet = page.getByRole("dialog", { name: "적금 추가" })
+        await expect(sheet).toBeVisible({ timeout: 10_000 })
+
+        // ── 이름·현재 저축액·목표 금액 입력 후 저장 ──
+        await sheet.getByLabel("적금 이름").fill(ACCOUNT_NAME)
+        await sheet.getByLabel("현재 저축액").fill(String(ACCOUNT_BASE))
+        await sheet.getByLabel("목표 금액").fill(String(ACCOUNT_GOAL))
+        await sheet.getByRole("button", { name: "적금 추가" }).click()
+
+        await expect(sheet).toBeHidden({ timeout: 10_000 })
+
+        // ── 적금 목록에 이름·목표 진행률 반영 확인 ──
+        const accountCard = page.getByRole("button", {
+            name: new RegExp(ACCOUNT_NAME),
+        })
+        await expect(accountCard).toBeVisible({ timeout: 10_000 })
+        await expect(
+            accountCard.getByText(`목표 ${ACCOUNT_GOAL_FORMATTED}`, {
+                exact: false,
+            }),
+        ).toBeVisible()
+        await expect(accountCard.getByText(/^\d+%$/)).toBeVisible()
     })
 })
