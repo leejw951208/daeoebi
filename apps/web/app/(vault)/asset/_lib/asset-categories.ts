@@ -4,16 +4,16 @@ import type { AssetCategory } from "@/lib/vault-client"
 // 카테고리 색 선택용 고정 팔레트(임의 hex 입력 대신 선택).
 export const CATEGORY_PALETTE: string[] = [
     "#f2994a",
-    "#4a90d9",
-    "#9b6bd6",
+    "#eb5757",
     "#e0689a",
+    "#9b6bd6",
+    "#7b61ff",
+    "#4a90d9",
+    "#2d9cdb",
+    "#20a4a4",
     "#3bb273",
-    "#14b8a6",
-    "#eab308",
-    "#ef4444",
-    "#6366f1",
-    "#0ea5e9",
-    "#84cc16",
+    "#6fcf97",
+    "#f2c94c",
     "#98a0a8",
 ]
 

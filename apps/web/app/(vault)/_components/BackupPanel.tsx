@@ -14,7 +14,6 @@ export function BackupPanel({ onImported }: Props) {
     const [error, setError] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
     const [mode, setMode] = useState<ImportMode>("reject")
-    const [pendingPayload, setPendingPayload] = useState<unknown>(null)
     const [pendingName, setPendingName] = useState<string | null>(null)
     const inputRef = useRef<HTMLInputElement | null>(null)
 
@@ -43,7 +42,6 @@ export function BackupPanel({ onImported }: Props) {
         setStatus(null)
         const file = e.target.files?.[0]
         if (!file) {
-            setPendingPayload(null)
             setPendingName(null)
             return
         }
@@ -51,38 +49,32 @@ export function BackupPanel({ onImported }: Props) {
         reader.onload = () => {
             try {
                 // E2E 백업은 암호문 블롭이 담긴 JSON 이다. 파싱만 하고 복호화하지 않는다.
-                setPendingPayload(JSON.parse(reader.result as string))
+                const parsed = JSON.parse(reader.result as string)
                 setPendingName(file.name)
+                void runImport(parsed)
             } catch {
                 setError("백업 파일이 올바른 JSON 형식이 아닙니다.")
-                setPendingPayload(null)
                 setPendingName(null)
             }
         }
         reader.onerror = () => {
             setError("파일을 읽지 못했습니다.")
-            setPendingPayload(null)
             setPendingName(null)
         }
         reader.readAsText(file)
     }
 
-    async function handleImport() {
-        if (pendingPayload === null) {
-            setError("복원할 파일을 먼저 선택하세요.")
-            return
-        }
+    async function runImport(payload: unknown) {
         setBusy(true)
         setStatus(null)
         setError(null)
         try {
-            const result = await importStore(pendingPayload, mode)
+            const result = await importStore(payload, mode)
             const line = (label: string, c: typeof result.secrets) =>
                 `${label} 추가 ${c.created} / 건너뜀 ${c.skipped} / 덮어쓰기 ${c.replaced}`
             setStatus(
                 `복원 완료. ${line("비밀번호", result.secrets)}, ${line("카테고리", result.categories)}, ${line("사이트", result.sites)}.`,
             )
-            setPendingPayload(null)
             setPendingName(null)
             if (inputRef.current) inputRef.current.value = ""
             await onImported()
@@ -122,7 +114,14 @@ export function BackupPanel({ onImported }: Props) {
                 </p>
                 <Button
                     variant="primary"
-                    style={{ width: "100%", minHeight: 50 }}
+                    style={{
+                        width: "100%",
+                        height: 50,
+                        minHeight: 50,
+                        borderRadius: 14,
+                        fontSize: 15,
+                        boxShadow: "none",
+                    }}
                     onClick={handleExport}
                     loading={busy}
                 >
@@ -237,10 +236,19 @@ export function BackupPanel({ onImported }: Props) {
                                     onChange={() => setMode(m.value)}
                                     disabled={busy}
                                     style={{
+                                        position: "absolute",
+                                        left: -9999,
+                                    }}
+                                />
+                                <span
+                                    aria-hidden="true"
+                                    style={{
+                                        flexShrink: 0,
                                         width: 19,
                                         height: 19,
-                                        accentColor: "var(--ac)",
-                                        flexShrink: 0,
+                                        borderRadius: "50%",
+                                        border: `5px solid ${on ? "var(--ac)" : "#dcdcdc"}`,
+                                        transition: "all 0.16s",
                                     }}
                                 />
                                 <span style={{ flex: 1, textAlign: "left" }}>
@@ -269,16 +277,6 @@ export function BackupPanel({ onImported }: Props) {
                         )
                     })}
                 </fieldset>
-
-                <Button
-                    variant="primary"
-                    style={{ width: "100%", marginTop: 16, minHeight: 50 }}
-                    onClick={handleImport}
-                    loading={busy}
-                    disabled={pendingPayload === null}
-                >
-                    복원 실행
-                </Button>
             </section>
 
             {status && (
@@ -305,16 +303,16 @@ const CONFLICT_MODES: { value: ImportMode; label: string; desc: string }[] = [
     {
         value: "reject",
         label: "거부",
-        desc: "충돌이 있으면 전체 가져오기를 중단합니다.",
+        desc: "충돌 시 전체 가져오기 중단",
     },
     {
         value: "skip",
         label: "건너뛰기",
-        desc: "기존 항목은 유지하고 새 항목만 추가합니다.",
+        desc: "기존 항목 유지, 새 항목만 추가",
     },
     {
         value: "replace",
         label: "덮어쓰기",
-        desc: "같은 항목은 백업 내용으로 교체합니다.",
+        desc: "같은 라벨은 백업 내용으로 교체",
     },
 ]

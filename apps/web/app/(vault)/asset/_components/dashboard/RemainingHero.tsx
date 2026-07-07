@@ -10,7 +10,10 @@ interface Props {
 
 export function RemainingHero({ left, pct, budget }: Props) {
     return (
-        <div className="asset-card" style={{ borderRadius: 20 }}>
+        <div
+            className="asset-card"
+            style={{ borderRadius: 20, padding: "20px 18px" }}
+        >
             <div
                 style={{
                     fontSize: 12.5,

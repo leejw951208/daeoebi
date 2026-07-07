@@ -1,7 +1,17 @@
+"use client"
 // 글로벌 404. 잘못된 라우트 진입 시 한국어 안내와 대외비 복귀 링크를 제공한다(Ink 테마).
+// 디자인 mock 처럼 풀스크린 챙(하단 탭바 없이)으로 노출한다 — VaultGate 밖 라우트라
+// data-auth-screen 을 직접 건다.
+import { useEffect } from "react"
 import Link from "next/link"
 
 export default function NotFound() {
+    useEffect(() => {
+        const root = document.documentElement
+        root.setAttribute("data-auth-screen", "")
+        return () => root.removeAttribute("data-auth-screen")
+    }, [])
+
     return (
         <section
             style={{
@@ -10,7 +20,7 @@ export default function NotFound() {
                 alignItems: "center",
                 justifyContent: "center",
                 textAlign: "center",
-                minHeight: "70vh",
+                minHeight: "100dvh",
                 background: "var(--tint)",
                 padding: 40,
             }}
@@ -52,6 +62,7 @@ export default function NotFound() {
                     borderRadius: 14,
                     boxShadow: "none",
                     height: 50,
+                    minHeight: 50,
                     fontSize: 15,
                     padding: "0 28px",
                 }}

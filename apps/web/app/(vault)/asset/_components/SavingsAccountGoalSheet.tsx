@@ -113,11 +113,17 @@ export function SavingsAccountGoalSheet({
                             background: account.color,
                         }}
                     />
-                    <div style={{ fontSize: 18, fontWeight: 800 }}>
+                    <div
+                        style={{
+                            fontSize: 18,
+                            fontWeight: 800,
+                            letterSpacing: "-0.02em",
+                        }}
+                    >
                         {account.name} 목표
                     </div>
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
+                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
                     이 적금에서 모을 금액을 정하면 진행률이 자동으로 계산돼요.
                     현재 {formatWon(currentTotal)} 모았어요.
                 </p>
@@ -196,7 +202,11 @@ export function SavingsAccountGoalSheet({
 
                 <Button
                     variant="primary"
-                    style={{ width: "100%", background: ACCENT }}
+                    style={{
+                        width: "100%",
+                        background: ACCENT,
+                        boxShadow: "0 8px 22px -8px #20a4a4",
+                    }}
                     onClick={() => {
                         resetIdle()
                         void save()
@@ -211,7 +221,10 @@ export function SavingsAccountGoalSheet({
                     className="btn-text"
                     style={{
                         width: "100%",
-                        marginTop: 6,
+                        height: 46,
+                        justifyContent: "center",
+                        marginTop: 2,
+                        fontWeight: 700,
                         color: "#e5484d",
                     }}
                     disabled={saving || deleting}

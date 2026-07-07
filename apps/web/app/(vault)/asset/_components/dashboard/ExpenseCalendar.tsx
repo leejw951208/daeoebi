@@ -1,7 +1,7 @@
 "use client"
 // 자산 대시보드의 지출 달력 카드. 월 그리드에 일별 지출 합계를 축약 표기하고
 // 날짜 셀을 누르면 선택일이 바뀐다(상세는 상위 DayDetail 이 그린다).
-import { WEEKDAYS, buildCalendar } from "../../_lib/asset-dates"
+import { WEEKDAYS, buildCalendar, todayISO } from "../../_lib/asset-dates"
 
 interface Props {
     month: string
@@ -26,6 +26,7 @@ export function ExpenseCalendar({
     count,
 }: Props) {
     const cells = buildCalendar(month)
+    const today = todayISO()
 
     return (
         <div
@@ -63,9 +64,9 @@ export function ExpenseCalendar({
                     // 일(0)·토(6)만 요일색으로 구분하고 나머지는 muted 로 둔다.
                     const color =
                         i === 0
-                            ? "#d98a8c"
+                            ? "#e5484d"
                             : i === 6
-                              ? "#8fb2d9"
+                              ? "#4a90d9"
                               : "var(--color-text-muted)"
                     return (
                         <div
@@ -75,6 +76,7 @@ export function ExpenseCalendar({
                                 fontSize: 11,
                                 fontWeight: 700,
                                 color,
+                                padding: "4px 0",
                             }}
                         >
                             {w}
@@ -94,13 +96,20 @@ export function ExpenseCalendar({
                         return <div key={`b${i}`} aria-hidden="true" />
                     const amount = dayTotals.get(cell.date!) ?? 0
                     const active = cell.date === selectedDay
+                    const isToday = cell.date === today
+                    const className =
+                        "cal-cell" +
+                        (active
+                            ? " active"
+                            : (amount > 0 ? " has-spend" : "") +
+                              (isToday ? " today" : ""))
                     return (
                         <button
                             key={cell.date}
                             type="button"
                             onClick={() => onSelectDay(cell.date!)}
                             aria-pressed={active}
-                            className={`cal-cell${active ? " active" : ""}`}
+                            className={className}
                         >
                             <span className="cal-day">{cell.day}</span>
                             {amount > 0 && (

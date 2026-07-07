@@ -62,8 +62,10 @@ const TABS = [
 
 export function BottomTabBar() {
     const pathname = usePathname()
-    // 데모 모드에서는 실제 보관함으로 가는 탭을 노출하지 않는다(폐쇄적 둘러보기).
-    if (pathname.startsWith("/demo")) return null
+    // 디자인상 하단 탭바는 목록(보관함)·자산 대시보드에만 노출한다. 상세·폼·백업·지출 등
+    // 서브 화면은 자체 헤더(취소/저장·← 뒤로)를 가진 풀스크린이라 탭바를 감춘다.
+    const showTabBar = pathname === "/" || pathname === "/asset"
+    if (!showTabBar) return null
     return (
         <nav className="bottom-tab-bar" aria-label="모바일 네비게이션">
             {TABS.map((tab) => {

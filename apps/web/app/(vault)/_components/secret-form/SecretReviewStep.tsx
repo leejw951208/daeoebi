@@ -66,6 +66,8 @@ export function SecretReviewStep({
                     flexDirection: "column",
                     gap: 14,
                     flex: 1,
+                    marginInline: "calc(-1 * var(--container-padding))",
+                    paddingInline: 18,
                 }}
             >
                 <div>
@@ -120,31 +122,17 @@ export function SecretReviewStep({
                                 >
                                     {r.name.trim()}
                                 </span>
-                                {r.sensitive ? (
-                                    <span
-                                        aria-label="값 숨김"
-                                        style={{
-                                            fontFamily: "var(--font-mono)",
-                                            fontSize: 14,
-                                            letterSpacing: "0.04em",
-                                            color: "#999",
-                                        }}
-                                    >
-                                        ••••••••
-                                    </span>
-                                ) : (
-                                    <span
-                                        style={{
-                                            fontSize: 14,
-                                            color: "var(--color-text-secondary)",
-                                            wordBreak: "break-all",
-                                            textAlign: "right",
-                                            minWidth: 0,
-                                        }}
-                                    >
-                                        {r.value.trim() || "—"}
-                                    </span>
-                                )}
+                                <span
+                                    aria-label="값 숨김"
+                                    style={{
+                                        fontFamily: "var(--font-mono)",
+                                        fontSize: 14,
+                                        letterSpacing: "0.04em",
+                                        color: "#999",
+                                    }}
+                                >
+                                    ••••••••
+                                </span>
                             </div>
                         ))}
                     </div>
@@ -186,8 +174,8 @@ export function SecretReviewStep({
                 style={{
                     position: "sticky",
                     bottom: 0,
-                    padding: "14px 0 22px",
-                    marginTop: 14,
+                    padding: "14px 18px 22px",
+                    marginInline: "calc(-1 * var(--container-padding))",
                     background:
                         "linear-gradient(180deg, rgba(255,255,255,0), #fff 30%)",
                 }}

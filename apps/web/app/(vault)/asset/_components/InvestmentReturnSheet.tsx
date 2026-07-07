@@ -1,14 +1,13 @@
 "use client"
-// 투자 현황 입력 바텀시트. 투자 원금(base)과 수익률(returnRate)을 함께 수정한다.
-// 저장 시 base 를 sealInvestment 로 암호화해 returnRate(평문)와 함께 보낸다.
+// 투자 수익률 입력 바텀시트. 수익률(returnRate)만 수정한다(원금 base 는 prop 으로 유지).
+// 저장 시 기존 base 를 sealInvestment 로 암호화해 returnRate(평문)와 함께 보낸다.
 import { useState } from "react"
 import { Button } from "@/components/Button"
 import { useVault } from "../../_lib/vault-context"
 import { saveInvestment } from "@/lib/vault-client"
 import { sealInvestment } from "../_lib/asset-payload"
-import { RETURN_RATE_PRESETS, formatAmount } from "../_lib/asset-categories"
+import { RETURN_RATE_PRESETS } from "../_lib/asset-categories"
 
-const MAX_AMOUNT_DIGITS = 12
 const ACCENT = "#7b61ff"
 
 interface Props {
@@ -26,19 +25,16 @@ export function InvestmentReturnSheet({
 }: Props) {
     const { vaultKey, resetIdle } = useVault()
     const [returnDraft, setReturnDraft] = useState(returnRate)
-    const [baseDraft, setBaseDraft] = useState(base > 0 ? String(base) : "")
     const [saving, setSaving] = useState(false)
     const [saveFailed, setSaveFailed] = useState(false)
     const [focusedField, setFocusedField] = useState<string | null>(null)
-
-    const baseValue = Number(baseDraft || "0")
 
     async function save() {
         if (saving) return
         setSaving(true)
         setSaveFailed(false)
         try {
-            const blob = await sealInvestment(vaultKey, { base: baseValue })
+            const blob = await sealInvestment(vaultKey, { base })
             await saveInvestment(returnDraft.trim(), blob)
             await onChanged()
             onClose()
@@ -61,47 +57,19 @@ export function InvestmentReturnSheet({
         >
             <div className="sheet">
                 <div className="sheet-grip" aria-hidden="true" />
-                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
+                <div
+                    style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                        letterSpacing: "-0.02em",
+                    }}
+                >
                     투자 수익률
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
-                    투자 원금과 수익률을 입력하면 평가금액과 손익이 자동으로
-                    계산돼요.
+                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
+                    현재 수익률을 입력하면 평가금액과 손익이 자동으로 계산돼요.
                 </p>
-
-                <div
-                    className="field-label"
-                    style={{ marginBottom: 7, fontSize: 11.5 }}
-                >
-                    투자 원금
-                </div>
-                <div
-                    className="income-input"
-                    style={{
-                        marginBottom: 16,
-                        ...(focusedField === "base"
-                            ? { borderColor: ACCENT }
-                            : {}),
-                    }}
-                    onFocus={() => setFocusedField("base")}
-                    onBlur={() => setFocusedField(null)}
-                >
-                    <span aria-hidden="true">₩</span>
-                    <input
-                        inputMode="numeric"
-                        value={baseDraft ? formatAmount(baseValue) : ""}
-                        placeholder="0"
-                        aria-label="투자 원금"
-                        onChange={(e) => {
-                            resetIdle()
-                            setBaseDraft(
-                                e.target.value
-                                    .replace(/[^\d]/g, "")
-                                    .slice(0, MAX_AMOUNT_DIGITS),
-                            )
-                        }}
-                    />
-                </div>
 
                 <div
                     className="field-label"
@@ -113,6 +81,7 @@ export function InvestmentReturnSheet({
                     className="income-input"
                     style={{
                         height: 64,
+                        padding: "0 18px",
                         marginBottom: 12,
                         borderColor:
                             focusedField === "rate" ? ACCENT : "#ececec",
@@ -188,7 +157,11 @@ export function InvestmentReturnSheet({
 
                 <Button
                     variant="primary"
-                    style={{ width: "100%", background: ACCENT }}
+                    style={{
+                        width: "100%",
+                        background: ACCENT,
+                        boxShadow: "0 8px 22px -8px #7b61ff",
+                    }}
                     onClick={() => {
                         resetIdle()
                         void save()

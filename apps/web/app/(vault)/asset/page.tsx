@@ -58,11 +58,6 @@ import {
 } from "./_components/dashboard/AssetDashboard"
 import { BudgetSheet } from "./_components/budget/BudgetSheet"
 import { CategoryManager } from "./_components/CategoryManager"
-import { SavingsAccountAddSheet } from "./_components/SavingsAccountAddSheet"
-import {
-    SavingsAccountGoalSheet,
-    type EditingAccount,
-} from "./_components/SavingsAccountGoalSheet"
 import { InvestmentReturnSheet } from "./_components/InvestmentReturnSheet"
 import { SavingsBoxSheet } from "./_components/SavingsBoxSheet"
 import {
@@ -194,10 +189,6 @@ export default function AssetPage() {
     const [savingsState, setSavingsState] = useState<SavingsState>({
         status: "idle",
     })
-    const [addAccountSheetOpen, setAddAccountSheetOpen] = useState(false)
-    const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
-        null,
-    )
     const [returnSheetOpen, setReturnSheetOpen] = useState(false)
     const [boxSheetMode, setBoxSheetMode] = useState<"in" | "out" | null>(null)
     const [boxDetailOpen, setBoxDetailOpen] = useState(false)
@@ -398,19 +389,6 @@ export default function AssetPage() {
         [resetIdle, savingsState.status, loadSavings, savingsCategoryIds],
     )
 
-    // 계좌 추가/목표 시트 저장·삭제 후: 계좌 목록만 재조회한다(적립 내역·투자는 그대로 둔다).
-    const reloadAccounts = useCallback(async () => {
-        try {
-            const accountViews = await listSavingsAccounts()
-            const accounts = await resolveAccounts(vaultKey, accountViews)
-            setSavingsState((prev) =>
-                prev.status === "ready" ? { ...prev, accounts } : prev,
-            )
-        } catch {
-            // no-op: 다음 로드에서 재시도됨
-        }
-    }, [vaultKey])
-
     // 수익률 시트 저장 후: 투자 포지션만 재조회한다(적립 내역·목표·계좌는 그대로 둔다).
     const reloadInvestment = useCallback(async () => {
         try {
@@ -460,18 +438,20 @@ export default function AssetPage() {
         const monthContribs = filterByMonth(contribAll, month)
         const monthSummary = savingsSummary(monthContribs, categories)
         const contributions: Contribution[] = monthContribs.map((c) => {
-            const { name } = resolveCategory(c.categoryId, categories)
+            const { name, color } = resolveCategory(c.categoryId, categories)
             return {
                 id: c.id,
                 item: c.item,
                 amount: c.amount,
                 categoryName: name,
                 date: c.date,
+                color,
+                recurring: c.recurringId !== null,
             }
         })
         // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
         const monthByItem = monthSavingsByItem(expenses, categories)
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+        const { savedTotal, savedMonth } = savingsAccountsView(
             accounts,
             monthByItem,
         )
@@ -488,25 +468,6 @@ export default function AssetPage() {
             savedMonth,
             investMonth: monthSummary.investTotal,
             contributions,
-            accounts: rows,
-            onAddAccount: () => {
-                resetIdle()
-                setAddAccountSheetOpen(true)
-            },
-            onEditAccountGoal: (name: string) => {
-                resetIdle()
-                const raw = accounts.find((a) => a.name === name)
-                const row = rows.find((r) => r.name === name)
-                if (!raw) return
-                setEditingAccount({
-                    id: raw.id,
-                    name: raw.name,
-                    color: raw.color,
-                    base: raw.base,
-                    goal: raw.goal,
-                    month: row?.month ?? 0,
-                })
-            },
             investment,
             onEditReturn: () => {
                 resetIdle()
@@ -532,8 +493,6 @@ export default function AssetPage() {
         }
     }, [savingsState, state, month, resetIdle])
 
-    const savingsAccounts =
-        savingsState.status === "ready" ? savingsState.accounts : []
     const currentInvestment =
         savingsState.status === "ready" ? savingsState.investment : null
     const boxTxns = savingsState.status === "ready" ? savingsState.boxTxns : []
@@ -546,7 +505,10 @@ export default function AssetPage() {
 
     return (
         <section style={{ minHeight: "100%" }}>
-            <div className="sticky-header">
+            <div
+                className="sticky-header"
+                style={{ padding: "30px 18px 12px" }}
+            >
                 <div
                     style={{
                         display: "flex",
@@ -599,7 +561,7 @@ export default function AssetPage() {
                         style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 12,
+                            gap: 8,
                         }}
                     >
                         <button
@@ -643,6 +605,75 @@ export default function AssetPage() {
                         <LockTimer />
                     </div>
                 </div>
+                {state.status === "ready" && (
+                    <div
+                        style={{
+                            display: "flex",
+                            gap: 4,
+                            marginTop: 14,
+                            padding: 4,
+                            background: "var(--soft)",
+                            borderRadius: 12,
+                        }}
+                    >
+                        <button
+                            type="button"
+                            aria-pressed={assetTab === "budget"}
+                            style={{
+                                flex: 1,
+                                height: 34,
+                                border: "none",
+                                borderRadius: 9,
+                                font: "inherit",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                ...(assetTab === "budget"
+                                    ? {
+                                          background: "#fff",
+                                          color: "#171717",
+                                          boxShadow:
+                                              "0 1px 3px rgba(0,0,0,0.09)",
+                                      }
+                                    : {
+                                          background: "transparent",
+                                          color: "#888",
+                                      }),
+                            }}
+                            onClick={() => handleAssetTab("budget")}
+                        >
+                            이번 달
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={assetTab === "savings"}
+                            style={{
+                                flex: 1,
+                                height: 34,
+                                border: "none",
+                                borderRadius: 9,
+                                font: "inherit",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                ...(assetTab === "savings"
+                                    ? {
+                                          background: "#fff",
+                                          color: "#171717",
+                                          boxShadow:
+                                              "0 1px 3px rgba(0,0,0,0.09)",
+                                      }
+                                    : {
+                                          background: "transparent",
+                                          color: "#888",
+                                      }),
+                            }}
+                            onClick={() => handleAssetTab("savings")}
+                        >
+                            저축·투자
+                        </button>
+                    </div>
+                )}
             </div>
 
             {state.status === "loading" && <SkeletonCard lines={4} />}
@@ -667,7 +698,6 @@ export default function AssetPage() {
                         setSheetOpen(true)
                     }}
                     assetTab={assetTab}
-                    onTab={handleAssetTab}
                     savings={savingsView}
                 />
             )}
@@ -690,23 +720,6 @@ export default function AssetPage() {
                 <CategoryManager
                     onChanged={load}
                     onClose={() => setCategorySheetOpen(false)}
-                />
-            )}
-
-            {addAccountSheetOpen && (
-                <SavingsAccountAddSheet
-                    accountCount={savingsAccounts.length}
-                    existingNames={savingsAccounts.map((a) => a.name)}
-                    onSaved={reloadAccounts}
-                    onClose={() => setAddAccountSheetOpen(false)}
-                />
-            )}
-
-            {editingAccount && (
-                <SavingsAccountGoalSheet
-                    account={editingAccount}
-                    onChanged={reloadAccounts}
-                    onClose={() => setEditingAccount(null)}
                 />
             )}
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { deleteSecret, getSecret, updateSecret } from "@/lib/vault-client"
+import { deleteSecret, getSecret } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { SkeletonCard } from "@/components/Skeleton"
@@ -13,7 +13,7 @@ import {
     type SecretFormInitial,
 } from "../_components/secret-form/SecretForm"
 import { useVault, type SecretField } from "../_lib/vault-context"
-import { openPayload, sealPayload } from "../_lib/secret-payload"
+import { openPayload } from "../_lib/secret-payload"
 import { isSensitiveFieldName } from "../_lib/field-suggestions"
 import { LockTimer } from "../_components/LockTimer"
 
@@ -41,9 +41,6 @@ export default function SecretDetailPage() {
     const [mode, setMode] = useState<"view" | "edit">("view")
     const [confirmDelete, setConfirmDelete] = useState(false)
     const [deleteBusy, setDeleteBusy] = useState(false)
-    // 삭제 확인 중인 필드 인덱스(null 이면 다이얼로그 닫힘). 필드 단위 삭제용.
-    const [fieldToDelete, setFieldToDelete] = useState<number | null>(null)
-    const [fieldBusy, setFieldBusy] = useState(false)
     const [, startTransition] = useTransition()
 
     const reload = useCallback(async () => {
@@ -105,33 +102,6 @@ export default function SecretDetailPage() {
         } finally {
             setDeleteBusy(false)
             setConfirmDelete(false)
-        }
-    }
-
-    // 단일 필드 삭제. 나머지 필드·메모만 다시 암호화해 저장한 뒤 재조회한다.
-    async function handleDeleteField(idx: number) {
-        if (!data) return
-        setFieldBusy(true)
-        setError(null)
-        try {
-            const nextFields = data.fields.filter((_, i) => i !== idx)
-            const blob = await sealPayload(vaultKey, {
-                fields: nextFields,
-                memo: data.memo,
-            })
-            await updateSecret(data.id, {
-                label: data.label,
-                categoryId: data.categoryId,
-                iv: blob.iv,
-                ciphertext: blob.ciphertext,
-                authTag: blob.authTag,
-            })
-            await reload()
-        } catch (e) {
-            setError(isApiError(e) ? e.message : (e as Error).message)
-        } finally {
-            setFieldBusy(false)
-            setFieldToDelete(null)
         }
     }
 
@@ -244,7 +214,7 @@ export default function SecretDetailPage() {
                 <Link className="btn-text" href="/">
                     ← 보관함
                 </Link>
-                <LockTimer compact />
+                <LockTimer compact bare />
             </div>
 
             {error && (
@@ -262,7 +232,7 @@ export default function SecretDetailPage() {
                         marginBottom: 22,
                     }}
                 >
-                    <span className="avatar lg" aria-hidden="true">
+                    <span className="avatar" aria-hidden="true">
                         {data.label.trim()[0] ?? "·"}
                     </span>
                     <div style={{ minWidth: 0 }}>
@@ -273,7 +243,7 @@ export default function SecretDetailPage() {
                                     display: "inline-flex",
                                     alignItems: "center",
                                     marginTop: 6,
-                                    padding: "3px 10px",
+                                    padding: "4px 10px",
                                     borderRadius: 999,
                                     background: "var(--soft)",
                                     fontSize: 11,
@@ -281,7 +251,7 @@ export default function SecretDetailPage() {
                                     color: "#8a8a8a",
                                 }}
                             >
-                                {formatDateChip(data.createdAt)} 생성
+                                {`수정 ${formatDateChip(data.updatedAt || data.createdAt)} · 생성 ${formatDateChip(data.createdAt)}`}
                             </div>
                         )}
                     </div>
@@ -301,14 +271,6 @@ export default function SecretDetailPage() {
                                 isSensitiveFieldName(field.name)
                             }
                             onActivity={resetIdle}
-                            onDelete={
-                                fieldBusy
-                                    ? undefined
-                                    : () => {
-                                          resetIdle()
-                                          setFieldToDelete(idx)
-                                      }
-                            }
                         />
                     ))}
                     {data.memo && (
@@ -328,7 +290,7 @@ export default function SecretDetailPage() {
                     <button
                         type="button"
                         className="btn secondary"
-                        style={{ flex: 1, minHeight: 48 }}
+                        style={{ flex: 1, minHeight: 48, fontSize: 14 }}
                         onClick={() => setMode("edit")}
                     >
                         수정
@@ -336,7 +298,7 @@ export default function SecretDetailPage() {
                     <button
                         type="button"
                         className="btn danger"
-                        style={{ flex: 1, minHeight: 48 }}
+                        style={{ flex: 1, minHeight: 48, fontSize: 14 }}
                         onClick={() => setConfirmDelete(true)}
                     >
                         삭제
@@ -353,24 +315,6 @@ export default function SecretDetailPage() {
                 confirmLoading={deleteBusy}
                 onConfirm={handleDelete}
                 onCancel={() => setConfirmDelete(false)}
-            />
-
-            <ConfirmDialog
-                open={fieldToDelete !== null}
-                title="필드 삭제"
-                message={
-                    fieldToDelete !== null && data.fields[fieldToDelete]
-                        ? `"${data.fields[fieldToDelete].name}" 필드를 삭제하시겠습니까?`
-                        : "이 필드를 삭제하시겠습니까?"
-                }
-                confirmLabel="삭제"
-                destructive
-                confirmLoading={fieldBusy}
-                onConfirm={() => {
-                    if (fieldToDelete !== null)
-                        void handleDeleteField(fieldToDelete)
-                }}
-                onCancel={() => setFieldToDelete(null)}
             />
         </section>
     )

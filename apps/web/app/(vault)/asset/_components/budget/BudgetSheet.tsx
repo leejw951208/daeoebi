@@ -101,11 +101,12 @@ export function BudgetSheet({ month, budgetRows, onChanged, onClose }: Props) {
                         fontSize: 18,
                         fontWeight: 800,
                         marginBottom: 4,
+                        letterSpacing: "-0.02em",
                     }}
                 >
                     월 예산
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
+                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
                     이번 달 쓸 수 있는 돈을 정해두세요.
                 </p>
 

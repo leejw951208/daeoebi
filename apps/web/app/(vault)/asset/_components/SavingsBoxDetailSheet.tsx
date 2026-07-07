@@ -69,13 +69,26 @@ export function SavingsBoxDetailSheet({
                 if (e.target === e.currentTarget) onClose()
             }}
         >
-            <div className="sheet">
-                <div className="sheet-grip" aria-hidden="true" />
+            <div
+                className="sheet"
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    padding: "10px 0 0",
+                }}
+            >
+                <div
+                    className="sheet-grip"
+                    aria-hidden="true"
+                    style={{ marginBottom: 14 }}
+                />
                 <div
                     style={{
-                        borderBottom: "1px solid #f2f2f2",
+                        flex: "none",
+                        padding: "0 22px",
                         paddingBottom: 14,
-                        marginBottom: 16,
+                        borderBottom: "1px solid #f2f2f2",
                     }}
                 >
                     <div
@@ -87,7 +100,13 @@ export function SavingsBoxDetailSheet({
                         }}
                     >
                         <span style={{ width: 34 }} aria-hidden="true" />
-                        <div style={{ fontSize: 16, fontWeight: 800 }}>
+                        <div
+                            style={{
+                                fontSize: 16,
+                                fontWeight: 800,
+                                letterSpacing: "-0.02em",
+                            }}
+                        >
                             세이빙 박스 내역
                         </div>
                         <button
@@ -129,214 +148,222 @@ export function SavingsBoxDetailSheet({
                     </div>
                 </div>
 
-                {errorMessage && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginBottom: 12 }}
-                    >
-                        {errorMessage}
-                    </div>
-                )}
+                <div
+                    style={{
+                        flex: 1,
+                        overflowY: "auto",
+                        padding: "16px 22px 26px",
+                    }}
+                >
+                    {errorMessage && (
+                        <div
+                            role="alert"
+                            className="error-box"
+                            style={{ marginBottom: 12 }}
+                        >
+                            {errorMessage}
+                        </div>
+                    )}
 
-                {rows.length === 0 ? (
-                    <div
-                        style={{
-                            textAlign: "center",
-                            padding: "36px 8px",
-                            fontSize: 13,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                            lineHeight: 1.5,
-                        }}
-                    >
-                        아직 기록이 없어요.
-                        <br />
-                        남은 돈을 입금해 보세요.
-                    </div>
-                ) : (
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                        }}
-                    >
-                        {rows.map((t) => (
-                            <div
-                                key={t.id}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 12,
-                                    padding: "10px 13px",
-                                    border: "1px solid #f1f1f1",
-                                    borderRadius: 14,
-                                    background: "var(--tint)",
-                                }}
-                            >
-                                <span
-                                    aria-hidden="true"
+                    {rows.length === 0 ? (
+                        <div
+                            style={{
+                                textAlign: "center",
+                                padding: "36px 8px",
+                                fontSize: 13,
+                                color: "var(--color-text-muted)",
+                                fontWeight: 600,
+                                lineHeight: 1.5,
+                            }}
+                        >
+                            아직 기록이 없어요.
+                            <br />
+                            남은 돈을 입금해 보세요.
+                        </div>
+                    ) : (
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 8,
+                            }}
+                        >
+                            {rows.map((t) => (
+                                <div
+                                    key={t.id}
                                     style={{
-                                        flexShrink: 0,
-                                        width: 30,
-                                        height: 30,
-                                        borderRadius: 10,
                                         display: "flex",
                                         alignItems: "center",
-                                        justifyContent: "center",
-                                        fontSize: 15,
-                                        fontWeight: 800,
-                                        background:
-                                            t.type === "in"
-                                                ? "#fdf6e3"
-                                                : "#f1f1f1",
-                                        color:
-                                            t.type === "in"
-                                                ? "#c08a15"
-                                                : "#888",
+                                        gap: 12,
+                                        padding: "10px 13px",
+                                        border: "1px solid #f1f1f1",
+                                        borderRadius: 14,
+                                        background: "var(--tint)",
                                     }}
                                 >
-                                    {t.type === "in" ? "+" : "−"}
-                                </span>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div
+                                    <span
+                                        aria-hidden="true"
                                         style={{
+                                            flexShrink: 0,
+                                            width: 34,
+                                            height: 34,
+                                            borderRadius: 11,
                                             display: "flex",
                                             alignItems: "center",
-                                            gap: 6,
-                                            minWidth: 0,
+                                            justifyContent: "center",
+                                            fontSize: 18,
+                                            fontWeight: 800,
+                                            background:
+                                                t.type === "in"
+                                                    ? "#fbf1d7"
+                                                    : "#fdecec",
+                                            color:
+                                                t.type === "in"
+                                                    ? "#c08a15"
+                                                    : "#e5484d",
                                         }}
                                     >
-                                        <span
+                                        {t.type === "in" ? "+" : "−"}
+                                    </span>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div
                                             style={{
-                                                fontSize: 14,
-                                                fontWeight: 700,
-                                                color: "#222",
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 6,
+                                                minWidth: 0,
                                             }}
                                         >
-                                            {rowLabel(t)}
-                                        </span>
-                                        {t.type === "in" &&
-                                            t.source === "savings" && (
-                                                <span
-                                                    style={{
-                                                        flexShrink: 0,
-                                                        fontSize: 10,
-                                                        fontWeight: 800,
-                                                        color: "#20a4a4",
-                                                        background: "#fff",
-                                                        padding: "2px 6px",
-                                                        borderRadius: 6,
-                                                    }}
-                                                >
-                                                    저축
-                                                </span>
-                                            )}
+                                            <span
+                                                style={{
+                                                    fontSize: 14,
+                                                    fontWeight: 700,
+                                                    color: "#222",
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                {rowLabel(t)}
+                                            </span>
+                                            {t.type === "in" &&
+                                                t.source === "savings" && (
+                                                    <span
+                                                        style={{
+                                                            flexShrink: 0,
+                                                            fontSize: 10,
+                                                            fontWeight: 800,
+                                                            color: "#20a4a4",
+                                                            background: "#fff",
+                                                            padding: "2px 6px",
+                                                            borderRadius: 6,
+                                                        }}
+                                                    >
+                                                        저축
+                                                    </span>
+                                                )}
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: 11.5,
+                                                color: "#a3a3a3",
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            {t.date}
+                                        </div>
                                     </div>
-                                    <div
+                                    <span
                                         style={{
-                                            fontSize: 11.5,
-                                            color: "#a3a3a3",
-                                            fontWeight: 600,
+                                            flexShrink: 0,
+                                            fontSize: 15,
+                                            fontWeight: 800,
+                                            letterSpacing: "-0.02em",
+                                            color:
+                                                t.type === "in"
+                                                    ? "#c08a15"
+                                                    : "#e5484d",
                                         }}
                                     >
-                                        {t.date}
-                                    </div>
-                                </div>
-                                <span
-                                    style={{
-                                        flexShrink: 0,
-                                        fontSize: 15,
-                                        fontWeight: 800,
-                                        letterSpacing: "-0.02em",
-                                        color:
-                                            t.type === "in"
-                                                ? "#171717"
-                                                : "#e5484d",
-                                    }}
-                                >
-                                    {t.type === "in" ? "+" : "-"}
-                                    {formatWon(t.amount)}
-                                </span>
-                                <button
-                                    type="button"
-                                    aria-label="삭제"
-                                    disabled={deletingId === t.id}
-                                    onClick={() => void handleDelete(t.id)}
-                                    style={{
-                                        flexShrink: 0,
-                                        border: "none",
-                                        background: "none",
-                                        color: "#c9ccd1",
-                                        cursor: "pointer",
-                                        padding: 4,
-                                        display: "flex",
-                                    }}
-                                >
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        aria-hidden="true"
+                                        {t.type === "in" ? "+" : "-"}
+                                        {formatWon(t.amount)}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        aria-label="삭제"
+                                        disabled={deletingId === t.id}
+                                        onClick={() => void handleDelete(t.id)}
+                                        style={{
+                                            flexShrink: 0,
+                                            border: "none",
+                                            background: "none",
+                                            color: "#c9ccd1",
+                                            cursor: "pointer",
+                                            padding: 4,
+                                            display: "flex",
+                                        }}
                                     >
-                                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                    </svg>
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                {moreCount > 0 && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            resetIdle()
-                            setShown((s) => s + PAGE_SIZE)
-                        }}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 6,
-                            width: "100%",
-                            height: 48,
-                            marginTop: 10,
-                            border: "1px solid #ececec",
-                            borderRadius: 14,
-                            background: "#fff",
-                            font: "inherit",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: "#555",
-                            cursor: "pointer",
-                        }}
-                    >
-                        {moreCount}개 더 보기
-                        <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
+                    {moreCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                resetIdle()
+                                setShown((s) => s + PAGE_SIZE)
+                            }}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                                width: "100%",
+                                height: 48,
+                                marginTop: 10,
+                                border: "1px solid #ececec",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#555",
+                                cursor: "pointer",
+                            }}
                         >
-                            <path d="M6 9l6 6 6-6" />
-                        </svg>
-                    </button>
-                )}
+                            {moreCount}개 더 보기
+                            <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     )

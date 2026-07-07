@@ -136,7 +136,11 @@ export function EntriesScreen() {
 
             <IdleWarning />
 
-            <nav aria-label="대외비 관리" className="toolbar">
+            <nav
+                aria-label="대외비 관리"
+                className="toolbar"
+                style={{ padding: "16px 18px 0", margin: 0 }}
+            >
                 <Link
                     href="/backup"
                     style={{
@@ -178,7 +182,7 @@ export function EntriesScreen() {
                 </div>
             )}
 
-            <div>
+            <div style={{ padding: "14px 16px 22px" }}>
                 {(state === "loading" || siteState.status === "loading") && (
                     <SkeletonCard lines={3} />
                 )}
