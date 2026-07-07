@@ -1,6 +1,7 @@
 /**
  * E2E QA: 저축·투자 탭
  * 세그먼트 전환 → 저축·투자 순자산 노출 → 저축 목표 설정 → 진행률/목표 반영.
+ * 세이빙 박스 입금 → 입출금 내역 반영.
  *
  * Auth bypass: dev 환경에서 "패스키로 잠금해제" 클릭 → devUnlock() 호출.
  * `category-crud.spec.ts` 의 enterVaultAt·waitForAssetDashboard·tall viewport
@@ -10,6 +11,10 @@
  * 파생된 고유 이름을 사용해 이전 실행과 구분한다. 금액도 새로 저장하므로
  * "목표 ₩<금액>" 텍스트로 정확히 검증할 수 있다(누적 저축액은 이전 테스트
  * 실행에 따라 달라질 수 있어 진행률 % 값 자체는 정확한 수치 대신 존재만 검증한다).
+ *
+ * 세이빙 박스 잔액도 볼트당 누적값(이전 실행 입출금이 계속 쌓임)이라 총액을
+ * 정확히 검증할 수 없다. 대신 이번 실행에서만 쓰는 고유 메모를 부여해
+ * "입출금 내역" 목록에서 해당 건이 금액과 함께 나타나는지로 검증한다.
  */
 
 import { test, expect, type Page } from "@playwright/test"
@@ -29,6 +34,12 @@ const ACCOUNT_GOAL_FORMATTED = `₩${ACCOUNT_GOAL.toLocaleString("ko-KR")}`
 // 프리셋(3/5/8/10%)과 겹치지 않는 소수 값을 써서 "저장 전 우연히 같은 값" 가능성을 배제한다.
 const RETURN_RATE = "7.3"
 const RETURN_RATE_FORMATTED = `+${RETURN_RATE}%`
+
+// 세이빙 박스 잔액은 볼트당 누적값(이전 실행 입출금이 누적)이라 정확한 총액을 검증할 수 없다.
+// 대신 이번 실행에서만 쓰는 고유 메모를 "입출금 내역"에서 찾아 입금이 반영됐는지 확인한다.
+const BOX_DEPOSIT_MEMO = `QA박스입금-${Date.now()}`
+const BOX_DEPOSIT_AMOUNT = 55_000
+const BOX_DEPOSIT_AMOUNT_FORMATTED = `+₩${BOX_DEPOSIT_AMOUNT.toLocaleString("ko-KR")}`
 
 // Tall viewport so the bottom sheet never extends above the visible area.
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
@@ -183,5 +194,54 @@ test.describe.serial("저축·투자 탭", () => {
         await expect(
             investCard.getByText(RETURN_RATE_FORMATTED, { exact: true }),
         ).toBeVisible({ timeout: 10_000 })
+    })
+
+    test("세이빙 박스 입금 → 입출금 내역에 반영", async ({ page }) => {
+        test.setTimeout(120_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+
+        // ── 세그먼트 전환 ──
+        await page.getByRole("button", { name: "저축·투자" }).click()
+        await expect(
+            page.getByText("저축·투자 순자산", { exact: true }),
+        ).toBeVisible({ timeout: 20_000 })
+
+        // ── 세이빙 박스 카드의 "입금" 버튼으로 시트 열기 ──
+        await page.getByRole("button", { name: "입금", exact: true }).click()
+
+        const sheet = page.getByRole("dialog", { name: "세이빙 박스 입금" })
+        await expect(sheet).toBeVisible({ timeout: 10_000 })
+
+        // ── 금액·메모 입력 후 저장 ──
+        await sheet.getByLabel("금액").fill(String(BOX_DEPOSIT_AMOUNT))
+        await sheet.getByLabel("메모").fill(BOX_DEPOSIT_MEMO)
+        await sheet.getByRole("button", { name: "입금", exact: true }).click()
+
+        await expect(sheet).toBeHidden({ timeout: 10_000 })
+
+        // ── "입출금 내역 보기" 로 내역 시트 열기 ──
+        await page.getByRole("button", { name: "입출금 내역 보기" }).click()
+
+        const detailSheet = page.getByRole("dialog", {
+            name: "세이빙 박스 내역",
+        })
+        await expect(detailSheet).toBeVisible({ timeout: 10_000 })
+
+        // ── 방금 입금한 건이 내역에 반영됐는지 확인 ──
+        // (잔액·금액은 볼트당 누적값이라 이전 실행에서 같은 금액(55,000)의
+        // 다른 건이 남아 있을 수 있다. 고유 메모가 같은 행에 금액과 함께
+        // 있는지로 좁혀 검증해야 strict-mode 충돌 없이 결정적으로 확인된다.)
+        await expect(
+            detailSheet.getByText(BOX_DEPOSIT_MEMO, { exact: true }),
+        ).toBeVisible({ timeout: 10_000 })
+        const depositRow = detailSheet
+            .locator("div")
+            .filter({ hasText: BOX_DEPOSIT_MEMO })
+            .filter({ hasText: BOX_DEPOSIT_AMOUNT_FORMATTED })
+            .last()
+        await expect(depositRow).toBeVisible({ timeout: 10_000 })
     })
 })
