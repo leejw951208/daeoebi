@@ -132,12 +132,6 @@ export function savingsSummary(
     return { savedTotal, investTotal, netWorth: savedTotal + investTotal }
 }
 
-// 저축 목표 진행률(%). 목표 0 이하면 0. 정수·0~100 클램프.
-export function goalProgress(savedTotal: number, goalAmount: number): number {
-    if (goalAmount <= 0) return 0
-    return Math.min(100, Math.round((savedTotal / goalAmount) * 100))
-}
-
 // 이번 달 SAVINGS 카테고리 지출을 item(적금 계좌명)별로 합산한다.
 // kind 로만 판별(Unit 0) — 카테고리 이름/코드는 앵커로 쓰지 않는다.
 export function monthSavingsByItem(
