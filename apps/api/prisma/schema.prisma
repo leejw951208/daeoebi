@@ -109,6 +109,18 @@ model SavingsGoal {
   updatedAt  DateTime @updatedAt
 }
 
+// 투자 현재가(단건 싱글톤). 수익률은 평문 소수 문자열(정렬·표시용), 금액은 클라이언트 E2E 암호문 블롭({base}).
+// 서버는 복호화하지 않는다(SavingsGoal 과 동일 패턴).
+model InvestmentPosition {
+  id         String   @id @default(cuid())
+  returnRate String   @default("")
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 // 적금 계좌(다건). name 평문(item 매칭·식별), color 평문. blob 은 {base, goal} 암호문.
 model SavingsAccount {
   id         String   @id @default(cuid())
