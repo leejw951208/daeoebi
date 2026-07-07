@@ -9,12 +9,14 @@ import { RecurringController } from "./recurring.controller"
 import { AssetCategoryController } from "./asset-category.controller"
 import { SavingsGoalController } from "./savings-goal.controller"
 import { SavingsAccountController } from "./savings-account.controller"
+import { InvestmentController } from "./investment.controller"
 import { IncomeService } from "./income.service"
 import { ExpenseService } from "./expense.service"
 import { RecurringService } from "./recurring.service"
 import { AssetCategoryService } from "./asset-category.service"
 import { SavingsGoalService } from "./savings-goal.service"
 import { SavingsAccountService } from "./savings-account.service"
+import { InvestmentService } from "./investment.service"
 
 @Module({
     imports: [PrismaModule],
@@ -25,6 +27,7 @@ import { SavingsAccountService } from "./savings-account.service"
         AssetCategoryController,
         SavingsGoalController,
         SavingsAccountController,
+        InvestmentController,
     ],
     providers: [
         IncomeService,
@@ -33,6 +36,7 @@ import { SavingsAccountService } from "./savings-account.service"
         AssetCategoryService,
         SavingsGoalService,
         SavingsAccountService,
+        InvestmentService,
     ],
 })
 export class AssetModule implements NestModule {
@@ -46,6 +50,7 @@ export class AssetModule implements NestModule {
                 AssetCategoryController,
                 SavingsGoalController,
                 SavingsAccountController,
+                InvestmentController,
             )
     }
 }
