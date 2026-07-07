@@ -1,17 +1,11 @@
 "use client"
-// 카테고리 목록 한 행. 보기·인라인 편집·삭제 트리거 지원.
-import { useState } from "react"
+// 카테고리 목록(LIST 모드) 한 행. 색상 점 + 이름 + 코드, 수정/삭제 트리거.
+// 실제 편집은 CategoryManager 가 FORM 모드로 전환해 처리한다(인라인 편집 없음).
 import type { AssetCategory } from "@/lib/vault-client"
-import { Button } from "@/components/Button"
-import { isValidHexColor } from "../_lib/asset-categories"
-import { CategoryColorInput } from "./CategoryColorInput"
 
 interface CategoryRowProps {
     category: AssetCategory
-    onEdit: (
-        id: string,
-        patch: { name?: string; color?: string; code?: string },
-    ) => Promise<void>
+    onEdit: (category: AssetCategory) => void
     onDelete: (category: AssetCategory) => void
     onActivity: () => void
 }
@@ -22,112 +16,26 @@ export function CategoryRow({
     onDelete,
     onActivity,
 }: CategoryRowProps) {
-    const [editing, setEditing] = useState(false)
-    const [name, setName] = useState(category.name)
-    const [color, setColor] = useState(category.color)
-    const [code, setCode] = useState(category.code ?? "")
-    const [saving, setSaving] = useState(false)
-
-    function cancelEdit() {
-        onActivity()
-        setEditing(false)
-        setName(category.name)
-        setColor(category.color)
-        setCode(category.code ?? "")
-    }
-
-    async function handleSave() {
-        if (saving) return
-        onActivity()
-        setSaving(true)
-        try {
-            await onEdit(category.id, {
-                name: name.trim() || category.name,
-                color,
-                code: code.trim(),
-            })
-            // 성공 시에만 편집 모드 종료
-            setEditing(false)
-        } catch {
-            // 오류는 부모(CategoryManager)가 setError로 표시. 편집 상태 유지.
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    if (editing) {
-        return (
-            <div
-                style={{
-                    padding: "12px 0",
-                    borderBottom: "1px solid var(--color-border)",
-                }}
-            >
-                <input
-                    type="text"
-                    className="input"
-                    value={name}
-                    maxLength={20}
-                    onChange={(e) => {
-                        onActivity()
-                        setName(e.target.value)
-                    }}
-                    style={{ marginBottom: 10 }}
-                />
-                <CategoryColorInput
-                    value={color}
-                    onChange={(c) => {
-                        onActivity()
-                        setColor(c)
-                    }}
-                />
-                <input
-                    type="text"
-                    className="input"
-                    value={code}
-                    maxLength={32}
-                    placeholder="코드 · 선택 (예: FOOD)"
-                    aria-label="카테고리 코드"
-                    onChange={(e) => {
-                        onActivity()
-                        setCode(e.target.value)
-                    }}
-                    style={{ marginTop: 10 }}
-                />
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                    <button
-                        type="button"
-                        className="btn secondary"
-                        onClick={cancelEdit}
-                        style={{ flex: 1 }}
-                    >
-                        취소
-                    </button>
-                    <Button
-                        variant="primary"
-                        onClick={handleSave}
-                        loading={saving}
-                        disabled={!isValidHexColor(color)}
-                        style={{ flex: 1 }}
-                    >
-                        저장
-                    </Button>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div
+            data-testid="category-row"
             style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                gap: 12,
                 padding: "12px 0",
                 borderBottom: "1px solid var(--color-border)",
             }}
         >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    minWidth: 0,
+                }}
+            >
                 <span
                     aria-hidden="true"
                     style={{
@@ -138,32 +46,47 @@ export function CategoryRow({
                         flexShrink: 0,
                     }}
                 />
-                <span style={{ fontSize: 14, fontWeight: 600 }}>
-                    {category.name}
-                </span>
-                {category.code && (
-                    <span
+                <div style={{ minWidth: 0 }}>
+                    <div
                         style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: "var(--color-text-muted)",
-                            background: "var(--color-surface-muted, #f1f1f1)",
-                            padding: "2px 7px",
-                            borderRadius: 6,
-                            letterSpacing: "0.02em",
+                            fontSize: 14,
+                            fontWeight: 600,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                         }}
                     >
-                        {category.code}
-                    </span>
-                )}
+                        {category.name}
+                    </div>
+                    {category.code && (
+                        <div
+                            style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "var(--color-text-muted)",
+                                letterSpacing: "0.02em",
+                                marginTop: 1,
+                            }}
+                        >
+                            {category.code}
+                        </div>
+                    )}
+                </div>
             </div>
-            <div style={{ display: "flex", gap: 12 }}>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    flexShrink: 0,
+                }}
+            >
                 <button
                     type="button"
                     className="btn-text"
                     onClick={() => {
                         onActivity()
-                        setEditing(true)
+                        onEdit(category)
                     }}
                 >
                     수정
@@ -171,13 +94,26 @@ export function CategoryRow({
                 <button
                     type="button"
                     className="btn-text"
-                    style={{ color: "var(--color-danger, #ef4444)" }}
+                    aria-label="삭제"
+                    style={{ color: "var(--color-danger-fg, #ef4444)" }}
                     onClick={() => {
                         onActivity()
                         onDelete(category)
                     }}
                 >
-                    삭제
+                    <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    </svg>
                 </button>
             </div>
         </div>

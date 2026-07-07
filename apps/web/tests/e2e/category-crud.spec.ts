@@ -166,11 +166,12 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // 이름 입력 + HEX 색상 입력(팔레트 제거됨) + 코드 입력(선택·고유).
+        // FORM 모드로 전환 후 이름 입력 + 색상 스와치 선택 + 코드 입력(선택·고유).
+        await dialog.getByRole("button", { name: "+ 카테고리 추가" }).click()
         await dialog.getByLabel("카테고리 이름").fill(UNIQUE)
-        await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
+        await dialog.getByRole("button", { name: "#4a90d9" }).click()
         await dialog.getByLabel("카테고리 코드").fill(CODE)
-        await dialog.getByRole("button", { name: "+ 추가" }).click()
+        await dialog.getByRole("button", { name: "저장" }).click()
 
         // Assert new category appears in the manager list.
         await expect(dialog.getByText(UNIQUE)).toBeVisible({ timeout: 10_000 })
@@ -214,15 +215,19 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         // test 2 에서 CODE 를 가진 카테고리가 이미 존재한다. 같은 코드로 추가 시도.
         const dupName = `${UNIQUE}-dup`
+        await dialog.getByRole("button", { name: "+ 카테고리 추가" }).click()
         await dialog.getByLabel("카테고리 이름").fill(dupName)
-        await dialog.getByLabel("색상 HEX 코드").fill("#3bb273")
+        await dialog.getByRole("button", { name: "#3bb273" }).click()
         await dialog.getByLabel("카테고리 코드").fill(CODE)
-        await dialog.getByRole("button", { name: "+ 추가" }).click()
+        await dialog.getByRole("button", { name: "저장" }).click()
 
         // 서버 409 → 에러 문구 노출, 새 카테고리는 추가되지 않는다.
         await expect(
             dialog.getByText("같은 코드의 카테고리가 이미 있습니다."),
         ).toBeVisible({ timeout: 10_000 })
+
+        // 실패 시 FORM 모드에 머무른다 → 목록으로 돌아가 미추가를 확인한다.
+        await dialog.getByRole("button", { name: "← 목록" }).click()
         await expect(dialog.getByText(dupName)).toBeHidden()
 
         await page.screenshot({
@@ -246,24 +251,18 @@ test.describe.serial("카테고리 관리 CRUD", () => {
         // The QA category added in test 2 must still exist.
         await expect(dialog.getByText(UNIQUE)).toBeVisible({ timeout: 10_000 })
 
-        // Click "수정" for the UNIQUE category row.
-        // Strategy: find the category name <span>, walk up two levels via XPath
-        // (span → name-container div → row div), then step into the second child
-        // div (action-buttons div) and click its first button (수정).
+        // Click "수정" for the UNIQUE category row (data-testid 로 행을 특정).
         // This is robust against parallel tests adding/removing other categories.
-        await dialog
-            .locator("span")
+        const editRow = dialog
+            .locator('[data-testid="category-row"]')
             .filter({ hasText: UNIQUE })
-            .locator("xpath=../../div[2]/button[1]")
-            .click()
+        await editRow.getByRole("button", { name: "수정" }).click()
 
-        // 편집 행의 이름 입력만 className="input"(추가 폼은 field-control).
-        const editInput = dialog.locator("input.input:not([placeholder])")
+        // FORM 모드: 이름을 바꾸고 색상 스와치를 선택한다.
+        const editInput = dialog.getByLabel("카테고리 이름")
         await editInput.clear()
         await editInput.fill(RENAMED)
-
-        // 색상 HEX 입력: 편집 모드엔 입력이 둘(추가 폼 + 편집 행)이므로 .last()=편집 행.
-        await dialog.getByLabel("색상 HEX 코드").last().fill("#9b6bd6")
+        await dialog.getByRole("button", { name: "#9b6bd6" }).click()
 
         // Save.
         await dialog.getByRole("button", { name: "저장" }).click()
@@ -317,14 +316,11 @@ test.describe.serial("카테고리 관리 CRUD", () => {
         // The renamed QA category from test 3 must still exist.
         await expect(dialog.getByText(RENAMED)).toBeVisible({ timeout: 10_000 })
 
-        // Click "삭제" for the RENAMED category row.
-        // Same XPath strategy as test 3: span → name-container div → row div →
-        // action-buttons div → second button (삭제).
-        await dialog
-            .locator("span")
+        // Click "삭제" for the RENAMED category row (data-testid 로 행을 특정).
+        const deleteRow = dialog
+            .locator('[data-testid="category-row"]')
             .filter({ hasText: RENAMED })
-            .locator("xpath=../../div[2]/button[2]")
-            .click()
+        await deleteRow.getByRole("button", { name: "삭제" }).click()
 
         // ConfirmDialog must appear with the "미분류" warning.
         const confirmDialog = page.getByRole("dialog", {

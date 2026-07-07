@@ -8,7 +8,8 @@ import {
     totalSpent,
     type ComputedExpense,
     type ComputedIncome,
-    type SavingsSummary,
+    type SavingsAccountView,
+    type InvestmentView,
 } from "../../_lib/asset-compute"
 import type { AssetCategory } from "@/lib/vault-client"
 import { SkeletonCard } from "@/components/Skeleton"
@@ -17,7 +18,11 @@ import { BudgetExpenseCards } from "./BudgetExpenseCards"
 import { CategoryBreakdown } from "./CategoryBreakdown"
 import { ExpenseCalendar } from "./ExpenseCalendar"
 import { DayDetail } from "./DayDetail"
-import { SavingsTab, type Contribution } from "./SavingsTab"
+import {
+    SavingsTab,
+    type Contribution,
+    type SavingsBoxSummary,
+} from "./SavingsTab"
 
 export type { Contribution } from "./SavingsTab"
 
@@ -36,13 +41,21 @@ export type SavingsView =
     | { status: "error"; message: string }
     | {
           status: "ready"
-          summary: SavingsSummary
+          // 저축·투자 순자산(hero) = 계좌 기반 저축 합계 + 투자 평가금액.
+          netWorth: number
+          savedTotal: number
           savedMonth: number
           investMonth: number
-          goalName: string | null
-          goalAmount: number
           contributions: Contribution[]
-          onEditGoal: () => void
+          accounts: SavingsAccountView[]
+          onAddAccount: () => void
+          onEditAccountGoal: (name: string) => void
+          investment: InvestmentView
+          onEditReturn: () => void
+          box: SavingsBoxSummary
+          onBoxIn: () => void
+          onBoxOut: () => void
+          onBoxDetail: () => void
       }
 
 interface Props {
@@ -164,13 +177,20 @@ export function AssetDashboard({
                     )}
                     {savings.status === "ready" && (
                         <SavingsTab
-                            summary={savings.summary}
+                            netWorth={savings.netWorth}
+                            savedTotal={savings.savedTotal}
                             savedMonth={savings.savedMonth}
                             investMonth={savings.investMonth}
-                            goalName={savings.goalName}
-                            goalAmount={savings.goalAmount}
                             contributions={savings.contributions}
-                            onEditGoal={savings.onEditGoal}
+                            accounts={savings.accounts}
+                            onAddAccount={savings.onAddAccount}
+                            onEditAccountGoal={savings.onEditAccountGoal}
+                            investment={savings.investment}
+                            onEditReturn={savings.onEditReturn}
+                            box={savings.box}
+                            onBoxIn={savings.onBoxIn}
+                            onBoxOut={savings.onBoxOut}
+                            onBoxDetail={savings.onBoxDetail}
                         />
                     )}
                 </>

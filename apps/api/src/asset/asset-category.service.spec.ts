@@ -28,7 +28,11 @@ describe("AssetCategoryService", () => {
 
         expect(prisma.assetCategory.createMany).toHaveBeenCalledTimes(1)
         expect(prisma.assetCategory.createMany).toHaveBeenCalledWith({
-            data: expect.arrayContaining([{ name: "식비", color: "#f2994a" }]),
+            data: expect.arrayContaining([
+                { name: "식비", color: "#f2994a" },
+                { name: "저축", color: "#14b8a6", kind: "SAVINGS" },
+                { name: "투자", color: "#eab308", kind: "INVESTMENT" },
+            ]),
         })
         expect(
             prisma.assetCategory.createMany.mock.calls[0][0].data,

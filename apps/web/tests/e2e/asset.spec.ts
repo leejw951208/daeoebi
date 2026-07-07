@@ -89,28 +89,30 @@ test("B. category CRUD — 추가·수정·삭제가 정상 동작한다", async
     await expect(dialog).toBeVisible({ timeout: 10_000 })
 
     // ── ADD ──────────────────────────────────────────────────────────────────
+    // LIST 모드 → "+ 카테고리 추가" 로 FORM 모드 전환.
+    await dialog.getByRole("button", { name: "+ 카테고리 추가" }).click()
+
     const nameInput = dialog.getByLabel("카테고리 이름")
     await nameInput.fill(uniqueName)
 
-    // 색상은 HEX 입력으로 지정한다(팔레트 제거됨).
-    await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
+    // 색상은 CATEGORY_PALETTE 스와치에서 선택한다.
+    await dialog.getByRole("button", { name: "#4a90d9" }).click()
 
-    await dialog.getByRole("button", { name: "+ 추가" }).click()
+    await dialog.getByRole("button", { name: "저장" }).click()
 
-    // New category appears in the list.
+    // 저장 성공 시 자동으로 LIST 모드로 돌아오고 새 카테고리가 노출된다.
     await expect(dialog.getByText(uniqueName)).toBeVisible({ timeout: 10_000 })
 
     // ── EDIT ─────────────────────────────────────────────────────────────────
     // The newly added category is the last in the list.
-    // Click the last "수정" button (corresponds to the just-added category).
+    // Click the last "수정" button (corresponds to the just-added category)
+    // → FORM 모드로 전환된다.
     await dialog.getByRole("button", { name: "수정" }).last().click()
 
-    // 편집 행의 이름 입력만 className="input" 을 쓴다(추가 폼은 field-control).
-    const editInput = dialog.locator("input.input:not([placeholder])")
+    const editInput = dialog.getByLabel("카테고리 이름")
     await editInput.fill(editedName)
 
-    // Save the edit — there is exactly one "저장" button when a row is in edit
-    // mode (the add-form uses "+ 추가" instead).
+    // Save the edit.
     await dialog.getByRole("button", { name: "저장" }).click()
 
     await expect(dialog.getByText(editedName)).toBeVisible({ timeout: 10_000 })
@@ -243,6 +245,9 @@ test("F. loading — 추가 버튼이 진행 중에 aria-busy 됨", async ({ pag
     const dialog = page.getByRole("dialog", { name: "카테고리 관리" })
     await expect(dialog).toBeVisible({ timeout: 10_000 })
 
+    // LIST 모드 → FORM 모드 전환.
+    await dialog.getByRole("button", { name: "+ 카테고리 추가" }).click()
+
     // Intercept POST /asset-categories with a 300 ms delay so the loading
     // state is observable before the response arrives.
     await page.route("**/asset-categories", async (route) => {
@@ -254,15 +259,18 @@ test("F. loading — 추가 버튼이 진행 중에 aria-busy 됨", async ({ pag
 
     // Fill the form.
     await dialog.getByLabel("카테고리 이름").fill(uniqueName)
-    await dialog.getByLabel("색상 HEX 코드").fill("#4a90d9")
+    await dialog.getByRole("button", { name: "#4a90d9" }).click()
 
-    // Click the add button and immediately assert aria-busy (while the
+    // Click the save button and immediately assert aria-busy (while the
     // delayed request is in-flight).
-    const addBtn = dialog.getByRole("button", { name: "+ 추가" })
-    await addBtn.click()
-    await expect(addBtn).toHaveAttribute("aria-busy", "true", { timeout: 500 })
+    const saveBtn = dialog.getByRole("button", { name: "저장" })
+    await saveBtn.click()
+    await expect(saveBtn).toHaveAttribute("aria-busy", "true", {
+        timeout: 500,
+    })
 
-    // Wait for the new category to appear (request completes after delay).
+    // Wait for the new category to appear (request completes after delay,
+    // FORM 저장 성공 후 LIST 모드로 복귀한다).
     await expect(dialog.getByText(uniqueName)).toBeVisible({ timeout: 10_000 })
 
     // Remove the route interception.

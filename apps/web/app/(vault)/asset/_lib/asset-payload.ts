@@ -97,3 +97,80 @@ export async function openGoal(
     }
     return { amount: typeof parsed.amount === "number" ? parsed.amount : 0 }
 }
+
+// 적금 계좌 본문. base=초기 적립액, goal=목표 금액(0=미설정).
+export interface AccountPayload {
+    base: number
+    goal: number
+}
+
+export async function sealAccount(
+    vaultKey: CryptoKey,
+    payload: AccountPayload,
+): Promise<SealedBlob> {
+    return seal(vaultKey, JSON.stringify({ v: PAYLOAD_VERSION, ...payload }))
+}
+
+export async function openAccount(
+    vaultKey: CryptoKey,
+    blob: SealedBlob,
+): Promise<AccountPayload> {
+    const parsed = JSON.parse(await open(vaultKey, blob)) as {
+        base?: unknown
+        goal?: unknown
+    }
+    return {
+        base: typeof parsed.base === "number" ? parsed.base : 0,
+        goal: typeof parsed.goal === "number" ? parsed.goal : 0,
+    }
+}
+
+// 투자 포지션 본문. base=투자 원금.
+export interface InvestmentPayload {
+    base: number
+}
+
+export async function sealInvestment(
+    vaultKey: CryptoKey,
+    payload: InvestmentPayload,
+): Promise<SealedBlob> {
+    return seal(vaultKey, JSON.stringify({ v: PAYLOAD_VERSION, ...payload }))
+}
+
+export async function openInvestment(
+    vaultKey: CryptoKey,
+    blob: SealedBlob,
+): Promise<InvestmentPayload> {
+    const parsed = JSON.parse(await open(vaultKey, blob)) as {
+        base?: unknown
+    }
+    return {
+        base: typeof parsed.base === "number" ? parsed.base : 0,
+    }
+}
+
+// 세이빙 박스 거래 1건의 평문 본문. type/source/date 메타는 서버 컬럼이라 여기 포함하지 않는다.
+export interface BoxTxnPayload {
+    amount: number
+    memo: string
+}
+
+export async function sealBoxTxn(
+    vaultKey: CryptoKey,
+    payload: BoxTxnPayload,
+): Promise<SealedBlob> {
+    return seal(vaultKey, JSON.stringify({ v: PAYLOAD_VERSION, ...payload }))
+}
+
+export async function openBoxTxn(
+    vaultKey: CryptoKey,
+    blob: SealedBlob,
+): Promise<BoxTxnPayload> {
+    const parsed = JSON.parse(
+        await open(vaultKey, blob),
+    ) as Partial<BoxTxnPayload>
+    return {
+        amount: typeof parsed.amount === "number" ? parsed.amount : 0,
+        memo: typeof parsed.memo === "string" ? parsed.memo : "",
+    }
+}

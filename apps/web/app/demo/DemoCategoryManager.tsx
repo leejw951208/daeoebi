@@ -40,6 +40,7 @@ export function DemoCategoryManager({
                 name: name.trim(),
                 color,
                 code: null,
+                kind: "NORMAL",
                 createdAt: ts,
                 updatedAt: ts,
             },

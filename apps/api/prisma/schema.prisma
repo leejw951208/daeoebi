@@ -73,6 +73,7 @@ model AssetCategory {
   name      String
   color     String
   code      String?  @unique // 사용자 지정 분류 코드(자유 텍스트). null = 미지정. 카테고리 간 고유.
+  kind      String   @default("NORMAL") // 시스템 마커: NORMAL|SAVINGS|INVESTMENT. name/code 는 변경 가능해 앵커로 쓰지 않는다. 시드/백필로만 관리(create() 는 항상 NORMAL).
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -101,6 +102,46 @@ model Income {
 model SavingsGoal {
   id         String   @id @default(cuid())
   name       String
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// 투자 현재가(단건 싱글톤). 수익률은 평문 소수 문자열(정렬·표시용), 금액은 클라이언트 E2E 암호문 블롭({base}).
+// 서버는 복호화하지 않는다(SavingsGoal 과 동일 패턴).
+model InvestmentPosition {
+  id         String   @id @default(cuid())
+  returnRate String   @default("")
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// 저축 박스 입출금 내역(다건). type(in|out)·source(cash|savings)·date("YYYY-MM-DD") 평문(필터·정렬용),
+// 금액·메모는 클라이언트 E2E 암호문 블롭({amount, memo})이다. 서버는 복호화하지 않는다(Income 과 동일 패턴).
+model SavingsBoxTxn {
+  id         String   @id @default(cuid())
+  type       String // in|out
+  source     String // cash|savings
+  date       String // "YYYY-MM-DD". 평문 — 정렬·조회용.
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
+}
+
+// 적금 계좌(다건). name 평문(item 매칭·식별), color 평문. blob 은 {base, goal} 암호문.
+model SavingsAccount {
+  id         String   @id @default(cuid())
+  name       String
+  color      String
   iv         Bytes
   ciphertext Bytes
   authTag    Bytes

@@ -115,18 +115,19 @@ export interface SavingsSummary {
     netWorth: number
 }
 
-// 저축/투자 카테고리 지출을 이름 기준으로 분리 합산한다. netWorth = 저축+투자.
+// 저축/투자 카테고리 지출을 kind 기준으로 분리 합산한다. netWorth = 저축+투자.
+// name/code 는 사용자가 바꿀 수 있어 앵커로 쓰지 않는다(카테고리 kind 로만 판별).
 export function savingsSummary(
     contribs: readonly { categoryId: string | null; amount: number }[],
-    categories: readonly { id: string; name: string }[],
+    categories: readonly { id: string; kind: string }[],
 ): SavingsSummary {
-    const nameById = new Map(categories.map((c) => [c.id, c.name]))
+    const kindById = new Map(categories.map((c) => [c.id, c.kind]))
     let savedTotal = 0
     let investTotal = 0
     for (const c of contribs) {
-        const name = c.categoryId ? nameById.get(c.categoryId) : undefined
-        if (name === "저축") savedTotal += c.amount
-        else if (name === "투자") investTotal += c.amount
+        const kind = c.categoryId ? kindById.get(c.categoryId) : undefined
+        if (kind === "SAVINGS") savedTotal += c.amount
+        else if (kind === "INVESTMENT") investTotal += c.amount
     }
     return { savedTotal, investTotal, netWorth: savedTotal + investTotal }
 }
@@ -135,6 +136,130 @@ export function savingsSummary(
 export function goalProgress(savedTotal: number, goalAmount: number): number {
     if (goalAmount <= 0) return 0
     return Math.min(100, Math.round((savedTotal / goalAmount) * 100))
+}
+
+// 이번 달 SAVINGS 카테고리 지출을 item(적금 계좌명)별로 합산한다.
+// kind 로만 판별(Unit 0) — 카테고리 이름/코드는 앵커로 쓰지 않는다.
+export function monthSavingsByItem(
+    monthExpenses: readonly {
+        categoryId: string | null
+        item: string
+        amount: number
+    }[],
+    categories: readonly { id: string; kind: string }[],
+): Map<string, number> {
+    const kindById = new Map(categories.map((c) => [c.id, c.kind]))
+    const map = new Map<string, number>()
+    for (const e of monthExpenses) {
+        const kind = e.categoryId ? kindById.get(e.categoryId) : undefined
+        if (kind !== "SAVINGS") continue
+        map.set(e.item, (map.get(e.item) ?? 0) + e.amount)
+    }
+    return map
+}
+
+export interface SavingsAccountView {
+    name: string
+    color: string
+    base: number
+    goal: number
+    month: number
+    total: number
+    goalPct: number
+    remain: number
+}
+
+// 적금 계좌별 진행률·합계. goalPct 는 0~100 클램프, remain 은 음수 방지.
+// rows 는 total 내림차순 정렬.
+export function savingsAccountsView(
+    accounts: readonly {
+        name: string
+        color: string
+        base: number
+        goal: number
+    }[],
+    monthByItem: ReadonlyMap<string, number>,
+): { rows: SavingsAccountView[]; savedTotal: number; savedMonth: number } {
+    const rows = accounts
+        .map((a) => {
+            const month = monthByItem.get(a.name) ?? 0
+            const total = a.base + month
+            const goalPct =
+                a.goal > 0
+                    ? Math.min(
+                          100,
+                          Math.max(0, Math.round((total / a.goal) * 100)),
+                      )
+                    : 0
+            const remain = Math.max(a.goal - total, 0)
+            return {
+                name: a.name,
+                color: a.color,
+                base: a.base,
+                goal: a.goal,
+                month,
+                total,
+                goalPct,
+                remain,
+            }
+        })
+        .sort((a, b) => b.total - a.total)
+    const savedTotal = rows.reduce((sum, r) => sum + r.total, 0)
+    const savedMonth = rows.reduce((sum, r) => sum + r.month, 0)
+    return { rows, savedTotal, savedMonth }
+}
+
+export interface InvestmentView {
+    principal: number
+    rate: number | null
+    value: number
+    pnl: number
+}
+
+// 투자 계좌 평가액·손익. rate 는 유효한 소수 문자열일 때만 채워지고, 그 외(빈 값·공백·숫자 아님)엔 null
+// 이어서 평가액은 원금과 같다(수익률 미입력 상태). investMonth 는 원금에 더해진다.
+export function investmentView(
+    base: number,
+    returnRate: string,
+    investMonth: number,
+): InvestmentView {
+    const principal = base + investMonth
+    const parsed = parseFloat(returnRate)
+    const rate = returnRate.trim() !== "" && !isNaN(parsed) ? parsed : null
+    const value =
+        rate !== null ? Math.round(principal * (1 + rate / 100)) : principal
+    const pnl = value - principal
+    return { principal, rate, value, pnl }
+}
+
+export interface SavingsBoxBalance {
+    balance: number
+    inTotal: number
+    outTotal: number
+    fromSavings: number
+}
+
+// 세이빙 박스 잔액. balance = inTotal - outTotal.
+// fromSavings 는 저축 계좌에서 박스로 넣은(type="in" && source="savings") 금액만 합산한다.
+export function savingsBoxBalance(
+    txns: readonly {
+        type: "in" | "out"
+        source: "cash" | "savings"
+        amount: number
+    }[],
+): SavingsBoxBalance {
+    let inTotal = 0
+    let outTotal = 0
+    let fromSavings = 0
+    for (const t of txns) {
+        if (t.type === "in") {
+            inTotal += t.amount
+            if (t.source === "savings") fromSavings += t.amount
+        } else {
+            outTotal += t.amount
+        }
+    }
+    return { balance: inTotal - outTotal, inTotal, outTotal, fromSavings }
 }
 
 // "YYYY-MM" 월에 속하는 항목만 남긴다(평문 date "YYYY-MM-DD" 접두 매칭).
