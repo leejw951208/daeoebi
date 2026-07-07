@@ -148,131 +148,194 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                 if (e.target === e.currentTarget) handleClose()
             }}
         >
-            <div className="sheet">
-                <div className="sheet-grip" aria-hidden="true" />
+            <div
+                className="sheet"
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: 0,
+                    overflow: "hidden",
+                }}
+            >
                 <div
                     style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 16,
+                        flex: "none",
+                        padding: "10px 22px 12px",
+                        borderBottom: "1px solid #f2f2f2",
                     }}
                 >
-                    {mode === "form" ? (
-                        <button
-                            type="button"
-                            className="btn-text"
-                            onClick={backToList}
-                        >
-                            ← 목록
-                        </button>
-                    ) : (
-                        <span style={{ width: 34 }} aria-hidden="true" />
-                    )}
-                    <div style={{ fontSize: 18, fontWeight: 800 }}>{title}</div>
-                    <button
-                        type="button"
-                        className="btn-text"
-                        onClick={() => {
-                            resetIdle()
-                            handleClose()
+                    <div
+                        aria-hidden="true"
+                        style={{
+                            width: 38,
+                            height: 5,
+                            borderRadius: 3,
+                            background: "#e3e3e6",
+                            margin: "0 auto 14px",
+                        }}
+                    />
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
                         }}
                     >
-                        닫기
-                    </button>
-                </div>
-
-                {error && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginBottom: 12 }}
-                    >
-                        {error}
-                    </div>
-                )}
-
-                {mode === "list" ? (
-                    <>
-                        {loading ? (
-                            <div
+                        {mode === "form" ? (
+                            <button
+                                type="button"
+                                onClick={backToList}
                                 style={{
-                                    textAlign: "center",
-                                    padding: "22px 0",
-                                    fontSize: 13,
-                                    color: "var(--color-text-muted)",
-                                    fontWeight: 600,
+                                    border: "none",
+                                    background: "none",
+                                    font: "inherit",
+                                    fontSize: 14,
+                                    color: "#888",
+                                    cursor: "pointer",
+                                    padding: 0,
                                 }}
                             >
-                                불러오는 중…
-                            </div>
-                        ) : categories.length === 0 ? (
-                            <div
-                                style={{
-                                    textAlign: "center",
-                                    padding: "22px 0",
-                                    fontSize: 13,
-                                    color: "var(--color-text-muted)",
-                                    fontWeight: 600,
-                                }}
-                            >
-                                아직 카테고리가 없어요.
-                            </div>
+                                ← 목록
+                            </button>
                         ) : (
-                            <div style={{ marginBottom: 14 }}>
-                                {categories.map((cat) => (
-                                    <CategoryRow
-                                        key={cat.id}
-                                        category={cat}
-                                        onEdit={openEditForm}
-                                        onDelete={(c) => {
-                                            resetIdle()
-                                            setPendingDelete(c)
-                                        }}
-                                        onActivity={resetIdle}
-                                    />
-                                ))}
-                            </div>
+                            <span style={{ width: 34 }} aria-hidden="true" />
                         )}
-                        <button
-                            type="button"
-                            onClick={openAddForm}
+                        <div
                             style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 6,
-                                width: "100%",
-                                height: 50,
-                                border: "1.5px dashed var(--color-border-strong)",
-                                borderRadius: 14,
-                                background: "none",
-                                font: "inherit",
-                                fontSize: 15,
-                                fontWeight: 700,
-                                color: "var(--color-accent, #171717)",
-                                cursor: "pointer",
+                                fontSize: 16,
+                                fontWeight: 800,
+                                letterSpacing: "-0.02em",
                             }}
                         >
-                            + 카테고리 추가
+                            {title}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                resetIdle()
+                                handleClose()
+                            }}
+                            style={{
+                                border: "none",
+                                background: "none",
+                                font: "inherit",
+                                fontSize: 14,
+                                color: "#888",
+                                cursor: "pointer",
+                                padding: 0,
+                            }}
+                        >
+                            닫기
                         </button>
-                    </>
-                ) : (
-                    <CategoryAddSection
-                        key={editingCategory?.id ?? "new"}
-                        initial={editingCategory}
-                        onSave={handleSave}
-                        onDelete={
-                            editingCategory
-                                ? () => {
-                                      resetIdle()
-                                      setPendingDelete(editingCategory)
-                                  }
-                                : undefined
-                        }
-                        onActivity={resetIdle}
-                    />
-                )}
+                    </div>
+                </div>
+
+                <div
+                    style={{
+                        flex: 1,
+                        overflowY: "auto",
+                        padding: "16px 22px 26px",
+                    }}
+                >
+                    {error && (
+                        <div
+                            role="alert"
+                            className="error-box"
+                            style={{ marginBottom: 12 }}
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    {mode === "list" ? (
+                        <>
+                            {loading ? (
+                                <div
+                                    style={{
+                                        textAlign: "center",
+                                        padding: "22px 0",
+                                        fontSize: 13,
+                                        color: "var(--color-text-muted)",
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    불러오는 중…
+                                </div>
+                            ) : categories.length === 0 ? (
+                                <div
+                                    style={{
+                                        textAlign: "center",
+                                        padding: "22px 0",
+                                        fontSize: 13,
+                                        color: "var(--color-text-muted)",
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    아직 카테고리가 없어요.
+                                </div>
+                            ) : (
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 8,
+                                        marginBottom: 14,
+                                    }}
+                                >
+                                    {categories.map((cat) => (
+                                        <CategoryRow
+                                            key={cat.id}
+                                            category={cat}
+                                            onEdit={openEditForm}
+                                            onDelete={(c) => {
+                                                resetIdle()
+                                                setPendingDelete(c)
+                                            }}
+                                            onActivity={resetIdle}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={openAddForm}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 6,
+                                    width: "100%",
+                                    height: 50,
+                                    border: "1.5px dashed #d8d8d8",
+                                    borderRadius: 14,
+                                    background: "none",
+                                    font: "inherit",
+                                    fontSize: 15,
+                                    fontWeight: 700,
+                                    color: "var(--color-accent, #171717)",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                + 카테고리 추가
+                            </button>
+                        </>
+                    ) : (
+                        <CategoryAddSection
+                            key={editingCategory?.id ?? "new"}
+                            initial={editingCategory}
+                            onSave={handleSave}
+                            onDelete={
+                                editingCategory
+                                    ? () => {
+                                          resetIdle()
+                                          setPendingDelete(editingCategory)
+                                      }
+                                    : undefined
+                            }
+                            onActivity={resetIdle}
+                        />
+                    )}
+                </div>
             </div>
 
             {pendingDelete && (
