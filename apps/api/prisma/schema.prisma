@@ -109,6 +109,18 @@ model SavingsGoal {
   updatedAt  DateTime @updatedAt
 }
 
+// 적금 계좌(다건). name 평문(item 매칭·식별), color 평문. blob 은 {base, goal} 암호문.
+model SavingsAccount {
+  id         String   @id @default(cuid())
+  name       String
+  color      String
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 // 고정 지출 템플릿. 매월 자동 생성의 원본이다. dayOfMonth·active 는 스케줄용 평문,
 // 금액·항목·카테고리·결제방법은 암호문 블롭({item,amount,category,method})이다.
 model RecurringExpense {
