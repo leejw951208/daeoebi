@@ -9,6 +9,7 @@ import {
     planBudgetSave,
     remaining,
     savingsAccountsView,
+    savingsBoxBalance,
     savingsSummary,
     spentPct,
     totalIncome,
@@ -314,6 +315,40 @@ describe("filterByMonth", () => {
 
     it("해당 월 항목이 없으면 빈 배열", () => {
         expect(filterByMonth(items, "2026-08")).toEqual([])
+    })
+})
+
+describe("savingsBoxBalance", () => {
+    it("입출금이 섞이면 in/out 을 각각 합산하고 balance=in-out 을 낸다", () => {
+        const r = savingsBoxBalance([
+            { type: "in", source: "cash", amount: 100000 },
+            { type: "in", source: "savings", amount: 30000 },
+            { type: "out", source: "cash", amount: 20000 },
+        ])
+        expect(r).toEqual({
+            balance: 110000,
+            inTotal: 130000,
+            outTotal: 20000,
+            fromSavings: 30000,
+        })
+    })
+
+    it("fromSavings 는 type=in && source=savings 인 건만 합산한다", () => {
+        const r = savingsBoxBalance([
+            { type: "in", source: "savings", amount: 10000 },
+            { type: "out", source: "savings", amount: 5000 }, // out 은 제외
+            { type: "in", source: "cash", amount: 7000 }, // cash 는 제외
+        ])
+        expect(r.fromSavings).toBe(10000)
+    })
+
+    it("빈 배열이면 전부 0", () => {
+        expect(savingsBoxBalance([])).toEqual({
+            balance: 0,
+            inTotal: 0,
+            outTotal: 0,
+            fromSavings: 0,
+        })
     })
 })
 

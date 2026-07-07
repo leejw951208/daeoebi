@@ -232,6 +232,36 @@ export function investmentView(
     return { principal, rate, value, pnl }
 }
 
+export interface SavingsBoxBalance {
+    balance: number
+    inTotal: number
+    outTotal: number
+    fromSavings: number
+}
+
+// 세이빙 박스 잔액. balance = inTotal - outTotal.
+// fromSavings 는 저축 계좌에서 박스로 넣은(type="in" && source="savings") 금액만 합산한다.
+export function savingsBoxBalance(
+    txns: readonly {
+        type: "in" | "out"
+        source: "cash" | "savings"
+        amount: number
+    }[],
+): SavingsBoxBalance {
+    let inTotal = 0
+    let outTotal = 0
+    let fromSavings = 0
+    for (const t of txns) {
+        if (t.type === "in") {
+            inTotal += t.amount
+            if (t.source === "savings") fromSavings += t.amount
+        } else {
+            outTotal += t.amount
+        }
+    }
+    return { balance: inTotal - outTotal, inTotal, outTotal, fromSavings }
+}
+
 // "YYYY-MM" 월에 속하는 항목만 남긴다(평문 date "YYYY-MM-DD" 접두 매칭).
 export function filterByMonth<T extends { date: string }>(
     items: readonly T[],
