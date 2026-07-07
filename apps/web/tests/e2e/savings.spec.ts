@@ -25,6 +25,11 @@ const ACCOUNT_BASE = 200_000
 const ACCOUNT_GOAL = 2_000_000
 const ACCOUNT_GOAL_FORMATTED = `₩${ACCOUNT_GOAL.toLocaleString("ko-KR")}`
 
+// 투자 포지션은 볼트당 단일 레코드(덮어쓰기)이므로 이전 실행 상태에 기대지 않는다.
+// 프리셋(3/5/8/10%)과 겹치지 않는 소수 값을 써서 "저장 전 우연히 같은 값" 가능성을 배제한다.
+const RETURN_RATE = "7.3"
+const RETURN_RATE_FORMATTED = `+${RETURN_RATE}%`
+
 // Tall viewport so the bottom sheet never extends above the visible area.
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
 
@@ -144,5 +149,39 @@ test.describe.serial("저축·투자 탭", () => {
             }),
         ).toBeVisible()
         await expect(accountCard.getByText(/^\d+%$/)).toBeVisible()
+    })
+
+    test("투자 수익률 입력 → 저장 → 카드에 수익률 반영", async ({ page }) => {
+        test.setTimeout(120_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+
+        // ── 세그먼트 전환 ──
+        await page.getByRole("button", { name: "저축·투자" }).click()
+        await expect(
+            page.getByText("저축·투자 순자산", { exact: true }),
+        ).toBeVisible({ timeout: 20_000 })
+
+        // ── "투자 수익률" 카드 탭하여 시트 열기 ──
+        const investCard = page.getByRole("button", { name: "투자 수익률" })
+        await expect(investCard).toBeVisible({ timeout: 10_000 })
+        await investCard.click()
+
+        const sheet = page.getByRole("dialog", { name: "투자 수익률" })
+        await expect(sheet).toBeVisible({ timeout: 10_000 })
+
+        // ── 수익률 입력 후 저장 ──
+        await sheet.getByLabel("투자 수익률(%)").fill(RETURN_RATE)
+        await sheet.getByRole("button", { name: "저장" }).click()
+
+        await expect(sheet).toBeHidden({ timeout: 10_000 })
+
+        // ── 카드에 반영된 수익률(%) 확인(포지션은 볼트당 단일 레코드이므로
+        // 이전 실행 값이 아닌, 방금 저장한 값이 정확히 표시되는지로 검증한다) ──
+        await expect(
+            investCard.getByText(RETURN_RATE_FORMATTED, { exact: true }),
+        ).toBeVisible({ timeout: 10_000 })
     })
 })
