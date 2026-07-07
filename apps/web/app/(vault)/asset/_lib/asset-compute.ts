@@ -209,6 +209,29 @@ export function savingsAccountsView(
     return { rows, savedTotal, savedMonth }
 }
 
+export interface InvestmentView {
+    principal: number
+    rate: number | null
+    value: number
+    pnl: number
+}
+
+// 투자 계좌 평가액·손익. rate 는 유효한 소수 문자열일 때만 채워지고, 그 외(빈 값·공백·숫자 아님)엔 null
+// 이어서 평가액은 원금과 같다(수익률 미입력 상태). investMonth 는 원금에 더해진다.
+export function investmentView(
+    base: number,
+    returnRate: string,
+    investMonth: number,
+): InvestmentView {
+    const principal = base + investMonth
+    const parsed = parseFloat(returnRate)
+    const rate = returnRate.trim() !== "" && !isNaN(parsed) ? parsed : null
+    const value =
+        rate !== null ? Math.round(principal * (1 + rate / 100)) : principal
+    const pnl = value - principal
+    return { principal, rate, value, pnl }
+}
+
 // "YYYY-MM" 월에 속하는 항목만 남긴다(평문 date "YYYY-MM-DD" 접두 매칭).
 export function filterByMonth<T extends { date: string }>(
     items: readonly T[],

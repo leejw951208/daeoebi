@@ -4,6 +4,7 @@ import {
     byDay,
     filterByMonth,
     goalProgress,
+    investmentView,
     monthSavingsByItem,
     planBudgetSave,
     remaining,
@@ -313,5 +314,52 @@ describe("filterByMonth", () => {
 
     it("해당 월 항목이 없으면 빈 배열", () => {
         expect(filterByMonth(items, "2026-08")).toEqual([])
+    })
+})
+
+describe("investmentView", () => {
+    it("유효한 수익률이면 rate 를 채우고 원금에 반영한 평가액·손익을 계산한다", () => {
+        const v = investmentView(6_300_000, "8.5", 0)
+        expect(v).toEqual({
+            principal: 6_300_000,
+            rate: 8.5,
+            value: 6_835_500,
+            pnl: 535_500,
+        })
+    })
+
+    it("수익률이 빈 문자열이면 rate=null 이고 평가액=원금, 손익=0", () => {
+        const v = investmentView(500_000, "", 100_000)
+        expect(v).toEqual({
+            principal: 600_000,
+            rate: null,
+            value: 600_000,
+            pnl: 0,
+        })
+    })
+
+    it("공백만 있거나 숫자로 해석 불가한 수익률도 rate=null 로 처리한다", () => {
+        expect(investmentView(100_000, "   ", 0).rate).toBeNull()
+        expect(investmentView(100_000, "abc", 0).rate).toBeNull()
+    })
+
+    it("음수 수익률이면 손익이 음수가 된다", () => {
+        const v = investmentView(1_000_000, "-10", 0)
+        expect(v).toEqual({
+            principal: 1_000_000,
+            rate: -10,
+            value: 900_000,
+            pnl: -100_000,
+        })
+    })
+
+    it("investMonth 는 원금에 더해진다", () => {
+        const v = investmentView(1_000_000, "5", 200_000)
+        expect(v).toEqual({
+            principal: 1_200_000,
+            rate: 5,
+            value: 1_260_000,
+            pnl: 60_000,
+        })
     })
 })
