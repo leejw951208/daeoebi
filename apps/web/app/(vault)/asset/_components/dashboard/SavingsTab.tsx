@@ -5,6 +5,7 @@ import Link from "next/link"
 import type {
     SavingsSummary,
     SavingsAccountView,
+    InvestmentView,
 } from "../../_lib/asset-compute"
 import { goalProgress } from "../../_lib/asset-compute"
 import { formatWon } from "../../_lib/asset-categories"
@@ -30,6 +31,26 @@ interface SavingsTabProps {
     onAddAccount: () => void
     // 이름으로 계좌를 식별해 목표 시트를 연다(이름은 생성 시 중복이 막혀 있어 앵커로 쓸 수 있다).
     onEditAccountGoal: (name: string) => void
+    // 투자 원금·평가금액·손익(수익률 적용 결과). 탭하면 onEditReturn 으로 수익률 수정 시트를 연다.
+    investment: InvestmentView
+    onEditReturn: () => void
+}
+
+// 평가손익 색(음수만 빨강, 그 외엔 다크). 배지의 수익률 텍스트에도 같은 색을 쓴다.
+function pnlColor(pnl: number): string {
+    return pnl < 0 ? "#e5484d" : "#171717"
+}
+
+// 수익률 배지 표기. 미설정(null)이면 "0%", 그 외엔 부호 포함 소수 첫째 자리까지.
+function formatReturnRate(rate: number | null): string {
+    if (rate === null) return "0%"
+    const rounded = Math.round(rate * 10) / 10
+    return `${rounded > 0 ? "+" : ""}${rounded}%`
+}
+
+// 평가손익 금액 표기(부호 + 통화). 0 이상은 +, 음수는 -.
+function formatPnl(pnl: number): string {
+    return `${pnl < 0 ? "-" : "+"}${formatWon(Math.abs(pnl))}`
 }
 
 export function SavingsTab({
@@ -43,11 +64,14 @@ export function SavingsTab({
     accounts,
     onAddAccount,
     onEditAccountGoal,
+    investment,
+    onEditReturn,
 }: SavingsTabProps) {
     const pct = goalProgress(summary.savedTotal, goalAmount)
     const monthContrib = savedMonth + investMonth
     // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
+    const investPnlColor = pnlColor(investment.pnl)
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* 순자산 */}
@@ -96,7 +120,7 @@ export function SavingsTab({
                 <div className="asset-card" style={{ flex: 1 }}>
                     <div className="asset-card-label">투자</div>
                     <div className="asset-card-value">
-                        {formatWon(summary.investTotal)}
+                        {formatWon(investment.value)}
                     </div>
                     <div
                         style={{
@@ -322,6 +346,160 @@ export function SavingsTab({
                     </button>
                 </div>
             </div>
+
+            {/* 투자 수익률 */}
+            <button
+                type="button"
+                className="asset-card"
+                onClick={onEditReturn}
+                style={{ textAlign: "left", cursor: "pointer" }}
+            >
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 14,
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 2,
+                        }}
+                    >
+                        <span style={{ fontSize: 13, fontWeight: 800 }}>
+                            투자 수익률
+                        </span>
+                        <span
+                            style={{
+                                fontSize: 11,
+                                color: "#b0b0b0",
+                                fontWeight: 600,
+                            }}
+                        >
+                            탭하여 수익률 수정
+                        </span>
+                    </div>
+                    <span
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            border: "1.5px solid #e7e2ff",
+                            background: "#f6f4ff",
+                            borderRadius: 999,
+                            padding: "6px 12px",
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontSize: 16,
+                                fontWeight: 800,
+                                letterSpacing: "-0.02em",
+                                color: investPnlColor,
+                            }}
+                        >
+                            {formatReturnRate(investment.rate)}
+                        </span>
+                    </span>
+                </div>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: "var(--color-text-muted)",
+                            }}
+                        >
+                            투자 원금
+                        </span>
+                        <span
+                            style={{
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#444",
+                            }}
+                        >
+                            {formatWon(investment.principal)}
+                        </span>
+                    </div>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: "var(--color-text-muted)",
+                            }}
+                        >
+                            평가금액
+                        </span>
+                        <span
+                            style={{
+                                fontSize: 15,
+                                fontWeight: 800,
+                                letterSpacing: "-0.02em",
+                            }}
+                        >
+                            {formatWon(investment.value)}
+                        </span>
+                    </div>
+                    <div
+                        style={{
+                            height: 1,
+                            background: "#f2f2f2",
+                            margin: "2px 0",
+                        }}
+                    />
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "#555",
+                            }}
+                        >
+                            평가손익
+                        </span>
+                        <span
+                            style={{
+                                fontSize: 16,
+                                fontWeight: 800,
+                                letterSpacing: "-0.02em",
+                                color: investPnlColor,
+                            }}
+                        >
+                            {formatPnl(investment.pnl)}
+                        </span>
+                    </div>
+                </div>
+            </button>
 
             {/* 저축 목표 */}
             <button

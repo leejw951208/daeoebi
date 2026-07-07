@@ -11,10 +11,12 @@ import {
     listContributions,
     getSavingsGoal,
     listSavingsAccounts,
+    getInvestment,
     type ExpenseView,
     type IncomeView,
     type SavingsGoalView,
     type SavingsAccountView as SavingsAccountApiView,
+    type InvestmentView as InvestmentApiView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
@@ -24,6 +26,7 @@ import {
     openIncome,
     openGoal,
     openAccount,
+    openInvestment,
 } from "./_lib/asset-payload"
 import { migrateExpenseCategories } from "./_lib/asset-migrate-categories"
 import {
@@ -33,6 +36,7 @@ import {
     filterByMonth,
     savingsAccountsView,
     monthSavingsByItem,
+    investmentView,
     type ComputedExpense,
     type ComputedIncome,
 } from "./_lib/asset-compute"
@@ -59,6 +63,7 @@ import {
     SavingsAccountGoalSheet,
     type EditingAccount,
 } from "./_components/SavingsAccountGoalSheet"
+import { InvestmentReturnSheet } from "./_components/InvestmentReturnSheet"
 import { LockTimer } from "../_components/LockTimer"
 
 // 저축 목표(이름 + 복호화된 금액).
@@ -76,6 +81,12 @@ interface Account {
     goal: number
 }
 
+// 투자 포지션(복호화된 base + 평문 returnRate). 없으면 null(투자 원금·수익률 미설정).
+interface Investment {
+    base: number
+    returnRate: string
+}
+
 // 저축·투자 탭 지연 로드 상태. 메인 State 와 동일한 패턴(idle 은 최초 진입 전).
 type SavingsState =
     | { status: "idle" }
@@ -86,6 +97,7 @@ type SavingsState =
           contribAll: ComputedExpense[]
           goal: Goal | null
           accounts: Account[]
+          investment: Investment | null
       }
 
 // 저축 목표 블롭 복호화. 블롭이 없으면 null, 복호화 실패 시(손상된 블롭) 목표 없음으로 취급한다.
@@ -127,6 +139,20 @@ async function resolveAccounts(
         .map((r) => r.value)
 }
 
+// 투자 포지션 블롭 복호화. 없으면 null, 복호화 실패 시(손상된 블롭) 미설정으로 취급한다.
+async function resolveInvestment(
+    vaultKey: CryptoKey,
+    view: InvestmentApiView | null,
+): Promise<Investment | null> {
+    if (!view) return null
+    try {
+        const { base } = await openInvestment(vaultKey, view)
+        return { base, returnRate: view.returnRate }
+    } catch {
+        return null
+    }
+}
+
 type State =
     | { status: "loading" }
     | { status: "error"; message: string }
@@ -162,6 +188,7 @@ export default function AssetPage() {
     const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
         null,
     )
+    const [returnSheetOpen, setReturnSheetOpen] = useState(false)
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
@@ -293,12 +320,17 @@ export default function AssetPage() {
         async (categoryIds: string[]) => {
             setSavingsState({ status: "loading" })
             try {
-                const [contribViews, goalView, accountViews] =
-                    await Promise.all([
-                        listContributions(categoryIds),
-                        getSavingsGoal(),
-                        listSavingsAccounts(),
-                    ])
+                const [
+                    contribViews,
+                    goalView,
+                    accountViews,
+                    investmentApiView,
+                ] = await Promise.all([
+                    listContributions(categoryIds),
+                    getSavingsGoal(),
+                    listSavingsAccounts(),
+                    getInvestment(),
+                ])
                 const settled = await Promise.allSettled(
                     contribViews.map(async (v): Promise<ComputedExpense> => {
                         const p = await openExpense(vaultKey, v)
@@ -320,8 +352,18 @@ export default function AssetPage() {
                     .map((r) => r.value)
                 const goal = await resolveGoal(vaultKey, goalView)
                 const accounts = await resolveAccounts(vaultKey, accountViews)
+                const investment = await resolveInvestment(
+                    vaultKey,
+                    investmentApiView,
+                )
 
-                setSavingsState({ status: "ready", contribAll, goal, accounts })
+                setSavingsState({
+                    status: "ready",
+                    contribAll,
+                    goal,
+                    accounts,
+                    investment,
+                })
             } catch (e) {
                 setSavingsState({
                     status: "error",
@@ -371,6 +413,22 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
+    // 수익률 시트 저장 후: 투자 포지션만 재조회한다(적립 내역·목표·계좌는 그대로 둔다).
+    const reloadInvestment = useCallback(async () => {
+        try {
+            const investmentApiView = await getInvestment()
+            const investment = await resolveInvestment(
+                vaultKey,
+                investmentApiView,
+            )
+            setSavingsState((prev) =>
+                prev.status === "ready" ? { ...prev, investment } : prev,
+            )
+        } catch {
+            // no-op: 다음 로드에서 재시도됨
+        }
+    }, [vaultKey])
+
     // SavingsTab 에 넘길 뷰 모델. 누적 요약은 savingsSummary 전체 기간, 이번 달 적립은 month 로 필터.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
@@ -379,7 +437,12 @@ export default function AssetPage() {
                 : { status: "loading" }
         }
         const { categories, expenses } = state.data
-        const { contribAll, goal, accounts } = savingsState
+        const {
+            contribAll,
+            goal,
+            accounts,
+            investment: investmentState,
+        } = savingsState
         const summary = savingsSummary(contribAll, categories)
         const monthContribs = filterByMonth(contribAll, month)
         const monthSummary = savingsSummary(monthContribs, categories)
@@ -396,6 +459,12 @@ export default function AssetPage() {
         // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
         const monthByItem = monthSavingsByItem(expenses, categories)
         const { rows } = savingsAccountsView(accounts, monthByItem)
+        // investMonth(이번 달 투자 지출)는 투자 원금에 더해진다(저축 계좌의 monthByItem 과 대응되는 값).
+        const investment = investmentView(
+            investmentState?.base ?? 0,
+            investmentState?.returnRate ?? "",
+            monthSummary.investTotal,
+        )
         return {
             status: "ready",
             summary,
@@ -427,6 +496,11 @@ export default function AssetPage() {
                     month: row?.month ?? 0,
                 })
             },
+            investment,
+            onEditReturn: () => {
+                resetIdle()
+                setReturnSheetOpen(true)
+            },
         }
     }, [savingsState, state, month, resetIdle])
 
@@ -434,6 +508,8 @@ export default function AssetPage() {
         savingsState.status === "ready" ? savingsState.goal : null
     const savingsAccounts =
         savingsState.status === "ready" ? savingsState.accounts : []
+    const currentInvestment =
+        savingsState.status === "ready" ? savingsState.investment : null
 
     return (
         <section style={{ minHeight: "100%" }}>
@@ -580,6 +656,15 @@ export default function AssetPage() {
                     account={editingAccount}
                     onChanged={reloadAccounts}
                     onClose={() => setEditingAccount(null)}
+                />
+            )}
+
+            {returnSheetOpen && (
+                <InvestmentReturnSheet
+                    base={currentInvestment?.base ?? 0}
+                    returnRate={currentInvestment?.returnRate ?? ""}
+                    onChanged={reloadInvestment}
+                    onClose={() => setReturnSheetOpen(false)}
                 />
             )}
         </section>

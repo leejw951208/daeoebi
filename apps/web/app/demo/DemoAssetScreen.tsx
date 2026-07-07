@@ -56,6 +56,10 @@ export function DemoAssetScreen() {
         onEditAccountGoal: () => {
             /* 데모: 적금 목표 편집 미지원 */
         },
+        investment: { principal: 0, rate: null, value: 0, pnl: 0 },
+        onEditReturn: () => {
+            /* 데모: 투자 수익률 편집 미지원 */
+        },
     }
 
     const data: Loaded = {

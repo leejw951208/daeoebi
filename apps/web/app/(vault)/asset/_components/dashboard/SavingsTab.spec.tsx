@@ -11,6 +11,8 @@ const baseProps = {
     goalAmount: 0,
     contributions: [],
     onEditGoal: () => {},
+    investment: { principal: 0, rate: null, value: 0, pnl: 0 },
+    onEditReturn: () => {},
 }
 
 function makeAccount(

@@ -74,3 +74,8 @@ export const SAVINGS_GOAL_PRESETS: AmountPreset[] = [
             ? `${value / HUNDRED_MILLION}억`
             : `${value / TEN_MILLION}천만`,
 }))
+
+// 투자 수익률 프리셋(설계 v5 returnPresets 와 동일한 값).
+export const RETURN_RATE_PRESETS: AmountPreset[] = [3, 5, 8, 10].map(
+    (value) => ({ value, label: `${value}%` }),
+)
