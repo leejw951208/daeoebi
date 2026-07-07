@@ -70,7 +70,7 @@ export function CategoryBreakdown({ cats }: Props) {
                                 {formatWon(c.amount)}
                             </span>
                         </div>
-                        <div className="asset-bar">
+                        <div className="asset-bar" style={{ height: 7 }}>
                             <div
                                 className="asset-bar-fill"
                                 style={{

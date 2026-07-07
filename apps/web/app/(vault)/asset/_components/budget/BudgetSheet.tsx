@@ -42,13 +42,7 @@ async function deleteRowIgnoringGone(id: string): Promise<void> {
     }
 }
 
-export function BudgetSheet({
-    month,
-    monthLabel,
-    budgetRows,
-    onChanged,
-    onClose,
-}: Props) {
+export function BudgetSheet({ month, budgetRows, onChanged, onClose }: Props) {
     const { vaultKey, resetIdle } = useVault()
     const initialAmount = totalIncome(budgetRows)
     // onChange 에서 digits-only 로 정제해 state 에는 항상 숫자 문자열만 있다.
@@ -104,22 +98,12 @@ export function BudgetSheet({
                 <div className="sheet-grip" aria-hidden="true" />
                 <div
                     style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        justifyContent: "space-between",
+                        fontSize: 18,
+                        fontWeight: 800,
                         marginBottom: 4,
                     }}
                 >
-                    <div style={{ fontSize: 18, fontWeight: 800 }}>월 예산</div>
-                    <div
-                        style={{
-                            fontSize: 12,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                        }}
-                    >
-                        {monthLabel}
-                    </div>
+                    월 예산
                 </div>
                 <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
                     이번 달 쓸 수 있는 돈을 정해두세요.
@@ -129,6 +113,7 @@ export function BudgetSheet({
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
+                        style={{ fontSize: 26, letterSpacing: "-0.02em" }}
                         value={amount ? formatAmount(value) : ""}
                         onChange={(e) => {
                             resetIdle()
@@ -153,18 +138,15 @@ export function BudgetSheet({
                     </div>
                 )}
 
-                <div style={{ display: "flex", gap: 9, marginTop: 16 }}>
-                    <Button
-                        variant="secondary"
-                        style={{ flex: 1 }}
-                        onClick={onClose}
-                        disabled={saving}
-                    >
-                        취소
-                    </Button>
+                <div style={{ marginTop: 16 }}>
                     <Button
                         variant="primary"
-                        style={{ flex: 2 }}
+                        style={{
+                            width: "100%",
+                            height: 54,
+                            borderRadius: 16,
+                            background: "var(--ac)",
+                        }}
                         onClick={() => {
                             resetIdle()
                             void save()

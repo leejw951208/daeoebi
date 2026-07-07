@@ -28,13 +28,17 @@ export function ExpenseCalendar({
     const cells = buildCalendar(month)
 
     return (
-        <div className="asset-card">
+        <div
+            className="asset-card"
+            style={{ padding: "16px 14px 18px", marginTop: 4 }}
+        >
             <div
                 style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     marginBottom: 14,
+                    padding: "0 4px",
                 }}
             >
                 <span style={{ fontSize: 13, fontWeight: 800 }}>지출 달력</span>
@@ -55,19 +59,28 @@ export function ExpenseCalendar({
                     marginBottom: 6,
                 }}
             >
-                {WEEKDAYS.map((w) => (
-                    <div
-                        key={w}
-                        style={{
-                            textAlign: "center",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: "var(--color-text-muted)",
-                        }}
-                    >
-                        {w}
-                    </div>
-                ))}
+                {WEEKDAYS.map((w, i) => {
+                    // 일(0)·토(6)만 요일색으로 구분하고 나머지는 muted 로 둔다.
+                    const color =
+                        i === 0
+                            ? "#d98a8c"
+                            : i === 6
+                              ? "#8fb2d9"
+                              : "var(--color-text-muted)"
+                    return (
+                        <div
+                            key={w}
+                            style={{
+                                textAlign: "center",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color,
+                            }}
+                        >
+                            {w}
+                        </div>
+                    )
+                })}
             </div>
             <div
                 style={{
