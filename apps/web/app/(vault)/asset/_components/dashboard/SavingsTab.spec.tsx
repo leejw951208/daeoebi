@@ -13,6 +13,10 @@ const baseProps = {
     onEditGoal: () => {},
     investment: { principal: 0, rate: null, value: 0, pnl: 0 },
     onEditReturn: () => {},
+    box: { balance: 0, fromSavings: 0, count: 0 },
+    onBoxIn: () => {},
+    onBoxOut: () => {},
+    onBoxDetail: () => {},
 }
 
 function makeAccount(
@@ -119,5 +123,55 @@ describe("SavingsTab", () => {
         )
         fireEvent.click(screen.getByText("+ 적금 추가"))
         expect(onAddAccount).toHaveBeenCalledTimes(1)
+    })
+
+    it("세이빙 박스 카드에 잔액·건수를 표시하고 버튼이 콜백을 호출한다", () => {
+        const onBoxIn = jest.fn()
+        const onBoxOut = jest.fn()
+        const onBoxDetail = jest.fn()
+        render(
+            <SavingsTab
+                {...baseProps}
+                accounts={[]}
+                onAddAccount={() => {}}
+                onEditAccountGoal={() => {}}
+                box={{ balance: 50_000, fromSavings: 0, count: 3 }}
+                onBoxIn={onBoxIn}
+                onBoxOut={onBoxOut}
+                onBoxDetail={onBoxDetail}
+            />,
+        )
+        expect(screen.getByText("세이빙 박스")).not.toBeNull()
+        expect(screen.getByText("₩50,000")).not.toBeNull()
+        expect(screen.getByText("3건 기록")).not.toBeNull()
+
+        fireEvent.click(screen.getByText("입금"))
+        expect(onBoxIn).toHaveBeenCalledTimes(1)
+        fireEvent.click(screen.getByText("출금"))
+        expect(onBoxOut).toHaveBeenCalledTimes(1)
+        fireEvent.click(screen.getByText("입출금 내역 보기"))
+        expect(onBoxDetail).toHaveBeenCalledTimes(1)
+    })
+
+    it("박스로 이체된 저축분(fromSavings)을 저축 표시에서 뺀다", () => {
+        render(
+            <SavingsTab
+                {...baseProps}
+                summary={{
+                    savedTotal: 100_000,
+                    investTotal: 0,
+                    netWorth: 100_000,
+                }}
+                goalAmount={200_000}
+                accounts={[]}
+                onAddAccount={() => {}}
+                onEditAccountGoal={() => {}}
+                box={{ balance: 30_000, fromSavings: 30_000, count: 1 }}
+            />,
+        )
+        // 저축 카드·저축 목표 모두 100,000 - 30,000(박스로 이체) = 70,000 을 표시한다.
+        expect(screen.getAllByText("₩70,000")).toHaveLength(2)
+        // 저축 목표 진행률도 같은 기준(70,000/200,000=35%)으로 계산된다.
+        expect(screen.getByText("35%")).not.toBeNull()
     })
 })

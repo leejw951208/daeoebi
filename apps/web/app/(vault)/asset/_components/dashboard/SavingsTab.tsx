@@ -18,6 +18,14 @@ export interface Contribution {
     date: string
 }
 
+// 세이빙 박스 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
+// count 는 전체 거래 건수(내역 배지 "{n}건 기록"에 쓴다).
+export interface SavingsBoxSummary {
+    balance: number
+    fromSavings: number
+    count: number
+}
+
 interface SavingsTabProps {
     summary: SavingsSummary
     savedMonth: number
@@ -34,6 +42,12 @@ interface SavingsTabProps {
     // 투자 원금·평가금액·손익(수익률 적용 결과). 탭하면 onEditReturn 으로 수익률 수정 시트를 연다.
     investment: InvestmentView
     onEditReturn: () => void
+    // 세이빙 박스 잔액·건수. 저축에서 박스로 이체한 금액(fromSavings)은 "저축" 표시에서 뺀다
+    // (같은 돈이 저축·박스 두 곳에 동시에 잡히지 않도록).
+    box: SavingsBoxSummary
+    onBoxIn: () => void
+    onBoxOut: () => void
+    onBoxDetail: () => void
 }
 
 // 평가손익 색(음수만 빨강, 그 외엔 다크). 배지의 수익률 텍스트에도 같은 색을 쓴다.
@@ -66,8 +80,14 @@ export function SavingsTab({
     onEditAccountGoal,
     investment,
     onEditReturn,
+    box,
+    onBoxIn,
+    onBoxOut,
+    onBoxDetail,
 }: SavingsTabProps) {
-    const pct = goalProgress(summary.savedTotal, goalAmount)
+    // 세이빙 박스로 이체한 저축분은 "저축" 표시에서 뺀다(박스 카드 잔액과 중복 집계 방지).
+    const displayedSaved = Math.max(0, summary.savedTotal - box.fromSavings)
+    const pct = goalProgress(displayedSaved, goalAmount)
     const monthContrib = savedMonth + investMonth
     // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
@@ -104,7 +124,7 @@ export function SavingsTab({
                 <div className="asset-card" style={{ flex: 1 }}>
                     <div className="asset-card-label">저축</div>
                     <div className="asset-card-value">
-                        {formatWon(summary.savedTotal)}
+                        {formatWon(displayedSaved)}
                     </div>
                     <div
                         style={{
@@ -133,6 +153,118 @@ export function SavingsTab({
                         이번 달 {formatWon(investMonth)}
                     </div>
                 </div>
+            </div>
+
+            {/* 세이빙 박스 */}
+            <div className="asset-card" style={{ padding: "20px 18px 16px" }}>
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        marginBottom: 13,
+                    }}
+                >
+                    <div style={{ fontSize: 13, fontWeight: 800 }}>
+                        세이빙 박스
+                    </div>
+                    <span
+                        style={{
+                            flexShrink: 0,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#c08a15",
+                            background: "#fbf1d7",
+                            padding: "4px 9px",
+                            borderRadius: 999,
+                        }}
+                    >
+                        {box.count}건 기록
+                    </span>
+                </div>
+                <div
+                    style={{
+                        fontSize: 30,
+                        fontWeight: 800,
+                        letterSpacing: "-0.03em",
+                        color: "#171717",
+                        marginBottom: 16,
+                    }}
+                >
+                    {formatWon(box.balance)}
+                </div>
+                <div style={{ display: "flex", gap: 9, marginBottom: 8 }}>
+                    <button
+                        type="button"
+                        onClick={onBoxIn}
+                        style={{
+                            flex: 1,
+                            height: 46,
+                            border: "none",
+                            borderRadius: 13,
+                            background: "#e9b949",
+                            color: "#5b4407",
+                            font: "inherit",
+                            fontSize: 14,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                        }}
+                    >
+                        입금
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onBoxOut}
+                        style={{
+                            flex: 1,
+                            height: 46,
+                            border: "1.5px solid #ececec",
+                            borderRadius: 13,
+                            background: "#fff",
+                            color: "#444",
+                            font: "inherit",
+                            fontSize: 14,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                        }}
+                    >
+                        출금
+                    </button>
+                </div>
+                <button
+                    type="button"
+                    onClick={onBoxDetail}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 5,
+                        width: "100%",
+                        height: 42,
+                        border: "none",
+                        background: "none",
+                        font: "inherit",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#8a8a8a",
+                        cursor: "pointer",
+                    }}
+                >
+                    입출금 내역 보기
+                    <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M9 6l6 6-6 6" />
+                    </svg>
+                </button>
             </div>
 
             {/* 적금 계좌 목록 */}
@@ -544,7 +676,7 @@ export function SavingsTab({
                         marginTop: 9,
                     }}
                 >
-                    <span>{formatWon(summary.savedTotal)}</span>
+                    <span>{formatWon(displayedSaved)}</span>
                     <span>
                         목표 {goalAmount > 0 ? formatWon(goalAmount) : "-"}
                     </span>

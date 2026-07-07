@@ -19,7 +19,11 @@ import { BudgetExpenseCards } from "./BudgetExpenseCards"
 import { CategoryBreakdown } from "./CategoryBreakdown"
 import { ExpenseCalendar } from "./ExpenseCalendar"
 import { DayDetail } from "./DayDetail"
-import { SavingsTab, type Contribution } from "./SavingsTab"
+import {
+    SavingsTab,
+    type Contribution,
+    type SavingsBoxSummary,
+} from "./SavingsTab"
 
 export type { Contribution } from "./SavingsTab"
 
@@ -50,6 +54,10 @@ export type SavingsView =
           onEditAccountGoal: (name: string) => void
           investment: InvestmentView
           onEditReturn: () => void
+          box: SavingsBoxSummary
+          onBoxIn: () => void
+          onBoxOut: () => void
+          onBoxDetail: () => void
       }
 
 interface Props {
@@ -183,6 +191,10 @@ export function AssetDashboard({
                             onEditAccountGoal={savings.onEditAccountGoal}
                             investment={savings.investment}
                             onEditReturn={savings.onEditReturn}
+                            box={savings.box}
+                            onBoxIn={savings.onBoxIn}
+                            onBoxOut={savings.onBoxOut}
+                            onBoxDetail={savings.onBoxDetail}
                         />
                     )}
                 </>
