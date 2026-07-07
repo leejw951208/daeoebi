@@ -107,7 +107,7 @@ export function EntriesScreen() {
                         <div
                             style={{
                                 fontSize: 12,
-                                color: "var(--color-text-muted)",
+                                color: "#9a9a9a",
                                 fontWeight: 500,
                             }}
                         >
@@ -138,10 +138,36 @@ export function EntriesScreen() {
 
             <nav aria-label="대외비 관리" className="toolbar">
                 <Link
-                    className="btn secondary"
-                    style={{ minHeight: 42 }}
                     href="/backup"
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        height: 38,
+                        padding: "0 15px",
+                        border: "1px solid #ececec",
+                        borderRadius: 999,
+                        background: "#fff",
+                        fontSize: 12.5,
+                        fontWeight: 700,
+                        color: "#444",
+                    }}
                 >
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3v12" />
+                        <path d="M8 11l4 4 4-4" />
+                        <path d="M5 20h14" />
+                    </svg>
                     백업·복원
                 </Link>
             </nav>
@@ -227,12 +253,20 @@ export function EntriesScreen() {
                                         </span>
                                     </span>
                                     <span className="entry-side">
-                                        <span
+                                        <svg
                                             className="entry-chevron"
+                                            width="18"
+                                            height="18"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.4"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
                                             aria-hidden="true"
                                         >
-                                            ›
-                                        </span>
+                                            <path d="M9 6l6 6-6 6" />
+                                        </svg>
                                     </span>
                                 </Link>
                             </li>
