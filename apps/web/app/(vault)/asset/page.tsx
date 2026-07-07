@@ -9,13 +9,11 @@ import {
     listRecurring,
     listAssetCategories,
     listContributions,
-    getSavingsGoal,
     listSavingsAccounts,
     getInvestment,
     listSavingsBox,
     type ExpenseView,
     type IncomeView,
-    type SavingsGoalView,
     type SavingsAccountView as SavingsAccountApiView,
     type InvestmentView as InvestmentApiView,
     type SavingsBoxTxnView,
@@ -26,7 +24,6 @@ import { useVault } from "../_lib/vault-context"
 import {
     openExpense,
     openIncome,
-    openGoal,
     openAccount,
     openInvestment,
     openBoxTxn,
@@ -61,7 +58,6 @@ import {
 } from "./_components/dashboard/AssetDashboard"
 import { BudgetSheet } from "./_components/budget/BudgetSheet"
 import { CategoryManager } from "./_components/CategoryManager"
-import { SavingsGoalSheet } from "./_components/SavingsGoalSheet"
 import { SavingsAccountAddSheet } from "./_components/SavingsAccountAddSheet"
 import {
     SavingsAccountGoalSheet,
@@ -74,12 +70,6 @@ import {
     type BoxTxnRow,
 } from "./_components/SavingsBoxDetailSheet"
 import { LockTimer } from "../_components/LockTimer"
-
-// 저축 목표(이름 + 복호화된 금액).
-interface Goal {
-    name: string
-    amount: number
-}
 
 // 적금 계좌(복호화된 base/goal). name 은 계좌 식별 앵커(생성 시 중복 방지).
 interface Account {
@@ -104,25 +94,10 @@ type SavingsState =
     | {
           status: "ready"
           contribAll: ComputedExpense[]
-          goal: Goal | null
           accounts: Account[]
           investment: Investment | null
           boxTxns: BoxTxnRow[]
       }
-
-// 저축 목표 블롭 복호화. 블롭이 없으면 null, 복호화 실패 시(손상된 블롭) 목표 없음으로 취급한다.
-async function resolveGoal(
-    vaultKey: CryptoKey,
-    view: SavingsGoalView | null,
-): Promise<Goal | null> {
-    if (!view) return null
-    try {
-        const { amount } = await openGoal(vaultKey, view)
-        return { name: view.name, amount }
-    } catch {
-        return null
-    }
-}
 
 // 적금 계좌 블롭 복호화(실패분 스킵).
 async function resolveAccounts(
@@ -219,7 +194,6 @@ export default function AssetPage() {
     const [savingsState, setSavingsState] = useState<SavingsState>({
         status: "idle",
     })
-    const [goalSheetOpen, setGoalSheetOpen] = useState(false)
     const [addAccountSheetOpen, setAddAccountSheetOpen] = useState(false)
     const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
         null,
@@ -360,13 +334,11 @@ export default function AssetPage() {
             try {
                 const [
                     contribViews,
-                    goalView,
                     accountViews,
                     investmentApiView,
                     boxViews,
                 ] = await Promise.all([
                     listContributions(categoryIds),
-                    getSavingsGoal(),
                     listSavingsAccounts(),
                     getInvestment(),
                     listSavingsBox(),
@@ -390,7 +362,6 @@ export default function AssetPage() {
                             r.status === "fulfilled",
                     )
                     .map((r) => r.value)
-                const goal = await resolveGoal(vaultKey, goalView)
                 const accounts = await resolveAccounts(vaultKey, accountViews)
                 const investment = await resolveInvestment(
                     vaultKey,
@@ -401,7 +372,6 @@ export default function AssetPage() {
                 setSavingsState({
                     status: "ready",
                     contribAll,
-                    goal,
                     accounts,
                     investment,
                     boxTxns,
@@ -428,21 +398,7 @@ export default function AssetPage() {
         [resetIdle, savingsState.status, loadSavings, savingsCategoryIds],
     )
 
-    // 목표 시트 저장 후: 적립 내역은 그대로 두고 목표만 재조회한다(저장은 이미 성공했으므로
-    // 재조회 실패는 조용히 무시하고 다음 진입 때 다시 시도한다).
-    const reloadGoal = useCallback(async () => {
-        try {
-            const goalView = await getSavingsGoal()
-            const goal = await resolveGoal(vaultKey, goalView)
-            setSavingsState((prev) =>
-                prev.status === "ready" ? { ...prev, goal } : prev,
-            )
-        } catch {
-            // no-op: 다음 로드에서 재시도됨
-        }
-    }, [vaultKey])
-
-    // 계좌 추가/목표 시트 저장·삭제 후: 계좌 목록만 재조회한다(적립 내역·목표는 그대로 둔다).
+    // 계좌 추가/목표 시트 저장·삭제 후: 계좌 목록만 재조회한다(적립 내역·투자는 그대로 둔다).
     const reloadAccounts = useCallback(async () => {
         try {
             const accountViews = await listSavingsAccounts()
@@ -484,7 +440,9 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
-    // SavingsTab 에 넘길 뷰 모델. 누적 요약은 savingsSummary 전체 기간, 이번 달 적립은 month 로 필터.
+    // SavingsTab 에 넘길 뷰 모델. 저축 합계는 계좌 모델(savingsAccountsView) 기준이고,
+    // 순자산(netWorth) = 그 저축 합계 + 투자 평가금액이다(지출 파생 누적 합계는 쓰지 않는다).
+    // 이번 달 투자 지출(investMonth)만은 여전히 카테고리 지출(kind=INVESTMENT)에서 파생한다.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
             return savingsState.status === "error"
@@ -494,12 +452,10 @@ export default function AssetPage() {
         const { categories, expenses } = state.data
         const {
             contribAll,
-            goal,
             accounts,
             investment: investmentState,
             boxTxns,
         } = savingsState
-        const summary = savingsSummary(contribAll, categories)
         const boxBalance = savingsBoxBalance(boxTxns)
         const monthContribs = filterByMonth(contribAll, month)
         const monthSummary = savingsSummary(monthContribs, categories)
@@ -515,7 +471,10 @@ export default function AssetPage() {
         })
         // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
         const monthByItem = monthSavingsByItem(expenses, categories)
-        const { rows } = savingsAccountsView(accounts, monthByItem)
+        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+            accounts,
+            monthByItem,
+        )
         // investMonth(이번 달 투자 지출)는 투자 원금에 더해진다(저축 계좌의 monthByItem 과 대응되는 값).
         const investment = investmentView(
             investmentState?.base ?? 0,
@@ -524,16 +483,11 @@ export default function AssetPage() {
         )
         return {
             status: "ready",
-            summary,
-            savedMonth: monthSummary.savedTotal,
+            netWorth: savedTotal + investment.value,
+            savedTotal,
+            savedMonth,
             investMonth: monthSummary.investTotal,
-            goalName: goal?.name ?? null,
-            goalAmount: goal?.amount ?? 0,
             contributions,
-            onEditGoal: () => {
-                resetIdle()
-                setGoalSheetOpen(true)
-            },
             accounts: rows,
             onAddAccount: () => {
                 resetIdle()
@@ -578,8 +532,6 @@ export default function AssetPage() {
         }
     }, [savingsState, state, month, resetIdle])
 
-    const currentGoal =
-        savingsState.status === "ready" ? savingsState.goal : null
     const savingsAccounts =
         savingsState.status === "ready" ? savingsState.accounts : []
     const currentInvestment =
@@ -589,10 +541,7 @@ export default function AssetPage() {
     // ready 일 때만 정확하므로, 그 전엔 0(시트를 열 수 있는 상태 자체가 아니라 문제 없음).
     const displayedSavedTotal =
         savingsView.status === "ready"
-            ? Math.max(
-                  0,
-                  savingsView.summary.savedTotal - savingsView.box.fromSavings,
-              )
+            ? Math.max(0, savingsView.savedTotal - savingsView.box.fromSavings)
             : 0
 
     return (
@@ -714,15 +663,6 @@ export default function AssetPage() {
                 <CategoryManager
                     onChanged={load}
                     onClose={() => setCategorySheetOpen(false)}
-                />
-            )}
-
-            {goalSheetOpen && (
-                <SavingsGoalSheet
-                    initialName={currentGoal?.name ?? ""}
-                    initialAmount={currentGoal?.amount ?? 0}
-                    onSaved={reloadGoal}
-                    onClose={() => setGoalSheetOpen(false)}
                 />
             )}
 

@@ -19,11 +19,6 @@
 
 import { test, expect, type Page } from "@playwright/test"
 
-// Unique goal name fixed at module load time.
-const GOAL_NAME = `QA저축목표-${Date.now()}`
-const GOAL_AMOUNT = 1_000_000
-const GOAL_AMOUNT_FORMATTED = `₩${GOAL_AMOUNT.toLocaleString("ko-KR")}`
-
 // Unique 적금 계좌 이름(이름이 계좌 식별 앵커라 실행마다 고유해야 함).
 const ACCOUNT_NAME = `QA적금-${Date.now()}`
 const ACCOUNT_BASE = 200_000
@@ -34,6 +29,8 @@ const ACCOUNT_GOAL_FORMATTED = `₩${ACCOUNT_GOAL.toLocaleString("ko-KR")}`
 // 프리셋(3/5/8/10%)과 겹치지 않는 소수 값을 써서 "저장 전 우연히 같은 값" 가능성을 배제한다.
 const RETURN_RATE = "7.3"
 const RETURN_RATE_FORMATTED = `+${RETURN_RATE}%`
+// 투자 원금(base)을 함께 설정해 평가금액·평가손익이 실제로 계산되는지 검증한다.
+const INVEST_BASE = 1_000_000
 
 // 세이빙 박스 잔액은 볼트당 누적값(이전 실행 입출금이 누적)이라 정확한 총액을 검증할 수 없다.
 // 대신 이번 실행에서만 쓰는 고유 메모를 "입출금 내역"에서 찾아 입금이 반영됐는지 확인한다.
@@ -74,50 +71,22 @@ async function waitForAssetDashboard(page: Page): Promise<void> {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 test.describe.serial("저축·투자 탭", () => {
-    test("세그먼트 전환 → 순자산 노출 → 저축 목표 설정 → 진행률/목표 반영", async ({
-        page,
-    }) => {
+    test("세그먼트 전환 → 저축·투자 순자산·카드 노출", async ({ page }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
         await enterVaultAt(page, "/asset")
         await waitForAssetDashboard(page)
 
-        // ── 세그먼트 전환 ──
+        // ── 세그먼트 전환 → 저축·투자 뷰 ──
         await page.getByRole("button", { name: "저축·투자" }).click()
         await expect(
             page.getByText("저축·투자 순자산", { exact: true }),
         ).toBeVisible({ timeout: 20_000 })
-
-        // ── 저축 목표 카드 열기 (설정 전엔 "설정하기" 라벨) ──
-        const goalCardBefore = page.getByRole("button", {
-            name: /저축 목표/,
-        })
-        await expect(goalCardBefore).toBeVisible({ timeout: 10_000 })
-
-        await goalCardBefore.click()
-
-        const sheet = page.getByRole("dialog", { name: "저축 목표 설정" })
-        await expect(sheet).toBeVisible({ timeout: 10_000 })
-
-        // ── 이름·금액 입력 후 저장 ──
-        await sheet.getByLabel("저축 목표 이름").fill(GOAL_NAME)
-        await sheet.getByLabel("저축 목표 금액").fill(String(GOAL_AMOUNT))
-        await sheet.getByRole("button", { name: "저장" }).click()
-
-        await expect(sheet).toBeHidden({ timeout: 10_000 })
-
-        // ── 진행률/목표 반영 확인 ──
-        const goalCardAfter = page.getByRole("button", {
-            name: new RegExp(`저축 목표 · ${GOAL_NAME}`),
-        })
-        await expect(goalCardAfter).toBeVisible({ timeout: 10_000 })
+        // 세이빙 박스 카드도 함께 렌더된다(저축·투자 뷰 구성 확인).
         await expect(
-            goalCardAfter.getByText(`목표 ${GOAL_AMOUNT_FORMATTED}`),
-        ).toBeVisible()
-        // 설정 완료 후엔 "설정하기" 대신 진행률(%) 이 노출된다.
-        await expect(goalCardAfter.getByText("설정하기")).toBeHidden()
-        await expect(goalCardAfter.getByText(/^\d+%$/)).toBeVisible()
+            page.getByText("세이빙 박스", { exact: true }),
+        ).toBeVisible({ timeout: 10_000 })
     })
 
     test("적금 계좌 추가 → 적금 목록에 이름·목표 진행률 반영", async ({
@@ -162,7 +131,9 @@ test.describe.serial("저축·투자 탭", () => {
         await expect(accountCard.getByText(/^\d+%$/)).toBeVisible()
     })
 
-    test("투자 수익률 입력 → 저장 → 카드에 수익률 반영", async ({ page }) => {
+    test("투자 원금·수익률 입력 → 저장 → 평가금액·평가손익 반영", async ({
+        page,
+    }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
@@ -183,17 +154,21 @@ test.describe.serial("저축·투자 탭", () => {
         const sheet = page.getByRole("dialog", { name: "투자 수익률" })
         await expect(sheet).toBeVisible({ timeout: 10_000 })
 
-        // ── 수익률 입력 후 저장 ──
+        // ── 원금·수익률 입력 후 저장 ──
+        await sheet.getByLabel("투자 원금").fill(String(INVEST_BASE))
         await sheet.getByLabel("투자 수익률(%)").fill(RETURN_RATE)
         await sheet.getByRole("button", { name: "저장" }).click()
 
         await expect(sheet).toBeHidden({ timeout: 10_000 })
 
-        // ── 카드에 반영된 수익률(%) 확인(포지션은 볼트당 단일 레코드이므로
-        // 이전 실행 값이 아닌, 방금 저장한 값이 정확히 표시되는지로 검증한다) ──
+        // ── 수익률(%) + 평가손익(양수 ₩)이 카드에 반영됐는지 확인 ──
         await expect(
             investCard.getByText(RETURN_RATE_FORMATTED, { exact: true }),
         ).toBeVisible({ timeout: 10_000 })
+        // 원금>0 · 수익률>0 이면 평가손익은 양수(+₩...) 로 표시된다.
+        await expect(investCard.getByText(/^\+₩[\d,]+$/).first()).toBeVisible({
+            timeout: 10_000,
+        })
     })
 
     test("세이빙 박스 입금 → 입출금 내역에 반영", async ({ page }) => {

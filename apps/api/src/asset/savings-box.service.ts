@@ -38,7 +38,8 @@ export class SavingsBoxService {
 
     async list() {
         const rows = await this.prisma.savingsBoxTxn.findMany({
-            orderBy: { date: "desc" },
+            // 같은 날짜는 생성 역순으로 안정 정렬(동일 date 순서 비결정성 방지).
+            orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         })
         return rows.map(toView)
     }

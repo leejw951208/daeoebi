@@ -4,13 +4,11 @@ import { SavingsTab } from "./SavingsTab"
 import type { SavingsAccountView } from "../../_lib/asset-compute"
 
 const baseProps = {
-    summary: { savedTotal: 0, investTotal: 0, netWorth: 0 },
+    netWorth: 0,
+    savedTotal: 0,
     savedMonth: 0,
     investMonth: 0,
-    goalName: null,
-    goalAmount: 0,
     contributions: [],
-    onEditGoal: () => {},
     investment: { principal: 0, rate: null, value: 0, pnl: 0 },
     onEditReturn: () => {},
     box: { balance: 0, fromSavings: 0, count: 0 },
@@ -157,21 +155,14 @@ describe("SavingsTab", () => {
         render(
             <SavingsTab
                 {...baseProps}
-                summary={{
-                    savedTotal: 100_000,
-                    investTotal: 0,
-                    netWorth: 100_000,
-                }}
-                goalAmount={200_000}
+                savedTotal={100_000}
                 accounts={[]}
                 onAddAccount={() => {}}
                 onEditAccountGoal={() => {}}
                 box={{ balance: 30_000, fromSavings: 30_000, count: 1 }}
             />,
         )
-        // 저축 카드·저축 목표 모두 100,000 - 30,000(박스로 이체) = 70,000 을 표시한다.
-        expect(screen.getAllByText("₩70,000")).toHaveLength(2)
-        // 저축 목표 진행률도 같은 기준(70,000/200,000=35%)으로 계산된다.
-        expect(screen.getByText("35%")).not.toBeNull()
+        // 저축 카드 = 계좌 기반 저축 합계 100,000 - 박스로 이체분 30,000 = 70,000
+        expect(screen.getByText("₩70,000")).not.toBeNull()
     })
 })

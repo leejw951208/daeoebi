@@ -42,7 +42,7 @@ describe("SavingsBoxService", () => {
         ])
         const out = await makeService(prisma).list()
         expect(prisma.savingsBoxTxn.findMany.mock.calls[0][0]).toMatchObject({
-            orderBy: { date: "desc" },
+            orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         })
         expect(out[0]).toMatchObject({
             id: "s1",

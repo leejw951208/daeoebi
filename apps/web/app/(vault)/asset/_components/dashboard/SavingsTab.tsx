@@ -1,13 +1,12 @@
 "use client"
-// 저축·투자 탭. 저축/투자 순자산·이번 달 적립·저축 목표 진행률·적립 내역을 보여준다.
-// 데이터(누적/월별/목표)는 부모(asset/page)가 복호화해 props 로 넘긴다.
+// 저축·투자 탭. 저축/투자 순자산·이번 달 적립·적립 내역을 보여준다.
+// 데이터(계좌·투자·박스)는 부모(asset/page)가 복호화해 props 로 넘긴다.
+// 저축 합계는 적금 계좌 모델(savingsAccountsView) 기준이다 — 지출 파생 단일 목표 모델은 쓰지 않는다.
 import Link from "next/link"
 import type {
-    SavingsSummary,
     SavingsAccountView,
     InvestmentView,
 } from "../../_lib/asset-compute"
-import { goalProgress } from "../../_lib/asset-compute"
 import { formatWon } from "../../_lib/asset-categories"
 
 export interface Contribution {
@@ -27,13 +26,13 @@ export interface SavingsBoxSummary {
 }
 
 interface SavingsTabProps {
-    summary: SavingsSummary
+    // 저축·투자 순자산(hero) = 계좌 기반 저축 합계 + 투자 평가금액. 부모가 미리 더해 넘긴다.
+    netWorth: number
+    // 계좌 기반 저축 합계·이번 달 적립(savingsAccountsView 의 savedTotal/savedMonth).
+    savedTotal: number
     savedMonth: number
     investMonth: number
-    goalName: string | null
-    goalAmount: number
     contributions: Contribution[]
-    onEditGoal: () => void
     // 적금 계좌 목록(계산된 뷰). 목표가 없는 계좌의 진행바는 계좌들 중 최대 total 대비 상대값으로 채운다.
     accounts: SavingsAccountView[]
     onAddAccount: () => void
@@ -68,13 +67,11 @@ function formatPnl(pnl: number): string {
 }
 
 export function SavingsTab({
-    summary,
+    netWorth,
+    savedTotal,
     savedMonth,
     investMonth,
-    goalName,
-    goalAmount,
     contributions,
-    onEditGoal,
     accounts,
     onAddAccount,
     onEditAccountGoal,
@@ -86,8 +83,7 @@ export function SavingsTab({
     onBoxDetail,
 }: SavingsTabProps) {
     // 세이빙 박스로 이체한 저축분은 "저축" 표시에서 뺀다(박스 카드 잔액과 중복 집계 방지).
-    const displayedSaved = Math.max(0, summary.savedTotal - box.fromSavings)
-    const pct = goalProgress(displayedSaved, goalAmount)
+    const displayedSaved = Math.max(0, savedTotal - box.fromSavings)
     const monthContrib = savedMonth + investMonth
     // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
@@ -104,7 +100,7 @@ export function SavingsTab({
                         letterSpacing: "-0.03em",
                     }}
                 >
-                    {formatWon(summary.netWorth)}
+                    {formatWon(netWorth)}
                 </div>
                 <div
                     style={{
@@ -630,56 +626,6 @@ export function SavingsTab({
                             {formatPnl(investment.pnl)}
                         </span>
                     </div>
-                </div>
-            </button>
-
-            {/* 저축 목표 */}
-            <button
-                type="button"
-                className="asset-card"
-                onClick={onEditGoal}
-                style={{ textAlign: "left", cursor: "pointer" }}
-            >
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 12,
-                    }}
-                >
-                    <span style={{ fontWeight: 800, fontSize: 13 }}>
-                        저축 목표{goalName ? ` · ${goalName}` : ""}
-                    </span>
-                    <span
-                        style={{
-                            fontWeight: 800,
-                            fontSize: 12.5,
-                            color: "#20a4a4",
-                        }}
-                    >
-                        {goalAmount > 0 ? `${pct}%` : "설정하기"}
-                    </span>
-                </div>
-                <div className="asset-bar">
-                    <div
-                        className="asset-bar-fill"
-                        style={{ width: `${pct}%`, background: "#20a4a4" }}
-                    />
-                </div>
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: 12,
-                        color: "var(--color-text-muted)",
-                        fontWeight: 600,
-                        marginTop: 9,
-                    }}
-                >
-                    <span>{formatWon(displayedSaved)}</span>
-                    <span>
-                        목표 {goalAmount > 0 ? formatWon(goalAmount) : "-"}
-                    </span>
                 </div>
             </button>
 

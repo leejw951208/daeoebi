@@ -8,7 +8,6 @@ import {
     totalSpent,
     type ComputedExpense,
     type ComputedIncome,
-    type SavingsSummary,
     type SavingsAccountView,
     type InvestmentView,
 } from "../../_lib/asset-compute"
@@ -42,13 +41,12 @@ export type SavingsView =
     | { status: "error"; message: string }
     | {
           status: "ready"
-          summary: SavingsSummary
+          // 저축·투자 순자산(hero) = 계좌 기반 저축 합계 + 투자 평가금액.
+          netWorth: number
+          savedTotal: number
           savedMonth: number
           investMonth: number
-          goalName: string | null
-          goalAmount: number
           contributions: Contribution[]
-          onEditGoal: () => void
           accounts: SavingsAccountView[]
           onAddAccount: () => void
           onEditAccountGoal: (name: string) => void
@@ -179,13 +177,11 @@ export function AssetDashboard({
                     )}
                     {savings.status === "ready" && (
                         <SavingsTab
-                            summary={savings.summary}
+                            netWorth={savings.netWorth}
+                            savedTotal={savings.savedTotal}
                             savedMonth={savings.savedMonth}
                             investMonth={savings.investMonth}
-                            goalName={savings.goalName}
-                            goalAmount={savings.goalAmount}
                             contributions={savings.contributions}
-                            onEditGoal={savings.onEditGoal}
                             accounts={savings.accounts}
                             onAddAccount={savings.onAddAccount}
                             onEditAccountGoal={savings.onEditAccountGoal}

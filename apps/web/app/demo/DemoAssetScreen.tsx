@@ -40,15 +40,11 @@ export function DemoAssetScreen() {
     // 데모엔 저축/투자 카테고리·목표 데이터가 없다. 세그먼트 전환은 보여주되 내용은 빈 상태로 표시한다.
     const demoSavings: SavingsView = {
         status: "ready",
-        summary: { savedTotal: 0, investTotal: 0, netWorth: 0 },
+        netWorth: 0,
+        savedTotal: 0,
         savedMonth: 0,
         investMonth: 0,
-        goalName: null,
-        goalAmount: 0,
         contributions: [],
-        onEditGoal: () => {
-            /* 데모: 저축 목표 편집 미지원 */
-        },
         accounts: [],
         onAddAccount: () => {
             /* 데모: 적금 추가 미지원 */
