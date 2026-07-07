@@ -46,6 +46,16 @@ export function VaultGate({ children }: { children: React.ReactNode }) {
         void refresh()
     }, [refresh])
 
+    // 인증 전 화면(로딩·에러·온보딩·잠금)은 풀스크린 챙으로 노출한다 — 하단 탭바는
+    // 잠긴 화면으로만 이어져 노출할 이유가 없고, 디자인에도 없다. root 의 data-auth-screen
+    // 을 CSS 훅으로 써서 탭바·컨테이너 패딩을 걷어낸다. unlocked 에서만 앱 챙을 복원한다.
+    useEffect(() => {
+        const root = document.documentElement
+        if (view.state !== "unlocked") root.setAttribute("data-auth-screen", "")
+        else root.removeAttribute("data-auth-screen")
+        return () => root.removeAttribute("data-auth-screen")
+    }, [view.state])
+
     // VK 확보 시 잠금해제 상태로 전환하고 idle 타이머를 초기화한다.
     const handleUnlocked = useCallback((vaultKey: CryptoKey) => {
         setView({ state: "unlocked", vaultKey })

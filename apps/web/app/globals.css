@@ -345,7 +345,7 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
@@ -383,7 +383,7 @@ a:hover {
     gap: 9px;
     height: 42px;
     padding: 0 14px;
-    border-radius: var(--radius-md);
+    border-radius: 13px;
     background: var(--soft);
 }
 
@@ -394,7 +394,7 @@ a:hover {
     font: inherit;
     font-size: 15px;
     outline: none;
-    color: var(--color-text-primary);
+    color: #222;
 }
 
 .search-bar input::placeholder {
@@ -459,16 +459,6 @@ a:hover {
     color: var(--ac);
 }
 
-.bottom-tab-bar a[aria-current="page"]::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    width: 28px;
-    height: 2px;
-    border-radius: var(--radius-full);
-    background: var(--ac);
-}
-
 .bottom-tab-bar a:hover {
     color: var(--color-text-secondary);
     text-decoration: none;
@@ -490,7 +480,6 @@ a:hover {
     font-family: var(--font-body);
     font-weight: 700;
     font-size: var(--font-md);
-    letter-spacing: -0.01em;
     box-shadow: var(--shadow-accent);
     transition:
         background-color var(--motion-fast) var(--ease),
@@ -656,7 +645,6 @@ a:hover {
     color: var(--color-text-muted);
     font-size: 11.5px;
     font-weight: 700;
-    letter-spacing: 0.02em;
 }
 
 .form-row input,
@@ -667,7 +655,7 @@ a:hover {
     min-height: 52px;
     padding: 0 15px;
     border: 1.5px solid #ececec;
-    border-radius: var(--radius-md);
+    border-radius: 13px;
     font-size: var(--font-md); /* 16px — iOS auto-zoom 방지 */
     font-family: inherit;
     font-weight: 500;
@@ -820,7 +808,7 @@ input[type="date"].field-control {
     padding: 14px;
     background: var(--color-surface-1);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
+    border-radius: 16px;
     color: var(--color-text-primary);
     text-decoration: none;
     overflow: hidden;
@@ -980,8 +968,8 @@ input[type="date"].field-control {
 
 /* 마스킹된 점 */
 .secret-value.masked {
-    color: var(--color-text-secondary);
-    letter-spacing: 0.18em;
+    color: #1f1f1f;
+    letter-spacing: 0.04em;
 }
 
 /* 드러난 비밀값 */
@@ -1044,7 +1032,7 @@ input[type="date"].field-control {
 .secret-drain-track {
     flex: 1;
     height: 3px;
-    border-radius: var(--radius-full);
+    border-radius: 3px;
     background: var(--soft);
     overflow: hidden;
 }
@@ -1083,6 +1071,16 @@ input[type="date"].field-control {
     background: var(--ac);
     color: #fff;
     margin-bottom: var(--space-5);
+}
+
+/* 인증 전 화면(온보딩·잠금·로딩·에러)은 풀스크린 — 하단 탭바를 숨기고 컨테이너
+   패딩을 걷어낸다(각 화면이 자체 패딩·전체 높이로 채운다). */
+html[data-auth-screen] .bottom-tab-bar {
+    display: none;
+}
+
+html[data-auth-screen] .container {
+    padding: 0;
 }
 
 /* 잠금해제 링(인증 중 회전) */
@@ -1398,7 +1396,6 @@ input[type="date"].field-control {
     color: var(--color-text-muted);
     font-size: 11.5px;
     font-weight: 700;
-    letter-spacing: 0.02em;
     margin-bottom: 7px;
 }
 
@@ -1467,31 +1464,48 @@ input[type="date"].field-control {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: var(--tint);
+    gap: 1px;
+    padding: 2px;
+    border: none;
+    border-radius: 11px;
+    background: transparent;
     cursor: pointer;
     font: inherit;
-    transition: transform var(--motion-fast) var(--ease);
+    transition:
+        transform var(--motion-fast) var(--ease),
+        background var(--motion-fast) var(--ease);
 }
 .cal-cell:active {
     transform: scale(0.9);
 }
-.cal-cell.active {
-    border-color: var(--ac);
+.cal-cell.has-spend {
     background: var(--soft);
 }
+.cal-cell.active {
+    background: var(--ac);
+}
 .cal-day {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-secondary);
+    line-height: 1;
+    color: #555;
+}
+.cal-cell.today .cal-day {
+    font-weight: 800;
+    color: var(--ac);
+}
+.cal-cell.active .cal-day {
+    font-weight: 800;
+    color: #fff;
 }
 .cal-amt {
     font-size: 9px;
     font-weight: 700;
     color: var(--color-danger-fg);
     line-height: 1;
+}
+.cal-cell.active .cal-amt {
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* 고정 지출 배지 */
@@ -1544,6 +1558,7 @@ input[type="date"].field-control {
 }
 .income-input input {
     flex: 1;
+    min-width: 0; /* 값이 길어도 옆의 단위(₩·%)를 박스 밖으로 밀지 않도록 축소 허용 */
     border: none;
     background: none;
     outline: none;

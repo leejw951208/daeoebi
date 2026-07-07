@@ -1,9 +1,7 @@
 "use client"
 // 잠금해제 화면. passkey 로그인으로 PRF→VK 언랩하거나, 복구코드로 VK 확보 후 새 passkey 를 재등록한다.
 import { useState } from "react"
-import { Lock } from "lucide-react"
 import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
 import {
     getLoginOptions,
     getRegisterOptions,
@@ -205,23 +203,19 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
         return (
             <section
                 style={{
-                    maxWidth: 440,
-                    margin: "0 auto",
+                    minHeight: "100dvh",
                     padding: "40px 28px",
                     background: "linear-gradient(180deg,#fff,#fafafa)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
-                    minHeight: "70vh",
                 }}
             >
                 <div
                     style={{
-                        flex: 1,
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "center",
                         alignItems: "center",
                     }}
                 >
@@ -241,7 +235,32 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                                         !
                                     </span>
                                 ) : (
-                                    <Icon icon={Lock} size={28} />
+                                    <div
+                                        aria-hidden="true"
+                                        style={{
+                                            width: 22,
+                                            height: 26,
+                                            border: "3px solid #fff",
+                                            borderTop: "none",
+                                            borderRadius: 7,
+                                            position: "relative",
+                                            marginTop: 5,
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                position: "absolute",
+                                                left: "50%",
+                                                top: -14,
+                                                transform: "translateX(-50%)",
+                                                width: 20,
+                                                height: 20,
+                                                border: "3px solid #fff",
+                                                borderBottom: "none",
+                                                borderRadius: "10px 10px 0 0",
+                                            }}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -260,6 +279,8 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                         {sub}
                     </p>
                 </div>
+
+                <div style={{ flex: 1 }} aria-hidden="true" />
 
                 {error && (
                     <div
@@ -289,6 +310,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                         width: "100%",
                         height: 48,
                         marginTop: 6,
+                        justifyContent: "center",
                         color: "#888",
                     }}
                     onClick={() => {

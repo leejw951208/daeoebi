@@ -8,9 +8,7 @@ import {
     createExpense,
     createRecurring,
     deleteExpense,
-    deleteRecurring,
     updateExpense,
-    updateRecurring,
     type AssetCategory,
 } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
@@ -56,7 +54,6 @@ export function ExpenseForm({
     const [termMonths, setTermMonths] = useState("")
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [deleteMenu, setDeleteMenu] = useState(false)
 
     // 신규 폼에서 카테고리 목록이 비동기로 도착했을 때 첫 항목을 자동 선택한다.
     // categoryId 가 이미 설정된 경우(수정 모드 또는 사용자가 직접 선택)에는 동작하지 않는다.
@@ -129,30 +126,6 @@ export function ExpenseForm({
                     ? e.message
                     : "저장에 실패했습니다. 다시 시도하세요.",
             )
-        }
-    }
-
-    async function handleDeactivate() {
-        if (!initial?.recurringId) return
-        setBusy(true)
-        try {
-            await updateRecurring(initial.recurringId, { active: false })
-            onDeleted()
-        } catch (e) {
-            setBusy(false)
-            setError(isApiError(e) ? e.message : "해제에 실패했습니다.")
-        }
-    }
-
-    async function handleDeleteAll() {
-        if (!initial?.recurringId) return
-        setBusy(true)
-        try {
-            await deleteRecurring(initial.recurringId) // FK Cascade 로 인스턴스까지 삭제
-            onDeleted()
-        } catch (e) {
-            setBusy(false)
-            setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         }
     }
 
@@ -321,11 +294,12 @@ export function ExpenseForm({
                                     <span
                                         aria-hidden="true"
                                         style={{
-                                            width: 9,
-                                            height: 9,
+                                            width: 8,
+                                            height: 8,
                                             borderRadius: "50%",
                                             background: c.color,
                                             display: "inline-block",
+                                            marginRight: 7,
                                         }}
                                     />
                                     {c.name}
@@ -393,12 +367,12 @@ export function ExpenseForm({
                             style={{
                                 flexShrink: 0,
                                 position: "relative",
-                                width: 44,
-                                height: 26,
+                                width: 50,
+                                height: 30,
                                 border: "none",
                                 borderRadius: 999,
                                 padding: 0,
-                                background: recurring ? "var(--ac)" : "#e2e2e2",
+                                background: recurring ? "var(--ac)" : "#dcdcdc",
                                 cursor: "pointer",
                                 transition: "background .18s",
                             }}
@@ -407,15 +381,15 @@ export function ExpenseForm({
                                 aria-hidden="true"
                                 style={{
                                     position: "absolute",
-                                    top: 2,
-                                    left: 2,
-                                    width: 22,
-                                    height: 22,
+                                    top: 3,
+                                    left: 3,
+                                    width: 24,
+                                    height: 24,
                                     borderRadius: "50%",
                                     background: "#fff",
-                                    boxShadow: "0 1px 3px rgba(0,0,0,.25)",
+                                    boxShadow: "0 2px 5px rgba(0,0,0,.2)",
                                     transform: recurring
-                                        ? "translateX(18px)"
+                                        ? "translateX(20px)"
                                         : "translateX(0)",
                                     transition: "transform .18s",
                                 }}
@@ -426,7 +400,10 @@ export function ExpenseForm({
 
                 {/* 개월 수(고정 ON 일 때만, 선택) */}
                 {!isEdit && recurring && (
-                    <div className="form-row" style={{ margin: 0 }}>
+                    <div
+                        className="form-row"
+                        style={{ margin: 0, marginTop: -12 }}
+                    >
                         <label htmlFor="term-months">
                             개월 수{" "}
                             <span
@@ -443,6 +420,7 @@ export function ExpenseForm({
                             inputMode="numeric"
                             className="field-control"
                             placeholder="비우면 무기한"
+                            style={{ fontSize: 15, fontWeight: 600 }}
                             value={termMonths}
                             onChange={(e) => {
                                 resetIdle()
@@ -467,110 +445,29 @@ export function ExpenseForm({
                     </div>
                 )}
 
-                {/* 액션(수정만) */}
+                {/* 삭제(수정만) */}
                 {isEdit && (
-                    <div
+                    <button
+                        type="button"
+                        onClick={handleDeleteThisMonth}
+                        disabled={busy}
                         style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
+                            height: 50,
+                            border: "1px solid #f3dcdc",
+                            borderRadius: 14,
+                            background: "#fff",
+                            font: "inherit",
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: "#e5484d",
+                            cursor: "pointer",
+                            marginTop: 4,
                         }}
                     >
-                        {initial?.recurringId ? (
-                            <>
-                                <Button
-                                    variant="secondary"
-                                    onClick={handleDeactivate}
-                                    loading={busy}
-                                >
-                                    고정 해제(이후 자동 생성 중단)
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    onClick={() => setDeleteMenu(true)}
-                                    disabled={busy}
-                                >
-                                    삭제
-                                </Button>
-                            </>
-                        ) : (
-                            <Button
-                                variant="danger"
-                                onClick={handleDeleteThisMonth}
-                                loading={busy}
-                            >
-                                이 지출 삭제
-                            </Button>
-                        )}
-                    </div>
+                        이 지출 삭제
+                    </button>
                 )}
             </div>
-
-            {deleteMenu && (
-                <div
-                    className="dialog-backdrop"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="고정 지출 삭제"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) setDeleteMenu(false)
-                    }}
-                >
-                    <div className="sheet">
-                        <div className="sheet-grip" aria-hidden="true" />
-                        <div
-                            style={{
-                                fontSize: 17,
-                                fontWeight: 800,
-                                marginBottom: 4,
-                            }}
-                        >
-                            고정 지출 삭제
-                        </div>
-                        <p
-                            className="muted"
-                            style={{
-                                fontSize: 13,
-                                lineHeight: 1.5,
-                                marginBottom: 16,
-                            }}
-                        >
-                            무엇을 삭제할지 선택하세요.
-                        </p>
-                        <Button
-                            variant="danger"
-                            style={{ width: "100%", marginBottom: 8 }}
-                            onClick={() => {
-                                setDeleteMenu(false)
-                                void handleDeleteAll()
-                            }}
-                            loading={busy}
-                        >
-                            이 고정 전체 삭제(모든 달 기록 제거)
-                        </Button>
-                        <Button
-                            variant="danger"
-                            style={{ width: "100%", marginBottom: 8 }}
-                            onClick={() => {
-                                setDeleteMenu(false)
-                                void handleDeleteThisMonth()
-                            }}
-                            loading={busy}
-                        >
-                            이번 달만 삭제
-                        </Button>
-                        <button
-                            type="button"
-                            className="btn secondary"
-                            style={{ width: "100%" }}
-                            onClick={() => setDeleteMenu(false)}
-                            disabled={busy}
-                        >
-                            취소
-                        </button>
-                    </div>
-                </div>
-            )}
         </section>
     )
 }

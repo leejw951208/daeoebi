@@ -3,10 +3,7 @@
 // 데이터(계좌·투자·박스)는 부모(asset/page)가 복호화해 props 로 넘긴다.
 // 저축 합계는 적금 계좌 모델(savingsAccountsView) 기준이다 — 지출 파생 단일 목표 모델은 쓰지 않는다.
 import Link from "next/link"
-import type {
-    SavingsAccountView,
-    InvestmentView,
-} from "../../_lib/asset-compute"
+import type { InvestmentView } from "../../_lib/asset-compute"
 import { formatWon } from "../../_lib/asset-categories"
 
 export interface Contribution {
@@ -15,6 +12,15 @@ export interface Contribution {
     amount: number
     categoryName: string
     date: string
+    color?: string
+    recurring?: boolean
+}
+
+// ISO("YYYY-MM-DD") → "M월 D일".
+function formatMonthDay(iso: string): string {
+    const m = Number(iso.slice(5, 7))
+    const d = Number(iso.slice(8, 10))
+    return `${m}월 ${d}일`
 }
 
 // 세이빙 박스 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
@@ -33,11 +39,6 @@ interface SavingsTabProps {
     savedMonth: number
     investMonth: number
     contributions: Contribution[]
-    // 적금 계좌 목록(계산된 뷰). 목표가 없는 계좌의 진행바는 계좌들 중 최대 total 대비 상대값으로 채운다.
-    accounts: SavingsAccountView[]
-    onAddAccount: () => void
-    // 이름으로 계좌를 식별해 목표 시트를 연다(이름은 생성 시 중복이 막혀 있어 앵커로 쓸 수 있다).
-    onEditAccountGoal: (name: string) => void
     // 투자 원금·평가금액·손익(수익률 적용 결과). 탭하면 onEditReturn 으로 수익률 수정 시트를 연다.
     investment: InvestmentView
     onEditReturn: () => void
@@ -72,9 +73,6 @@ export function SavingsTab({
     savedMonth,
     investMonth,
     contributions,
-    accounts,
-    onAddAccount,
-    onEditAccountGoal,
     investment,
     onEditReturn,
     box,
@@ -85,14 +83,22 @@ export function SavingsTab({
     // 세이빙 박스로 이체한 저축분은 "저축" 표시에서 뺀다(박스 카드 잔액과 중복 집계 방지).
     const displayedSaved = Math.max(0, savedTotal - box.fromSavings)
     const monthContrib = savedMonth + investMonth
-    // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
-    const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
     const investPnlColor = pnlColor(investment.pnl)
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* 순자산 */}
-            <div className="asset-card" style={{ borderRadius: 20 }}>
-                <div className="asset-card-label" style={{ color: "#9a9a9a" }}>
+            <div
+                className="asset-card"
+                style={{ borderRadius: 20, padding: "20px 18px" }}
+            >
+                <div
+                    className="asset-card-label"
+                    style={{
+                        color: "#9a9a9a",
+                        fontSize: 12.5,
+                        marginBottom: 7,
+                    }}
+                >
                     저축·투자 순자산
                 </div>
                 <div
@@ -135,7 +141,7 @@ export function SavingsTab({
 
             {/* 저축 / 투자 카드 */}
             <div style={{ display: "flex", gap: 12 }}>
-                <div className="asset-card" style={{ flex: 1 }}>
+                <div className="asset-card" style={{ flex: 1, padding: 16 }}>
                     <div
                         style={{
                             display: "flex",
@@ -176,7 +182,7 @@ export function SavingsTab({
                         이번 달 {formatWon(savedMonth)}
                     </div>
                 </div>
-                <div className="asset-card" style={{ flex: 1 }}>
+                <div className="asset-card" style={{ flex: 1, padding: 16 }}>
                     <div
                         style={{
                             display: "flex",
@@ -329,218 +335,6 @@ export function SavingsTab({
                         <path d="M9 6l6 6-6 6" />
                     </svg>
                 </button>
-            </div>
-
-            {/* 적금 계좌 목록 */}
-            <div className="asset-card">
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 13,
-                    }}
-                >
-                    <span style={{ fontSize: 13, fontWeight: 800 }}>
-                        저축 현황
-                    </span>
-                    <span
-                        style={{
-                            fontSize: 12,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                        }}
-                    >
-                        {accounts.length}개 적금
-                    </span>
-                </div>
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                    }}
-                >
-                    {accounts.length === 0 && (
-                        <div
-                            style={{
-                                textAlign: "center",
-                                padding: "8px 8px 14px",
-                                fontSize: 13,
-                                color: "var(--color-text-muted)",
-                                fontWeight: 600,
-                            }}
-                        >
-                            아직 등록한 적금이 없어요.
-                        </div>
-                    )}
-                    {accounts.map((a) => {
-                        const hasGoal = a.goal > 0
-                        const fillPct = hasGoal
-                            ? a.goalPct
-                            : (a.total / maxAccountTotal) * 100
-                        return (
-                            <button
-                                key={a.name}
-                                type="button"
-                                onClick={() => onEditAccountGoal(a.name)}
-                                style={{
-                                    textAlign: "left",
-                                    width: "100%",
-                                    border: "1px solid var(--color-border)",
-                                    borderRadius: 14,
-                                    background: "var(--tint)",
-                                    padding: "13px 14px",
-                                    cursor: "pointer",
-                                    font: "inherit",
-                                    color: "inherit",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                            minWidth: 0,
-                                        }}
-                                    >
-                                        <span
-                                            style={{
-                                                flexShrink: 0,
-                                                width: 9,
-                                                height: 9,
-                                                borderRadius: "50%",
-                                                background: a.color,
-                                            }}
-                                        />
-                                        <span
-                                            style={{
-                                                fontSize: 13.5,
-                                                fontWeight: 700,
-                                                color: "#333",
-                                                whiteSpace: "nowrap",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                            }}
-                                        >
-                                            {a.name}
-                                        </span>
-                                        {a.month > 0 && (
-                                            <span
-                                                style={{
-                                                    flexShrink: 0,
-                                                    fontSize: 11,
-                                                    fontWeight: 700,
-                                                    color: "#20a4a4",
-                                                    background: "#fff",
-                                                    padding: "2px 7px",
-                                                    borderRadius: 6,
-                                                }}
-                                            >
-                                                +{formatWon(a.month)}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span
-                                        style={{
-                                            flexShrink: 0,
-                                            fontSize: 14,
-                                            fontWeight: 800,
-                                            letterSpacing: "-0.02em",
-                                            color: "#1f1f1f",
-                                        }}
-                                    >
-                                        {formatWon(a.total)}
-                                    </span>
-                                </div>
-                                <div
-                                    style={{
-                                        height: 7,
-                                        borderRadius: 999,
-                                        background: "#fff",
-                                        overflow: "hidden",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            height: "100%",
-                                            borderRadius: 999,
-                                            background: a.color,
-                                            width: `${fillPct}%`,
-                                            transition:
-                                                "width .55s cubic-bezier(.22,1,.36,1)",
-                                        }}
-                                    />
-                                </div>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        fontSize: 11.5,
-                                        fontWeight: 600,
-                                        color: "#a3a3a3",
-                                        marginTop: 7,
-                                    }}
-                                >
-                                    {hasGoal ? (
-                                        <span
-                                            style={{
-                                                color: a.color,
-                                                fontWeight: 800,
-                                            }}
-                                        >
-                                            {a.goalPct}%
-                                        </span>
-                                    ) : (
-                                        <span
-                                            style={{
-                                                color: "#20a4a4",
-                                                fontWeight: 700,
-                                            }}
-                                        >
-                                            + 목표 설정
-                                        </span>
-                                    )}
-                                    <span>
-                                        {hasGoal
-                                            ? `목표 ${formatWon(a.goal)} · ${formatWon(a.remain)} 남음`
-                                            : "목표 미설정"}
-                                    </span>
-                                </div>
-                            </button>
-                        )
-                    })}
-                    <button
-                        type="button"
-                        onClick={onAddAccount}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 6,
-                            width: "100%",
-                            height: 46,
-                            border: "1.5px dashed #d8d8d8",
-                            borderRadius: 13,
-                            background: "none",
-                            font: "inherit",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: "#20a4a4",
-                            cursor: "pointer",
-                        }}
-                    >
-                        + 적금 추가
-                    </button>
-                </div>
             </div>
 
             {/* 투자 수익률 */}
@@ -712,7 +506,7 @@ export function SavingsTab({
             </button>
 
             {/* 이번 달 적립 내역 */}
-            <div className="asset-card">
+            <div className="asset-card" style={{ padding: "18px 16px 16px" }}>
                 <div
                     style={{
                         display: "flex",
@@ -758,68 +552,85 @@ export function SavingsTab({
                             gap: 9,
                         }}
                     >
-                        {contributions.map((c) => (
-                            <Link
-                                key={c.id}
-                                href={`/asset/${c.id}`}
-                                className="entry-card"
-                                style={{ gap: 13 }}
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    style={{
-                                        flexShrink: 0,
-                                        width: 38,
-                                        height: 38,
-                                        borderRadius: 12,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        fontSize: 15,
-                                        fontWeight: 800,
-                                        background: "#e7f5f5",
-                                        color: "#20a4a4",
-                                    }}
+                        {contributions.map((c) => {
+                            const accent = c.color ?? "#20a4a4"
+                            return (
+                                <Link
+                                    key={c.id}
+                                    href={`/asset/${c.id}`}
+                                    className="entry-card"
+                                    style={{ gap: 13 }}
                                 >
-                                    {c.item.trim().charAt(0) || "저"}
-                                </span>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div
+                                    <span
+                                        aria-hidden="true"
                                         style={{
+                                            flexShrink: 0,
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: 12,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
                                             fontSize: 15,
-                                            fontWeight: 700,
-                                            letterSpacing: "-0.01em",
-                                            color: "#1c1c1c",
-                                            whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
+                                            fontWeight: 800,
+                                            background: `${accent}1f`,
+                                            color: accent,
                                         }}
                                     >
-                                        {c.item}
+                                        {c.item.trim().charAt(0) || "저"}
+                                    </span>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 6,
+                                                fontSize: 15,
+                                                fontWeight: 700,
+                                                letterSpacing: "-0.01em",
+                                                color: "#1c1c1c",
+                                                minWidth: 0,
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    whiteSpace: "nowrap",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                }}
+                                            >
+                                                {c.item}
+                                            </span>
+                                            {c.recurring && (
+                                                <span className="recur-badge">
+                                                    고정
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: 12,
+                                                color: "#a3a3a3",
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            {`${c.categoryName} · ${formatMonthDay(c.date)}`}
+                                        </div>
                                     </div>
-                                    <div
+                                    <span
                                         style={{
-                                            fontSize: 12,
-                                            color: "#a3a3a3",
-                                            fontWeight: 500,
+                                            flexShrink: 0,
+                                            fontSize: 15,
+                                            fontWeight: 800,
+                                            letterSpacing: "-0.02em",
+                                            color: c.color ?? "#171717",
                                         }}
                                     >
-                                        {c.categoryName}
-                                    </div>
-                                </div>
-                                <span
-                                    style={{
-                                        flexShrink: 0,
-                                        fontSize: 15,
-                                        fontWeight: 800,
-                                        letterSpacing: "-0.02em",
-                                        color: "#171717",
-                                    }}
-                                >
-                                    {formatWon(c.amount)}
-                                </span>
-                            </Link>
-                        ))}
+                                        {"+" + formatWon(c.amount)}
+                                    </span>
+                                </Link>
+                            )
+                        })}
                     </div>
                 )}
             </div>

@@ -51,7 +51,7 @@ export function CategoryAddSection({
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="field-label" style={{ marginBottom: 8 }}>
+            <div className="field-label" style={{ marginBottom: 7 }}>
                 카테고리명
             </div>
             <input
@@ -68,7 +68,7 @@ export function CategoryAddSection({
                 style={{ marginBottom: 18, fontWeight: 600 }}
             />
 
-            <div className="field-label" style={{ marginBottom: 8 }}>
+            <div className="field-label" style={{ marginBottom: 7 }}>
                 코드{" "}
                 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
                     · 영문·숫자
@@ -116,14 +116,15 @@ export function CategoryAddSection({
                             setColor(swatch)
                         }}
                         style={{
-                            width: 32,
-                            height: 32,
+                            width: 34,
+                            height: 34,
                             borderRadius: "50%",
                             background: swatch,
                             border:
                                 swatch === color
-                                    ? "3px solid var(--color-text-primary)"
-                                    : "1px solid var(--color-border)",
+                                    ? "3px solid #171717"
+                                    : "3px solid transparent",
+                            boxShadow: "0 0 0 1px #e6e6e6",
                             padding: 0,
                             cursor: "pointer",
                         }}
@@ -147,7 +148,9 @@ export function CategoryAddSection({
                     className="btn-text"
                     style={{
                         width: "100%",
-                        marginTop: 8,
+                        height: 46,
+                        marginTop: 2,
+                        fontWeight: 700,
                         color: "#e5484d",
                     }}
                     onClick={() => {

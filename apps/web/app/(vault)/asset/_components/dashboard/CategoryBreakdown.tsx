@@ -10,7 +10,7 @@ interface Props {
 
 export function CategoryBreakdown({ cats }: Props) {
     return (
-        <div className="asset-card">
+        <div className="asset-card" style={{ padding: "18px 18px 20px" }}>
             <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 15 }}>
                 카테고리별 지출
             </div>

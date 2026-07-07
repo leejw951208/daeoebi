@@ -26,9 +26,9 @@ interface Props {
 
 // 출처 세그먼트의 선택된 버튼 스타일(세이빙 박스 accent #e9b949 톤).
 const SOURCE_ACTIVE_STYLE = {
-    borderColor: "#e9b949",
-    background: "#fdf6e3",
-    color: "#5b4407",
+    borderColor: "#171717",
+    background: "#f5f5f5",
+    color: "#171717",
 } as const
 
 export function SavingsBoxSheet({
@@ -89,7 +89,14 @@ export function SavingsBoxSheet({
         >
             <div className="sheet">
                 <div className="sheet-grip" aria-hidden="true" />
-                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
+                <div
+                    style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                        letterSpacing: "-0.02em",
+                    }}
+                >
                     세이빙 박스 {title}
                 </div>
                 <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
@@ -125,14 +132,14 @@ export function SavingsBoxSheet({
                                 style={{
                                     flex: 1,
                                     height: 44,
-                                    borderRadius: 13,
+                                    borderRadius: 12,
                                     font: "inherit",
-                                    fontSize: 14,
+                                    fontSize: 13.5,
                                     fontWeight: 700,
                                     cursor: "pointer",
                                     border: "1.5px solid #ececec",
                                     background: "#fff",
-                                    color: "#444",
+                                    color: "#888",
                                     ...(source === "cash"
                                         ? SOURCE_ACTIVE_STYLE
                                         : {}),
@@ -150,14 +157,14 @@ export function SavingsBoxSheet({
                                 style={{
                                     flex: 1,
                                     height: 44,
-                                    borderRadius: 13,
+                                    borderRadius: 12,
                                     font: "inherit",
-                                    fontSize: 14,
+                                    fontSize: 13.5,
                                     fontWeight: 700,
                                     cursor: "pointer",
                                     border: "1.5px solid #ececec",
                                     background: "#fff",
-                                    color: "#444",
+                                    color: "#888",
                                     ...(source === "savings"
                                         ? SOURCE_ACTIVE_STYLE
                                         : {}),
@@ -242,7 +249,7 @@ export function SavingsBoxSheet({
                         resetIdle()
                         setMemo(e.target.value)
                     }}
-                    style={{ marginBottom: 20 }}
+                    style={{ marginBottom: 20, fontWeight: 600 }}
                 />
 
                 {saveFailed && (

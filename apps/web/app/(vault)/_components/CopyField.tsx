@@ -15,13 +15,7 @@ interface Props {
 
 const CLEAR_AFTER_MS = 30_000
 
-export function CopyField({
-    label,
-    value,
-    sensitive,
-    onActivity,
-    onDelete,
-}: Props) {
+export function CopyField({ label, value, sensitive, onActivity }: Props) {
     const [revealed, setRevealed] = useState(false)
     const [status, setStatus] = useState<string>("")
     const [remaining, setRemaining] = useState<number | null>(null)
@@ -69,6 +63,7 @@ export function CopyField({
     }
 
     const masked = sensitive && !revealed
+    const maskDots = "•".repeat(Math.min(12, value.length || 8))
 
     return (
         <div className="secret-plate">
@@ -81,6 +76,13 @@ export function CopyField({
                         <button
                             type="button"
                             className="secret-btn"
+                            style={{
+                                fontSize: 12,
+                                minWidth: 0,
+                                minHeight: 0,
+                                padding: "2px 6px",
+                                color: "#999",
+                            }}
                             onClick={() => {
                                 onActivity?.()
                                 setRevealed((v) => !v)
@@ -93,30 +95,22 @@ export function CopyField({
                     <button
                         type="button"
                         className="secret-btn accent"
+                        style={{
+                            fontSize: 12,
+                            minWidth: 0,
+                            minHeight: 0,
+                            padding: "2px 4px",
+                        }}
                         onClick={handleCopy}
                     >
                         {remaining !== null ? `복사됨 ${remaining}s` : "복사"}
                     </button>
-                    {onDelete && (
-                        <button
-                            type="button"
-                            className="secret-btn"
-                            style={{ color: "#d99" }}
-                            onClick={() => {
-                                onActivity?.()
-                                onDelete()
-                            }}
-                            aria-label={`${label} 필드 삭제`}
-                        >
-                            삭제
-                        </button>
-                    )}
                 </span>
             </div>
             <span
                 className={`secret-value${masked ? " masked" : revealed ? " revealed" : ""}`}
             >
-                {masked ? MASK : value}
+                {masked ? maskDots : value}
             </span>
 
             {remaining !== null && (
@@ -132,9 +126,6 @@ export function CopyField({
                             }}
                         />
                     </span>
-                    <span className="secret-drain-count" aria-hidden="true">
-                        {remaining}s
-                    </span>
                 </div>
             )}
 
@@ -148,6 +139,3 @@ export function CopyField({
         </div>
     )
 }
-
-// 길이를 노출하지 않도록 고정 길이 마스크.
-const MASK = "•".repeat(10)

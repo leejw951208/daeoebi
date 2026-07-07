@@ -7,7 +7,6 @@ interface Props {
     index: number
     name: string
     value: string
-    sensitive: boolean
     isFirst: boolean
     isLast: boolean
     onUpdate: (patch: Partial<SecretField>) => void
@@ -19,7 +18,6 @@ export function SecretFieldRow({
     index,
     name,
     value,
-    sensitive,
     isFirst,
     isLast,
     onUpdate,
@@ -69,20 +67,6 @@ export function SecretFieldRow({
                     <button
                         type="button"
                         className="secret-btn"
-                        onClick={() => onUpdate({ sensitive: !sensitive })}
-                        aria-pressed={sensitive}
-                        aria-label={`필드 ${index + 1} 값 ${sensitive ? "표시로 전환" : "가림으로 전환"}`}
-                        title={
-                            sensitive
-                                ? "상세에서 가림(마스킹)"
-                                : "상세에서 표시"
-                        }
-                    >
-                        {sensitive ? "🔒" : "👁"}
-                    </button>
-                    <button
-                        type="button"
-                        className="secret-btn"
                         onClick={() => onMove(-1)}
                         disabled={isFirst}
                         aria-label={`필드 ${index + 1} 위로`}
@@ -101,7 +85,7 @@ export function SecretFieldRow({
                     <button
                         type="button"
                         className="secret-btn"
-                        style={{ color: "#d99" }}
+                        style={{ color: "#d99", fontSize: 15 }}
                         onClick={onRemove}
                         aria-label={`필드 ${index + 1} 삭제`}
                     >
@@ -122,6 +106,10 @@ export function SecretFieldRow({
                     border: "1px solid #e9e9e9",
                     borderRadius: 10,
                     background: "#fff",
+                    padding: "0 13px",
+                    fontSize: 14.5,
+                    fontWeight: 400,
+                    color: "#333",
                 }}
             />
         </div>

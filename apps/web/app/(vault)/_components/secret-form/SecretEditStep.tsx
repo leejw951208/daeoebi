@@ -89,6 +89,8 @@ export function SecretEditStep({
                     flexDirection: "column",
                     gap: 22,
                     minWidth: 0,
+                    marginInline: "calc(-1 * var(--container-padding))",
+                    paddingInline: 18,
                 }}
             >
                 {hint && (
@@ -190,7 +192,7 @@ export function SecretEditStep({
                             overflowX: "auto",
                             minWidth: 0,
                             paddingBottom: 8,
-                            marginBottom: 9,
+                            marginBottom: 4,
                         }}
                     >
                         <span
@@ -208,12 +210,32 @@ export function SecretEditStep({
                             <button
                                 key={s.name}
                                 type="button"
-                                className="chip"
                                 onClick={() => onAddRow(s.name)}
                                 disabled={
                                     usedNames.has(s.name) ||
                                     rows.length >= MAX_FIELDS
                                 }
+                                style={{
+                                    flexShrink: 0,
+                                    border: "1px solid #e8e8e8",
+                                    borderRadius: 999,
+                                    padding: "6px 12px",
+                                    font: "inherit",
+                                    fontSize: 12.5,
+                                    fontWeight: 600,
+                                    color: "#666",
+                                    background: "#fff",
+                                    cursor:
+                                        usedNames.has(s.name) ||
+                                        rows.length >= MAX_FIELDS
+                                            ? "not-allowed"
+                                            : "pointer",
+                                    opacity:
+                                        usedNames.has(s.name) ||
+                                        rows.length >= MAX_FIELDS
+                                            ? 0.45
+                                            : 1,
+                                }}
                             >
                                 + {s.name}
                             </button>
@@ -227,7 +249,6 @@ export function SecretEditStep({
                                 index={idx}
                                 name={row.name}
                                 value={row.value}
-                                sensitive={row.sensitive ?? false}
                                 isFirst={idx === 0}
                                 isLast={idx === rows.length - 1}
                                 onUpdate={(patch) => onUpdateRow(idx, patch)}

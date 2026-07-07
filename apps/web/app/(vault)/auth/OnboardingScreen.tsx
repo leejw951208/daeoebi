@@ -1,9 +1,7 @@
 "use client"
 // 온보딩/passkey 등록 화면. passkey 생성 → VK·복구코드 생성 → PRF·복구코드로 래핑 → register/verify → 복구코드 발급.
 import { useState } from "react"
-import { Lock } from "lucide-react"
 import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
 import { getRegisterOptions, postRegisterVerify } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import {
@@ -130,7 +128,7 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 background: "linear-gradient(180deg,#fafafa,#fff)",
                 display: "flex",
                 flexDirection: "column",
-                minHeight: "70vh",
+                minHeight: "100dvh",
             }}
         >
             <div
@@ -143,7 +141,31 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 }}
             >
                 <span className="vault-emblem pop" style={{ marginBottom: 30 }}>
-                    <Icon icon={Lock} size={26} />
+                    <div
+                        style={{
+                            width: 20,
+                            height: 24,
+                            border: "3px solid #fff",
+                            borderTop: "none",
+                            borderRadius: 7,
+                            position: "relative",
+                            marginTop: 6,
+                        }}
+                    >
+                        <span
+                            style={{
+                                position: "absolute",
+                                left: "50%",
+                                top: -13,
+                                transform: "translateX(-50%)",
+                                width: 18,
+                                height: 18,
+                                border: "3px solid #fff",
+                                borderBottom: "none",
+                                borderRadius: "9px 9px 0 0",
+                            }}
+                        />
+                    </div>
                 </span>
                 <span className="eyebrow">대외비</span>
                 <h1
@@ -152,6 +174,7 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                         marginTop: 10,
                         lineHeight: 1.25,
                         letterSpacing: "-.03em",
+                        textWrap: "balance",
                     }}
                 >
                     민감한 정보와 자산을 한 곳에 잠가두고, 필요할 때만 엽니다
@@ -197,7 +220,11 @@ export function OnboardingScreen({ onUnlocked }: Props) {
             <div className="form-row" style={{ margin: "0 0 14px" }}>
                 <label
                     htmlFor="bootstrap-token"
-                    style={{ color: "#a0a0a0", letterSpacing: "normal" }}
+                    style={{
+                        color: "#a0a0a0",
+                        letterSpacing: "normal",
+                        marginBottom: 7,
+                    }}
                 >
                     부트스트랩 토큰
                 </label>
@@ -217,10 +244,12 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                         height: 56,
                         minHeight: 56,
                         borderRadius: 14,
+                        padding: "0 16px",
                         fontFamily: "ui-monospace,monospace",
                         fontSize: 15,
                         fontWeight: 600,
                         letterSpacing: ".02em",
+                        color: "#333",
                     }}
                 />
                 <p
@@ -239,7 +268,12 @@ export function OnboardingScreen({ onUnlocked }: Props) {
 
             <Button
                 variant="primary"
-                style={{ width: "100%" }}
+                style={{
+                    width: "100%",
+                    ...(!token.trim() || phase === "registering"
+                        ? { background: "#f0f0f0", color: "#b0b0b0" }
+                        : {}),
+                }}
                 onClick={handleRegister}
                 loading={phase === "registering"}
                 disabled={!token.trim()}
