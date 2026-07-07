@@ -124,3 +124,27 @@ export async function openAccount(
         goal: typeof parsed.goal === "number" ? parsed.goal : 0,
     }
 }
+
+// 투자 포지션 본문. base=투자 원금.
+export interface InvestmentPayload {
+    base: number
+}
+
+export async function sealInvestment(
+    vaultKey: CryptoKey,
+    payload: InvestmentPayload,
+): Promise<SealedBlob> {
+    return seal(vaultKey, JSON.stringify({ v: PAYLOAD_VERSION, ...payload }))
+}
+
+export async function openInvestment(
+    vaultKey: CryptoKey,
+    blob: SealedBlob,
+): Promise<InvestmentPayload> {
+    const parsed = JSON.parse(await open(vaultKey, blob)) as {
+        base?: unknown
+    }
+    return {
+        base: typeof parsed.base === "number" ? parsed.base : 0,
+    }
+}

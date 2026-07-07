@@ -438,6 +438,28 @@ export async function deleteSavingsAccount(id: string): Promise<void> {
     await vaultClient.delete(`/savings-accounts/${id}`)
 }
 
+// 투자 포지션(/investment) — returnRate 는 평문, 본문(base)은 암호문 블롭.
+export interface InvestmentView extends SealedBlobDto {
+    id: string
+    returnRate: string
+}
+
+export async function getInvestment(): Promise<InvestmentView | null> {
+    const { data } = await vaultClient.get<InvestmentView | null>("/investment")
+    return data ?? null
+}
+
+export async function saveInvestment(
+    returnRate: string,
+    blob: SealedBlobDto,
+): Promise<InvestmentView> {
+    const { data } = await vaultClient.put<InvestmentView>("/investment", {
+        returnRate,
+        ...blob,
+    })
+    return data
+}
+
 // 저축·투자 카테고리(저축/투자)의 전 기간 적립 지출.
 export async function listContributions(
     categoryIds: string[],
