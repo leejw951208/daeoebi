@@ -121,6 +121,22 @@ model InvestmentPosition {
   updatedAt  DateTime @updatedAt
 }
 
+// 저축 박스 입출금 내역(다건). type(in|out)·source(cash|savings)·date("YYYY-MM-DD") 평문(필터·정렬용),
+// 금액·메모는 클라이언트 E2E 암호문 블롭({amount, memo})이다. 서버는 복호화하지 않는다(Income 과 동일 패턴).
+model SavingsBoxTxn {
+  id         String   @id @default(cuid())
+  type       String // in|out
+  source     String // cash|savings
+  date       String // "YYYY-MM-DD". 평문 — 정렬·조회용.
+  iv         Bytes
+  ciphertext Bytes
+  authTag    Bytes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
+}
+
 // 적금 계좌(다건). name 평문(item 매칭·식별), color 평문. blob 은 {base, goal} 암호문.
 model SavingsAccount {
   id         String   @id @default(cuid())
