@@ -11,6 +11,8 @@ export default function NotFound() {
                 justifyContent: "center",
                 textAlign: "center",
                 minHeight: "70vh",
+                background: "var(--tint)",
+                padding: 40,
             }}
         >
             <div
@@ -27,18 +29,34 @@ export default function NotFound() {
             >
                 404
             </div>
-            <h1 style={{ fontSize: 18, marginBottom: 8 }}>
-                페이지를 찾을 수 없어요
+            <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+                항목을 찾을 수 없어요
             </h1>
             <p
                 className="muted"
-                style={{ fontSize: 14, lineHeight: 1.6, maxWidth: 240, marginBottom: 28 }}
+                style={{
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: "#8a8a8a",
+                    maxWidth: 240,
+                    marginBottom: 28,
+                }}
             >
-                요청하신 페이지가 존재하지 않거나 이동되었을 수 있어요. 대외비로
-                돌아가 다시 찾아보세요.
+                삭제되었거나 주소가 잘못되었을 수 있어요. 대외비로 돌아가 다시
+                찾아보세요.
             </p>
-            <Link className="btn" href="/">
-                대외비로 돌아가기
+            <Link
+                className="btn"
+                href="/"
+                style={{
+                    borderRadius: 14,
+                    boxShadow: "none",
+                    height: 50,
+                    fontSize: 15,
+                    padding: "0 28px",
+                }}
+            >
+                보관함으로 돌아가기
             </Link>
         </section>
     )
