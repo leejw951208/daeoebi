@@ -61,10 +61,13 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                 <span className="dot" />
                 <span className="dot active" />
             </div>
-            <h1>복구코드를 저장하세요</h1>
-            <p className="muted" style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}>
-                기기를 잃어버리면 이 코드로만 대외비를 되찾을 수 있습니다. 화면 캡처
-                대신 안전한 곳에 따로 보관하세요. 서버에는 저장되지 않습니다.
+            <h1 style={{ fontSize: 24 }}>복구코드를 저장하세요</h1>
+            <p
+                className="muted"
+                style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}
+            >
+                기기를 잃어버리면 이 코드로만 대외비를 되찾을 수 있습니다. 화면
+                캡처 대신 안전한 곳에 따로 보관하세요.
             </p>
 
             <div className="recovery-box" style={{ marginTop: 22 }}>
@@ -72,7 +75,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                     style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        color: "var(--color-text-muted)",
+                        color: "#999",
                         letterSpacing: "0.08em",
                         marginBottom: 14,
                     }}
@@ -94,7 +97,12 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                 <button
                     type="button"
                     className="btn secondary"
-                    style={{ flex: 1, minHeight: 48 }}
+                    style={{
+                        flex: 1,
+                        minHeight: 48,
+                        fontSize: 14,
+                        borderRadius: 14,
+                    }}
                     onClick={handleCopy}
                 >
                     {copied ? "✓ 복사됨" : "복사"}
@@ -102,23 +110,32 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                 <button
                     type="button"
                     className="btn secondary"
-                    style={{ flex: 1, minHeight: 48 }}
+                    style={{
+                        flex: 1,
+                        minHeight: 48,
+                        fontSize: 14,
+                        borderRadius: 14,
+                    }}
                     onClick={handleDownload}
                 >
                     {downloaded ? "✓ 다운로드됨" : "다운로드"}
                 </button>
             </div>
 
-            <label
-                className="ack-label"
-                style={{ marginTop: 20 }}
-            >
+            <label className="ack-label" style={{ marginTop: 20 }}>
                 <input
                     type="checkbox"
                     checked={acknowledged}
                     onChange={(e) => setAcknowledged(e.target.checked)}
                 />
-                <span style={{ fontSize: 13.5, lineHeight: 1.5, color: "#444", fontWeight: 500 }}>
+                <span
+                    style={{
+                        fontSize: 13.5,
+                        lineHeight: 1.5,
+                        color: "#444",
+                        fontWeight: 500,
+                    }}
+                >
                     복구코드를 안전한 곳에 보관했습니다.
                 </span>
             </label>

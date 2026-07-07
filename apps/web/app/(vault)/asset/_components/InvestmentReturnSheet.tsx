@@ -9,6 +9,7 @@ import { sealInvestment } from "../_lib/asset-payload"
 import { RETURN_RATE_PRESETS, formatAmount } from "../_lib/asset-categories"
 
 const MAX_AMOUNT_DIGITS = 12
+const ACCENT = "#7b61ff"
 
 interface Props {
     base: number // 현재 투자 원금 베이스(수정 가능).
@@ -28,6 +29,7 @@ export function InvestmentReturnSheet({
     const [baseDraft, setBaseDraft] = useState(base > 0 ? String(base) : "")
     const [saving, setSaving] = useState(false)
     const [saveFailed, setSaveFailed] = useState(false)
+    const [focusedField, setFocusedField] = useState<string | null>(null)
 
     const baseValue = Number(baseDraft || "0")
 
@@ -73,7 +75,17 @@ export function InvestmentReturnSheet({
                 >
                     투자 원금
                 </div>
-                <div className="income-input" style={{ marginBottom: 16 }}>
+                <div
+                    className="income-input"
+                    style={{
+                        marginBottom: 16,
+                        ...(focusedField === "base"
+                            ? { borderColor: ACCENT }
+                            : {}),
+                    }}
+                    onFocus={() => setFocusedField("base")}
+                    onBlur={() => setFocusedField(null)}
+                >
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
@@ -102,8 +114,11 @@ export function InvestmentReturnSheet({
                     style={{
                         height: 64,
                         marginBottom: 12,
-                        borderColor: "#ececec",
+                        borderColor:
+                            focusedField === "rate" ? ACCENT : "#ececec",
                     }}
+                    onFocus={() => setFocusedField("rate")}
+                    onBlur={() => setFocusedField(null)}
                 >
                     <input
                         inputMode="decimal"
@@ -171,27 +186,17 @@ export function InvestmentReturnSheet({
                     </div>
                 )}
 
-                <div style={{ display: "flex", gap: 9 }}>
-                    <Button
-                        variant="secondary"
-                        style={{ flex: 1 }}
-                        onClick={onClose}
-                        disabled={saving}
-                    >
-                        취소
-                    </Button>
-                    <Button
-                        variant="primary"
-                        style={{ flex: 2 }}
-                        onClick={() => {
-                            resetIdle()
-                            void save()
-                        }}
-                        loading={saving}
-                    >
-                        저장
-                    </Button>
-                </div>
+                <Button
+                    variant="primary"
+                    style={{ width: "100%", background: ACCENT }}
+                    onClick={() => {
+                        resetIdle()
+                        void save()
+                    }}
+                    loading={saving}
+                >
+                    저장
+                </Button>
             </div>
         </div>
     )

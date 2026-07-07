@@ -55,7 +55,7 @@ async function waitForAssetDashboard(page: Page): Promise<void> {
 
 /** Open the CategoryManager bottom-sheet and return a Locator scoped to it. */
 async function openCategoryManager(page: Page): Promise<Locator> {
-    await page.getByRole("button", { name: "카테고리 관리" }).click()
+    await page.getByRole("button", { name: "카테고리" }).click()
     const dialog = page.getByRole("dialog", { name: "카테고리 관리" })
     await expect(dialog).toBeVisible({ timeout: 10_000 })
     return dialog
@@ -98,7 +98,7 @@ test.describe.serial("카테고리 관리 CRUD", () => {
                 .first(),
         ).toBeVisible({ timeout: 30_000 })
 
-        await pg.getByRole("button", { name: "카테고리 관리" }).click()
+        await pg.getByRole("button", { name: "카테고리" }).click()
         const dialog = pg.getByRole("dialog", { name: "카테고리 관리" })
         await expect(dialog).toBeVisible({ timeout: 10_000 })
 

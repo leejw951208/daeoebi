@@ -113,12 +113,12 @@ export function BackupPanel({ onImported }: Props) {
                     style={{
                         fontSize: 13.5,
                         lineHeight: 1.55,
-                        color: "var(--color-text-muted)",
+                        color: "#777",
                         margin: "0 0 16px",
                     }}
                 >
-                    모든 항목을 암호화된 파일로 내보냅니다. 복호화는 이 기기의
-                    대외비 키로만 가능합니다.
+                    모든 항목을 암호화된 파일로 내보냅니다. 파일을 열려면
+                    복구코드가 필요합니다.
                 </p>
                 <Button
                     variant="primary"
@@ -141,7 +141,7 @@ export function BackupPanel({ onImported }: Props) {
                     style={{
                         fontSize: 13.5,
                         lineHeight: 1.55,
-                        color: "var(--color-text-muted)",
+                        color: "#777",
                         margin: "0 0 14px",
                     }}
                 >
@@ -171,11 +171,11 @@ export function BackupPanel({ onImported }: Props) {
                     <div
                         style={{
                             fontSize: 13.5,
-                            color: "var(--color-text-muted)",
+                            color: "#999",
                             fontWeight: 500,
                         }}
                     >
-                        {pendingName ?? "파일을 선택하세요"}
+                        {pendingName ?? "파일을 끌어다 놓거나 탭하세요"}
                     </div>
                     <input
                         id="import-file"
@@ -192,7 +192,7 @@ export function BackupPanel({ onImported }: Props) {
                     style={{
                         fontSize: 11.5,
                         fontWeight: 700,
-                        color: "var(--color-text-muted)",
+                        color: "#a0a0a0",
                         marginBottom: 9,
                     }}
                 >
@@ -258,7 +258,7 @@ export function BackupPanel({ onImported }: Props) {
                                         style={{
                                             display: "block",
                                             fontSize: 12,
-                                            color: "var(--color-text-muted)",
+                                            color: "#999",
                                             marginTop: 1,
                                         }}
                                     >

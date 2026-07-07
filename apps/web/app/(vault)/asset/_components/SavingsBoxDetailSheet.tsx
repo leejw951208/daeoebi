@@ -73,52 +73,60 @@ export function SavingsBoxDetailSheet({
                 <div className="sheet-grip" aria-hidden="true" />
                 <div
                     style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 12,
-                    }}
-                >
-                    <div style={{ fontSize: 16, fontWeight: 800 }}>
-                        세이빙 박스 내역
-                    </div>
-                    <button
-                        type="button"
-                        className="btn-text"
-                        onClick={() => {
-                            resetIdle()
-                            onClose()
-                        }}
-                    >
-                        닫기
-                    </button>
-                </div>
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        justifyContent: "space-between",
+                        borderBottom: "1px solid #f2f2f2",
+                        paddingBottom: 14,
                         marginBottom: 16,
                     }}
                 >
-                    <span
+                    <div
                         style={{
-                            fontSize: 12.5,
-                            fontWeight: 700,
-                            color: "#a3a3a3",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 12,
                         }}
                     >
-                        현재 잔액
-                    </span>
-                    <span
+                        <span style={{ width: 34 }} aria-hidden="true" />
+                        <div style={{ fontSize: 16, fontWeight: 800 }}>
+                            세이빙 박스 내역
+                        </div>
+                        <button
+                            type="button"
+                            className="btn-text"
+                            onClick={() => {
+                                resetIdle()
+                                onClose()
+                            }}
+                        >
+                            닫기
+                        </button>
+                    </div>
+                    <div
                         style={{
-                            fontSize: 22,
-                            fontWeight: 800,
-                            letterSpacing: "-0.03em",
+                            display: "flex",
+                            alignItems: "baseline",
+                            justifyContent: "space-between",
                         }}
                     >
-                        {formatWon(balance)}
-                    </span>
+                        <span
+                            style={{
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                color: "#a3a3a3",
+                            }}
+                        >
+                            현재 잔액
+                        </span>
+                        <span
+                            style={{
+                                fontSize: 22,
+                                fontWeight: 800,
+                                letterSpacing: "-0.03em",
+                            }}
+                        >
+                            {formatWon(balance)}
+                        </span>
+                    </div>
                 </div>
 
                 {errorMessage && (
@@ -256,16 +264,32 @@ export function SavingsBoxDetailSheet({
                                 </span>
                                 <button
                                     type="button"
-                                    className="btn-text"
+                                    aria-label="삭제"
                                     disabled={deletingId === t.id}
                                     onClick={() => void handleDelete(t.id)}
                                     style={{
                                         flexShrink: 0,
-                                        color: "#c9525a",
-                                        fontSize: 12.5,
+                                        border: "none",
+                                        background: "none",
+                                        color: "#c9ccd1",
+                                        cursor: "pointer",
+                                        padding: 4,
+                                        display: "flex",
                                     }}
                                 >
-                                    삭제
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        aria-hidden="true"
+                                    >
+                                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                    </svg>
                                 </button>
                             </div>
                         ))}
@@ -298,6 +322,19 @@ export function SavingsBoxDetailSheet({
                         }}
                     >
                         {moreCount}개 더 보기
+                        <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
                     </button>
                 )}
             </div>

@@ -81,7 +81,7 @@ test("B. category CRUD — 추가·수정·삭제가 정상 동작한다", async
     ).toBeVisible({ timeout: 30_000 })
 
     // Open CategoryManager.
-    const categoryMgrBtn = page.getByRole("button", { name: "카테고리 관리" })
+    const categoryMgrBtn = page.getByRole("button", { name: "카테고리" })
     await expect(categoryMgrBtn).toBeVisible()
     await categoryMgrBtn.click()
 
@@ -241,7 +241,7 @@ test("F. loading — 추가 버튼이 진행 중에 aria-busy 됨", async ({ pag
     ).toBeVisible({ timeout: 30_000 })
 
     // Open CategoryManager.
-    await page.getByRole("button", { name: "카테고리 관리" }).click()
+    await page.getByRole("button", { name: "카테고리" }).click()
     const dialog = page.getByRole("dialog", { name: "카테고리 관리" })
     await expect(dialog).toBeVisible({ timeout: 10_000 })
 

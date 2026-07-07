@@ -81,6 +81,7 @@ export function SecretEditStep({
             </div>
 
             <div
+                className="stagger"
                 // 프로토타입과 동일하게 flex 컬럼으로 배치한다. grid 암묵적 auto 컬럼은
                 // 가장 넓은 자식(가로 스크롤 추천칩 묶음)에 맞춰 늘어나 입력들이 컨테이너를 벗어난다.
                 style={{
@@ -110,11 +111,11 @@ export function SecretEditStep({
                 )}
 
                 <div className="form-row" style={{ margin: 0 }}>
-                    <label htmlFor="secret-label">
+                    <label htmlFor="secret-label" style={{ color: "#a0a0a0" }}>
                         제목{" "}
                         <span
                             style={{
-                                color: "var(--color-text-muted)",
+                                color: "#cbcbcb",
                                 fontWeight: 600,
                             }}
                         >
@@ -130,6 +131,7 @@ export function SecretEditStep({
                         onChange={(e) => onLabelChange(e.target.value)}
                         maxLength={200}
                         autoComplete="off"
+                        style={{ fontWeight: 600 }}
                     />
                 </div>
 
@@ -155,13 +157,13 @@ export function SecretEditStep({
                             style={{
                                 fontSize: 11.5,
                                 fontWeight: 700,
-                                color: "var(--color-text-muted)",
+                                color: "#a0a0a0",
                             }}
                         >
                             필드{" "}
                             <span
                                 style={{
-                                    color: "var(--color-text-muted)",
+                                    color: "#cbcbcb",
                                     fontWeight: 600,
                                 }}
                             >
@@ -172,10 +174,10 @@ export function SecretEditStep({
                             style={{
                                 fontSize: 11,
                                 fontWeight: 700,
-                                color: "var(--color-text-muted)",
+                                color: "#bcbcbc",
                             }}
                         >
-                            {usedNames.size}/{MAX_FIELDS}
+                            {rows.length}/{MAX_FIELDS}
                         </span>
                     </legend>
 
@@ -195,7 +197,7 @@ export function SecretEditStep({
                             style={{
                                 flexShrink: 0,
                                 fontSize: 11,
-                                color: "var(--color-text-muted)",
+                                color: "#bbb",
                                 alignSelf: "center",
                                 fontWeight: 600,
                             }}
@@ -260,11 +262,11 @@ export function SecretEditStep({
                 </fieldset>
 
                 <div className="form-row" style={{ margin: 0 }}>
-                    <label htmlFor="secret-memo">
+                    <label htmlFor="secret-memo" style={{ color: "#a0a0a0" }}>
                         메모{" "}
                         <span
                             style={{
-                                color: "var(--color-text-muted)",
+                                color: "#cbcbcb",
                                 fontWeight: 600,
                             }}
                         >
@@ -279,6 +281,7 @@ export function SecretEditStep({
                         onChange={(e) => onMemoChange(e.target.value)}
                         rows={3}
                         maxLength={4096}
+                        style={{ fontSize: 15, resize: "none" }}
                     />
                 </div>
 

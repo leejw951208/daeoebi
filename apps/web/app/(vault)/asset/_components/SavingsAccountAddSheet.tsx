@@ -11,6 +11,7 @@ import { formatAmount, SAVINGS_GOAL_PRESETS } from "../_lib/asset-categories"
 
 const MAX_AMOUNT_DIGITS = 12
 const MAX_NAME_LENGTH = 40
+const ACCENT = "#20a4a4"
 
 // 디자인 v5 ADD_COLORS: 새 적금에 순환 배정하는 저축 톤 팔레트.
 const ADD_COLORS = [
@@ -43,6 +44,7 @@ export function SavingsAccountAddSheet({
     const [goal, setGoal] = useState("")
     const [saving, setSaving] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [focusedField, setFocusedField] = useState<string | null>(null)
 
     const baseValue = Number(base || "0")
     const goalValue = Number(goal || "0")
@@ -129,7 +131,17 @@ export function SavingsAccountAddSheet({
                         · 선택
                     </span>
                 </div>
-                <div className="income-input" style={{ marginBottom: 16 }}>
+                <div
+                    className="income-input"
+                    style={{
+                        marginBottom: 16,
+                        ...(focusedField === "base"
+                            ? { borderColor: ACCENT }
+                            : {}),
+                    }}
+                    onFocus={() => setFocusedField("base")}
+                    onBlur={() => setFocusedField(null)}
+                >
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
@@ -160,7 +172,17 @@ export function SavingsAccountAddSheet({
                         · 선택
                     </span>
                 </div>
-                <div className="income-input" style={{ marginBottom: 12 }}>
+                <div
+                    className="income-input"
+                    style={{
+                        marginBottom: 12,
+                        ...(focusedField === "goal"
+                            ? { borderColor: ACCENT }
+                            : {}),
+                    }}
+                    onFocus={() => setFocusedField("goal")}
+                    onBlur={() => setFocusedField(null)}
+                >
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
@@ -214,28 +236,18 @@ export function SavingsAccountAddSheet({
                     </div>
                 )}
 
-                <div style={{ display: "flex", gap: 9 }}>
-                    <Button
-                        variant="secondary"
-                        style={{ flex: 1 }}
-                        onClick={onClose}
-                        disabled={saving}
-                    >
-                        취소
-                    </Button>
-                    <Button
-                        variant="primary"
-                        style={{ flex: 2 }}
-                        onClick={() => {
-                            resetIdle()
-                            void save()
-                        }}
-                        loading={saving}
-                        disabled={!trimmedName}
-                    >
-                        적금 추가
-                    </Button>
-                </div>
+                <Button
+                    variant="primary"
+                    style={{ width: "100%", background: ACCENT }}
+                    onClick={() => {
+                        resetIdle()
+                        void save()
+                    }}
+                    loading={saving}
+                    disabled={!trimmedName}
+                >
+                    적금 추가
+                </Button>
             </div>
         </div>
     )
