@@ -567,7 +567,7 @@ export default function AssetPage() {
                                 letterSpacing: "-0.03em",
                             }}
                         >
-                            자산
+                            지출
                         </div>
                         <div
                             style={{

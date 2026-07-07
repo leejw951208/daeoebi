@@ -54,7 +54,7 @@ const TABS = [
     },
     {
         href: "/asset",
-        label: "자산",
+        label: "지출",
         Icon: AssetIcon,
         isActive: (pathname: string) => pathname.startsWith("/asset"),
     },
