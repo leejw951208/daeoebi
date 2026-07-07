@@ -60,6 +60,7 @@ export function SecretReviewStep({
             )}
 
             <div
+                className="stagger"
                 style={{
                     display: "flex",
                     flexDirection: "column",
@@ -72,7 +73,7 @@ export function SecretReviewStep({
                         style={{
                             fontSize: 11,
                             fontWeight: 700,
-                            color: "var(--color-text-muted)",
+                            color: "#bcbcbc",
                             marginBottom: 4,
                         }}
                     >
@@ -97,7 +98,7 @@ export function SecretReviewStep({
                             overflow: "hidden",
                         }}
                     >
-                        {reviewFields.map((r, idx) => (
+                        {reviewFields.map((r) => (
                             <div
                                 key={r.key}
                                 style={{
@@ -106,10 +107,7 @@ export function SecretReviewStep({
                                     justifyContent: "space-between",
                                     gap: 12,
                                     padding: "13px 15px",
-                                    borderBottom:
-                                        idx === reviewFields.length - 1
-                                            ? "none"
-                                            : "1px solid #f5f5f5",
+                                    borderBottom: "1px solid #f5f5f5",
                                 }}
                             >
                                 <span
@@ -129,7 +127,7 @@ export function SecretReviewStep({
                                             fontFamily: "var(--font-mono)",
                                             fontSize: 14,
                                             letterSpacing: "0.04em",
-                                            color: "var(--color-text-muted)",
+                                            color: "#999",
                                         }}
                                     >
                                         ••••••••
@@ -164,7 +162,7 @@ export function SecretReviewStep({
                             style={{
                                 fontSize: 11,
                                 fontWeight: 700,
-                                color: "var(--color-text-muted)",
+                                color: "#bcbcbc",
                                 marginBottom: 5,
                             }}
                         >
