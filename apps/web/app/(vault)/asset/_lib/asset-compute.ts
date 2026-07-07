@@ -115,18 +115,19 @@ export interface SavingsSummary {
     netWorth: number
 }
 
-// 저축/투자 카테고리 지출을 이름 기준으로 분리 합산한다. netWorth = 저축+투자.
+// 저축/투자 카테고리 지출을 kind 기준으로 분리 합산한다. netWorth = 저축+투자.
+// name/code 는 사용자가 바꿀 수 있어 앵커로 쓰지 않는다(카테고리 kind 로만 판별).
 export function savingsSummary(
     contribs: readonly { categoryId: string | null; amount: number }[],
-    categories: readonly { id: string; name: string }[],
+    categories: readonly { id: string; kind: string }[],
 ): SavingsSummary {
-    const nameById = new Map(categories.map((c) => [c.id, c.name]))
+    const kindById = new Map(categories.map((c) => [c.id, c.kind]))
     let savedTotal = 0
     let investTotal = 0
     for (const c of contribs) {
-        const name = c.categoryId ? nameById.get(c.categoryId) : undefined
-        if (name === "저축") savedTotal += c.amount
-        else if (name === "투자") investTotal += c.amount
+        const kind = c.categoryId ? kindById.get(c.categoryId) : undefined
+        if (kind === "SAVINGS") savedTotal += c.amount
+        else if (kind === "INVESTMENT") investTotal += c.amount
     }
     return { savedTotal, investTotal, netWorth: savedTotal + investTotal }
 }

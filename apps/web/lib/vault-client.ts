@@ -334,6 +334,7 @@ export interface AssetCategory {
     name: string
     color: string
     code: string | null // 사용자 지정 분류 코드. null = 미지정.
+    kind: "NORMAL" | "SAVINGS" | "INVESTMENT" // 저축/투자 식별용 시스템 마커. name/code 는 사용자가 바꿀 수 있어 앵커로 쓰지 않는다.
     createdAt: string
     updatedAt: string
 }

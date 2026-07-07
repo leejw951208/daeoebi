@@ -217,12 +217,15 @@ export default function AssetPage() {
         [state],
     )
 
-    // 저축/투자 카테고리 id(이름 기준). 카테고리 목록이 로드된 뒤에만 계산된다.
+    // 저축/투자 카테고리 id(kind 기준). 카테고리 목록이 로드된 뒤에만 계산된다.
     const savingsCategoryIds = useMemo(
         () =>
             state.status === "ready"
                 ? state.data.categories
-                      .filter((c) => c.name === "저축" || c.name === "투자")
+                      .filter(
+                          (c) =>
+                              c.kind === "SAVINGS" || c.kind === "INVESTMENT",
+                      )
                       .map((c) => c.id)
                 : [],
         [state],

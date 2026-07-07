@@ -20,6 +20,7 @@ const CATS = [
         name: "식비",
         color: "#f2994a",
         code: null,
+        kind: "NORMAL" as const,
         createdAt: "",
         updatedAt: "",
     },
@@ -28,6 +29,7 @@ const CATS = [
         name: "교통",
         color: "#4a90d9",
         code: null,
+        kind: "NORMAL" as const,
         createdAt: "",
         updatedAt: "",
     },
@@ -156,9 +158,9 @@ describe("asset-compute", () => {
 
 describe("savingsSummary", () => {
     const cats = [
-        { id: "s", name: "저축" },
-        { id: "i", name: "투자" },
-        { id: "f", name: "식비" },
+        { id: "s", kind: "SAVINGS" },
+        { id: "i", kind: "INVESTMENT" },
+        { id: "f", kind: "NORMAL" },
     ]
     it("저축/투자를 분리 합산하고 순자산을 낸다", () => {
         const r = savingsSummary(
