@@ -4,8 +4,10 @@ import {
     byDay,
     filterByMonth,
     goalProgress,
+    monthSavingsByItem,
     planBudgetSave,
     remaining,
+    savingsAccountsView,
     savingsSummary,
     spentPct,
     totalIncome,
@@ -186,6 +188,111 @@ describe("goalProgress", () => {
         expect(goalProgress(50000, 100000)).toBe(50)
         expect(goalProgress(150000, 100000)).toBe(100)
         expect(goalProgress(1000, 0)).toBe(0)
+    })
+})
+
+describe("monthSavingsByItem", () => {
+    const cats = [
+        { id: "s", kind: "SAVINGS" },
+        { id: "i", kind: "INVESTMENT" },
+        { id: "f", kind: "NORMAL" },
+    ]
+
+    it("SAVINGS 카테고리 지출만 item 별로 합산한다", () => {
+        const map = monthSavingsByItem(
+            [
+                exp({ categoryId: "s", item: "청년적금", amount: 100000 }),
+                exp({ categoryId: "s", item: "청년적금", amount: 50000 }),
+                exp({ categoryId: "s", item: "내집마련", amount: 30000 }),
+                exp({ categoryId: "i", item: "청년적금", amount: 9999 }), // INVESTMENT 는 제외
+                exp({ categoryId: "f", item: "청년적금", amount: 8888 }), // NORMAL 은 제외
+                exp({ categoryId: null, item: "청년적금", amount: 7777 }), // 미분류는 제외
+            ],
+            cats,
+        )
+        expect(map.get("청년적금")).toBe(150000)
+        expect(map.get("내집마련")).toBe(30000)
+        expect(map.size).toBe(2)
+    })
+
+    it("SAVINGS 지출이 없으면 빈 Map", () => {
+        const map = monthSavingsByItem(
+            [exp({ categoryId: "f", item: "청년적금", amount: 1000 })],
+            cats,
+        )
+        expect(map.size).toBe(0)
+    })
+})
+
+describe("savingsAccountsView", () => {
+    it("목표가 있으면 진행률·잔여를 계산하고 total 내림차순 정렬한다", () => {
+        const monthByItem = new Map([
+            ["청년적금", 100000],
+            ["내집마련", 0],
+        ])
+        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+            [
+                {
+                    name: "청년적금",
+                    color: "#20a4a4",
+                    base: 500000,
+                    goal: 1000000,
+                },
+                {
+                    name: "내집마련",
+                    color: "#7b61ff",
+                    base: 2000000,
+                    goal: 1000000,
+                },
+            ],
+            monthByItem,
+        )
+        // 청년적금: total = 600000, 내집마련: total = 2000000 → 내집마련이 먼저
+        expect(rows.map((r) => r.name)).toEqual(["내집마련", "청년적금"])
+        expect(rows[0]).toMatchObject({
+            name: "내집마련",
+            base: 2000000,
+            goal: 1000000,
+            month: 0,
+            total: 2000000,
+            goalPct: 100, // 클램프
+            remain: 0,
+        })
+        expect(rows[1]).toMatchObject({
+            name: "청년적금",
+            base: 500000,
+            goal: 1000000,
+            month: 100000,
+            total: 600000,
+            goalPct: 60,
+            remain: 400000,
+        })
+        expect(savedTotal).toBe(2600000)
+        expect(savedMonth).toBe(100000)
+    })
+
+    it("목표가 없으면(0) goalPct=0, remain=0 이고 month 매칭 없는 계좌는 month=0", () => {
+        const monthByItem = new Map([["비상금", 20000]])
+        const { rows } = savingsAccountsView(
+            [{ name: "비상금", color: "#e9b949", base: 100000, goal: 0 }],
+            monthByItem,
+        )
+        expect(rows[0]).toMatchObject({
+            month: 20000,
+            total: 120000,
+            goalPct: 0,
+            remain: 0,
+        })
+    })
+
+    it("계좌가 없으면 빈 rows·합계 0", () => {
+        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+            [],
+            new Map(),
+        )
+        expect(rows).toEqual([])
+        expect(savedTotal).toBe(0)
+        expect(savedMonth).toBe(0)
     })
 })
 

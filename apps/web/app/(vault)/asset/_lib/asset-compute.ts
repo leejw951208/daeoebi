@@ -138,6 +138,77 @@ export function goalProgress(savedTotal: number, goalAmount: number): number {
     return Math.min(100, Math.round((savedTotal / goalAmount) * 100))
 }
 
+// 이번 달 SAVINGS 카테고리 지출을 item(적금 계좌명)별로 합산한다.
+// kind 로만 판별(Unit 0) — 카테고리 이름/코드는 앵커로 쓰지 않는다.
+export function monthSavingsByItem(
+    monthExpenses: readonly {
+        categoryId: string | null
+        item: string
+        amount: number
+    }[],
+    categories: readonly { id: string; kind: string }[],
+): Map<string, number> {
+    const kindById = new Map(categories.map((c) => [c.id, c.kind]))
+    const map = new Map<string, number>()
+    for (const e of monthExpenses) {
+        const kind = e.categoryId ? kindById.get(e.categoryId) : undefined
+        if (kind !== "SAVINGS") continue
+        map.set(e.item, (map.get(e.item) ?? 0) + e.amount)
+    }
+    return map
+}
+
+export interface SavingsAccountView {
+    name: string
+    color: string
+    base: number
+    goal: number
+    month: number
+    total: number
+    goalPct: number
+    remain: number
+}
+
+// 적금 계좌별 진행률·합계. goalPct 는 0~100 클램프, remain 은 음수 방지.
+// rows 는 total 내림차순 정렬.
+export function savingsAccountsView(
+    accounts: readonly {
+        name: string
+        color: string
+        base: number
+        goal: number
+    }[],
+    monthByItem: ReadonlyMap<string, number>,
+): { rows: SavingsAccountView[]; savedTotal: number; savedMonth: number } {
+    const rows = accounts
+        .map((a) => {
+            const month = monthByItem.get(a.name) ?? 0
+            const total = a.base + month
+            const goalPct =
+                a.goal > 0
+                    ? Math.min(
+                          100,
+                          Math.max(0, Math.round((total / a.goal) * 100)),
+                      )
+                    : 0
+            const remain = Math.max(a.goal - total, 0)
+            return {
+                name: a.name,
+                color: a.color,
+                base: a.base,
+                goal: a.goal,
+                month,
+                total,
+                goalPct,
+                remain,
+            }
+        })
+        .sort((a, b) => b.total - a.total)
+    const savedTotal = rows.reduce((sum, r) => sum + r.total, 0)
+    const savedMonth = rows.reduce((sum, r) => sum + r.month, 0)
+    return { rows, savedTotal, savedMonth }
+}
+
 // "YYYY-MM" 월에 속하는 항목만 남긴다(평문 date "YYYY-MM-DD" 접두 매칭).
 export function filterByMonth<T extends { date: string }>(
     items: readonly T[],
