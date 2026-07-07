@@ -604,14 +604,41 @@ export default function AssetPage() {
                     >
                         <button
                             type="button"
-                            className="btn-text"
-                            style={{ fontSize: 12 }}
+                            aria-label="카테고리"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                height: 38,
+                                padding: "0 13px",
+                                border: "1px solid #ececec",
+                                borderRadius: 999,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                color: "#444",
+                                cursor: "pointer",
+                            }}
                             onClick={() => {
                                 resetIdle()
                                 setCategorySheetOpen(true)
                             }}
                         >
-                            카테고리 관리
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M7 7h.01M7 3h5a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8l-5.6 5.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12V7a4 4 0 0 1 4-4Z" />
+                            </svg>
+                            카테고리
                         </button>
                         <LockTimer />
                     </div>

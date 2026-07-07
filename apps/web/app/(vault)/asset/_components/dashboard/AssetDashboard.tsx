@@ -70,11 +70,28 @@ interface Props {
     savings: SavingsView
 }
 
-// 상단 세그먼트 토글의 활성 chip 스타일(카테고리 칩 선택 스타일과 동일하게 재사용).
-const ACTIVE_CHIP_STYLE = {
-    borderColor: "var(--ac)",
-    background: "var(--soft)",
-    color: "#222",
+// 세그먼트 트랙 개별 세그먼트 기본 스타일. 활성/비활성만 background·color·box-shadow 로 구분한다.
+const SEGMENT_BASE_STYLE = {
+    flex: 1,
+    textAlign: "center",
+    padding: "8px 0",
+    border: "none",
+    borderRadius: 9,
+    font: "inherit",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+} as const
+
+const SEGMENT_ACTIVE_STYLE = {
+    background: "#fff",
+    color: "#171717",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+} as const
+
+const SEGMENT_INACTIVE_STYLE = {
+    background: "transparent",
+    color: "#888",
 } as const
 
 export function AssetDashboard({
@@ -108,14 +125,24 @@ export function AssetDashboard({
                 paddingTop: 4,
             }}
         >
-            <div style={{ display: "flex", gap: 8 }}>
+            <div
+                style={{
+                    display: "flex",
+                    gap: 4,
+                    padding: 4,
+                    background: "var(--soft)",
+                    borderRadius: 12,
+                }}
+            >
                 <button
                     type="button"
                     aria-pressed={assetTab === "budget"}
-                    className="chip"
-                    style={
-                        assetTab === "budget" ? ACTIVE_CHIP_STYLE : undefined
-                    }
+                    style={{
+                        ...SEGMENT_BASE_STYLE,
+                        ...(assetTab === "budget"
+                            ? SEGMENT_ACTIVE_STYLE
+                            : SEGMENT_INACTIVE_STYLE),
+                    }}
                     onClick={() => onTab("budget")}
                 >
                     이번 달
@@ -123,10 +150,12 @@ export function AssetDashboard({
                 <button
                     type="button"
                     aria-pressed={assetTab === "savings"}
-                    className="chip"
-                    style={
-                        assetTab === "savings" ? ACTIVE_CHIP_STYLE : undefined
-                    }
+                    style={{
+                        ...SEGMENT_BASE_STYLE,
+                        ...(assetTab === "savings"
+                            ? SEGMENT_ACTIVE_STYLE
+                            : SEGMENT_INACTIVE_STYLE),
+                    }}
                     onClick={() => onTab("savings")}
                 >
                     저축·투자

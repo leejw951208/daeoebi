@@ -12,6 +12,8 @@ export const CATEGORY_PALETTE: string[] = [
     "#eab308",
     "#ef4444",
     "#6366f1",
+    "#0ea5e9",
+    "#84cc16",
     "#98a0a8",
 ]
 

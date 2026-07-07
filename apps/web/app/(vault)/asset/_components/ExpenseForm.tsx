@@ -219,7 +219,10 @@ export function ExpenseForm({
 
                 {/* 금액 */}
                 <div style={{ textAlign: "center", padding: "14px 0 4px" }}>
-                    <div className="field-label" style={{ marginBottom: 10 }}>
+                    <div
+                        className="field-label"
+                        style={{ marginBottom: 10, color: "#a0a0a0" }}
+                    >
                         금액
                     </div>
                     <div
@@ -265,7 +268,9 @@ export function ExpenseForm({
 
                 {/* 항목 */}
                 <div>
-                    <div className="field-label">항목</div>
+                    <div className="field-label" style={{ color: "#a0a0a0" }}>
+                        항목
+                    </div>
                     <input
                         value={item}
                         onChange={(e) => {
@@ -275,12 +280,16 @@ export function ExpenseForm({
                         placeholder="예: 점심 김밥천국"
                         aria-label="항목"
                         className="field-control"
+                        style={{ fontWeight: 600 }}
                     />
                 </div>
 
                 {/* 카테고리 */}
                 <div>
-                    <div className="field-label" style={{ marginBottom: 10 }}>
+                    <div
+                        className="field-label"
+                        style={{ marginBottom: 10, color: "#a0a0a0" }}
+                    >
                         카테고리
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -299,11 +308,14 @@ export function ExpenseForm({
                                     style={
                                         active
                                             ? {
-                                                  borderColor: "var(--ac)",
-                                                  background: "var(--soft)",
-                                                  color: "#222",
+                                                  border: `1.5px solid ${c.color}`,
+                                                  color: c.color,
+                                                  background: `${c.color}14`,
                                               }
-                                            : undefined
+                                            : {
+                                                  border: "1.5px solid #ececec",
+                                                  color: "#777",
+                                              }
                                     }
                                 >
                                     <span
@@ -325,7 +337,9 @@ export function ExpenseForm({
 
                 {/* 날짜 */}
                 <div>
-                    <div className="field-label">날짜</div>
+                    <div className="field-label" style={{ color: "#a0a0a0" }}>
+                        날짜
+                    </div>
                     <input
                         type="date"
                         value={date}
@@ -335,12 +349,17 @@ export function ExpenseForm({
                         }}
                         aria-label="날짜"
                         className="field-control"
+                        style={{
+                            fontSize: 15,
+                            fontWeight: 600,
+                            color: "#333",
+                        }}
                     />
                 </div>
 
                 {/* 고정 지출 토글(신규만) */}
                 {!isEdit && (
-                    <label className="asset-toggle-row">
+                    <div className="asset-toggle-row">
                         <span>
                             <span
                                 style={{
@@ -359,19 +378,50 @@ export function ExpenseForm({
                                     marginTop: 2,
                                 }}
                             >
-                                매월 자동으로 추가됩니다.
+                                매월 반복되는 지출
                             </span>
                         </span>
-                        <input
-                            type="checkbox"
-                            checked={recurring}
-                            onChange={(e) => {
-                                resetIdle()
-                                setRecurring(e.target.checked)
-                            }}
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={recurring}
                             aria-label="고정 지출"
-                        />
-                    </label>
+                            onClick={() => {
+                                resetIdle()
+                                setRecurring(!recurring)
+                            }}
+                            style={{
+                                flexShrink: 0,
+                                position: "relative",
+                                width: 44,
+                                height: 26,
+                                border: "none",
+                                borderRadius: 999,
+                                padding: 0,
+                                background: recurring ? "var(--ac)" : "#e2e2e2",
+                                cursor: "pointer",
+                                transition: "background .18s",
+                            }}
+                        >
+                            <span
+                                aria-hidden="true"
+                                style={{
+                                    position: "absolute",
+                                    top: 2,
+                                    left: 2,
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: "50%",
+                                    background: "#fff",
+                                    boxShadow: "0 1px 3px rgba(0,0,0,.25)",
+                                    transform: recurring
+                                        ? "translateX(18px)"
+                                        : "translateX(0)",
+                                    transition: "transform .18s",
+                                }}
+                            />
+                        </button>
+                    </div>
                 )}
 
                 {/* 개월 수(고정 ON 일 때만, 선택) */}
@@ -404,6 +454,16 @@ export function ExpenseForm({
                             }}
                             aria-label="개월 수"
                         />
+                        <div
+                            style={{
+                                fontSize: 12,
+                                color: "#9a9a9a",
+                                marginTop: 7,
+                            }}
+                        >
+                            설정한 개월 수만큼 매월 자동 반영돼요. 비워두면
+                            무기한 반복됩니다.
+                        </div>
                     </div>
                 )}
 

@@ -65,16 +65,19 @@ export function CategoryAddSection({
                     onActivity()
                     setName(e.target.value)
                 }}
-                style={{ marginBottom: 18 }}
+                style={{ marginBottom: 18, fontWeight: 600 }}
             />
 
             <div className="field-label" style={{ marginBottom: 8 }}>
-                코드 · 선택
+                코드{" "}
+                <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
+                    · 영문·숫자
+                </span>
             </div>
             <input
                 type="text"
                 className="field-control"
-                placeholder="예: HEALTH (카테고리 간 고유)"
+                placeholder="예: HEALTH"
                 value={code}
                 maxLength={32}
                 aria-label="카테고리 코드"
@@ -82,7 +85,11 @@ export function CategoryAddSection({
                     onActivity()
                     setCode(e.target.value)
                 }}
-                style={{ marginBottom: 18 }}
+                style={{
+                    marginBottom: 18,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                }}
             />
 
             <div className="field-label" style={{ marginBottom: 10 }}>
@@ -141,7 +148,7 @@ export function CategoryAddSection({
                     style={{
                         width: "100%",
                         marginTop: 8,
-                        color: "var(--color-danger-fg, #ef4444)",
+                        color: "#e5484d",
                     }}
                     onClick={() => {
                         onActivity()

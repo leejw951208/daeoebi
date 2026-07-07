@@ -242,7 +242,7 @@ export default function SecretDetailPage() {
                 }}
             >
                 <Link className="btn-text" href="/">
-                    ← 대외비
+                    ← 보관함
                 </Link>
                 <LockTimer compact />
             </div>
@@ -267,6 +267,23 @@ export default function SecretDetailPage() {
                     </span>
                     <div style={{ minWidth: 0 }}>
                         <h1 style={{ fontSize: 21 }}>{data.label}</h1>
+                        {data.createdAt && (
+                            <div
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    marginTop: 6,
+                                    padding: "3px 10px",
+                                    borderRadius: 999,
+                                    background: "var(--soft)",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: "#8a8a8a",
+                                }}
+                            >
+                                {formatDateChip(data.createdAt)} 생성
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -298,7 +315,7 @@ export default function SecretDetailPage() {
                         <div className="secret-plate">
                             <div
                                 className="secret-label"
-                                style={{ marginBottom: 6 }}
+                                style={{ marginBottom: 6, color: "#a0a0a0" }}
                             >
                                 메모
                             </div>
@@ -306,20 +323,6 @@ export default function SecretDetailPage() {
                         </div>
                     )}
                 </div>
-
-                <dl
-                    className="secret-plate"
-                    style={{ marginTop: 9, display: "grid", gap: 8 }}
-                >
-                    <DetailRow
-                        label="생성"
-                        value={new Date(data.createdAt).toLocaleString("ko-KR")}
-                    />
-                    <DetailRow
-                        label="수정"
-                        value={new Date(data.updatedAt).toLocaleString("ko-KR")}
-                    />
-                </dl>
 
                 <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
                     <button
@@ -373,11 +376,12 @@ export default function SecretDetailPage() {
     )
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="detail-row">
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-        </div>
-    )
+// 상세 제목 아래 칩에 쓰는 날짜 포맷(YYYY.MM.DD).
+function formatDateChip(iso: string): string {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ""
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    return `${y}.${m}.${day}`
 }

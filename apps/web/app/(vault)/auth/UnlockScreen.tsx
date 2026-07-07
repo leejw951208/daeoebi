@@ -44,7 +44,10 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
     const [busy, setBusy] = useState<Busy>("idle")
     const [error, setError] = useState<string | null>(null)
     const [retryAfter, setRetryAfter] = useState<number | null>(null)
-    const [recoveryInput, setRecoveryInput] = useState("")
+    // 복구코드를 2열 6칸 세그먼트로 입력받는다. 제출 시 하나로 합쳐 파싱한다.
+    const [recoverySegments, setRecoverySegments] = useState<string[]>(() =>
+        Array(6).fill(""),
+    )
 
     // passkey 로그인 → PRF 출력으로 wrappedVkPrf 언랩 → VK 확보.
     async function handlePasskeyUnlock() {
@@ -88,7 +91,9 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
 
     // 복구코드 제출(recovery/verify) → wrap 수신 + 복구 세션 → 로컬 언랩 → VK 확보 → 새 passkey 재등록.
     async function handleRecover() {
-        const recoveryBytes = parseRecoveryCode(recoveryInput)
+        // 6칸 세그먼트를 합쳐 전체 복구코드로 복원한다(파서가 구분자·공백을 무시).
+        const combinedCode = recoverySegments.join("")
+        const recoveryBytes = parseRecoveryCode(combinedCode)
         // L-2. 정확히 160bit(20B)인지 조기 검증해 잘못된 입력을 서버 전송 전에 거른다.
         if (!isValidRecoveryLength(recoveryBytes)) {
             setError(
@@ -202,7 +207,8 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 style={{
                     maxWidth: 440,
                     margin: "0 auto",
-                    paddingTop: 24,
+                    padding: "40px 28px",
+                    background: "linear-gradient(180deg,#fff,#fafafa)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -248,6 +254,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                             fontSize: 14,
                             lineHeight: 1.6,
                             maxWidth: 260,
+                            color: "#6b6b6b",
                         }}
                     >
                         {sub}
@@ -278,7 +285,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 </Button>
                 <Button
                     variant="text"
-                    style={{ marginTop: 6 }}
+                    style={{
+                        width: "100%",
+                        height: 48,
+                        marginTop: 6,
+                        color: "#888",
+                    }}
                     onClick={() => {
                         setMode("recovery")
                         setError(null)
@@ -298,7 +310,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
             <button
                 type="button"
                 className="btn-text"
-                style={{ marginBottom: 16, marginLeft: -8 }}
+                style={{ marginBottom: 16, marginLeft: -8, color: "#888" }}
                 onClick={() => {
                     setMode("passkey")
                     setError(null)
@@ -308,13 +320,13 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
             >
                 ← 잠금해제로
             </button>
-            <h1>복구코드로 접근</h1>
+            <h1 style={{ fontSize: 24 }}>복구코드로 접근</h1>
             <p
                 className="muted"
                 style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}
             >
-                발급받은 복구코드를 입력하면 접근을 복구하고 이 기기에 새
-                패스키를 등록합니다.
+                발급받은 복구코드를 입력하면 접근을 복구하고 새 패스키를
+                등록합니다.
             </p>
 
             <form
@@ -324,26 +336,52 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 }}
                 style={{ marginTop: 24 }}
             >
-                <div className="form-row">
-                    <label htmlFor="recovery-code">복구코드</label>
-                    <input
-                        id="recovery-code"
-                        type="text"
-                        className="field-control"
-                        autoComplete="off"
-                        autoCapitalize="characters"
-                        spellCheck={false}
-                        placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX-XX"
-                        value={recoveryInput}
-                        onChange={(e) => {
-                            setRecoveryInput(e.target.value)
-                            setError(null)
-                        }}
-                        disabled={busy !== "idle"}
-                    />
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 10,
+                        marginBottom: 16,
+                    }}
+                >
+                    {recoverySegments.map((segment, i) => (
+                        <input
+                            key={i}
+                            type="text"
+                            aria-label={`복구코드 ${i + 1}번째 칸`}
+                            autoComplete="off"
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            value={segment}
+                            onChange={(e) => {
+                                const next = [...recoverySegments]
+                                next[i] = e.target.value
+                                setRecoverySegments(next)
+                                setError(null)
+                            }}
+                            disabled={busy !== "idle"}
+                            style={{
+                                height: 50,
+                                border: "1.5px solid #e3e3e6",
+                                borderRadius: 12,
+                                background: "#fafafa",
+                                textAlign: "center",
+                                fontFamily: "ui-monospace,monospace",
+                                fontSize: 15,
+                                fontWeight: 600,
+                                letterSpacing: ".08em",
+                                color: "#222",
+                                outline: "none",
+                            }}
+                        />
+                    ))}
                 </div>
-                <p className="muted" style={{ fontSize: 12.5, marginTop: -4 }}>
-                    대소문자 구분 없이 입력하세요. 여러 번 실패하면 잠시 후 다시
+                <p
+                    className="muted"
+                    style={{ fontSize: 12.5, marginTop: -4, color: "#a0a0a0" }}
+                >
+                    대소문자 구분 없이 입력하세요. 5회 실패 시 잠시 후 다시
                     시도할 수 있습니다.
                 </p>
 
@@ -359,7 +397,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 <Button
                     type="submit"
                     variant="primary"
-                    style={{ width: "100%", marginTop: 8 }}
+                    style={{ width: "100%", marginTop: 22 }}
                     loading={busy === "recovering"}
                 >
                     검증하고 복구

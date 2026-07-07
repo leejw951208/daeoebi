@@ -1,7 +1,7 @@
 "use client"
 // 온보딩/passkey 등록 화면. passkey 생성 → VK·복구코드 생성 → PRF·복구코드로 래핑 → register/verify → 복구코드 발급.
 import { useState } from "react"
-import { Lock, Check } from "lucide-react"
+import { Lock } from "lucide-react"
 import { Button } from "@/components/Button"
 import { Icon } from "@/components/Icon"
 import { getRegisterOptions, postRegisterVerify } from "@/lib/vault-client"
@@ -126,13 +126,15 @@ export function OnboardingScreen({ onUnlocked }: Props) {
             style={{
                 maxWidth: 440,
                 margin: "0 auto",
-                paddingTop: 24,
+                padding: "56px 26px 30px",
+                background: "linear-gradient(180deg,#fafafa,#fff)",
                 display: "flex",
                 flexDirection: "column",
                 minHeight: "70vh",
             }}
         >
             <div
+                className="stagger"
                 style={{
                     flex: 1,
                     display: "flex",
@@ -140,19 +142,31 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                     justifyContent: "center",
                 }}
             >
-                <span className="vault-emblem pop">
+                <span className="vault-emblem pop" style={{ marginBottom: 30 }}>
                     <Icon icon={Lock} size={26} />
                 </span>
                 <span className="eyebrow">대외비</span>
-                <h1 style={{ fontSize: 30, marginTop: 10, lineHeight: 1.25 }}>
-                    비밀번호를 안전하게 잠가두고, 필요할 때만 엽니다
+                <h1
+                    style={{
+                        fontSize: 30,
+                        marginTop: 10,
+                        lineHeight: 1.25,
+                        letterSpacing: "-.03em",
+                    }}
+                >
+                    민감한 정보와 자산을 한 곳에 잠가두고, 필요할 때만 엽니다
                 </h1>
                 <p
                     className="muted"
-                    style={{ marginTop: 14, fontSize: 15, lineHeight: 1.6 }}
+                    style={{
+                        marginTop: 14,
+                        fontSize: 15,
+                        lineHeight: 1.6,
+                        color: "#6b6b6b",
+                    }}
                 >
-                    패스키 하나로 잠금해제합니다. 마스터 비밀번호도, PIN도
-                    없습니다. 암호화 키는 이 기기를 벗어나지 않습니다.
+                    비밀번호·계좌·카드부터 예산·지출과 저축·투자까지. 패스키
+                    하나로만 열리고, 암호화 키는 이 기기를 벗어나지 않습니다.
                 </p>
             </div>
 
@@ -163,42 +177,60 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                     margin: "26px 0 18px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 8,
+                    gap: 11,
                 }}
             >
                 <li style={onboardCheckRow}>
                     <span style={onboardCheckMark} aria-hidden="true">
-                        <Icon icon={Check} size={11} />
+                        ✓
                     </span>
                     생체·기기 인증으로 본인 확인
                 </li>
                 <li style={onboardCheckRow}>
                     <span style={onboardCheckMark} aria-hidden="true">
-                        <Icon icon={Check} size={11} />
+                        ✓
                     </span>
                     3분간 미사용 시 자동 재잠금
                 </li>
             </ul>
 
             <div className="form-row" style={{ margin: "0 0 14px" }}>
-                <label htmlFor="bootstrap-token">부트스트랩 토큰</label>
+                <label
+                    htmlFor="bootstrap-token"
+                    style={{ color: "#a0a0a0", letterSpacing: "normal" }}
+                >
+                    부트스트랩 토큰
+                </label>
                 <input
                     id="bootstrap-token"
-                    type="password"
+                    type="text"
                     className="field-control"
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
                     disabled={phase === "registering"}
                     autoComplete="off"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
                     aria-describedby="bootstrap-token-hint"
+                    style={{
+                        height: 56,
+                        minHeight: 56,
+                        borderRadius: 14,
+                        fontFamily: "ui-monospace,monospace",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        letterSpacing: ".02em",
+                    }}
                 />
                 <p
                     id="bootstrap-token-hint"
                     className="muted"
                     style={{
-                        margin: "2px 0 0",
-                        fontSize: 12.5,
+                        margin: "8px 0 0",
+                        fontSize: 12,
                         lineHeight: 1.5,
+                        color: "#a0a0a0",
                     }}
                 >
                     첫 등록에만 필요합니다. 배포 시 설정한 토큰을 입력하세요.
@@ -240,21 +272,17 @@ export function OnboardingScreen({ onUnlocked }: Props) {
 // 체크 2줄(보조 안내) 공통 스타일.
 const onboardCheckRow: React.CSSProperties = {
     display: "flex",
-    gap: 10,
+    gap: 11,
     alignItems: "center",
     fontSize: 13.5,
     color: "#444",
 }
 const onboardCheckMark: React.CSSProperties = {
-    flexShrink: 0,
-    width: 18,
-    height: 18,
-    borderRadius: "50%",
-    background: "var(--soft)",
-    color: "var(--ac)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    flex: "none",
+    width: 16,
+    color: "#9a9a9a",
+    fontSize: 12,
+    fontWeight: 800,
 }
 
 // 예외를 사용자에게 보여줄 한국어 메시지로 변환한다.

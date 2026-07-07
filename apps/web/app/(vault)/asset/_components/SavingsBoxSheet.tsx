@@ -10,6 +10,7 @@ import { formatAmount, formatWon } from "../_lib/asset-categories"
 
 const MAX_AMOUNT_DIGITS = 12
 const MAX_MEMO_LENGTH = 60
+const ACCENT = "#e9b949"
 
 type BoxSource = "cash" | "savings"
 
@@ -43,6 +44,7 @@ export function SavingsBoxSheet({
     const [memo, setMemo] = useState("")
     const [saving, setSaving] = useState(false)
     const [saveFailed, setSaveFailed] = useState(false)
+    const [amountFocused, setAmountFocused] = useState(false)
 
     const isIn = mode === "in"
     const title = isIn ? "입금" : "출금"
@@ -191,7 +193,15 @@ export function SavingsBoxSheet({
                 >
                     금액
                 </div>
-                <div className="income-input" style={{ marginBottom: 16 }}>
+                <div
+                    className="income-input"
+                    style={{
+                        marginBottom: 16,
+                        ...(amountFocused ? { borderColor: ACCENT } : {}),
+                    }}
+                    onFocus={() => setAmountFocused(true)}
+                    onBlur={() => setAmountFocused(false)}
+                >
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
@@ -245,28 +255,18 @@ export function SavingsBoxSheet({
                     </div>
                 )}
 
-                <div style={{ display: "flex", gap: 9 }}>
-                    <Button
-                        variant="secondary"
-                        style={{ flex: 1 }}
-                        onClick={onClose}
-                        disabled={saving}
-                    >
-                        취소
-                    </Button>
-                    <Button
-                        variant="primary"
-                        style={{ flex: 2 }}
-                        onClick={() => {
-                            resetIdle()
-                            void save()
-                        }}
-                        loading={saving}
-                        disabled={amountValue <= 0}
-                    >
-                        {title}
-                    </Button>
-                </div>
+                <Button
+                    variant="primary"
+                    style={{ width: "100%", background: "#171717" }}
+                    onClick={() => {
+                        resetIdle()
+                        void save()
+                    }}
+                    loading={saving}
+                    disabled={amountValue <= 0}
+                >
+                    {title}
+                </Button>
             </div>
         </div>
     )

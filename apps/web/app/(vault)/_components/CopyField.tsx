@@ -73,7 +73,9 @@ export function CopyField({
     return (
         <div className="secret-plate">
             <div className="secret-plate-head">
-                <span className="secret-label">{label}</span>
+                <span className="secret-label" style={{ color: "#a0a0a0" }}>
+                    {label}
+                </span>
                 <span className="secret-actions">
                     {sensitive && (
                         <button

@@ -14,6 +14,7 @@ import {
 } from "../_lib/asset-categories"
 
 const MAX_AMOUNT_DIGITS = 12
+const ACCENT = "#20a4a4"
 
 // 목표 시트가 다루는 계좌 정보. base 는 그대로 유지, goal 만 수정 대상이다.
 // month 는 "현재 모았어요" 안내 문구 표시용(수정 대상 아님, total=base+month).
@@ -45,6 +46,7 @@ export function SavingsAccountGoalSheet({
     const [deleting, setDeleting] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [focused, setFocused] = useState(false)
     const goalValue = Number(goal || "0")
     const currentTotal = account.base + account.month
 
@@ -130,7 +132,15 @@ export function SavingsAccountGoalSheet({
                 >
                     목표 금액
                 </div>
-                <div className="income-input" style={{ marginBottom: 12 }}>
+                <div
+                    className="income-input"
+                    style={{
+                        marginBottom: 12,
+                        ...(focused ? { borderColor: ACCENT } : {}),
+                    }}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                >
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
@@ -184,28 +194,18 @@ export function SavingsAccountGoalSheet({
                     </div>
                 )}
 
-                <div style={{ display: "flex", gap: 9 }}>
-                    <Button
-                        variant="secondary"
-                        style={{ flex: 1 }}
-                        onClick={onClose}
-                        disabled={saving || deleting}
-                    >
-                        취소
-                    </Button>
-                    <Button
-                        variant="primary"
-                        style={{ flex: 2 }}
-                        onClick={() => {
-                            resetIdle()
-                            void save()
-                        }}
-                        loading={saving}
-                        disabled={goalValue <= 0}
-                    >
-                        저장
-                    </Button>
-                </div>
+                <Button
+                    variant="primary"
+                    style={{ width: "100%", background: ACCENT }}
+                    onClick={() => {
+                        resetIdle()
+                        void save()
+                    }}
+                    loading={saving}
+                    disabled={goalValue <= 0}
+                >
+                    저장
+                </Button>
                 <button
                     type="button"
                     className="btn-text"

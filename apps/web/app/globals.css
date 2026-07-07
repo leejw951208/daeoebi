@@ -66,9 +66,9 @@
 
     /* Radius — 프로토타입 토큰 */
     --radius-sm: 10px;
-    --radius-md: 13px;
+    --radius-md: 14px;
     --radius-lg: 16px;
-    --radius-card: 16px;
+    --radius-card: 18px;
     --radius-full: 999px;
 
     /* Shadow */
@@ -96,6 +96,7 @@
     /* Motion */
     --motion-fast: 120ms;
     --motion-normal: 250ms;
+    --motion-base: 550ms; /* 진행 바(width) 채우기 애니메이션 */
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Container */
@@ -344,13 +345,13 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
     margin: calc(-1 * var(--container-padding));
     margin-bottom: var(--space-3);
-    padding: var(--space-4) var(--container-padding) var(--space-3);
+    padding: 30px var(--container-padding) var(--space-3);
 }
 
 /* 항목 이니셜 아바타 */
@@ -511,6 +512,9 @@ a:hover {
     color: var(--color-text-primary);
     border: 1px solid var(--color-border-strong);
     box-shadow: none;
+    min-height: 48px;
+    border-radius: 14px;
+    font-size: 15px;
 }
 
 .btn.secondary:hover:not(:disabled) {
@@ -525,6 +529,9 @@ a:hover {
     border: 1px solid var(--color-danger-border);
     color: var(--color-danger-fg);
     box-shadow: none;
+    min-height: 48px;
+    border-radius: 14px;
+    font-size: 15px;
 }
 
 .btn.danger:hover:not(:disabled) {
@@ -578,14 +585,14 @@ a:hover {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    min-height: var(--touch-target-min);
-    border: 1px solid #e8e8e8;
+    min-height: 0;
+    border: 1.5px solid #ececec;
     border-radius: var(--radius-full);
-    padding: 6px 14px;
+    padding: 8px 14px;
     font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 700;
+    color: #777;
     background: #fff;
     cursor: pointer;
     transition: transform var(--motion-fast) var(--ease);
@@ -608,7 +615,7 @@ a:hover {
 .fab {
     position: fixed;
     right: calc(50% - 240px + 20px);
-    bottom: calc(var(--bottom-tab-height) + var(--space-4));
+    bottom: var(--bottom-tab-height);
     width: 56px;
     height: 56px;
     border: none;
@@ -619,7 +626,7 @@ a:hover {
     font-weight: 300;
     line-height: 1;
     cursor: pointer;
-    box-shadow: var(--shadow-accent);
+    box-shadow: 0 12px 28px -8px var(--ac);
     transition: transform var(--motion-fast) var(--ease);
     display: flex;
     align-items: center;
@@ -866,7 +873,7 @@ input[type="date"].field-control {
 }
 
 .entry-chevron {
-    color: var(--color-text-muted);
+    color: #c9c9c9;
     font-size: var(--font-lg);
 }
 
@@ -995,14 +1002,15 @@ input[type="date"].field-control {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 36px;
+    min-width: 28px;
+    min-height: 28px;
     padding: 2px var(--space-2);
     border-radius: var(--radius-sm);
     border: none;
     background: none;
-    color: var(--color-text-muted);
+    color: #bbb;
     font-family: var(--font-body);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     transition: opacity var(--motion-fast) var(--ease);
@@ -1133,6 +1141,7 @@ input[type="date"].field-control {
     border-radius: 18px;
     padding: 22px 18px;
     background: var(--tint);
+    animation: fadeUp 0.4s var(--ease) both;
 }
 
 /* 체크 확인 라벨(복구코드 보관·드롭존 라디오 공용 톤) */
@@ -1142,7 +1151,7 @@ input[type="date"].field-control {
     align-items: flex-start;
     padding: 15px;
     border-radius: var(--radius-md);
-    background: var(--soft);
+    background: #f4f4f4;
     cursor: pointer;
 }
 
@@ -1158,7 +1167,7 @@ input[type="date"].field-control {
 .dialog-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.32);
     z-index: 100;
     display: flex;
     align-items: flex-end;
@@ -1539,8 +1548,9 @@ input[type="date"].field-control {
     background: none;
     outline: none;
     font: inherit;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
+    letter-spacing: -0.02em;
     color: #171717;
 }
 
