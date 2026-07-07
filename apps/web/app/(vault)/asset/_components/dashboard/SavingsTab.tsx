@@ -92,10 +92,12 @@ export function SavingsTab({
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* 순자산 */}
             <div className="asset-card" style={{ borderRadius: 20 }}>
-                <div className="asset-card-label">저축·투자 순자산</div>
+                <div className="asset-card-label" style={{ color: "#9a9a9a" }}>
+                    저축·투자 순자산
+                </div>
                 <div
                     style={{
-                        fontSize: 32,
+                        fontSize: 34,
                         fontWeight: 800,
                         letterSpacing: "-0.03em",
                     }}
@@ -104,21 +106,62 @@ export function SavingsTab({
                 </div>
                 <div
                     style={{
-                        fontSize: 12.5,
-                        color: "var(--color-text-muted)",
-                        fontWeight: 600,
-                        marginTop: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 7,
+                        marginTop: 10,
                     }}
                 >
-                    이번 달 {formatWon(monthContrib)} 적립 ·{" "}
-                    {contributions.length}건
+                    <span
+                        style={{
+                            fontSize: 12.5,
+                            fontWeight: 800,
+                            color: "#171717",
+                        }}
+                    >
+                        이번 달 {formatWon(monthContrib)} 적립
+                    </span>
+                    <span
+                        style={{
+                            fontSize: 11.5,
+                            color: "#bcbcbc",
+                            fontWeight: 600,
+                        }}
+                    >
+                        · 지출 {contributions.length}건 자동 연동
+                    </span>
                 </div>
             </div>
 
             {/* 저축 / 투자 카드 */}
             <div style={{ display: "flex", gap: 12 }}>
                 <div className="asset-card" style={{ flex: 1 }}>
-                    <div className="asset-card-label">저축</div>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 7,
+                            marginBottom: 6,
+                        }}
+                    >
+                        <span
+                            style={{
+                                width: 9,
+                                height: 9,
+                                borderRadius: "50%",
+                                background: "#20a4a4",
+                            }}
+                        />
+                        <span
+                            style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: "#9a9a9a",
+                            }}
+                        >
+                            저축
+                        </span>
+                    </div>
                     <div className="asset-card-value">
                         {formatWon(displayedSaved)}
                     </div>
@@ -134,7 +177,32 @@ export function SavingsTab({
                     </div>
                 </div>
                 <div className="asset-card" style={{ flex: 1 }}>
-                    <div className="asset-card-label">투자</div>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 7,
+                            marginBottom: 6,
+                        }}
+                    >
+                        <span
+                            style={{
+                                width: 9,
+                                height: 9,
+                                borderRadius: "50%",
+                                background: "#7b61ff",
+                            }}
+                        />
+                        <span
+                            style={{
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: "#9a9a9a",
+                            }}
+                        >
+                            투자
+                        </span>
+                    </div>
                     <div className="asset-card-value">
                         {formatWon(investment.value)}
                     </div>
@@ -531,6 +599,20 @@ export function SavingsTab({
                         >
                             {formatReturnRate(investment.rate)}
                         </span>
+                        <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#7b61ff"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
                     </span>
                 </div>
                 <div
@@ -632,21 +714,41 @@ export function SavingsTab({
             {/* 이번 달 적립 내역 */}
             <div className="asset-card">
                 <div
-                    style={{ fontWeight: 800, fontSize: 13, marginBottom: 12 }}
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 14,
+                        padding: "0 2px",
+                    }}
                 >
-                    이번 달 적립 내역
+                    <span style={{ fontSize: 13, fontWeight: 800 }}>
+                        이번 달 적립 내역
+                    </span>
+                    <span
+                        style={{
+                            fontSize: 12,
+                            color: "#9a9a9a",
+                            fontWeight: 600,
+                        }}
+                    >
+                        지출 연동 · {contributions.length}건
+                    </span>
                 </div>
                 {contributions.length === 0 ? (
                     <div
                         style={{
                             textAlign: "center",
-                            padding: "18px 0",
+                            padding: "14px 8px 8px",
                             fontSize: 13,
                             color: "var(--color-text-muted)",
                             fontWeight: 600,
+                            lineHeight: 1.5,
                         }}
                     >
-                        이번 달 적립이 없어요
+                        지출을 &lsquo;저축&rsquo;·&lsquo;투자&rsquo;로 분류하면
+                        <br />
+                        여기에 자동으로 모여요.
                     </div>
                 ) : (
                     <div
@@ -661,20 +763,59 @@ export function SavingsTab({
                                 key={c.id}
                                 href={`/asset/${c.id}`}
                                 className="entry-card"
-                                style={{ justifyContent: "space-between" }}
+                                style={{ gap: 13 }}
                             >
-                                <span style={{ fontSize: 15, fontWeight: 700 }}>
-                                    {c.item}
-                                </span>
                                 <span
+                                    aria-hidden="true"
                                     style={{
-                                        fontSize: 12,
-                                        color: "var(--color-text-muted)",
+                                        flexShrink: 0,
+                                        width: 38,
+                                        height: 38,
+                                        borderRadius: 12,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: 15,
+                                        fontWeight: 800,
+                                        background: "#e7f5f5",
+                                        color: "#20a4a4",
                                     }}
                                 >
-                                    {c.categoryName}
+                                    {c.item.trim().charAt(0) || "저"}
                                 </span>
-                                <span style={{ fontSize: 15, fontWeight: 800 }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div
+                                        style={{
+                                            fontSize: 15,
+                                            fontWeight: 700,
+                                            letterSpacing: "-0.01em",
+                                            color: "#1c1c1c",
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                    >
+                                        {c.item}
+                                    </div>
+                                    <div
+                                        style={{
+                                            fontSize: 12,
+                                            color: "#a3a3a3",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {c.categoryName}
+                                    </div>
+                                </div>
+                                <span
+                                    style={{
+                                        flexShrink: 0,
+                                        fontSize: 15,
+                                        fontWeight: 800,
+                                        letterSpacing: "-0.02em",
+                                        color: "#171717",
+                                    }}
+                                >
                                     {formatWon(c.amount)}
                                 </span>
                             </Link>
