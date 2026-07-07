@@ -328,11 +328,23 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
 
     // ── recovery 모드: 복구코드 입력 ──
     return (
-        <section style={{ maxWidth: 440, margin: "0 auto", paddingTop: 24 }}>
+        <section
+            style={{
+                minHeight: "100dvh",
+                display: "flex",
+                flexDirection: "column",
+                padding: "54px 24px 28px",
+                background: "#fff",
+            }}
+        >
             <button
                 type="button"
                 className="btn-text"
-                style={{ marginBottom: 16, marginLeft: -8, color: "#888" }}
+                style={{
+                    alignSelf: "flex-start",
+                    marginBottom: 22,
+                    color: "#888",
+                }}
                 onClick={() => {
                     setMode("passkey")
                     setError(null)
@@ -356,7 +368,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     e.preventDefault()
                     if (busy === "idle") void handleRecover()
                 }}
-                style={{ marginTop: 24 }}
+                style={{
+                    marginTop: 24,
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                }}
             >
                 <div
                     style={{
@@ -401,7 +418,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 </div>
                 <p
                     className="muted"
-                    style={{ fontSize: 12.5, marginTop: -4, color: "#a0a0a0" }}
+                    style={{
+                        fontSize: 12.5,
+                        marginTop: -4,
+                        marginBottom: "auto",
+                        color: "#a0a0a0",
+                    }}
                 >
                     대소문자 구분 없이 입력하세요. 5회 실패 시 잠시 후 다시
                     시도할 수 있습니다.
