@@ -9,6 +9,7 @@ import {
     type ComputedExpense,
     type ComputedIncome,
     type SavingsSummary,
+    type SavingsAccountView,
 } from "../../_lib/asset-compute"
 import type { AssetCategory } from "@/lib/vault-client"
 import { SkeletonCard } from "@/components/Skeleton"
@@ -43,6 +44,9 @@ export type SavingsView =
           goalAmount: number
           contributions: Contribution[]
           onEditGoal: () => void
+          accounts: SavingsAccountView[]
+          onAddAccount: () => void
+          onEditAccountGoal: (name: string) => void
       }
 
 interface Props {
@@ -171,6 +175,9 @@ export function AssetDashboard({
                             goalAmount={savings.goalAmount}
                             contributions={savings.contributions}
                             onEditGoal={savings.onEditGoal}
+                            accounts={savings.accounts}
+                            onAddAccount={savings.onAddAccount}
+                            onEditAccountGoal={savings.onEditAccountGoal}
                         />
                     )}
                 </>

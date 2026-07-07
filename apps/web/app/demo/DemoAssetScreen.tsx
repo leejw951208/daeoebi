@@ -49,6 +49,13 @@ export function DemoAssetScreen() {
         onEditGoal: () => {
             /* 데모: 저축 목표 편집 미지원 */
         },
+        accounts: [],
+        onAddAccount: () => {
+            /* 데모: 적금 추가 미지원 */
+        },
+        onEditAccountGoal: () => {
+            /* 데모: 적금 목표 편집 미지원 */
+        },
     }
 
     const data: Loaded = {

@@ -10,20 +10,29 @@ import {
     listAssetCategories,
     listContributions,
     getSavingsGoal,
+    listSavingsAccounts,
     type ExpenseView,
     type IncomeView,
     type SavingsGoalView,
+    type SavingsAccountView as SavingsAccountApiView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
 import { useVault } from "../_lib/vault-context"
-import { openExpense, openIncome, openGoal } from "./_lib/asset-payload"
+import {
+    openExpense,
+    openIncome,
+    openGoal,
+    openAccount,
+} from "./_lib/asset-payload"
 import { migrateExpenseCategories } from "./_lib/asset-migrate-categories"
 import {
     byDay,
     totalIncome,
     savingsSummary,
     filterByMonth,
+    savingsAccountsView,
+    monthSavingsByItem,
     type ComputedExpense,
     type ComputedIncome,
 } from "./_lib/asset-compute"
@@ -45,6 +54,11 @@ import {
 import { BudgetSheet } from "./_components/budget/BudgetSheet"
 import { CategoryManager } from "./_components/CategoryManager"
 import { SavingsGoalSheet } from "./_components/SavingsGoalSheet"
+import { SavingsAccountAddSheet } from "./_components/SavingsAccountAddSheet"
+import {
+    SavingsAccountGoalSheet,
+    type EditingAccount,
+} from "./_components/SavingsAccountGoalSheet"
 import { LockTimer } from "../_components/LockTimer"
 
 // 저축 목표(이름 + 복호화된 금액).
@@ -53,12 +67,26 @@ interface Goal {
     amount: number
 }
 
+// 적금 계좌(복호화된 base/goal). name 은 계좌 식별 앵커(생성 시 중복 방지).
+interface Account {
+    id: string
+    name: string
+    color: string
+    base: number
+    goal: number
+}
+
 // 저축·투자 탭 지연 로드 상태. 메인 State 와 동일한 패턴(idle 은 최초 진입 전).
 type SavingsState =
     | { status: "idle" }
     | { status: "loading" }
     | { status: "error"; message: string }
-    | { status: "ready"; contribAll: ComputedExpense[]; goal: Goal | null }
+    | {
+          status: "ready"
+          contribAll: ComputedExpense[]
+          goal: Goal | null
+          accounts: Account[]
+      }
 
 // 저축 목표 블롭 복호화. 블롭이 없으면 null, 복호화 실패 시(손상된 블롭) 목표 없음으로 취급한다.
 async function resolveGoal(
@@ -72,6 +100,31 @@ async function resolveGoal(
     } catch {
         return null
     }
+}
+
+// 적금 계좌 블롭 복호화(실패분 스킵).
+async function resolveAccounts(
+    vaultKey: CryptoKey,
+    views: SavingsAccountApiView[],
+): Promise<Account[]> {
+    const settled = await Promise.allSettled(
+        views.map(async (v): Promise<Account> => {
+            const p = await openAccount(vaultKey, v)
+            return {
+                id: v.id,
+                name: v.name,
+                color: v.color,
+                base: p.base,
+                goal: p.goal,
+            }
+        }),
+    )
+    return settled
+        .filter(
+            (r): r is PromiseFulfilledResult<Account> =>
+                r.status === "fulfilled",
+        )
+        .map((r) => r.value)
 }
 
 type State =
@@ -105,6 +158,10 @@ export default function AssetPage() {
         status: "idle",
     })
     const [goalSheetOpen, setGoalSheetOpen] = useState(false)
+    const [addAccountSheetOpen, setAddAccountSheetOpen] = useState(false)
+    const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
+        null,
+    )
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
@@ -236,10 +293,12 @@ export default function AssetPage() {
         async (categoryIds: string[]) => {
             setSavingsState({ status: "loading" })
             try {
-                const [contribViews, goalView] = await Promise.all([
-                    listContributions(categoryIds),
-                    getSavingsGoal(),
-                ])
+                const [contribViews, goalView, accountViews] =
+                    await Promise.all([
+                        listContributions(categoryIds),
+                        getSavingsGoal(),
+                        listSavingsAccounts(),
+                    ])
                 const settled = await Promise.allSettled(
                     contribViews.map(async (v): Promise<ComputedExpense> => {
                         const p = await openExpense(vaultKey, v)
@@ -260,8 +319,9 @@ export default function AssetPage() {
                     )
                     .map((r) => r.value)
                 const goal = await resolveGoal(vaultKey, goalView)
+                const accounts = await resolveAccounts(vaultKey, accountViews)
 
-                setSavingsState({ status: "ready", contribAll, goal })
+                setSavingsState({ status: "ready", contribAll, goal, accounts })
             } catch (e) {
                 setSavingsState({
                     status: "error",
@@ -298,6 +358,19 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
+    // 계좌 추가/목표 시트 저장·삭제 후: 계좌 목록만 재조회한다(적립 내역·목표는 그대로 둔다).
+    const reloadAccounts = useCallback(async () => {
+        try {
+            const accountViews = await listSavingsAccounts()
+            const accounts = await resolveAccounts(vaultKey, accountViews)
+            setSavingsState((prev) =>
+                prev.status === "ready" ? { ...prev, accounts } : prev,
+            )
+        } catch {
+            // no-op: 다음 로드에서 재시도됨
+        }
+    }, [vaultKey])
+
     // SavingsTab 에 넘길 뷰 모델. 누적 요약은 savingsSummary 전체 기간, 이번 달 적립은 month 로 필터.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
@@ -305,8 +378,8 @@ export default function AssetPage() {
                 ? { status: "error", message: savingsState.message }
                 : { status: "loading" }
         }
-        const { categories } = state.data
-        const { contribAll, goal } = savingsState
+        const { categories, expenses } = state.data
+        const { contribAll, goal, accounts } = savingsState
         const summary = savingsSummary(contribAll, categories)
         const monthContribs = filterByMonth(contribAll, month)
         const monthSummary = savingsSummary(monthContribs, categories)
@@ -320,6 +393,9 @@ export default function AssetPage() {
                 date: c.date,
             }
         })
+        // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
+        const monthByItem = monthSavingsByItem(expenses, categories)
+        const { rows } = savingsAccountsView(accounts, monthByItem)
         return {
             status: "ready",
             summary,
@@ -332,11 +408,32 @@ export default function AssetPage() {
                 resetIdle()
                 setGoalSheetOpen(true)
             },
+            accounts: rows,
+            onAddAccount: () => {
+                resetIdle()
+                setAddAccountSheetOpen(true)
+            },
+            onEditAccountGoal: (name: string) => {
+                resetIdle()
+                const raw = accounts.find((a) => a.name === name)
+                const row = rows.find((r) => r.name === name)
+                if (!raw) return
+                setEditingAccount({
+                    id: raw.id,
+                    name: raw.name,
+                    color: raw.color,
+                    base: raw.base,
+                    goal: raw.goal,
+                    month: row?.month ?? 0,
+                })
+            },
         }
     }, [savingsState, state, month, resetIdle])
 
     const currentGoal =
         savingsState.status === "ready" ? savingsState.goal : null
+    const savingsAccounts =
+        savingsState.status === "ready" ? savingsState.accounts : []
 
     return (
         <section style={{ minHeight: "100%" }}>
@@ -466,6 +563,23 @@ export default function AssetPage() {
                     initialAmount={currentGoal?.amount ?? 0}
                     onSaved={reloadGoal}
                     onClose={() => setGoalSheetOpen(false)}
+                />
+            )}
+
+            {addAccountSheetOpen && (
+                <SavingsAccountAddSheet
+                    accountCount={savingsAccounts.length}
+                    existingNames={savingsAccounts.map((a) => a.name)}
+                    onSaved={reloadAccounts}
+                    onClose={() => setAddAccountSheetOpen(false)}
+                />
+            )}
+
+            {editingAccount && (
+                <SavingsAccountGoalSheet
+                    account={editingAccount}
+                    onChanged={reloadAccounts}
+                    onClose={() => setEditingAccount(null)}
                 />
             )}
         </section>

@@ -55,3 +55,22 @@ export function formatAmount(n: number): string {
 export function formatWon(n: number): string {
     return `₩${formatAmount(n)}`
 }
+
+// 적금 목표 금액 프리셋(설계 v5 goalPresets/addGoalPresets 와 동일한 값·라벨).
+export interface AmountPreset {
+    value: number
+    label: string
+}
+
+const HUNDRED_MILLION = 100_000_000
+const TEN_MILLION = 10_000_000
+
+export const SAVINGS_GOAL_PRESETS: AmountPreset[] = [
+    10_000_000, 30_000_000, 50_000_000, 100_000_000,
+].map((value) => ({
+    value,
+    label:
+        value >= HUNDRED_MILLION
+            ? `${value / HUNDRED_MILLION}억`
+            : `${value / TEN_MILLION}천만`,
+}))

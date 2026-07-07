@@ -2,7 +2,10 @@
 // 저축·투자 탭. 저축/투자 순자산·이번 달 적립·저축 목표 진행률·적립 내역을 보여준다.
 // 데이터(누적/월별/목표)는 부모(asset/page)가 복호화해 props 로 넘긴다.
 import Link from "next/link"
-import type { SavingsSummary } from "../../_lib/asset-compute"
+import type {
+    SavingsSummary,
+    SavingsAccountView,
+} from "../../_lib/asset-compute"
 import { goalProgress } from "../../_lib/asset-compute"
 import { formatWon } from "../../_lib/asset-categories"
 
@@ -22,6 +25,11 @@ interface SavingsTabProps {
     goalAmount: number
     contributions: Contribution[]
     onEditGoal: () => void
+    // 적금 계좌 목록(계산된 뷰). 목표가 없는 계좌의 진행바는 계좌들 중 최대 total 대비 상대값으로 채운다.
+    accounts: SavingsAccountView[]
+    onAddAccount: () => void
+    // 이름으로 계좌를 식별해 목표 시트를 연다(이름은 생성 시 중복이 막혀 있어 앵커로 쓸 수 있다).
+    onEditAccountGoal: (name: string) => void
 }
 
 export function SavingsTab({
@@ -32,9 +40,14 @@ export function SavingsTab({
     goalAmount,
     contributions,
     onEditGoal,
+    accounts,
+    onAddAccount,
+    onEditAccountGoal,
 }: SavingsTabProps) {
     const pct = goalProgress(summary.savedTotal, goalAmount)
     const monthContrib = savedMonth + investMonth
+    // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
+    const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* 순자산 */}
@@ -95,6 +108,218 @@ export function SavingsTab({
                     >
                         이번 달 {formatWon(investMonth)}
                     </div>
+                </div>
+            </div>
+
+            {/* 적금 계좌 목록 */}
+            <div className="asset-card">
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 13,
+                    }}
+                >
+                    <span style={{ fontSize: 13, fontWeight: 800 }}>
+                        저축 현황
+                    </span>
+                    <span
+                        style={{
+                            fontSize: 12,
+                            color: "var(--color-text-muted)",
+                            fontWeight: 600,
+                        }}
+                    >
+                        {accounts.length}개 적금
+                    </span>
+                </div>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                    }}
+                >
+                    {accounts.length === 0 && (
+                        <div
+                            style={{
+                                textAlign: "center",
+                                padding: "8px 8px 14px",
+                                fontSize: 13,
+                                color: "var(--color-text-muted)",
+                                fontWeight: 600,
+                            }}
+                        >
+                            아직 등록한 적금이 없어요.
+                        </div>
+                    )}
+                    {accounts.map((a) => {
+                        const hasGoal = a.goal > 0
+                        const fillPct = hasGoal
+                            ? a.goalPct
+                            : (a.total / maxAccountTotal) * 100
+                        return (
+                            <button
+                                key={a.name}
+                                type="button"
+                                onClick={() => onEditAccountGoal(a.name)}
+                                style={{
+                                    textAlign: "left",
+                                    width: "100%",
+                                    border: "1px solid var(--color-border)",
+                                    borderRadius: 14,
+                                    background: "var(--tint)",
+                                    padding: "13px 14px",
+                                    cursor: "pointer",
+                                    font: "inherit",
+                                    color: "inherit",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        marginBottom: 8,
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            minWidth: 0,
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                flexShrink: 0,
+                                                width: 9,
+                                                height: 9,
+                                                borderRadius: "50%",
+                                                background: a.color,
+                                            }}
+                                        />
+                                        <span
+                                            style={{
+                                                fontSize: 13.5,
+                                                fontWeight: 700,
+                                                color: "#333",
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                            }}
+                                        >
+                                            {a.name}
+                                        </span>
+                                        {a.month > 0 && (
+                                            <span
+                                                style={{
+                                                    flexShrink: 0,
+                                                    fontSize: 11,
+                                                    fontWeight: 700,
+                                                    color: "#20a4a4",
+                                                    background: "#fff",
+                                                    padding: "2px 7px",
+                                                    borderRadius: 6,
+                                                }}
+                                            >
+                                                +{formatWon(a.month)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span
+                                        style={{
+                                            flexShrink: 0,
+                                            fontSize: 14,
+                                            fontWeight: 800,
+                                            letterSpacing: "-0.02em",
+                                            color: "#1f1f1f",
+                                        }}
+                                    >
+                                        {formatWon(a.total)}
+                                    </span>
+                                </div>
+                                <div
+                                    style={{
+                                        height: 7,
+                                        borderRadius: 999,
+                                        background: "#fff",
+                                        overflow: "hidden",
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            height: "100%",
+                                            borderRadius: 999,
+                                            background: a.color,
+                                            width: `${fillPct}%`,
+                                            transition:
+                                                "width .55s cubic-bezier(.22,1,.36,1)",
+                                        }}
+                                    />
+                                </div>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        fontSize: 11.5,
+                                        fontWeight: 600,
+                                        color: "#a3a3a3",
+                                        marginTop: 7,
+                                    }}
+                                >
+                                    {hasGoal ? (
+                                        <span
+                                            style={{
+                                                color: a.color,
+                                                fontWeight: 800,
+                                            }}
+                                        >
+                                            {a.goalPct}%
+                                        </span>
+                                    ) : (
+                                        <span
+                                            style={{
+                                                color: "#20a4a4",
+                                                fontWeight: 700,
+                                            }}
+                                        >
+                                            + 목표 설정
+                                        </span>
+                                    )}
+                                    <span>
+                                        {hasGoal
+                                            ? `목표 ${formatWon(a.goal)} · ${formatWon(a.remain)} 남음`
+                                            : "목표 미설정"}
+                                    </span>
+                                </div>
+                            </button>
+                        )
+                    })}
+                    <button
+                        type="button"
+                        onClick={onAddAccount}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                            width: "100%",
+                            height: 46,
+                            border: "1.5px dashed #d8d8d8",
+                            borderRadius: 13,
+                            background: "none",
+                            font: "inherit",
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: "#20a4a4",
+                            cursor: "pointer",
+                        }}
+                    >
+                        + 적금 추가
+                    </button>
                 </div>
             </div>
 
