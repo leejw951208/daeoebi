@@ -73,6 +73,7 @@ model AssetCategory {
   name      String
   color     String
   code      String?  @unique // 사용자 지정 분류 코드(자유 텍스트). null = 미지정. 카테고리 간 고유.
+  kind      String   @default("NORMAL") // 시스템 마커: NORMAL|SAVINGS|INVESTMENT. name/code 는 변경 가능해 앵커로 쓰지 않는다. 시드/백필로만 관리(create() 는 항상 NORMAL).
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
