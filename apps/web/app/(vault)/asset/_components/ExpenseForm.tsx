@@ -594,29 +594,19 @@ export function ExpenseForm({
                             disabled={busy}
                             style={{
                                 width: "100%",
-                                height: 50,
-                                border: "1px solid #f3dcdc",
-                                borderRadius: 14,
-                                background: "#fff",
+                                height: 54,
+                                border: "none",
+                                borderRadius: 16,
+                                background: "#e5484d",
                                 font: "inherit",
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: 700,
-                                color: "#e5484d",
+                                color: "#fff",
                                 cursor: "pointer",
-                                marginBottom: 8,
+                                marginBottom: 9,
                             }}
                         >
                             고정 전체 삭제
-                            <span
-                                style={{
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                    color: "var(--color-text-muted)",
-                                    marginLeft: 6,
-                                }}
-                            >
-                                모든 달 기록 제거
-                            </span>
                         </button>
                         <button
                             type="button"
@@ -627,16 +617,16 @@ export function ExpenseForm({
                             disabled={busy}
                             style={{
                                 width: "100%",
-                                height: 50,
-                                border: "1px solid #f3dcdc",
-                                borderRadius: 14,
+                                height: 54,
+                                border: "1.5px solid #ececec",
+                                borderRadius: 16,
                                 background: "#fff",
                                 font: "inherit",
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: 700,
-                                color: "#e5484d",
+                                color: "#222",
                                 cursor: "pointer",
-                                marginBottom: 8,
+                                marginBottom: 9,
                             }}
                         >
                             이번 달만 삭제
@@ -648,13 +638,12 @@ export function ExpenseForm({
                             style={{
                                 width: "100%",
                                 height: 50,
-                                border: "1px solid #ececec",
-                                borderRadius: 14,
-                                background: "#fff",
+                                border: "none",
+                                background: "none",
                                 font: "inherit",
                                 fontSize: 14,
                                 fontWeight: 700,
-                                color: "#333",
+                                color: "#888",
                                 cursor: "pointer",
                             }}
                         >
