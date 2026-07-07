@@ -334,6 +334,7 @@ export interface AssetCategory {
     name: string
     color: string
     code: string | null // 사용자 지정 분류 코드. null = 미지정.
+    kind: "NORMAL" | "SAVINGS" | "INVESTMENT" // 저축/투자 식별용 시스템 마커. name/code 는 사용자가 바꿀 수 있어 앵커로 쓰지 않는다.
     createdAt: string
     updatedAt: string
 }
@@ -392,6 +393,68 @@ export async function saveSavingsGoal(
 ): Promise<SavingsGoalView> {
     const { data } = await vaultClient.put<SavingsGoalView>("/savings-goal", {
         name,
+        ...blob,
+    })
+    return data
+}
+
+// 적금 계좌(/savings-accounts) — name·color 는 평문, 본문(base/goal)은 암호문 블롭.
+export interface SavingsAccountView extends SealedBlobDto {
+    id: string
+    name: string
+    color: string
+}
+
+export async function listSavingsAccounts(): Promise<SavingsAccountView[]> {
+    const { data } =
+        await vaultClient.get<SavingsAccountView[]>("/savings-accounts")
+    return data
+}
+
+export async function createSavingsAccount(
+    name: string,
+    color: string,
+    blob: SealedBlobDto,
+): Promise<SavingsAccountView> {
+    const { data } = await vaultClient.post<SavingsAccountView>(
+        "/savings-accounts",
+        { name, color, ...blob },
+    )
+    return data
+}
+
+export async function updateSavingsAccount(
+    id: string,
+    patch: { color?: string } & Partial<SealedBlobDto>,
+): Promise<SavingsAccountView> {
+    const { data } = await vaultClient.patch<SavingsAccountView>(
+        `/savings-accounts/${id}`,
+        patch,
+    )
+    return data
+}
+
+export async function deleteSavingsAccount(id: string): Promise<void> {
+    await vaultClient.delete(`/savings-accounts/${id}`)
+}
+
+// 투자 포지션(/investment) — returnRate 는 평문, 본문(base)은 암호문 블롭.
+export interface InvestmentView extends SealedBlobDto {
+    id: string
+    returnRate: string
+}
+
+export async function getInvestment(): Promise<InvestmentView | null> {
+    const { data } = await vaultClient.get<InvestmentView | null>("/investment")
+    return data ?? null
+}
+
+export async function saveInvestment(
+    returnRate: string,
+    blob: SealedBlobDto,
+): Promise<InvestmentView> {
+    const { data } = await vaultClient.put<InvestmentView>("/investment", {
+        returnRate,
         ...blob,
     })
     return data
@@ -545,4 +608,36 @@ export async function updateRecurring(
 
 export async function deleteRecurring(id: string): Promise<void> {
     await vaultClient.delete(`/recurring/${id}`)
+}
+
+// 세이빙 박스 거래(/savings-box) — type·source·date 는 평문 메타, 본문(amount/memo)은 암호문 블롭.
+export interface SavingsBoxTxnView extends SealedBlobDto {
+    id: string
+    type: "in" | "out"
+    source: "cash" | "savings"
+    date: string
+}
+
+export async function listSavingsBox(): Promise<SavingsBoxTxnView[]> {
+    const { data } = await vaultClient.get<SavingsBoxTxnView[]>("/savings-box")
+    return data
+}
+
+export async function createSavingsBoxTxn(
+    type: "in" | "out",
+    source: "cash" | "savings",
+    date: string,
+    blob: SealedBlobDto,
+): Promise<SavingsBoxTxnView> {
+    const { data } = await vaultClient.post<SavingsBoxTxnView>("/savings-box", {
+        type,
+        source,
+        date,
+        ...blob,
+    })
+    return data
+}
+
+export async function deleteSavingsBoxTxn(id: string): Promise<void> {
+    await vaultClient.delete(`/savings-box/${id}`)
 }

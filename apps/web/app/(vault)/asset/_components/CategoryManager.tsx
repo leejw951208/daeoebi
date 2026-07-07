@@ -1,5 +1,7 @@
 "use client"
-// 카테고리 관리 바텀시트. 목록 표시·추가·인라인 수정·삭제를 지원한다.
+// 카테고리 관리 바텀시트. LIST(목록) · FORM(추가/수정) 2모드.
+// LIST: 색상 점 + 이름/코드 + 수정·삭제, 하단 "+ 카테고리 추가".
+// FORM: 이름 + 코드 + 색상 스와치 + 저장, 수정 중엔 "카테고리 삭제" 도 노출.
 // 모든 쓰기 후 목록 재조회 및 onChanged 콜백 호출.
 import { useState, useEffect } from "react"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
@@ -20,11 +22,18 @@ interface Props {
     onChanged?: () => void
 }
 
+type CategoryFormData = { name: string; color: string; code: string }
+
+type Mode = "list" | "form"
+
 export function CategoryManager({ onClose, onChanged }: Props) {
     const { resetIdle } = useVault()
     const [categories, setCategories] = useState<AssetCategory[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [mode, setMode] = useState<Mode>("list")
+    const [editingCategory, setEditingCategory] =
+        useState<AssetCategory | null>(null)
     const [pendingDelete, setPendingDelete] = useState<AssetCategory | null>(
         null,
     )
@@ -58,29 +67,47 @@ export function CategoryManager({ onClose, onChanged }: Props) {
         onClose()
     }
 
-    async function handleAdd(name: string, color: string, code: string) {
+    function openAddForm() {
+        resetIdle()
         setError(null)
-        try {
-            await createAssetCategory(name, color, code)
-            await loadCategories()
-            setDirty(true)
-        } catch (e) {
-            setError(isApiError(e) ? e.message : "추가에 실패했습니다.")
-            throw e
-        }
+        setEditingCategory(null)
+        setMode("form")
     }
 
-    async function handleEdit(
-        id: string,
-        patch: { name?: string; color?: string; code?: string },
-    ) {
+    function openEditForm(category: AssetCategory) {
+        resetIdle()
+        setError(null)
+        setEditingCategory(category)
+        setMode("form")
+    }
+
+    function backToList() {
+        resetIdle()
+        setError(null)
+        setMode("list")
+        setEditingCategory(null)
+    }
+
+    async function handleSave(data: CategoryFormData) {
         setError(null)
         try {
-            await updateAssetCategory(id, patch)
+            if (editingCategory) {
+                await updateAssetCategory(editingCategory.id, data)
+            } else {
+                await createAssetCategory(data.name, data.color, data.code)
+            }
             await loadCategories()
             setDirty(true)
+            setMode("list")
+            setEditingCategory(null)
         } catch (e) {
-            setError(isApiError(e) ? e.message : "수정에 실패했습니다.")
+            setError(
+                isApiError(e)
+                    ? e.message
+                    : editingCategory
+                      ? "수정에 실패했습니다."
+                      : "추가에 실패했습니다.",
+            )
             throw e
         }
     }
@@ -94,6 +121,8 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             await deleteAssetCategory(target.id)
             await loadCategories()
             setDirty(true)
+            setMode("list")
+            setEditingCategory(null)
         } catch (e) {
             setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         } finally {
@@ -101,6 +130,13 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             setPendingDelete(null)
         }
     }
+
+    const title =
+        mode === "form"
+            ? editingCategory
+                ? "카테고리 수정"
+                : "카테고리 추가"
+            : "카테고리 관리"
 
     return (
         <div
@@ -117,24 +153,32 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                 <div
                     style={{
                         display: "flex",
-                        alignItems: "baseline",
+                        alignItems: "center",
                         justifyContent: "space-between",
                         marginBottom: 16,
                     }}
                 >
-                    <div style={{ fontSize: 18, fontWeight: 800 }}>
-                        카테고리 관리
-                    </div>
+                    {mode === "form" ? (
+                        <button
+                            type="button"
+                            className="btn-text"
+                            onClick={backToList}
+                        >
+                            ← 목록
+                        </button>
+                    ) : (
+                        <span style={{ width: 34 }} aria-hidden="true" />
+                    )}
+                    <div style={{ fontSize: 18, fontWeight: 800 }}>{title}</div>
                     <button
                         type="button"
                         className="btn-text"
-                        aria-label="닫기"
                         onClick={() => {
                             resetIdle()
                             handleClose()
                         }}
                     >
-                        ✕
+                        닫기
                     </button>
                 </div>
 
@@ -148,47 +192,86 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                     </div>
                 )}
 
-                <CategoryAddSection onAdd={handleAdd} onActivity={resetIdle} />
-
-                {loading ? (
-                    <div
-                        style={{
-                            textAlign: "center",
-                            padding: "22px 0",
-                            fontSize: 13,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                        }}
-                    >
-                        불러오는 중…
-                    </div>
-                ) : categories.length === 0 ? (
-                    <div
-                        style={{
-                            textAlign: "center",
-                            padding: "22px 0",
-                            fontSize: 13,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                        }}
-                    >
-                        아직 카테고리가 없어요.
-                    </div>
-                ) : (
-                    <div>
-                        {categories.map((cat) => (
-                            <CategoryRow
-                                key={cat.id}
-                                category={cat}
-                                onEdit={handleEdit}
-                                onDelete={(c) => {
-                                    resetIdle()
-                                    setPendingDelete(c)
+                {mode === "list" ? (
+                    <>
+                        {loading ? (
+                            <div
+                                style={{
+                                    textAlign: "center",
+                                    padding: "22px 0",
+                                    fontSize: 13,
+                                    color: "var(--color-text-muted)",
+                                    fontWeight: 600,
                                 }}
-                                onActivity={resetIdle}
-                            />
-                        ))}
-                    </div>
+                            >
+                                불러오는 중…
+                            </div>
+                        ) : categories.length === 0 ? (
+                            <div
+                                style={{
+                                    textAlign: "center",
+                                    padding: "22px 0",
+                                    fontSize: 13,
+                                    color: "var(--color-text-muted)",
+                                    fontWeight: 600,
+                                }}
+                            >
+                                아직 카테고리가 없어요.
+                            </div>
+                        ) : (
+                            <div style={{ marginBottom: 14 }}>
+                                {categories.map((cat) => (
+                                    <CategoryRow
+                                        key={cat.id}
+                                        category={cat}
+                                        onEdit={openEditForm}
+                                        onDelete={(c) => {
+                                            resetIdle()
+                                            setPendingDelete(c)
+                                        }}
+                                        onActivity={resetIdle}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={openAddForm}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 6,
+                                width: "100%",
+                                height: 50,
+                                border: "1.5px dashed var(--color-border-strong)",
+                                borderRadius: 14,
+                                background: "none",
+                                font: "inherit",
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: "var(--color-accent, #171717)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            + 카테고리 추가
+                        </button>
+                    </>
+                ) : (
+                    <CategoryAddSection
+                        key={editingCategory?.id ?? "new"}
+                        initial={editingCategory}
+                        onSave={handleSave}
+                        onDelete={
+                            editingCategory
+                                ? () => {
+                                      resetIdle()
+                                      setPendingDelete(editingCategory)
+                                  }
+                                : undefined
+                        }
+                        onActivity={resetIdle}
+                    />
                 )}
             </div>
 

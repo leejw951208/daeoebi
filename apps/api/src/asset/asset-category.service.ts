@@ -12,14 +12,16 @@ import {
 import { ASSET_ERRORS } from "./asset.types"
 
 // 기존 디자인 고정 카테고리(asset-categories.ts 의 CATEGORIES 와 동일). 첫 사용 시 시드한다.
-const DEFAULT_CATEGORIES: { name: string; color: string }[] = [
+// kind 는 저축/투자 식별용 시스템 마커다(이름/코드는 사용자가 바꿀 수 있어 앵커로 쓰지 않음).
+// 나머지는 생략 시 스키마 기본값 NORMAL 이 적용된다.
+const DEFAULT_CATEGORIES: { name: string; color: string; kind?: string }[] = [
     { name: "식비", color: "#f2994a" },
     { name: "교통", color: "#4a90d9" },
     { name: "주거·공과금", color: "#9b6bd6" },
     { name: "쇼핑", color: "#e0689a" },
     { name: "문화", color: "#3bb273" },
-    { name: "저축", color: "#14b8a6" },
-    { name: "투자", color: "#eab308" },
+    { name: "저축", color: "#14b8a6", kind: "SAVINGS" },
+    { name: "투자", color: "#eab308", kind: "INVESTMENT" },
     { name: "기타", color: "#98a0a8" },
 ]
 
