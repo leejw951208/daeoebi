@@ -609,3 +609,35 @@ export async function updateRecurring(
 export async function deleteRecurring(id: string): Promise<void> {
     await vaultClient.delete(`/recurring/${id}`)
 }
+
+// 세이빙 박스 거래(/savings-box) — type·source·date 는 평문 메타, 본문(amount/memo)은 암호문 블롭.
+export interface SavingsBoxTxnView extends SealedBlobDto {
+    id: string
+    type: "in" | "out"
+    source: "cash" | "savings"
+    date: string
+}
+
+export async function listSavingsBox(): Promise<SavingsBoxTxnView[]> {
+    const { data } = await vaultClient.get<SavingsBoxTxnView[]>("/savings-box")
+    return data
+}
+
+export async function createSavingsBoxTxn(
+    type: "in" | "out",
+    source: "cash" | "savings",
+    date: string,
+    blob: SealedBlobDto,
+): Promise<SavingsBoxTxnView> {
+    const { data } = await vaultClient.post<SavingsBoxTxnView>("/savings-box", {
+        type,
+        source,
+        date,
+        ...blob,
+    })
+    return data
+}
+
+export async function deleteSavingsBoxTxn(id: string): Promise<void> {
+    await vaultClient.delete(`/savings-box/${id}`)
+}
