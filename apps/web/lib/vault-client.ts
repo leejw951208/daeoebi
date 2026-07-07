@@ -398,6 +398,46 @@ export async function saveSavingsGoal(
     return data
 }
 
+// 적금 계좌(/savings-accounts) — name·color 는 평문, 본문(base/goal)은 암호문 블롭.
+export interface SavingsAccountView extends SealedBlobDto {
+    id: string
+    name: string
+    color: string
+}
+
+export async function listSavingsAccounts(): Promise<SavingsAccountView[]> {
+    const { data } =
+        await vaultClient.get<SavingsAccountView[]>("/savings-accounts")
+    return data
+}
+
+export async function createSavingsAccount(
+    name: string,
+    color: string,
+    blob: SealedBlobDto,
+): Promise<SavingsAccountView> {
+    const { data } = await vaultClient.post<SavingsAccountView>(
+        "/savings-accounts",
+        { name, color, ...blob },
+    )
+    return data
+}
+
+export async function updateSavingsAccount(
+    id: string,
+    patch: { color?: string } & Partial<SealedBlobDto>,
+): Promise<SavingsAccountView> {
+    const { data } = await vaultClient.patch<SavingsAccountView>(
+        `/savings-accounts/${id}`,
+        patch,
+    )
+    return data
+}
+
+export async function deleteSavingsAccount(id: string): Promise<void> {
+    await vaultClient.delete(`/savings-accounts/${id}`)
+}
+
 // 저축·투자 카테고리(저축/투자)의 전 기간 적립 지출.
 export async function listContributions(
     categoryIds: string[],

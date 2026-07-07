@@ -97,3 +97,30 @@ export async function openGoal(
     }
     return { amount: typeof parsed.amount === "number" ? parsed.amount : 0 }
 }
+
+// 적금 계좌 본문. base=초기 적립액, goal=목표 금액(0=미설정).
+export interface AccountPayload {
+    base: number
+    goal: number
+}
+
+export async function sealAccount(
+    vaultKey: CryptoKey,
+    payload: AccountPayload,
+): Promise<SealedBlob> {
+    return seal(vaultKey, JSON.stringify({ v: PAYLOAD_VERSION, ...payload }))
+}
+
+export async function openAccount(
+    vaultKey: CryptoKey,
+    blob: SealedBlob,
+): Promise<AccountPayload> {
+    const parsed = JSON.parse(await open(vaultKey, blob)) as {
+        base?: unknown
+        goal?: unknown
+    }
+    return {
+        base: typeof parsed.base === "number" ? parsed.base : 0,
+        goal: typeof parsed.goal === "number" ? parsed.goal : 0,
+    }
+}
