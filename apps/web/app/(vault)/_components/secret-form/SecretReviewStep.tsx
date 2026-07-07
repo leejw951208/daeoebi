@@ -122,17 +122,31 @@ export function SecretReviewStep({
                                 >
                                     {r.name.trim()}
                                 </span>
-                                <span
-                                    aria-label="값 숨김"
-                                    style={{
-                                        fontFamily: "var(--font-mono)",
-                                        fontSize: 14,
-                                        letterSpacing: "0.04em",
-                                        color: "#999",
-                                    }}
-                                >
-                                    ••••••••
-                                </span>
+                                {r.sensitive ? (
+                                    <span
+                                        aria-label="값 숨김"
+                                        style={{
+                                            fontFamily: "var(--font-mono)",
+                                            fontSize: 14,
+                                            letterSpacing: "0.04em",
+                                            color: "#999",
+                                        }}
+                                    >
+                                        ••••••••
+                                    </span>
+                                ) : (
+                                    <span
+                                        style={{
+                                            fontSize: 14,
+                                            color: "var(--color-text-secondary)",
+                                            wordBreak: "break-all",
+                                            textAlign: "right",
+                                            minWidth: 0,
+                                        }}
+                                    >
+                                        {r.value.trim() || "—"}
+                                    </span>
+                                )}
                             </div>
                         ))}
                     </div>

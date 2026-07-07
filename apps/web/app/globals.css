@@ -459,6 +459,16 @@ a:hover {
     color: var(--ac);
 }
 
+.bottom-tab-bar a[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 28px;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: var(--ac);
+}
+
 .bottom-tab-bar a:hover {
     color: var(--color-text-secondary);
     text-decoration: none;

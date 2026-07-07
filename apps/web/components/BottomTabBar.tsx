@@ -78,6 +78,7 @@ export function BottomTabBar() {
                         aria-label={tab.label}
                     >
                         <tab.Icon />
+                        <span>{tab.label}</span>
                     </Link>
                 )
             })}

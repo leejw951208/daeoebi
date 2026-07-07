@@ -8,7 +8,9 @@ import {
     createExpense,
     createRecurring,
     deleteExpense,
+    deleteRecurring,
     updateExpense,
+    updateRecurring,
     type AssetCategory,
 } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
@@ -54,6 +56,7 @@ export function ExpenseForm({
     const [termMonths, setTermMonths] = useState("")
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [deleteMenu, setDeleteMenu] = useState(false)
 
     // 신규 폼에서 카테고리 목록이 비동기로 도착했을 때 첫 항목을 자동 선택한다.
     // categoryId 가 이미 설정된 경우(수정 모드 또는 사용자가 직접 선택)에는 동작하지 않는다.
@@ -126,6 +129,30 @@ export function ExpenseForm({
                     ? e.message
                     : "저장에 실패했습니다. 다시 시도하세요.",
             )
+        }
+    }
+
+    async function handleDeactivate() {
+        if (!initial?.recurringId) return
+        setBusy(true)
+        try {
+            await updateRecurring(initial.recurringId, { active: false })
+            onDeleted()
+        } catch (e) {
+            setBusy(false)
+            setError(isApiError(e) ? e.message : "해제에 실패했습니다.")
+        }
+    }
+
+    async function handleDeleteAll() {
+        if (!initial?.recurringId) return
+        setBusy(true)
+        try {
+            await deleteRecurring(initial.recurringId) // FK Cascade 로 인스턴스까지 삭제
+            onDeleted()
+        } catch (e) {
+            setBusy(false)
+            setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         }
     }
 
@@ -446,28 +473,196 @@ export function ExpenseForm({
                 )}
 
                 {/* 삭제(수정만) */}
-                {isEdit && (
-                    <button
-                        type="button"
-                        onClick={handleDeleteThisMonth}
-                        disabled={busy}
-                        style={{
-                            height: 50,
-                            border: "1px solid #f3dcdc",
-                            borderRadius: 14,
-                            background: "#fff",
-                            font: "inherit",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: "#e5484d",
-                            cursor: "pointer",
-                            marginTop: 4,
-                        }}
-                    >
-                        이 지출 삭제
-                    </button>
-                )}
+                {isEdit &&
+                    (initial?.recurringId ? (
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 8,
+                                marginTop: 4,
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={handleDeactivate}
+                                disabled={busy}
+                                style={{
+                                    height: 50,
+                                    border: "1px solid #ececec",
+                                    borderRadius: 14,
+                                    background: "#fff",
+                                    font: "inherit",
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: "#333",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                고정 해제
+                                <span
+                                    style={{
+                                        fontSize: 12,
+                                        fontWeight: 600,
+                                        color: "var(--color-text-muted)",
+                                        marginLeft: 6,
+                                    }}
+                                >
+                                    이후 자동 생성 중단
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setDeleteMenu(true)}
+                                disabled={busy}
+                                style={{
+                                    height: 50,
+                                    border: "1px solid #f3dcdc",
+                                    borderRadius: 14,
+                                    background: "#fff",
+                                    font: "inherit",
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: "#e5484d",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                삭제
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleDeleteThisMonth}
+                            disabled={busy}
+                            style={{
+                                height: 50,
+                                border: "1px solid #f3dcdc",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#e5484d",
+                                cursor: "pointer",
+                                marginTop: 4,
+                            }}
+                        >
+                            이 지출 삭제
+                        </button>
+                    ))}
             </div>
+
+            {deleteMenu && (
+                <div
+                    className="dialog-backdrop"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="고정 지출 삭제"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setDeleteMenu(false)
+                    }}
+                >
+                    <div className="sheet">
+                        <div className="sheet-grip" aria-hidden="true" />
+                        <div
+                            style={{
+                                fontSize: 16,
+                                fontWeight: 800,
+                                letterSpacing: "-0.02em",
+                                marginBottom: 4,
+                            }}
+                        >
+                            고정 지출 삭제
+                        </div>
+                        <p
+                            style={{
+                                fontSize: 13,
+                                lineHeight: 1.5,
+                                color: "var(--color-text-muted)",
+                                marginBottom: 16,
+                            }}
+                        >
+                            무엇을 삭제할지 선택하세요.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDeleteMenu(false)
+                                void handleDeleteAll()
+                            }}
+                            disabled={busy}
+                            style={{
+                                width: "100%",
+                                height: 50,
+                                border: "1px solid #f3dcdc",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#e5484d",
+                                cursor: "pointer",
+                                marginBottom: 8,
+                            }}
+                        >
+                            고정 전체 삭제
+                            <span
+                                style={{
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    color: "var(--color-text-muted)",
+                                    marginLeft: 6,
+                                }}
+                            >
+                                모든 달 기록 제거
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDeleteMenu(false)
+                                void handleDeleteThisMonth()
+                            }}
+                            disabled={busy}
+                            style={{
+                                width: "100%",
+                                height: 50,
+                                border: "1px solid #f3dcdc",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#e5484d",
+                                cursor: "pointer",
+                                marginBottom: 8,
+                            }}
+                        >
+                            이번 달만 삭제
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteMenu(false)}
+                            disabled={busy}
+                            style={{
+                                width: "100%",
+                                height: 50,
+                                border: "1px solid #ececec",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#333",
+                                cursor: "pointer",
+                            }}
+                        >
+                            취소
+                        </button>
+                    </div>
+                </div>
+            )}
         </section>
     )
 }

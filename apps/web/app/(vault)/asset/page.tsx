@@ -58,6 +58,11 @@ import {
 } from "./_components/dashboard/AssetDashboard"
 import { BudgetSheet } from "./_components/budget/BudgetSheet"
 import { CategoryManager } from "./_components/CategoryManager"
+import { SavingsAccountAddSheet } from "./_components/SavingsAccountAddSheet"
+import {
+    SavingsAccountGoalSheet,
+    type EditingAccount,
+} from "./_components/SavingsAccountGoalSheet"
 import { InvestmentReturnSheet } from "./_components/InvestmentReturnSheet"
 import { SavingsBoxSheet } from "./_components/SavingsBoxSheet"
 import {
@@ -192,6 +197,10 @@ export default function AssetPage() {
     const [returnSheetOpen, setReturnSheetOpen] = useState(false)
     const [boxSheetMode, setBoxSheetMode] = useState<"in" | "out" | null>(null)
     const [boxDetailOpen, setBoxDetailOpen] = useState(false)
+    const [addAccountSheetOpen, setAddAccountSheetOpen] = useState(false)
+    const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
+        null,
+    )
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
@@ -389,6 +398,19 @@ export default function AssetPage() {
         [resetIdle, savingsState.status, loadSavings, savingsCategoryIds],
     )
 
+    // 계좌 추가/목표 시트 저장·삭제 후: 계좌 목록만 재조회한다(적립 내역·투자는 그대로 둔다).
+    const reloadAccounts = useCallback(async () => {
+        try {
+            const accountViews = await listSavingsAccounts()
+            const accounts = await resolveAccounts(vaultKey, accountViews)
+            setSavingsState((prev) =>
+                prev.status === "ready" ? { ...prev, accounts } : prev,
+            )
+        } catch {
+            // no-op: 다음 로드에서 재시도됨
+        }
+    }, [vaultKey])
+
     // 수익률 시트 저장 후: 투자 포지션만 재조회한다(적립 내역·목표·계좌는 그대로 둔다).
     const reloadInvestment = useCallback(async () => {
         try {
@@ -451,7 +473,7 @@ export default function AssetPage() {
         })
         // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
         const monthByItem = monthSavingsByItem(expenses, categories)
-        const { savedTotal, savedMonth } = savingsAccountsView(
+        const { rows, savedTotal, savedMonth } = savingsAccountsView(
             accounts,
             monthByItem,
         )
@@ -468,6 +490,25 @@ export default function AssetPage() {
             savedMonth,
             investMonth: monthSummary.investTotal,
             contributions,
+            accounts: rows,
+            onAddAccount: () => {
+                resetIdle()
+                setAddAccountSheetOpen(true)
+            },
+            onEditAccountGoal: (name: string) => {
+                resetIdle()
+                const raw = accounts.find((a) => a.name === name)
+                const row = rows.find((r) => r.name === name)
+                if (!raw) return
+                setEditingAccount({
+                    id: raw.id,
+                    name: raw.name,
+                    color: raw.color,
+                    base: raw.base,
+                    goal: raw.goal,
+                    month: row?.month ?? 0,
+                })
+            },
             investment,
             onEditReturn: () => {
                 resetIdle()
@@ -493,6 +534,8 @@ export default function AssetPage() {
         }
     }, [savingsState, state, month, resetIdle])
 
+    const savingsAccounts =
+        savingsState.status === "ready" ? savingsState.accounts : []
     const currentInvestment =
         savingsState.status === "ready" ? savingsState.investment : null
     const boxTxns = savingsState.status === "ready" ? savingsState.boxTxns : []
@@ -748,6 +791,23 @@ export default function AssetPage() {
                     txns={boxTxns}
                     onChanged={reloadBox}
                     onClose={() => setBoxDetailOpen(false)}
+                />
+            )}
+
+            {addAccountSheetOpen && (
+                <SavingsAccountAddSheet
+                    accountCount={savingsAccounts.length}
+                    existingNames={savingsAccounts.map((a) => a.name)}
+                    onSaved={reloadAccounts}
+                    onClose={() => setAddAccountSheetOpen(false)}
+                />
+            )}
+
+            {editingAccount && (
+                <SavingsAccountGoalSheet
+                    account={editingAccount}
+                    onChanged={reloadAccounts}
+                    onClose={() => setEditingAccount(null)}
                 />
             )}
         </section>

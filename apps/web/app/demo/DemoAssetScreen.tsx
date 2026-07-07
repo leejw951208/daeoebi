@@ -45,6 +45,13 @@ export function DemoAssetScreen() {
         savedMonth: 0,
         investMonth: 0,
         contributions: [],
+        accounts: [],
+        onAddAccount: () => {
+            /* 데모: 적금 추가 미지원 */
+        },
+        onEditAccountGoal: () => {
+            /* 데모: 적금 목표 편집 미지원 */
+        },
         investment: { principal: 0, rate: null, value: 0, pnl: 0 },
         onEditReturn: () => {
             /* 데모: 투자 수익률 편집 미지원 */

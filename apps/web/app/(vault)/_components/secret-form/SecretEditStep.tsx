@@ -249,6 +249,7 @@ export function SecretEditStep({
                                 index={idx}
                                 name={row.name}
                                 value={row.value}
+                                sensitive={row.sensitive ?? false}
                                 isFirst={idx === 0}
                                 isLast={idx === rows.length - 1}
                                 onUpdate={(patch) => onUpdateRow(idx, patch)}

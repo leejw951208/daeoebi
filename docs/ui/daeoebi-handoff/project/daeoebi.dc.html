@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Pretendard',system-ui,sans-serif;background:#e9e9ec;color:#171717;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--ac,#171717);color:#fff}
+  @keyframes fadeUp{from{transform:translateY(10px)}to{transform:translateY(0)}}
+  @keyframes slideIn{from{transform:translateX(16px)}to{transform:translateX(0)}}
+  @keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+  @keyframes ring{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes toastUp{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+  @keyframes sheen{to{background-position:200% 0}}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .scr::-webkit-scrollbar{width:0}
+  .stagger>*{animation:fadeUp .42s cubic-bezier(.22,1,.36,1) both;opacity:1}
+  .stagger>*:nth-child(1){animation-delay:.02s}.stagger>*:nth-child(2){animation-delay:.06s}
+  .stagger>*:nth-child(3){animation-delay:.10s}.stagger>*:nth-child(4){animation-delay:.14s}
+  .stagger>*:nth-child(5){animation-delay:.18s}.stagger>*:nth-child(6){animation-delay:.22s}
+  .stagger>*:nth-child(7){animation-delay:.26s}.stagger>*:nth-child(8){animation-delay:.30s}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px;gap:22px">
+
+  <!-- prototype control bar -->
+  <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;max-width:920px">
+    <div style="font-weight:800;font-size:15px;letter-spacing:-.02em;margin-right:4px">Daeoebi</div>
+    <div style="display:flex;gap:4px;background:#fff;border:1px solid #e3e3e6;border-radius:999px;padding:4px">
+      <sc-for list="{{ moods }}" as="m" hint-placeholder-count="3">
+        <button onClick="{{ m.pick }}" style="{{ m.btn }}" style-active="transform:scale(.94)">{{ m.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:4px;background:#fff;border:1px solid #e3e3e6;border-radius:999px;padding:4px">
+      <button onClick="{{ pickMobile }}" style="{{ mobBtn }}" style-active="transform:scale(.94)">모바일</button>
+      <button onClick="{{ pickDesktop }}" style="{{ deskBtn }}" style-active="transform:scale(.94)">데스크탑</button>
+    </div>
+    <select value="{{ screen }}" onChange="{{ jump }}" style="appearance:none;background:#fff url('data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%2210%22&gt;&lt;path d=%22M1 3l4 4 4-4%22 fill=%22none%22 stroke=%22%23999%22 stroke-width=%221.4%22/&gt;&lt;/svg&gt;') no-repeat right 12px center;border:1px solid #e3e3e6;border-radius:999px;padding:8px 30px 8px 14px;font:inherit;font-size:13px;font-weight:600;color:#444;cursor:pointer">
+      <option value="onboarding">1 · 온보딩</option>
+      <option value="recovery">2 · 복구코드 발급</option>
+      <option value="unlock">3 · 잠금해제</option>
+      <option value="recover">4 · 복구코드 복구</option>
+      <option value="list">5 · 목록</option>
+      <option value="detail">6 · 상세</option>
+      <option value="form">7 · 신규/수정</option>
+      <option value="backup">8 · 백업/복원</option>
+      <option value="notfound">9 · 404</option>
+      <option value="asset">10 · 지출 대시보드</option>
+      <option value="expense">11 · 지출 추가/수정</option>
+    </select>
+  </div>
+
+  <!-- device frame -->
+  <div style="{{ frameStyle }}">
+    <div style="{{ bezelStyle }}">
+      <div class="scr" style="{{ screenStyle }}">
+
+        <!-- ===== 1. ONBOARDING ===== -->
+        <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:100%;display:flex;flex-direction:column;padding:56px 26px 30px;background:linear-gradient(180deg,var(--tint,#fafafa),#fff)">
+            <div class="stagger" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0">
+              <div style="width:58px;height:58px;border-radius:18px;background:var(--ac,#171717);display:flex;align-items:center;justify-content:center;margin-bottom:30px;animation:pop .5s both">
+                <div style="width:20px;height:24px;border:3px solid #fff;border-radius:7px;border-top:none;position:relative;margin-top:6px"><span style="position:absolute;left:50%;top:-13px;transform:translateX(-50%);width:18px;height:18px;border:3px solid #fff;border-bottom:none;border-radius:9px 9px 0 0"></span></div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--ac,#171717);letter-spacing:.02em;margin-bottom:10px">대외비</div>
+              <h1 style="font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.25;margin-bottom:14px;text-wrap:balance">민감한 정보와 자산을 한 곳에 잠가두고, 필요할 때만 엽니다</h1>
+              <p style="font-size:15px;line-height:1.6;color:#6b6b6b">비밀번호·계좌·카드부터 예산·지출과 저축·투자까지. 패스키 하나로만 열리고, 암호화 키는 이 기기를 벗어나지 않습니다.</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:11px;margin:26px 0 18px">
+              <div style="display:flex;gap:11px;align-items:center;font-size:13.5px;color:#444"><span style="width:16px;color:#9a9a9a;font-size:12px;font-weight:800;flex:none">✓</span>생체·기기 인증으로 본인 확인</div>
+              <div style="display:flex;gap:11px;align-items:center;font-size:13.5px;color:#444"><span style="width:16px;color:#9a9a9a;font-size:12px;font-weight:800;flex:none">✓</span>3분간 미사용 시 자동 재잠금</div>
+            </div>
+            <div style="margin-bottom:14px">
+              <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">부트스트랩 토큰</div>
+              <input value="{{ bootToken }}" onInput="{{ setBootToken }}" style="width:100%;height:56px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 16px;font:inherit;font-size:15px;font-weight:600;color:#333;outline:none;font-family:ui-monospace,monospace;letter-spacing:.02em" style-focus="border-color:var(--ac,#171717);background:#fff">
+              <div style="font-size:12px;color:#a0a0a0;margin-top:8px">첫 등록에만 필요합니다. 배포 시 설정한 토큰을 입력하세요.</div>
+            </div>
+            <button onClick="{{ goRecovery }}" disabled="{{ onboardDisabled }}" style="{{ onboardBtnStyle }}" style-active="transform:scale(.97)">패스키 만들기</button>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:18px">
+              <span style="width:18px;height:5px;border-radius:3px;background:var(--ac,#171717)"></span>
+              <span style="width:5px;height:5px;border-radius:3px;background:#dcdcdc"></span>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== 2. RECOVERY CODE ===== -->
+        <sc-if value="{{ isRecovery }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:100%;display:flex;flex-direction:column;padding:54px 24px 28px;background:#fff">
+            <div style="display:flex;gap:6px;margin-bottom:26px">
+              <span style="width:18px;height:5px;border-radius:3px;background:#dcdcdc"></span>
+              <span style="width:18px;height:5px;border-radius:3px;background:var(--ac,#171717)"></span>
+            </div>
+            <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px">복구코드를 저장하세요</h1>
+            <p style="font-size:14px;line-height:1.6;color:#6b6b6b;margin-bottom:22px">기기를 잃어버리면 이 코드로만 대외비를 되찾을 수 있습니다. 화면 캡처 대신 안전한 곳에 따로 보관하세요.</p>
+            <div style="position:relative;border:1.5px dashed #d8d8d8;border-radius:18px;padding:22px 18px;background:var(--tint,#fafafa);margin-bottom:8px;animation:fadeUp .4s both">
+              <div style="font-size:11px;font-weight:700;color:#999;letter-spacing:.08em;margin-bottom:14px">RECOVERY CODE</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-family:ui-monospace,'SFMono-Regular',monospace;font-size:16px;font-weight:600;letter-spacing:.06em;color:#222">
+                <sc-for list="{{ recoveryParts }}" as="p" hint-placeholder-count="6"><div>{{ p }}</div></sc-for>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:auto">
+              <button onClick="{{ copyRecovery }}" style="flex:1;height:48px;border:1px solid #e3e3e6;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#222;cursor:pointer;transition:transform .12s" style-active="transform:scale(.97)">{{ copyRecLabel }}</button>
+              <button onClick="{{ copyRecovery }}" style="flex:1;height:48px;border:1px solid #e3e3e6;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#222;cursor:pointer;transition:transform .12s" style-active="transform:scale(.97)">다운로드</button>
+            </div>
+            <label style="display:flex;gap:11px;align-items:flex-start;padding:15px;border-radius:14px;background:var(--soft,#f4f4f4);margin:20px 0 12px;cursor:pointer" onClick="{{ toggleSaved }}">
+              <span style="{{ checkBox }}">{{ checkMark }}</span>
+              <span style="font-size:13.5px;line-height:1.5;color:#444;font-weight:500">복구코드를 안전한 곳에 보관했습니다.</span>
+            </label>
+            <button onClick="{{ finishOnboard }}" disabled="{{ notSaved }}" style="{{ recDoneBtn }}" style-active="transform:scale(.97)">완료하고 대외비 열기</button>
+          </div>
+        </sc-if>
+
+        <!-- ===== 3. UNLOCK ===== -->
+        <sc-if value="{{ isUnlock }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:linear-gradient(180deg,#fff,var(--tint,#fafafa));text-align:center">
+            <div style="{{ unlockRing }}">
+              <div style="{{ unlockDot }}">
+                <sc-if value="{{ unlockFail }}" hint-placeholder-val="{{ false }}"><span style="font-size:30px;color:#e5484d">!</span></sc-if>
+                <sc-if value="{{ unlockIdle }}" hint-placeholder-val="{{ true }}"><div style="width:22px;height:26px;border:3px solid #fff;border-radius:7px;border-top:none;position:relative;margin-top:5px"><span style="position:absolute;left:50%;top:-14px;transform:translateX(-50%);width:20px;height:20px;border:3px solid #fff;border-bottom:none;border-radius:10px 10px 0 0"></span></div></sc-if>
+              </div>
+            </div>
+            <h1 style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin:30px 0 8px">{{ unlockTitle }}</h1>
+            <p style="font-size:14px;line-height:1.6;color:#6b6b6b;max-width:260px">{{ unlockSub }}</p>
+            <div style="flex:1"></div>
+            <button onClick="{{ doUnlock }}" style="width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:transform .12s;box-shadow:0 8px 22px -8px var(--ac,#171717)" style-active="transform:scale(.97)">{{ unlockCta }}</button>
+            <button onClick="{{ goRecover }}" style="width:100%;height:48px;border:none;background:none;font:inherit;font-size:14px;font-weight:600;color:#888;cursor:pointer;margin-top:6px">복구코드로 접근</button>
+          </div>
+        </sc-if>
+
+        <!-- ===== 4. RECOVER ===== -->
+        <sc-if value="{{ isRecover }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:100%;display:flex;flex-direction:column;padding:54px 24px 28px;background:#fff">
+            <button onClick="{{ goUnlock }}" style="align-self:flex-start;border:none;background:none;font:inherit;font-size:14px;color:#888;cursor:pointer;margin-bottom:22px;padding:0">← 잠금해제로</button>
+            <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px">복구코드로 접근</h1>
+            <p style="font-size:14px;line-height:1.6;color:#6b6b6b;margin-bottom:24px">발급받은 복구코드를 입력하면 접근을 복구하고 새 패스키를 등록합니다.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+              <sc-for list="{{ recInputs }}" as="r" hint-placeholder-count="6">
+                <input placeholder="{{ r }}" style="height:50px;border:1.5px solid #e3e3e6;border-radius:12px;background:var(--tint,#fafafa);text-align:center;font-family:ui-monospace,monospace;font-size:15px;font-weight:600;letter-spacing:.08em;color:#222;outline:none" style-focus="border-color:var(--ac,#171717);background:#fff">
+              </sc-for>
+            </div>
+            <p style="font-size:12.5px;color:#a0a0a0;margin-bottom:auto">대소문자 구분 없이 입력하세요. 5회 실패 시 잠시 후 다시 시도할 수 있습니다.</p>
+            <button onClick="{{ doRecover }}" style="width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:22px;transition:transform .12s" style-active="transform:scale(.97)">검증하고 복구</button>
+          </div>
+        </sc-if>
+
+        <!-- ===== 5. LIST ===== -->
+        <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:100%;background:var(--tint,#fafafa);display:flex;flex-direction:column">
+            <div style="position:sticky;top:0;z-index:5;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid #efefef;padding:30px 18px 12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div>
+                  <div style="font-size:21px;font-weight:800;letter-spacing:-.03em">대외비</div>
+                  <div style="font-size:12px;color:#9a9a9a;font-weight:500">{{ itemCount }}개 항목</div>
+                </div>
+                <button onClick="{{ lockNow }}" style="display:flex;align-items:center;gap:7px;height:38px;padding:0 14px;border:1px solid #ececec;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#444;cursor:pointer;transition:transform .12s" style-active="transform:scale(.95)">
+                  <span style="width:7px;height:7px;border-radius:50%;background:var(--ac,#171717);animation:pulse 2s infinite"></span>{{ countdown }} 잠그기
+                </button>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;height:42px;padding:0 14px;border-radius:13px;background:var(--soft,#f1f1f1)">
+                <span style="color:#aaa;font-size:15px">⌕</span>
+                <input value="{{ query }}" onInput="{{ setQuery }}" placeholder="제목 검색" style="flex:1;border:none;background:none;font:inherit;font-size:15px;outline:none;color:#222">
+              </div>
+            </div>
+
+            <div style="padding:16px 18px 0">
+              <button onClick="{{ goBackup }}" style="display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 15px;border:1px solid #ececec;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#444;cursor:pointer;transition:transform .12s" style-active="transform:scale(.95)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M8 11l4 4 4-4"></path><path d="M5 20h14"></path></svg>백업·복원
+              </button>
+            </div>
+
+            <sc-if value="{{ hasItems }}" hint-placeholder-val="{{ true }}">
+              <div class="stagger" style="padding:14px 16px 96px;flex:1;display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ filteredItems }}" as="it" hint-placeholder-count="5">
+                  <button onClick="{{ it.open }}" style="display:flex;align-items:center;gap:13px;width:100%;padding:14px 14px;border:1px solid #efefef;border-radius:16px;background:#fff;cursor:pointer;text-align:left;transition:transform .14s,box-shadow .2s" style-active="transform:scale(.985)" style-hover="box-shadow:0 6px 18px -10px rgba(0,0,0,.25)">
+                    <div style="{{ it.avatar }}">{{ it.initial }}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:15.5px;font-weight:700;letter-spacing:-.01em;color:#1c1c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.title }}</div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9c9c9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M9 6l6 6-6 6"></path></svg>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ emptyItems }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;animation:fadeUp .4s both">
+                <div style="width:64px;height:64px;border-radius:20px;background:var(--soft,#f1f1f1);display:flex;align-items:center;justify-content:center;font-size:26px;color:#bbb;margin-bottom:18px">+</div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:6px">아직 항목이 없어요</div>
+                <p style="font-size:13.5px;color:#9a9a9a;line-height:1.5;max-width:220px">첫 번째 비밀번호를 추가하면 여기에 안전하게 보관됩니다.</p>
+              </div>
+            </sc-if>
+
+            <!-- bottom tab bar -->
+            <div style="position:sticky;bottom:0;z-index:6;display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-top:1px solid #efefef;padding:7px 0 14px">
+              <button onClick="{{ goNew }}" style="position:absolute;right:20px;bottom:92px;width:56px;height:56px;border:none;border-radius:18px;background:var(--ac,#171717);color:#fff;font-size:26px;font-weight:300;cursor:pointer;box-shadow:0 12px 28px -8px var(--ac,#171717);transition:transform .14s;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92) rotate(90deg)">+</button>
+              <button onClick="{{ goList }}" style="{{ tabVaultStyle }}" style-active="transform:scale(.92)">
+                <span style="{{ tabVaultBar }}"></span>
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"></circle><path d="M11.8 11.8 19 19"></path><path d="M16.5 19l2-2"></path><path d="M14 16.5l2-2"></path></svg>
+                <span style="font-size:10px;font-weight:700;letter-spacing:.01em">보관함</span>
+              </button>
+              <button onClick="{{ goAsset }}" style="{{ tabAssetStyle }}" style-active="transform:scale(.92)">
+                <span style="{{ tabAssetBar }}"></span>
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"></rect><circle cx="12" cy="12" r="2.6"></circle></svg>
+                <span style="font-size:10px;font-weight:700;letter-spacing:.01em">지출</span>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== 6. DETAIL ===== -->
+        <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%;background:var(--tint,#fafafa);display:flex;flex-direction:column">
+            <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:30px 16px 14px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid #efefef">
+              <button onClick="{{ goList }}" style="border:none;background:none;font:inherit;font-size:15px;color:#666;cursor:pointer;padding:6px;display:flex;align-items:center;gap:4px" style-active="opacity:.5">← 보관함</button>
+              <button onClick="{{ lockNow }}" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#888;border:none;background:none;cursor:pointer"><span style="width:6px;height:6px;border-radius:50%;background:var(--ac,#171717);animation:pulse 2s infinite"></span>{{ countdown }}</button>
+            </div>
+            <div class="stagger" style="padding:22px 18px 100px">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+                <div style="{{ curAvatar }}">{{ curInitial }}</div>
+                <div style="min-width:0">
+                  <div style="font-size:21px;font-weight:800;letter-spacing:-.02em">{{ curTitle }}</div>
+                  <sc-if value="{{ curHasDates }}" hint-placeholder-val="{{ false }}"><div style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 10px;border-radius:999px;background:var(--soft,#f1f1f1);font-size:11px;font-weight:600;color:#8a8a8a">{{ curDates }}</div></sc-if>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ curFields }}" as="fl" hint-placeholder-count="4">
+                  <div style="padding:14px 16px;border:1px solid #efefef;border-radius:15px;background:#fff">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                      <span style="font-size:11.5px;font-weight:700;color:#a0a0a0;letter-spacing:.02em">{{ fl.label }}</span>
+                      <div style="display:flex;align-items:center;gap:4px">
+                        <button onClick="{{ fl.toggle }}" style="font-size:12px;font-weight:700;color:#999;border:none;background:none;cursor:pointer;padding:2px 6px" style-active="opacity:.5">{{ fl.revealLabel }}</button>
+                        <button onClick="{{ fl.copy }}" style="font-size:12px;font-weight:700;color:var(--ac,#171717);border:none;background:none;cursor:pointer;padding:2px 4px" style-active="opacity:.5">{{ fl.copyLabel }}</button>
+                        <button onClick="{{ fl.del }}" aria-label="필드 삭제" style="font-size:12px;font-weight:700;color:#c9555a;border:none;background:none;cursor:pointer;padding:2px 4px" style-active="opacity:.5">삭제</button>
+                      </div>
+                    </div>
+                    <div style="font-family:{{ fl.font }};font-size:15.5px;font-weight:600;letter-spacing:{{ fl.ls }};color:#1f1f1f;word-break:break-all">{{ fl.shown }}</div>
+                    <sc-if value="{{ fl.masking }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;gap:8px;margin-top:9px">
+                        <div style="flex:1;height:3px;border-radius:3px;background:var(--soft,#eee);overflow:hidden"><div style="{{ fl.bar }}"></div></div>
+                        <span style="flex:none;font-size:10.5px;font-weight:700;color:#b0b0b0;font-variant-numeric:tabular-nums">{{ fl.countLabel }}</span>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ curHasNote }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:9px;padding:14px 16px;border:1px solid #efefef;border-radius:15px;background:#fff">
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:6px">메모</div>
+                  <div style="font-size:14px;line-height:1.55;color:#444">{{ curNote }}</div>
+                </div>
+              </sc-if>
+              <div style="display:flex;gap:10px;margin-top:18px">
+                <button onClick="{{ goEdit }}" style="flex:1;height:48px;border:1px solid #e3e3e6;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#222;cursor:pointer" style-active="transform:scale(.97)">수정</button>
+                <button onClick="{{ deleteItem }}" style="flex:1;height:48px;border:1px solid #f3dcdc;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#e5484d;cursor:pointer" style-active="transform:scale(.97)">삭제</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== 7. FORM ===== -->
+        <sc-if value="{{ isForm }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%;background:#fff;display:flex;flex-direction:column">
+
+            <!-- step: edit -->
+            <sc-if value="{{ formStepEdit }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;min-height:100%">
+                <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:30px 16px 14px;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid #efefef">
+                  <button onClick="{{ cancelForm }}" style="border:none;background:none;font:inherit;font-size:15px;color:#888;cursor:pointer">취소</button>
+                  <div style="font-size:15px;font-weight:700">{{ formTitle }}</div>
+                  <button onClick="{{ goReview }}" style="border:none;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--ac,#171717);cursor:pointer">다음</button>
+                </div>
+                <div class="stagger" style="padding:20px 18px 70px;display:flex;flex-direction:column;gap:22px">
+
+                  <div>
+                    <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">제목 <span style="color:#cbcbcb;font-weight:600">· 평문 저장</span></div>
+                    <input value="{{ ftitle }}" onInput="{{ setFtitle }}" placeholder="예: 국민은행 인터넷뱅킹" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:16px;font-weight:600;outline:none" style-focus="border-color:var(--ac,#171717);background:#fff">
+                  </div>
+
+                  <div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+                      <span style="font-size:11.5px;font-weight:700;color:#a0a0a0">필드 <span style="color:#cbcbcb;font-weight:600">· 암호화</span></span>
+                      <span style="font-size:11px;font-weight:700;color:#bcbcbc">{{ fieldCount }}/20</span>
+                    </div>
+                    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px" class="scr">
+                      <span style="flex-shrink:0;font-size:11px;color:#bbb;align-self:center;font-weight:600">추천</span>
+                      <sc-for list="{{ quickAdds }}" as="q" hint-placeholder-count="6">
+                        <button onClick="{{ q.add }}" style="flex-shrink:0;border:1px solid #e8e8e8;border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;color:#666;background:#fff;cursor:pointer" style-active="transform:scale(.94)">+ {{ q.label }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:9px">
+                      <sc-for list="{{ formFields }}" as="ff" hint-placeholder-count="2">
+                        <div style="border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:11px 12px;display:flex;flex-direction:column;gap:8px;animation:fadeUp .3s both">
+                          <div style="display:flex;align-items:center;gap:8px">
+                            <span style="color:#cdcdcd;font-size:16px;cursor:grab;line-height:1">⋮⋮</span>
+                            <input value="{{ ff.name }}" onInput="{{ ff.rename }}" placeholder="필드 이름" style="flex:1;height:40px;border:none;background:none;font:inherit;font-size:14.5px;font-weight:700;color:#222;outline:none">
+                            <div style="display:flex;align-items:center;gap:2px">
+                              <button onClick="{{ ff.toggleSens }}" aria-label="민감 표시" style="{{ ff.sensStyle }}" style-active="opacity:.4">{{ ff.sensIcon }}</button>
+                              <button onClick="{{ ff.up }}" disabled="{{ ff.isFirst }}" style="width:28px;height:28px;border:none;background:none;color:#bbb;font-size:13px;cursor:pointer" style-active="opacity:.4">↑</button>
+                              <button onClick="{{ ff.down }}" disabled="{{ ff.isLast }}" style="width:28px;height:28px;border:none;background:none;color:#bbb;font-size:13px;cursor:pointer" style-active="opacity:.4">↓</button>
+                              <button onClick="{{ ff.remove }}" style="width:28px;height:28px;border:none;background:none;color:#d99;font-size:15px;cursor:pointer" style-active="opacity:.4">✕</button>
+                            </div>
+                          </div>
+                          <input value="{{ ff.value }}" onInput="{{ ff.setVal }}" placeholder="값 입력" style="width:100%;height:44px;border:1px solid #e9e9e9;border-radius:10px;background:#fff;padding:0 13px;font:inherit;font-size:14.5px;color:#333;outline:none" style-focus="border-color:var(--ac,#171717)">
+                        </div>
+                      </sc-for>
+                      <button onClick="{{ addBlankField }}" disabled="{{ atMaxField }}" style="height:46px;border:1.5px dashed #d8d8d8;border-radius:13px;background:none;font:inherit;font-size:14px;font-weight:700;color:var(--ac,#171717);cursor:pointer" style-active="transform:scale(.98)">+ 필드 추가</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">메모 <span style="color:#cbcbcb;font-weight:600">· 암호화 · 선택</span></div>
+                    <textarea value="{{ fnote }}" onInput="{{ setFnote }}" placeholder="선택 입력" style="width:100%;height:82px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:13px 15px;font:inherit;font-size:15px;outline:none;resize:none" style-focus="border-color:var(--ac,#171717);background:#fff"></textarea>
+                  </div>
+
+                  <div style="display:flex;gap:9px;align-items:flex-start;padding:13px 14px;border-radius:13px;background:var(--soft,#f4f4f4)">
+                    <span style="font-size:14px;line-height:1.4">🔒</span>
+                    <span style="font-size:12.5px;line-height:1.5;color:#666;font-weight:500">제목만 평문으로 저장되고, 필드 이름·값·메모는 통째로 암호화됩니다.</span>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- step: review -->
+            <sc-if value="{{ formStepReview }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;min-height:100%">
+                <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:30px 16px 14px;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid #efefef">
+                  <button onClick="{{ backToEdit }}" style="border:none;background:none;font:inherit;font-size:15px;color:#888;cursor:pointer">← 수정</button>
+                  <div style="font-size:15px;font-weight:700">저장 전 확인</div>
+                  <span style="width:36px"></span>
+                </div>
+                <div class="stagger" style="padding:22px 18px 30px;display:flex;flex-direction:column;gap:14px;flex:1">
+                  <div>
+                    <div style="font-size:11px;font-weight:700;color:#bcbcbc;margin-bottom:4px">제목</div>
+                    <div style="font-size:20px;font-weight:800;letter-spacing:-.02em">{{ ftitle }}</div>
+                  </div>
+                  <div style="border:1px solid #efefef;border-radius:15px;overflow:hidden">
+                    <sc-for list="{{ reviewFields }}" as="rf" hint-placeholder-count="2">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;border-bottom:1px solid #f5f5f5">
+                        <span style="font-size:13.5px;font-weight:700;color:#444">{{ rf.name }}</span>
+                        <span style="{{ rf.shownStyle }}">{{ rf.shown }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ reviewHasNote }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:14px 16px;border:1px solid #efefef;border-radius:15px"><div style="font-size:11px;font-weight:700;color:#bcbcbc;margin-bottom:5px">메모</div><div style="font-size:14px;line-height:1.5;color:#444">{{ fnote }}</div></div>
+                  </sc-if>
+                </div>
+                <div style="position:sticky;bottom:0;padding:14px 18px 22px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 30%)">
+                  <button onClick="{{ confirmSave }}" style="width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px var(--ac,#171717)" style-active="transform:scale(.97)">암호화하여 저장</button>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-if>
+
+        <!-- ===== 8. BACKUP ===== -->
+        <sc-if value="{{ isBackup }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%;background:#fff">
+            <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:30px 16px 14px;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid #efefef">
+              <button onClick="{{ goList }}" style="border:none;background:none;font:inherit;font-size:15px;color:#666;cursor:pointer">←</button>
+              <div style="font-size:17px;font-weight:800;letter-spacing:-.02em">백업 · 복원</div>
+            </div>
+            <div class="stagger" style="padding:22px 18px 50px;display:flex;flex-direction:column;gap:14px">
+              <div style="border:1px solid #efefef;border-radius:18px;padding:20px;background:var(--tint,#fafafa)">
+                <div style="font-size:16px;font-weight:800;margin-bottom:6px">암호화 백업 내보내기</div>
+                <p style="font-size:13.5px;line-height:1.55;color:#777;margin-bottom:16px">모든 항목을 암호화된 파일로 내보냅니다. 파일을 열려면 복구코드가 필요합니다.</p>
+                <button onClick="{{ noop }}" style="width:100%;height:50px;border:none;border-radius:14px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)">백업 파일 다운로드</button>
+              </div>
+              <div style="border:1px solid #efefef;border-radius:18px;padding:20px">
+                <div style="font-size:16px;font-weight:800;margin-bottom:6px">복원 가져오기</div>
+                <p style="font-size:13.5px;line-height:1.55;color:#777;margin-bottom:14px">백업 파일을 선택하고 충돌 처리 방식을 고르세요.</p>
+                <div style="border:1.5px dashed #d8d8d8;border-radius:14px;padding:22px;text-align:center;background:var(--tint,#fafafa);margin-bottom:16px">
+                  <div style="font-size:24px;color:#ccc;margin-bottom:6px">⤓</div>
+                  <div style="font-size:13.5px;color:#999;font-weight:500">파일을 끌어다 놓거나 탭하세요</div>
+                </div>
+                <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:9px">충돌 처리</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ conflictModes }}" as="cm" hint-placeholder-count="3">
+                    <button onClick="{{ cm.pick }}" style="{{ cm.style }}" style-active="transform:scale(.99)">
+                      <span style="{{ cm.radio }}"></span>
+                      <span style="flex:1;text-align:left"><span style="display:block;font-size:14px;font-weight:700;color:#222">{{ cm.label }}</span><span style="display:block;font-size:12px;color:#999;margin-top:1px">{{ cm.desc }}</span></span>
+                    </button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ doRestore }}" style="width:100%;height:50px;margin-top:16px;border:none;border-radius:14px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)">복원 실행</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ===== 10. NOT FOUND ===== -->
+        <sc-if value="{{ isNotFound }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;background:var(--tint,#fafafa)">
+            <div style="font-size:72px;font-weight:800;letter-spacing:-.04em;color:var(--ac,#171717);line-height:1;margin-bottom:8px;animation:pop .5s both">404</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px">항목을 찾을 수 없어요</div>
+            <p style="font-size:14px;line-height:1.6;color:#8a8a8a;max-width:240px;margin-bottom:28px">삭제되었거나 주소가 잘못되었을 수 있어요. 대외비로 돌아가 다시 찾아보세요.</p>
+            <button onClick="{{ goList }}" style="height:50px;padding:0 28px;border:none;border-radius:14px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.96)">보관함으로 돌아가기</button>
+          </div>
+        </sc-if>
+
+        <!-- ===== 11. ASSET DASHBOARD ===== -->
+        <sc-if value="{{ isAsset }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%;background:var(--tint,#fafafa);display:flex;flex-direction:column">
+            <div style="position:sticky;top:0;z-index:5;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid #efefef;padding:30px 18px 12px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:21px;font-weight:800;letter-spacing:-.03em">지출</div>
+                  <div style="font-size:12px;color:#9a9a9a;font-weight:500">{{ assetMonth }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button onClick="{{ openCatMgr }}" aria-label="카테고리 관리" style="display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;border:1px solid #ececec;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#444;cursor:pointer;transition:transform .12s" style-active="transform:scale(.95)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h.01M7 3h5a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8l-5.6 5.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12V7a4 4 0 0 1 4-4Z"></path></svg>
+                    카테고리
+                  </button>
+                  <button onClick="{{ lockNow }}" style="display:flex;align-items:center;gap:7px;height:38px;padding:0 13px;border:1px solid #ececec;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#444;cursor:pointer;transition:transform .12s" style-active="transform:scale(.95)">
+                    <span style="width:7px;height:7px;border-radius:50%;background:var(--ac,#171717);animation:pulse 2s infinite"></span>{{ countdown }} 잠그기
+                  </button>
+                </div>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:14px;padding:4px;background:var(--soft,#f1f1f1);border-radius:12px">
+                <button onClick="{{ showBudget }}" style="{{ segBudgetStyle }}" style-active="transform:scale(.98)">이번 달</button>
+                <button onClick="{{ showSavings }}" style="{{ segSavingsStyle }}" style-active="transform:scale(.98)">저축·투자</button>
+              </div>
+            </div>
+
+            <sc-if value="{{ isBudgetTab }}" hint-placeholder-val="{{ true }}">
+            <div class="stagger" style="padding:16px 16px 88px;flex:1;display:flex;flex-direction:column;gap:12px">
+              <!-- hero: remaining -->
+              <div style="border:1px solid #efefef;border-radius:20px;background:#fff;padding:20px 18px">
+                <div style="font-size:12.5px;font-weight:700;color:#9a9a9a;margin-bottom:7px">이번 달 남은 예산</div>
+                <div style="font-size:34px;font-weight:800;letter-spacing:-.03em;color:{{ remainColor }}">{{ remainingStr }}</div>
+                <div style="height:8px;border-radius:999px;background:var(--soft,#f1f1f1);margin:16px 0 10px;overflow:hidden"><div style="{{ spentBar }}"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#a0a0a0">
+                  <span>지출 {{ spentPct }}%</span><span>예산 {{ incomeStr }}</span>
+                </div>
+              </div>
+
+              <!-- income / spent -->
+              <div style="display:flex;gap:12px">
+                <button onClick="{{ openIncome }}" style="flex:1;border:1px solid #efefef;border-radius:18px;background:#fff;padding:16px;text-align:left;cursor:pointer;transition:transform .12s" style-active="transform:scale(.98)">
+                  <div style="font-size:12px;font-weight:700;color:#9a9a9a;margin-bottom:5px">이번 달 예산</div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em">{{ incomeStr }}</div>
+                  <div style="font-size:11px;color:var(--ac,#171717);font-weight:700;margin-top:5px">수정 ›</div>
+                </button>
+                <div style="flex:1;border:1px solid #efefef;border-radius:18px;background:#fff;padding:16px">
+                  <div style="font-size:12px;font-weight:700;color:#9a9a9a;margin-bottom:5px">지출</div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;color:#e5484d">{{ spentStr }}</div>
+                  <div style="font-size:11px;color:#bcbcbc;font-weight:600;margin-top:5px">{{ expCount }}건</div>
+                </div>
+              </div>
+
+              <!-- category breakdown -->
+              <sc-if value="{{ hasCats }}" hint-placeholder-val="{{ true }}">
+                <div style="border:1px solid #efefef;border-radius:18px;background:#fff;padding:18px 18px 20px">
+                  <div style="font-size:13px;font-weight:800;margin-bottom:15px">카테고리별 지출</div>
+                  <div style="display:flex;flex-direction:column;gap:14px">
+                    <sc-for list="{{ catRows }}" as="c" hint-placeholder-count="4">
+                      <div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+                          <div style="display:flex;align-items:center;gap:8px">
+                            <span style="width:9px;height:9px;border-radius:50%;background:{{ c.color }}"></span>
+                            <span style="font-size:13.5px;font-weight:700;color:#333">{{ c.name }}</span>
+                            <span style="font-size:11.5px;color:#bcbcbc;font-weight:600">{{ c.pct }}%</span>
+                          </div>
+                          <span style="font-size:13px;font-weight:700;color:#444">{{ c.amount }}</span>
+                        </div>
+                        <div style="height:7px;border-radius:999px;background:var(--soft,#f1f1f1);overflow:hidden"><div style="{{ c.bar }}"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- expense calendar -->
+              <div style="border:1px solid #efefef;border-radius:18px;background:#fff;padding:16px 14px 18px;margin-top:4px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 4px">
+                  <span style="font-size:13px;font-weight:800">지출 달력</span>
+                  <span style="font-size:12px;color:#9a9a9a;font-weight:600">{{ expCount }}건</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px">
+                  <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7">
+                    <div style="{{ w.style }}">{{ w.label }}</div>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                  <sc-for list="{{ calCells }}" as="d" hint-placeholder-count="35">
+                    <button onClick="{{ d.pick }}" style="{{ d.style }}" style-active="transform:scale(.9)">
+                      <span style="{{ d.numStyle }}">{{ d.day }}</span>
+                      <sc-if value="{{ d.hasSpend }}" hint-placeholder-val="{{ false }}"><span style="{{ d.amtStyle }}">{{ d.amount }}</span></sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <!-- selected day detail -->
+              <sc-if value="{{ hasDaySel }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin:6px 2px 0">
+                  <span style="font-size:13px;font-weight:800">{{ selDayLabel }}</span>
+                  <span style="font-size:13px;font-weight:800;color:#e5484d">{{ selDayTotal }}</span>
+                </div>
+                <sc-if value="{{ hasDayExps }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:9px">
+                    <sc-for list="{{ dayExpenseRows }}" as="e" hint-placeholder-count="2">
+                      <button onClick="{{ e.open }}" style="display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;border:1px solid #efefef;border-radius:16px;background:#fff;cursor:pointer;text-align:left;transition:transform .14s,box-shadow .2s" style-active="transform:scale(.985)" style-hover="box-shadow:0 6px 18px -10px rgba(0,0,0,.25)">
+                        <div style="{{ e.dot }}">{{ e.initial }}</div>
+                        <div style="flex:1;min-width:0">
+                          <div style="display:flex;align-items:center;gap:6px;min-width:0">
+                            <span style="font-size:15px;font-weight:700;letter-spacing:-.01em;color:#1c1c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.item }}</span>
+                            <sc-if value="{{ e.recurring }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;font-size:10px;font-weight:800;color:var(--ac,#171717);background:var(--soft,#f1f1f1);padding:2px 6px;border-radius:6px">고정</span></sc-if>
+                          </div>
+                          <div style="font-size:12px;color:#a3a3a3;font-weight:500">{{ e.meta }}</div>
+                        </div>
+                        <div style="font-size:15px;font-weight:800;letter-spacing:-.02em;color:#1f1f1f">{{ e.amount }}</div>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ dayEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="text-align:center;padding:22px 0;font-size:13px;color:#bcbcbc;font-weight:600">이 날은 지출이 없어요</div>
+                </sc-if>
+              </sc-if>
+            </div>
+            </sc-if>
+
+            <!-- SAVINGS · INVESTMENT tab -->
+            <sc-if value="{{ isSavingsTab }}" hint-placeholder-val="{{ false }}">
+            <div class="stagger" style="padding:16px 16px 88px;flex:1;display:flex;flex-direction:column;gap:12px">
+              <!-- net worth hero -->
+              <div style="border:1px solid #efefef;border-radius:20px;background:#fff;padding:20px 18px">
+                <div style="font-size:12.5px;font-weight:700;color:#9a9a9a;margin-bottom:7px">저축·투자 순자산</div>
+                <div style="font-size:34px;font-weight:800;letter-spacing:-.03em">{{ netWorthStr }}</div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:10px">
+                  <span style="font-size:12.5px;font-weight:800;color:#171717">이번 달 {{ monthContribStr }} 적립</span>
+                  <span style="font-size:11.5px;color:#bcbcbc;font-weight:600">· 지출 {{ contribCount }}건 자동 연동</span>
+                </div>
+              </div>
+
+              <!-- 저축 / 투자 cards -->
+              <div style="display:flex;gap:12px">
+                <div style="flex:1;border:1px solid #efefef;border-radius:18px;background:#fff;padding:16px">
+                  <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="width:9px;height:9px;border-radius:50%;background:#20a4a4"></span><span style="font-size:12px;font-weight:700;color:#9a9a9a">저축</span></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em">{{ savedTotalStr }}</div>
+                  <div style="font-size:11px;color:#20a4a4;font-weight:700;margin-top:5px">이번 달 {{ savedMonthStr }}</div>
+                </div>
+                <div style="flex:1;border:1px solid #efefef;border-radius:18px;background:#fff;padding:16px">
+                  <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="width:9px;height:9px;border-radius:50%;background:#7b61ff"></span><span style="font-size:12px;font-weight:700;color:#9a9a9a">투자</span></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em">{{ investTotalStr }}</div>
+                  <div style="font-size:11px;color:#7b61ff;font-weight:700;margin-top:5px">이번 달 {{ investMonthStr }}</div>
+                </div>
+              </div>
+
+              <!-- 세이빙 박스 -->
+              <div style="border:1px solid #efefef;border-radius:18px;background:#fff;padding:20px 18px 16px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px">
+                  <div style="font-size:13px;font-weight:800">세이빙 박스</div>
+                  <span style="flex:none;font-size:11px;font-weight:700;color:#c08a15;background:#fbf1d7;padding:4px 9px;border-radius:999px">{{ boxTxnCount }}건 기록</span>
+                </div>
+                <div style="font-size:30px;font-weight:800;letter-spacing:-.03em;color:#171717;margin-bottom:16px">{{ boxBalanceStr }}</div>
+                <div style="display:flex;gap:9px;margin-bottom:8px">
+                  <button onClick="{{ openBoxIn }}" style="flex:1;height:46px;border:none;border-radius:13px;background:#e9b949;color:#5b4407;font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:transform .12s" style-active="transform:scale(.97)">입금</button>
+                  <button onClick="{{ openBoxOut }}" style="flex:1;height:46px;border:1.5px solid #ececec;border-radius:13px;background:#fff;color:#444;font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:transform .12s" style-active="transform:scale(.97)">출금</button>
+                </div>
+                <button onClick="{{ openBoxDetail }}" style="display:flex;align-items:center;justify-content:center;gap:5px;width:100%;height:42px;border:none;background:none;font:inherit;font-size:13px;font-weight:700;color:#8a8a8a;cursor:pointer" style-active="opacity:.6">
+                  입출금 내역 보기
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+                </button>
+              </div>
+
+              <!-- 저축 현황 (적금 목록) -->
+              <div style="border:1px solid #efefef;border-radius:18px;background:#fff;padding:18px 16px 16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px">
+                  <span style="font-size:13px;font-weight:800">저축 현황</span>
+                  <button onClick="{{ openAddAcct }}" style="display:flex;align-items:center;gap:4px;border:1px solid #e8e8e8;border-radius:999px;background:#fff;font:inherit;font-size:12px;font-weight:700;color:#20a4a4;padding:6px 11px;cursor:pointer" style-active="transform:scale(.95)">+ 적금 추가</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <sc-for list="{{ savingAccounts }}" as="a" hint-placeholder-count="3">
+                    <button onClick="{{ a.editGoal }}" style="text-align:left;width:100%;border:1px solid #f1f1f1;border-radius:15px;background:var(--tint,#fafafa);padding:14px 15px;cursor:pointer;transition:transform .12s" style-active="transform:scale(.99)">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+                        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                          <span style="flex:none;width:9px;height:9px;border-radius:50%;background:{{ a.color }}"></span>
+                          <span style="font-size:14px;font-weight:700;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.name }}</span>
+                          <sc-if value="{{ a.hasMonth }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:10px;font-weight:800;color:#20a4a4;background:#e6f6f5;padding:2px 6px;border-radius:6px">{{ a.monthStr }}</span></sc-if>
+                        </div>
+                        <span style="flex:none;font-size:15px;font-weight:800;letter-spacing:-.02em;color:#171717">{{ a.totalStr }}</span>
+                      </div>
+                      <div style="height:7px;border-radius:999px;background:#ececec;overflow:hidden;margin-bottom:7px"><div style="{{ a.bar }}"></div></div>
+                      <div style="display:flex;align-items:center;justify-content:space-between">
+                        <span style="font-size:11.5px;font-weight:600;color:#a0a0a0">{{ a.goalLabel }}</span>
+                        <sc-if value="{{ a.hasGoal }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:800;color:{{ a.color }}">{{ a.goalPct }}%</span></sc-if>
+                      </div>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <!-- 투자 수익률 -->
+              <button onClick="{{ openReturn }}" style="text-align:left;width:100%;border:1px solid #efefef;border-radius:18px;background:#fff;padding:18px;cursor:pointer;transition:transform .12s" style-active="transform:scale(.99)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                  <div style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:13px;font-weight:800">투자 수익률</span>
+                    <span style="font-size:11px;color:#b0b0b0;font-weight:600">탭하여 수익률 수정</span>
+                  </div>
+                  <span style="display:flex;align-items:center;gap:6px;border:1.5px solid #e7e2ff;background:#f6f4ff;border-radius:999px;padding:6px 12px">
+                    <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:{{ investPnlColor }}">{{ investReturnStr }}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b61ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                  </span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span style="font-size:13px;font-weight:600;color:#9a9a9a">투자 원금</span>
+                    <span style="font-size:14px;font-weight:700;color:#444">{{ investPrincipalStr }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span style="font-size:13px;font-weight:600;color:#9a9a9a">평가금액</span>
+                    <span style="font-size:15px;font-weight:800;letter-spacing:-.02em">{{ investTotalStr }}</span>
+                  </div>
+                  <div style="height:1px;background:#f2f2f2;margin:2px 0"></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span style="font-size:13px;font-weight:700;color:#555">평가손익</span>
+                    <span style="font-size:16px;font-weight:800;letter-spacing:-.02em;color:{{ investPnlColor }}">{{ investPnlStr }}</span>
+                  </div>
+                </div>
+              </button>
+
+              <!-- 이번 달 적립 내역 (자동 연동) -->
+              <div style="border:1px solid #efefef;border-radius:18px;background:#fff;padding:18px 16px 16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px">
+                  <span style="font-size:13px;font-weight:800">이번 달 적립 내역</span>
+                  <span style="font-size:12px;color:#9a9a9a;font-weight:600">지출 연동 · {{ contribCount }}건</span>
+                </div>
+                <sc-if value="{{ hasContribs }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:9px">
+                    <sc-for list="{{ contribRows }}" as="r" hint-placeholder-count="3">
+                      <button onClick="{{ r.open }}" style="display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;border:1px solid #efefef;border-radius:16px;background:#fff;cursor:pointer;text-align:left;transition:transform .14s,box-shadow .2s" style-active="transform:scale(.985)" style-hover="box-shadow:0 6px 18px -10px rgba(0,0,0,.25)">
+                        <div style="{{ r.dot }}">{{ r.initial }}</div>
+                        <div style="flex:1;min-width:0">
+                          <div style="display:flex;align-items:center;gap:6px;min-width:0">
+                            <span style="font-size:15px;font-weight:700;letter-spacing:-.01em;color:#1c1c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.item }}</span>
+                            <sc-if value="{{ r.recurring }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;font-size:10px;font-weight:800;color:var(--ac,#171717);background:var(--soft,#f1f1f1);padding:2px 6px;border-radius:6px">고정</span></sc-if>
+                          </div>
+                          <div style="font-size:12px;color:#a3a3a3;font-weight:500">{{ r.meta }}</div>
+                        </div>
+                        <div style="font-size:15px;font-weight:800;letter-spacing:-.02em;color:{{ r.amtColor }}">{{ r.amount }}</div>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ noContribs }}" hint-placeholder-val="{{ false }}">
+                  <div style="text-align:center;padding:14px 8px 8px;font-size:13px;color:#bcbcbc;font-weight:600;line-height:1.5">지출을 ‘저축’·‘투자’로 분류하면<br>여기에 자동으로 모여요.</div>
+                </sc-if>
+              </div>
+            </div>
+            </sc-if>
+
+            <!-- bottom tab bar -->
+            <div style="position:sticky;bottom:0;z-index:6;display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-top:1px solid #efefef;padding:7px 0 14px">
+              <button onClick="{{ newExpense }}" style="position:absolute;right:20px;bottom:92px;width:56px;height:56px;border:none;border-radius:18px;background:var(--ac,#171717);color:#fff;font-size:26px;font-weight:300;cursor:pointer;box-shadow:0 12px 28px -8px var(--ac,#171717);transition:transform .14s;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92) rotate(90deg)">+</button>
+              <button onClick="{{ goList }}" style="{{ tabVaultStyle }}" style-active="transform:scale(.92)">
+                <span style="{{ tabVaultBar }}"></span>
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"></circle><path d="M11.8 11.8 19 19"></path><path d="M16.5 19l2-2"></path><path d="M14 16.5l2-2"></path></svg>
+                <span style="font-size:10px;font-weight:700;letter-spacing:.01em">보관함</span>
+              </button>
+              <button onClick="{{ goAsset }}" style="{{ tabAssetStyle }}" style-active="transform:scale(.92)">
+                <span style="{{ tabAssetBar }}"></span>
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"></rect><circle cx="12" cy="12" r="2.6"></circle></svg>
+                <span style="font-size:10px;font-weight:700;letter-spacing:.01em">지출</span>
+              </button>
+            </div>
+
+            <!-- income bottom sheet -->
+            <sc-if value="{{ showIncomeSheet }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeIncome }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:26px 26px 0 0;padding:10px 22px 26px;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 18px"></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px">월 예산</div>
+                  <p style="font-size:13px;color:#9a9a9a;line-height:1.5;margin-bottom:18px">이번 달 쓸 수 있는 돈을 정해두세요.</p>
+                  <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 16px;height:60px;margin-bottom:18px" style-focus="border-color:var(--ac,#171717)">
+                    <span style="font-size:24px;font-weight:800;color:#cfcfcf">₩</span>
+                    <input value="{{ incomeDraftFmt }}" onInput="{{ setIncomeDraft }}" inputmode="numeric" placeholder="0" style="flex:1;border:none;background:none;font:inherit;font-size:26px;font-weight:800;letter-spacing:-.02em;outline:none;color:#171717">
+                  </div>
+                  <button onClick="{{ saveIncome }}" style="width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px var(--ac,#171717)" style-active="transform:scale(.97)">저장</button>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+
+            <!-- 적금 목표 bottom sheet -->
+            <sc-if value="{{ showGoalSheet }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeGoal }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:26px 26px 0 0;padding:10px 22px 26px;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 18px"></div>
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px">
+                    <span style="width:11px;height:11px;border-radius:50%;background:{{ goalAcctColor }}"></span>
+                    <div style="font-size:18px;font-weight:800;letter-spacing:-.02em">{{ goalAcctName }} 목표</div>
+                  </div>
+                  <p style="font-size:13px;color:#9a9a9a;line-height:1.5;margin-bottom:18px">이 적금에서 모을 금액을 정하면 진행률이 자동으로 계산돼요. 현재 {{ goalAcctCurStr }} 모았어요.</p>
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">목표 금액</div>
+                  <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 16px;height:60px;margin-bottom:12px" style-focus="border-color:#20a4a4">
+                    <span style="font-size:24px;font-weight:800;color:#cfcfcf">₩</span>
+                    <input value="{{ goalDraftFmt }}" onInput="{{ setGoalDraft }}" inputmode="numeric" placeholder="0" style="flex:1;min-width:0;border:none;background:none;font:inherit;font-size:26px;font-weight:800;letter-spacing:-.02em;outline:none;color:#171717">
+                  </div>
+                  <div style="display:flex;gap:7px;margin-bottom:20px">
+                    <sc-for list="{{ goalPresets }}" as="p" hint-placeholder-count="4">
+                      <button onClick="{{ p.pick }}" style="flex:1;height:36px;border:1px solid #e8e8e8;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#666;cursor:pointer" style-active="transform:scale(.95)">{{ p.label }}</button>
+                    </sc-for>
+                  </div>
+
+                  <button onClick="{{ saveGoal }}" style="width:100%;height:54px;border:none;border-radius:16px;background:#20a4a4;color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px #20a4a4" style-active="transform:scale(.97)">저장</button>
+                  <button onClick="{{ deleteGoalAcct }}" style="width:100%;height:46px;border:none;background:none;font:inherit;font-size:14px;font-weight:700;color:#e5484d;cursor:pointer;margin-top:2px" style-active="opacity:.6">적금 삭제</button>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+
+            <!-- 적금 추가 bottom sheet -->
+            <sc-if value="{{ showAddAcct }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeAddAcct }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:26px 26px 0 0;padding:10px 22px 26px;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 18px"></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px">적금 추가</div>
+                  <p style="font-size:13px;color:#9a9a9a;line-height:1.5;margin-bottom:18px">지출을 이 이름의 ‘저축’으로 분류하면 매달 자동으로 합산돼요.</p>
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">적금 이름</div>
+                  <input value="{{ addName }}" onInput="{{ setAddName }}" placeholder="예: 청년도약계좌, 여행 자금" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:16px;font-weight:600;outline:none;margin-bottom:16px" style-focus="border-color:#20a4a4;background:#fff">
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">현재 저축액 <span style="color:#cbcbcb;font-weight:600">· 선택</span></div>
+                  <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 16px;height:56px;margin-bottom:16px" style-focus="border-color:#20a4a4">
+                    <span style="font-size:22px;font-weight:800;color:#cfcfcf">₩</span>
+                    <input value="{{ addBaseFmt }}" onInput="{{ setAddBase }}" inputmode="numeric" placeholder="0" style="flex:1;min-width:0;border:none;background:none;font:inherit;font-size:23px;font-weight:800;letter-spacing:-.02em;outline:none;color:#171717">
+                  </div>
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">목표 금액 <span style="color:#cbcbcb;font-weight:600">· 선택</span></div>
+                  <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 16px;height:56px;margin-bottom:12px" style-focus="border-color:#20a4a4">
+                    <span style="font-size:22px;font-weight:800;color:#cfcfcf">₩</span>
+                    <input value="{{ addGoalFmt }}" onInput="{{ setAddGoal }}" inputmode="numeric" placeholder="0" style="flex:1;min-width:0;border:none;background:none;font:inherit;font-size:23px;font-weight:800;letter-spacing:-.02em;outline:none;color:#171717">
+                  </div>
+                  <div style="display:flex;gap:7px;margin-bottom:20px">
+                    <sc-for list="{{ addGoalPresets }}" as="p" hint-placeholder-count="4">
+                      <button onClick="{{ p.pick }}" style="flex:1;height:36px;border:1px solid #e8e8e8;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#666;cursor:pointer" style-active="transform:scale(.95)">{{ p.label }}</button>
+                    </sc-for>
+                  </div>
+
+                  <button onClick="{{ saveAddAcct }}" style="width:100%;height:54px;border:none;border-radius:16px;background:#20a4a4;color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px #20a4a4" style-active="transform:scale(.97)">적금 추가</button>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+
+            <!-- investment return bottom sheet -->
+            <sc-if value="{{ showReturnSheet }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeReturn }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:26px 26px 0 0;padding:10px 22px 26px;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 18px"></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px">투자 수익률</div>
+                  <p style="font-size:13px;color:#9a9a9a;line-height:1.5;margin-bottom:18px">현재 수익률을 입력하면 평가금액과 손익이 자동으로 계산돼요.</p>
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">수익률</div>
+                  <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 18px;height:64px;margin-bottom:12px" style-focus="border-color:#7b61ff">
+                    <input value="{{ returnDraft }}" onInput="{{ setReturnDraft }}" inputmode="decimal" placeholder="0" style="flex:1;min-width:0;border:none;background:none;font:inherit;font-size:34px;font-weight:800;letter-spacing:-.02em;text-align:right;outline:none;color:#7b61ff">
+                    <span style="font-size:30px;font-weight:800;color:#7b61ff;flex:none">%</span>
+                  </div>
+                  <div style="display:flex;gap:7px;margin-bottom:20px">
+                    <sc-for list="{{ returnPresets }}" as="p" hint-placeholder-count="4">
+                      <button onClick="{{ p.pick }}" style="flex:1;height:36px;border:1px solid #e8e8e8;border-radius:999px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#666;cursor:pointer" style-active="transform:scale(.95)">{{ p.label }}</button>
+                    </sc-for>
+                  </div>
+
+                  <button onClick="{{ saveReturn }}" style="width:100%;height:54px;border:none;border-radius:16px;background:#7b61ff;color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px #7b61ff" style-active="transform:scale(.97)">저장</button>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+
+            <!-- 세이빙 박스 내역 상세 sheet -->
+            <sc-if value="{{ showBoxDetail }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeBoxDetail }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.32);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;max-height:74%;display:flex;flex-direction:column;background:#fff;border-radius:26px 26px 0 0;overflow:hidden;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="flex:none;padding:10px 22px 14px;border-bottom:1px solid #f2f2f2">
+                    <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 14px"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                      <span style="width:34px"></span>
+                      <div style="font-size:16px;font-weight:800;letter-spacing:-.02em">세이빙 박스 내역</div>
+                      <button onClick="{{ closeBoxDetail }}" style="border:none;background:none;font:inherit;font-size:14px;color:#888;cursor:pointer;padding:0">닫기</button>
+                    </div>
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 2px">
+                      <span style="font-size:12.5px;font-weight:700;color:#a3a3a3">현재 잔액</span>
+                      <span style="font-size:22px;font-weight:800;letter-spacing:-.03em;color:#171717">{{ boxBalanceStr }}</span>
+                    </div>
+                  </div>
+                  <div style="flex:1;overflow-y:auto;padding:16px 22px 26px">
+                    <sc-if value="{{ hasBoxTxns }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;flex-direction:column;gap:8px">
+                        <sc-for list="{{ boxRowsShown }}" as="t" hint-placeholder-count="4">
+                          <div style="display:flex;align-items:center;gap:12px;padding:10px 13px;border:1px solid #f1f1f1;border-radius:14px;background:var(--tint,#fafafa)">
+                            <span style="{{ t.icon }}">{{ t.sign }}</span>
+                            <div style="flex:1;min-width:0">
+                              <div style="display:flex;align-items:center;gap:6px;min-width:0">
+                                <span style="font-size:14px;font-weight:700;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.memo }}</span>
+                                <sc-if value="{{ t.fromSavings }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:10px;font-weight:800;color:#20a4a4;background:#fff;padding:2px 6px;border-radius:6px">저축</span></sc-if>
+                              </div>
+                              <div style="font-size:11.5px;color:#a3a3a3;font-weight:600">{{ t.date }}</div>
+                            </div>
+                            <span style="flex:none;font-size:15px;font-weight:800;letter-spacing:-.02em;color:{{ t.color }}">{{ t.amount }}</span>
+                            <button onClick="{{ t.del }}" aria-label="삭제" style="flex:none;border:none;background:none;color:#c9ccd1;cursor:pointer;padding:4px;display:flex" style-active="opacity:.5">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+                            </button>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <sc-if value="{{ boxHasMore }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ showMoreBox }}" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:48px;margin-top:10px;border:1px solid #ececec;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#555;cursor:pointer" style-active="transform:scale(.99)">
+                          {{ boxMoreCount }}개 더 보기
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                        </button>
+                      </sc-if>
+                    </sc-if>
+                    <sc-if value="{{ noBoxTxns }}" hint-placeholder-val="{{ false }}">
+                      <div style="text-align:center;padding:36px 8px;font-size:13px;color:#bcbcbc;font-weight:600;line-height:1.5">아직 기록이 없어요.<br>남은 돈을 입금해 보세요.</div>
+                    </sc-if>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+
+            <!-- 세이빙 박스 입출금 sheet -->
+            <sc-if value="{{ showBoxSheet }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeBox }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:26px 26px 0 0;padding:10px 22px 26px;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 18px"></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px">세이빙 박스 {{ boxSheetTitle }}</div>
+                  <p style="font-size:13px;color:#9a9a9a;line-height:1.5;margin-bottom:18px">{{ boxSheetDesc }}</p>
+
+                  <sc-if value="{{ boxIsIn }}" hint-placeholder-val="{{ true }}">
+                    <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">입금 출처</div>
+                    <div style="display:flex;gap:7px;margin-bottom:16px">
+                      <button onClick="{{ pickSrcCash }}" style="{{ srcCashStyle }}" style-active="transform:scale(.98)">직접 입금</button>
+                      <button onClick="{{ pickSrcSavings }}" style="{{ srcSavingsStyle }}" style-active="transform:scale(.98)">저축에서 이체</button>
+                    </div>
+                    <sc-if value="{{ boxSrcSavings }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:12px;color:#20a4a4;font-weight:700;margin:-8px 0 16px;line-height:1.5">저축 잔액 {{ savedAvailStr }} · 이체하면 저축에서 차감돼요</div>
+                    </sc-if>
+                  </sc-if>
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">금액</div>
+                  <div style="display:flex;align-items:center;gap:6px;border:1.5px solid #ececec;border-radius:14px;background:var(--tint,#fafafa);padding:0 16px;height:60px;margin-bottom:16px" style-focus="border-color:#e9b949">
+                    <span style="font-size:24px;font-weight:800;color:#cfcfcf">₩</span>
+                    <input value="{{ boxDraftFmt }}" onInput="{{ setBoxDraft }}" inputmode="numeric" placeholder="0" style="flex:1;min-width:0;border:none;background:none;font:inherit;font-size:26px;font-weight:800;letter-spacing:-.02em;outline:none;color:#171717">
+                  </div>
+
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">메모 <span style="color:#cbcbcb;font-weight:600">· 선택</span></div>
+                  <input value="{{ boxMemo }}" onInput="{{ setBoxMemo }}" placeholder="{{ boxMemoPlaceholder }}" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:16px;font-weight:600;outline:none;margin-bottom:20px" style-focus="border-color:#e9b949;background:#fff">
+
+                  <button onClick="{{ saveBoxTxn }}" style="width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px var(--ac,#171717)" style-active="transform:scale(.97)">{{ boxSaveLabel }}</button>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+
+            <!-- 카테고리 관리 sheet -->
+            <sc-if value="{{ showCatMgr }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:40">
+              <div onClick="{{ closeCatMgr }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.32);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;max-height:74%;display:flex;flex-direction:column;background:#fff;border-radius:26px 26px 0 0;overflow:hidden;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="flex:none;padding:10px 22px 12px;border-bottom:1px solid #f2f2f2">
+                    <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 14px"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                      <sc-if value="{{ catMgrEdit }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ backCatList }}" style="border:none;background:none;font:inherit;font-size:14px;color:#888;cursor:pointer;padding:0">← 목록</button>
+                      </sc-if>
+                      <sc-if value="{{ catMgrList }}" hint-placeholder-val="{{ true }}"><span style="width:34px"></span></sc-if>
+                      <div style="font-size:16px;font-weight:800;letter-spacing:-.02em">{{ catMgrTitle }}</div>
+                      <button onClick="{{ closeCatMgr }}" style="border:none;background:none;font:inherit;font-size:14px;color:#888;cursor:pointer;padding:0">닫기</button>
+                    </div>
+                  </div>
+                  <div style="flex:1;overflow-y:auto;padding:16px 22px 26px">
+
+                  <!-- 목록 -->
+                  <sc-if value="{{ catMgrList }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+                      <sc-for list="{{ catMgrRows }}" as="c" hint-placeholder-count="6">
+                        <div style="display:flex;align-items:center;gap:12px;border:1px solid #f1f1f1;border-radius:14px;background:var(--tint,#fafafa);padding:12px 14px">
+                          <span style="{{ c.dot }}"></span>
+                          <div style="flex:1;min-width:0">
+                            <div style="font-size:14px;font-weight:700;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</div>
+                            <div style="font-size:11.5px;font-weight:700;color:#b0b0b0;letter-spacing:.03em;margin-top:1px">{{ c.code }}</div>
+                          </div>
+                          <button onClick="{{ c.edit }}" style="flex:none;border:1px solid #e8e8e8;border-radius:9px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#555;padding:6px 12px;cursor:pointer" style-active="transform:scale(.95)">수정</button>
+                          <button onClick="{{ c.del }}" aria-label="삭제" style="flex:none;border:none;background:none;color:#d0555a;cursor:pointer;padding:6px;display:flex" style-active="opacity:.6">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
+                          </button>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <button onClick="{{ newCategory }}" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:50px;border:1.5px dashed #d8d8d8;border-radius:14px;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--ac,#171717);cursor:pointer" style-active="transform:scale(.99)">+ 카테고리 추가</button>
+                  </sc-if>
+
+                  <!-- 추가/수정 폼 -->
+                  <sc-if value="{{ catMgrEdit }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">카테고리명</div>
+                    <input value="{{ catName }}" onInput="{{ setCatName }}" placeholder="예: 의료·건강" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:16px;font-weight:600;outline:none;margin-bottom:18px" style-focus="border-color:var(--ac,#171717);background:#fff">
+
+                    <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">코드 <span style="color:#cbcbcb;font-weight:600">· 영문·숫자</span></div>
+                    <input value="{{ catCode }}" onInput="{{ setCatCode }}" placeholder="예: HEALTH" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:16px;font-weight:700;letter-spacing:.04em;outline:none;margin-bottom:18px" style-focus="border-color:var(--ac,#171717);background:#fff">
+
+                    <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:10px">색상</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:11px;margin-bottom:12px">
+                      <sc-for list="{{ catColorSwatches }}" as="sw" hint-placeholder-count="12">
+                        <button onClick="{{ sw.pick }}" style="{{ sw.style }}"></button>
+                      </sc-for>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+                      <span style="flex:none;width:38px;height:38px;border-radius:10px;background:{{ catColorVal }};box-shadow:0 0 0 1px #e6e6e6"></span>
+                      <div style="flex:1;display:flex;align-items:center;gap:4px;border:1.5px solid #ececec;border-radius:12px;background:var(--tint,#fafafa);padding:0 14px;height:48px" style-focus="border-color:var(--ac,#171717)">
+                        <span style="font-size:16px;font-weight:800;color:#cfcfcf">#</span>
+                        <input value="{{ catColorHex }}" onInput="{{ setCatColorHex }}" placeholder="F2994A" maxlength="6" style="flex:1;min-width:0;border:none;background:none;font:inherit;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;outline:none;color:#333">
+                      </div>
+                    </div>
+
+                    <button onClick="{{ saveCategory }}" style="width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -8px var(--ac,#171717)" style-active="transform:scale(.97)">저장</button>
+                    <sc-if value="{{ catEditIsEdit }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ deleteEditingCat }}" style="width:100%;height:46px;border:none;background:none;font:inherit;font-size:14px;font-weight:700;color:#e5484d;cursor:pointer;margin-top:2px" style-active="opacity:.6">카테고리 삭제</button>
+                    </sc-if>
+                  </sc-if>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ===== 12. EXPENSE FORM ===== -->
+        <sc-if value="{{ isExpense }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%;background:#fff;display:flex;flex-direction:column">
+            <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:30px 16px 14px;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid #efefef">
+              <button onClick="{{ cancelExpense }}" style="border:none;background:none;font:inherit;font-size:15px;color:#888;cursor:pointer">취소</button>
+              <div style="font-size:15px;font-weight:700">{{ expFormTitle }}</div>
+              <button onClick="{{ saveExpense }}" style="border:none;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--ac,#171717);cursor:pointer">저장</button>
+            </div>
+            <div class="stagger" style="padding:14px 18px 50px;display:flex;flex-direction:column;gap:24px">
+
+              <!-- amount -->
+              <div style="text-align:center;padding:14px 0 4px">
+                <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:10px">금액</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:5px">
+                  <span style="font-size:30px;font-weight:800;color:#cfcfcf">₩</span>
+                  <input value="{{ exAmountFmt }}" onInput="{{ setExAmount }}" inputmode="numeric" placeholder="0" size="6" style="width:auto;min-width:60px;max-width:230px;border:none;background:none;font:inherit;font-size:40px;font-weight:800;letter-spacing:-.03em;text-align:center;outline:none;color:#171717">
+                </div>
+              </div>
+
+              <!-- item -->
+              <div>
+                <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">항목</div>
+                <input value="{{ exItem }}" onInput="{{ setExItem }}" placeholder="예: 점심 김밥천국" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:16px;font-weight:600;outline:none" style-focus="border-color:var(--ac,#171717);background:#fff">
+              </div>
+
+              <!-- category -->
+              <div>
+                <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:10px">카테고리</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="8">
+                    <button onClick="{{ c.pick }}" style="{{ c.style }}" style-active="transform:scale(.95)"><span style="{{ c.dot }}"></span>{{ c.name }}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <!-- date -->
+              <div>
+                <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">날짜</div>
+                <input type="date" value="{{ exDate }}" onChange="{{ setExDate }}" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:15px;font-weight:600;color:#333;outline:none" style-focus="border-color:var(--ac,#171717);background:#fff">
+              </div>
+
+              <!-- recurring (fixed) toggle -->
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa)">
+                <div>
+                  <div style="font-size:14.5px;font-weight:700;color:#222">고정 지출</div>
+                  <div style="font-size:12px;color:#9a9a9a;margin-top:2px">매월 반복되는 지출</div>
+                </div>
+                <button onClick="{{ toggleRecur }}" style="{{ recurTrack }}" style-active="transform:scale(.96)"><span style="{{ recurKnob }}"></span></button>
+              </div>
+
+              <sc-if value="{{ exRecur }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:-12px">
+                  <div style="font-size:11.5px;font-weight:700;color:#a0a0a0;margin-bottom:7px">개월 수 <span style="color:#cbcbcb;font-weight:600">· 선택</span></div>
+                  <input value="{{ exMonths }}" onInput="{{ setExMonths }}" inputmode="numeric" placeholder="비우면 무기한" style="width:100%;height:52px;border:1.5px solid #ececec;border-radius:13px;background:var(--tint,#fafafa);padding:0 15px;font:inherit;font-size:15px;font-weight:600;color:#333;outline:none" style-focus="border-color:var(--ac,#171717);background:#fff">
+                  <div style="font-size:12px;color:#9a9a9a;margin-top:7px">설정한 개월 수만큼 매월 자동 반영돼요. 비워두면 무기한 반복됩니다.</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ expEditMode }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:9px;margin-top:4px">
+                  <sc-if value="{{ exRecur }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ unsetRecur }}" style="height:50px;border:1px solid #ececec;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#555;cursor:pointer" style-active="transform:scale(.98)">고정 해제</button>
+                  </sc-if>
+                  <button onClick="{{ deleteExpense }}" style="height:50px;border:1px solid #f3dcdc;border-radius:14px;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#e5484d;cursor:pointer" style-active="transform:scale(.98)">이 지출 삭제</button>
+                </div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ showDeleteSheet }}" hint-placeholder-val="{{ false }}">
+              <div style="position:sticky;bottom:0;height:0;z-index:20">
+              <div onClick="{{ closeDeleteSheet }}" style="position:absolute;left:0;right:0;bottom:0;height:900px;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;animation:fade .2s both">
+                <div onClick="{{ stop }}" style="width:100%;background:#fff;border-radius:26px 26px 0 0;padding:10px 22px 26px;animation:sheetUp .34s cubic-bezier(.22,1,.36,1) both">
+                  <div style="width:38px;height:5px;border-radius:3px;background:#e3e3e6;margin:0 auto 18px"></div>
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px">고정 지출 삭제</div>
+                  <p style="font-size:13px;color:#9a9a9a;line-height:1.5;margin-bottom:18px">매월 반복되는 지출이에요. 어떻게 삭제할까요?</p>
+                  <div style="display:flex;flex-direction:column;gap:9px">
+                    <button onClick="{{ deleteRecurAll }}" style="width:100%;height:54px;border:none;border-radius:16px;background:#e5484d;color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer" style-active="transform:scale(.98)">고정 전체 삭제</button>
+                    <button onClick="{{ deleteThisMonth }}" style="width:100%;height:54px;border:1.5px solid #ececec;border-radius:16px;background:#fff;font:inherit;font-size:15px;font-weight:700;color:#222;cursor:pointer" style-active="transform:scale(.98)">이번 달만 삭제</button>
+                    <button onClick="{{ closeDeleteSheet }}" style="width:100%;height:50px;border:none;background:none;font:inherit;font-size:14px;font-weight:700;color:#888;cursor:pointer" style-active="opacity:.6">취소</button>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:#171717;color:#fff;font-size:13.5px;font-weight:600;padding:12px 20px;border-radius:999px;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);animation:toastUp .3s cubic-bezier(.22,1,.36,1) both;z-index:50">{{ toastMsg }}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:900},&quot;mood&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ink&quot;,&quot;toss&quot;,&quot;carrot&quot;],&quot;default&quot;:&quot;ink&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;device&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;mobile&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;mobile&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;autoLockSeconds&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:180,&quot;min&quot;:30,&quot;max&quot;:600,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'onboarding', mood: 'ink', device: 'mobile',
+    saved: false, copiedRec: false, bootToken: '',
+    unlock: 'idle', query: '', filter: 'ALL',
+    selectedId: 'kb', reveals: {}, copyMsg: {},
+    countdown: 180, conflict: 'skip', toast: '', items: null,
+    // form
+    formMode: 'new', formStep: 'edit', formTitle: '', formCategory: '',
+    formNote: '', formFields: [{ name:'아이디', value:'', sensitive:false }, { name:'비밀번호', value:'', sensitive:true }],
+    // asset management
+    income: 3200000, expenses: null, showIncomeSheet: false, incomeDraft: '',
+    assetTab: 'budget', savedBase: 4800000, investedBase: 6300000,
+    savingGoals: { '주택청약저축': 20000000, '자유적금': 6000000, '정기예금': 5000000 },
+    investReturn: '8.5',
+    showGoalSheet: false, goalAcctName: '', goalDraft: '', savingsView: 'each', deletedAccts: [],
+    customAccts: [], showAddAcct: false, addName: '', addBase: '', addGoal: '',
+    showReturnSheet: false, returnDraft: '',
+    // 세이빙 박스
+    boxTxns: null, showBoxSheet: false, showBoxDetail: false, boxShown: 10, boxMode: 'in', boxDraft: '', boxMemo: '', boxSource: 'cash',
+    expMode: 'new', expSel: null, showDeleteSheet: false,
+    exItem: '', exAmount: '', exDate: '2026-06-28', exMethod: '카드', exCat: '식비', exRecur: false, exMonths: '',
+    selDay: '2026-06-27',
+    // 카테고리 관리
+    categories: null, showCatMgr: false, catMgrMode: 'list',
+    catEditKey: null, catName: '', catColor: '#f2994a', catCode: '',
+  };
+
+  MOODS = {
+    ink:   { ac:'#171717', soft:'#f1f1f1', tint:'#fafafa', label:'Ink' },
+    toss:  { ac:'#3182f6', soft:'#e9f1fe', tint:'#f5f9ff', label:'Cobalt' },
+    carrot:{ ac:'#ff7314', soft:'#fff0e3', tint:'#fff8f2', label:'Carrot' },
+  };
+  // 자주 쓰는 필드 이름 추천 (읽기 전용, 폼 빠른 추가용)
+  SUGGEST = { '추천 필드': ['비밀번호', '계좌번호', '카드번호'] };
+  QUICK = ['비밀번호', '계좌번호', '카드번호'];
+
+  // 자산 관리
+  CATS = [
+    { key:'식비',       color:'#f2994a', code:'FOOD' },
+    { key:'교통',       color:'#4a90d9', code:'TRANS' },
+    { key:'주거·공과금', color:'#9b6bd6', code:'HOME' },
+    { key:'쇼핑',       color:'#e0689a', code:'SHOP' },
+    { key:'문화',       color:'#3bb273', code:'CULT' },
+    { key:'기타',       color:'#98a0a8', code:'ETC' },
+    { key:'저축',       color:'#20a4a4', code:'SAVE' },
+    { key:'투자',       color:'#7b61ff', code:'INVEST' },
+  ];
+  // 카테고리 색상 팔레트 (관리 화면 스와치)
+  CAT_COLORS = ['#f2994a','#eb5757','#e0689a','#9b6bd6','#7b61ff','#4a90d9','#2d9cdb','#20a4a4','#3bb273','#6fcf97','#f2c94c','#98a0a8'];
+  METHODS = ['카드', '자동이체', '현금'];
+  // 저축 적금 계좌 (누적 잔액 base; 이번 달 적립은 '저축' 지출 item과 이름이 같으면 자동 합산)
+  SAVING_ACCOUNTS = [
+    { name:'주택청약저축', base:1200000, color:'#0f8a8a' },
+    { name:'자유적금',     base:2400000, color:'#20a4a4' },
+    { name:'정기예금',     base:1200000, color:'#5cbdb9' },
+  ];
+  // 새 적금 추가 시 순환 배정 색상 (teal 계열)
+  ADD_COLORS = ['#178a8a','#2bb3a8','#3a9d94','#5cbdb9','#0f766e','#7cc9c4'];
+
+  defaultExpenses() {
+    return [
+      { id:'e1', item:'점심 김밥천국', amount:8500,   date:'2026-06-27', method:'카드',     category:'식비' },
+      { id:'e2', item:'지하철 정기권',  amount:65000,  date:'2026-06-25', method:'자동이체',     category:'교통', recurring:true },
+      { id:'e3', item:'6월 관리비',    amount:142000, date:'2026-06-25', method:'자동이체', category:'주거·공과금', recurring:true },
+      { id:'e4', item:'쿠팡 생필품',   amount:38900,  date:'2026-06-23', method:'카드',     category:'쇼핑' },
+      { id:'e5', item:'CGV 영화',     amount:28000,  date:'2026-06-21', method:'카드', category:'문화' },
+      { id:'e6', item:'스타벅스',      amount:6100,   date:'2026-06-20', method:'카드',     category:'식비' },
+      { id:'e7', item:'통신비',        amount:55000,  date:'2026-06-18', method:'자동이체', category:'주거·공과금', recurring:true },
+      { id:'e8', item:'배달의민족 저녁', amount:19800, date:'2026-06-17', method:'카드', category:'식비' },
+      { id:'e9', item:'올리브영',     amount:24500,  date:'2026-06-12', method:'카드',     category:'쇼핑' },
+      { id:'e10', item:'주택청약저축',  amount:100000, date:'2026-06-25', method:'자동이체', category:'저축', recurring:true },
+      { id:'e11', item:'자유적금',      amount:300000, date:'2026-06-05', method:'자동이체', category:'저축', recurring:true },
+      { id:'e12', item:'ETF 정기매수',   amount:200000, date:'2026-06-10', method:'자동이체', category:'투자', recurring:true },
+    ];
+  }
+
+  defaultItems() {
+    return [
+      { id:'kb', title:'국민은행 인터넷뱅킹', category:'은행', note:'OTP는 별도 보관', created:'2026.03.11', updated:'2026.06.20',
+        fields:[{name:'아이디',value:'minsoo.kim'},{name:'비밀번호',value:'Kb!7xq2049'},{name:'계좌번호',value:'123-45-678901'},{name:'보안카드 번호',value:'45 67 / 88 21'}] },
+      { id:'shin', title:'신한카드', category:'카드', note:'', created:'2026.04.02', updated:'2026.05.28',
+        fields:[{name:'카드번호',value:'5412 7788 9032 1146'},{name:'유효기간',value:'08/27'},{name:'CVC',value:'391'},{name:'카드 비밀번호',value:'1142'}] },
+      { id:'kiwoom', title:'키움증권', category:'증권', note:'영웅문S 로그인', created:'2026.02.19', updated:'2026.02.19',
+        fields:[{name:'계좌번호',value:'5009-22-019384'},{name:'인증서 비밀번호',value:'Sec#kw88'},{name:'거래 비밀번호',value:'4021'}] },
+      { id:'coupang', title:'쿠팡', category:'쇼핑', note:'', created:'2026.05.09', updated:'2026.06.14',
+        fields:[{name:'이메일',value:'minsoo@gmail.com'},{name:'비밀번호',value:'Cpang!2024'}] },
+      { id:'netflix', title:'넷플릭스', category:null, note:'가족 공유 계정', created:'2026.01.30', updated:'2026.06.03',
+        fields:[{name:'이메일',value:'family.kim@gmail.com'},{name:'비밀번호',value:'Nflx-house7'},{name:'프로필 PIN',value:'3344'}] },
+    ];
+  }
+
+  defaultBoxTxns() {
+    return [
+      { id:'b1', type:'in',  amount:150000, memo:'6월 남은 생활비',  source:'cash',    date:'2026-06-26' },
+      { id:'b2', type:'in',  amount:200000, memo:'자유적금에서 이체', source:'savings', date:'2026-06-15' },
+      { id:'b3', type:'out', amount:40000,  memo:'경조사비',         source:'cash',    date:'2026-06-22' },
+    ];
+  }
+
+  componentDidMount() {
+    this.setState({ items: this.defaultItems(), expenses: this.defaultExpenses(), boxTxns: this.defaultBoxTxns() });
+    this._t = setInterval(() => {
+      const vault = ['list','detail','form','reference','backup','asset','expense'].includes(this.state.screen);
+      if (vault && this.state.countdown > 0) {
+        this.setState(s => {
+          const n = s.countdown - 1;
+          if (n <= 0) return { countdown: 0, screen: 'unlock', unlock: 'idle' };
+          return { countdown: n };
+        });
+      }
+      // copy-mask countdowns
+      const cm = this.state.copyMsg; let changed = false; const next = {};
+      for (const k in cm) { if (cm[k] > 0) { next[k] = cm[k]-1; changed = true; if (next[k]===0){ const r={...this.state.reveals}; delete r[k]; this.setState({reveals:r}); } } }
+      if (changed) this.setState({ copyMsg: { ...cm, ...next } });
+    }, 1000);
+  }
+  componentWillUnmount(){ clearInterval(this._t); }
+
+  addField(name='') {
+    this.setState(s => s.formFields.length>=20 ? {} : ({ formFields:[...s.formFields, {name, value:'', sensitive:true}] }));
+  }
+  removeField(i){ this.setState(s=>({ formFields: s.formFields.filter((_,j)=>j!==i) })); }
+  editField(i,key,val){ this.setState(s=>({ formFields: s.formFields.map((f,j)=> j===i?{...f,[key]:val}:f) })); }
+  moveField(i,dir){ this.setState(s=>{ const a=[...s.formFields]; const j=i+dir; if(j<0||j>=a.length) return {}; [a[i],a[j]]=[a[j],a[i]]; return {formFields:a}; }); }
+  toggleFieldSensitive(i){ this.setState(s=>({ formFields: s.formFields.map((f,j)=> j===i?{...f, sensitive:!(f.sensitive!==false)}:f) })); }
+  isSensitiveName(n){ return /비밀번호|비번|password|passwd|pin|cvc|보안|인증서|거래|otp|secret/i.test(String(n||'')); }
+  deleteDetailField(idx){
+    this.setState(p=>({ items: p.items.map(i=> i.id===p.selectedId ? {...i, fields:i.fields.filter((_,j)=>j!==idx)} : i) }));
+    this.toast('필드를 삭제했어요');
+  }
+  go(screen, extra={}) { this.setState({ screen, ...extra }); }
+  deleteSavingAcct(name){
+    this.setState(p=>{
+      const g={...p.savingGoals}; delete g[name];
+      return { deletedAccts:[...(p.deletedAccts||[]), name], savingGoals:g, showGoalSheet:false };
+    });
+    this.toast(name+' 적금을 삭제했어요');
+  }
+  // ---- 카테고리 관리 ----
+  cats(){ return this.state.categories || this.CATS; }
+  saveCategory(){
+    const s=this.state;
+    const name=(s.catName||'').trim();
+    const code=(s.catCode||'').trim().toUpperCase();
+    if(!name){ this.toast('카테고리명을 입력하세요'); return; }
+    const list=this.cats();
+    const dupName=list.find(c=>c.key===name && c.key!==s.catEditKey);
+    if(dupName){ this.toast('이미 있는 카테고리명이에요'); return; }
+    if(code){ const dupCode=list.find(c=>(c.code||'').toUpperCase()===code && c.key!==s.catEditKey); if(dupCode){ this.toast('이미 쓰는 코드예요'); return; } }
+    this.setState(p=>{
+      const cats=(p.categories||this.CATS).map(c=>({...c}));
+      if(p.catEditKey){
+        const idx=cats.findIndex(c=>c.key===p.catEditKey);
+        if(idx>=0) cats[idx]={ key:name, color:p.catColor, code };
+        // 이름이 바뀌면 기존 지출·항목의 카테고리도 이관
+        const expenses = name!==p.catEditKey ? (p.expenses||[]).map(e=> e.category===p.catEditKey?{...e,category:name}:e) : p.expenses;
+        return { categories:cats, expenses, showCatMgr:true, catMgrMode:'list' };
+      }
+      cats.push({ key:name, color:p.catColor, code });
+      return { categories:cats, showCatMgr:true, catMgrMode:'list' };
+    });
+    this.toast(s.catEditKey ? '카테고리를 수정했어요' : '카테고리를 추가했어요');
+  }
+  deleteCategory(key){
+    this.setState(p=>({ categories:(p.categories||this.CATS).filter(c=>c.key!==key), catMgrMode:'list' }));
+    this.toast('카테고리를 삭제했어요');
+  }
+  toast(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),2200); }
+  fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+':'+String(ss).padStart(2,'0'); }
+  won(n){ return '₩'+Number(n||0).toLocaleString('ko-KR'); }
+  mdLabel(d){ const p=String(d).split('-'); return p.length===3 ? (+p[1])+'월 '+(+p[2])+'일' : d; }
+
+  toggleReveal(key) {
+    this.setState(s => {
+      const r = { ...s.reveals }, cm = { ...s.copyMsg };
+      if (r[key]) { delete r[key]; delete cm[key]; } else { r[key] = true; }
+      return { reveals: r, copyMsg: cm };
+    });
+  }
+  copyField(itemId, idx, value, label) {
+    const key = itemId+'-'+idx;
+    this.setState(s => ({ reveals:{...s.reveals,[key]:true}, copyMsg:{...s.copyMsg,[key]:30} }));
+    try { navigator.clipboard && navigator.clipboard.writeText(value); } catch(e){}
+    this.toast(label+' 복사됨 · 30초 후 자동 숨김');
+  }
+
+  renderVals() {
+    const M = this.MOODS[this.state.mood] || this.MOODS.ink;
+    const s = this.state;
+    const items = s.items || [];
+    const isDesk = s.device === 'desktop';
+
+    // ---- mood + device buttons ----
+    const moods = Object.keys(this.MOODS).map(k => {
+      const on = s.mood === k;
+      return { label:this.MOODS[k].label, pick:()=>this.setState({mood:k}),
+        btn:`border:none;border-radius:999px;padding:7px 14px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .18s;${on?`background:${this.MOODS[k].ac};color:#fff`:'background:none;color:#999'}` };
+    });
+    const segBtn = on => `border:none;border-radius:999px;padding:7px 16px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .18s;${on?'background:#171717;color:#fff':'background:none;color:#999'}`;
+
+    // ---- frame ----
+    const w = isDesk ? 1040 : 390, h = isDesk ? 660 : 800;
+    const frameStyle = `--ac:${M.ac};--soft:${M.soft};--tint:${M.tint};width:min(${w}px,calc(100vw - 32px));`;
+    const bezelStyle = isDesk
+      ? `background:#1c1c1e;border-radius:18px;padding:12px;box-shadow:0 40px 80px -30px rgba(0,0,0,.45)`
+      : `background:#1c1c1e;border-radius:54px;padding:11px;box-shadow:0 40px 80px -30px rgba(0,0,0,.5)`;
+    const screenStyle = `position:relative;overflow-y:auto;background:#fff;width:100%;height:${h}px;${isDesk?'border-radius:8px':'border-radius:44px'}`;
+
+    // ---- list ----
+    const q = s.query.trim();
+    const filtered = items.filter(it => !q || it.title.includes(q));
+    const avatar = `flex-shrink:0;width:44px;height:44px;border-radius:13px;background:${M.soft};color:${M.ac};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800`;
+    const filteredItems = filtered.map(it => ({
+      open:()=>this.go('detail',{selectedId:it.id, reveals:{}}),
+      avatar, initial:it.title[0], title:it.title,
+      sub:`${it.fields.length}개 필드`,
+    }));
+
+    // ---- detail ----
+    const cur = items.find(i=>i.id===s.selectedId) || items[0] || {fields:[],title:'',category:null,note:''};
+    const curFields = (cur.fields||[]).map((f,idx) => {
+      const { name, value } = f;
+      const key = cur.id+'-'+idx;
+      const revealed = !!s.reveals[key];
+      const cd = s.copyMsg[key]||0;
+      return { label:name, masking: cd>0,
+        copy:()=>this.copyField(cur.id,idx,value,name),
+        del:()=>this.deleteDetailField(idx),
+        countLabel: cd+'s',
+        toggle:()=>this.toggleReveal(key),
+        copyLabel: cd>0 ? `복사됨 ${cd}s` : '복사',
+        revealLabel: revealed ? '숨김' : '표시',
+        shown: revealed ? value : '•'.repeat(Math.min(12, String(value).length||8)),
+        font: revealed ? 'inherit' : 'ui-monospace,monospace',
+        ls: revealed ? '0' : '.04em',
+        bar:`height:100%;background:${M.ac};width:${(cd/30)*100}%;transition:width 1s linear` };
+    });
+
+    // ---- form (user-constructed fields) ----
+    const formFields = s.formFields.map((f,i) => ({
+      name:f.name, value:f.value, idx:i,
+      rename:e=>this.editField(i,'name',e.target.value),
+      setVal:e=>this.editField(i,'value',e.target.value),
+      remove:()=>this.removeField(i),
+      up:()=>this.moveField(i,-1), down:()=>this.moveField(i,1),
+      isFirst:i===0, isLast:i===s.formFields.length-1,
+      sensitive: f.sensitive!==false,
+      sensIcon: (f.sensitive!==false) ? '🔒' : '👁',
+      sensStyle:'width:28px;height:28px;border:none;background:none;font-size:13px;cursor:pointer;line-height:1;opacity:'+((f.sensitive!==false)?'1':'.5'),
+      toggleSens:()=>this.toggleFieldSensitive(i),
+    }));
+    const quickAdds = this.QUICK.map(n => ({ label:n, add:()=>this.addField(n) }));
+    const reviewFields = s.formFields.filter(f=>f.name.trim()).map(f=>{
+      const sens = f.sensitive!==false;
+      const val = (f.value||'').trim();
+      return { name:f.name.trim(), sensitive:sens,
+        shown: sens ? '••••••••' : (val || '—'),
+        shownStyle:'font-family:'+(sens?'ui-monospace,monospace':'inherit')+';font-size:14px;letter-spacing:'+(sens?'.04em':'0')+';color:'+(sens?'#999':'#333')+';font-weight:'+(sens?'400':'600')+';max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right' };
+    });
+
+    // ---- suggestions (read-only helper) ----
+    const suggestGroups = Object.keys(this.SUGGEST).map(g => ({
+      group:g, names: this.SUGGEST[g].map(n => ({ name:n })),
+    }));
+
+    // ---- conflict modes ----
+    const conflictModes = [['reject','거부','충돌 시 전체 가져오기 중단'],['skip','건너뛰기','기존 항목 유지, 새 항목만 추가'],['replace','덮어쓰기','같은 라벨은 백업 내용으로 교체']].map(([k,label,desc])=>{
+      const on=s.conflict===k;
+      return { label, desc, pick:()=>this.setState({conflict:k}),
+        style:`display:flex;align-items:center;gap:12px;width:100%;padding:13px 15px;border:1.5px solid ${on?M.ac:'#ececec'};border-radius:13px;background:${on?M.tint:'#fff'};cursor:pointer;transition:all .16s`,
+        radio:`flex-shrink:0;width:19px;height:19px;border-radius:50%;border:5px solid ${on?M.ac:'#dcdcdc'};transition:all .16s` };
+    });
+
+    // ---- unlock state ----
+    const ust = s.unlock;
+    const unlockRing = `position:relative;width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;${ust==='authing'?`border:3px solid ${M.soft};border-top-color:${M.ac};animation:ring .9s linear infinite`:ust==='fail'?'background:#fdeaea':''}`;
+    const unlockDot = ust==='authing' ? 'display:none' : `width:72px;height:72px;border-radius:50%;background:${ust==='fail'?'#fdeaea':M.ac};display:flex;align-items:center;justify-content:center`;
+
+    // ---- asset management ----
+    const income = s.income;
+    const exps = s.expenses || [];
+    const spent = exps.reduce((a,e)=>a+e.amount,0);
+    const remaining = income - spent;
+    const over = spent > income;
+    const spentRatio = income>0 ? Math.min(spent/income, 1) : 0;
+    const CATS = s.categories || this.CATS;
+    const catMap = {}; CATS.forEach(c=>catMap[c.key]=c);
+    const catTotals = CATS.map(c=>{
+      const total = exps.filter(e=>e.category===c.key).reduce((a,e)=>a+e.amount,0);
+      return { key:c.key, color:c.color, total };
+    }).filter(c=>c.total>0).sort((a,b)=>b.total-a.total);
+    const maxCat = catTotals.length ? catTotals[0].total : 1;
+    const catRows = catTotals.map(c=>({
+      name:c.key, color:c.color, amount:this.won(c.total),
+      pct: spent>0 ? Math.round(c.total/spent*100) : 0,
+      bar:`height:100%;border-radius:999px;background:${c.color};width:${(c.total/maxCat)*100}%;transition:width .55s cubic-bezier(.22,1,.36,1)`,
+    }));
+    const sortedExps = [...exps].sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
+    const mkRow = e => {
+      const c = catMap[e.category] || { color:'#98a0a8' };
+      return {
+        open:()=>this.setState({screen:'expense',expMode:'edit',expSel:e.id,exItem:e.item,exAmount:String(e.amount),exDate:e.date,exMethod:e.method,exCat:e.category,exRecur:!!e.recurring,exMonths:e.months?String(e.months):''}),
+        dot:`flex-shrink:0;width:40px;height:40px;border-radius:12px;background:${c.color}1f;color:${c.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800`,
+        initial:(e.item||' ')[0],
+        item:e.item, meta:`${e.category} · ${this.mdLabel(e.date)}`,
+        recurring:!!e.recurring,
+        amount:'-'+this.won(e.amount),
+      };
+    };
+
+    // ---- expense calendar (month: 2026-06) ----
+    const CY = 2026, CM = 6, TODAY = '2026-06-28';
+    const pad2 = n => String(n).padStart(2,'0');
+    const dayTotals = {};
+    exps.forEach(e=>{ dayTotals[e.date] = (dayTotals[e.date]||0) + e.amount; });
+    const compact = n => n>=10000 ? (Math.round(n/1000)/10).toString().replace(/\.0$/,'')+'만' : Math.round(n/1000)+'천';
+    const startDow = new Date(CY, CM-1, 1).getDay();
+    const daysInMonth = new Date(CY, CM, 0).getDate();
+    const weekdays = ['일','월','화','수','목','금','토'].map((w,i)=>({
+      label:w, style:`text-align:center;font-size:11px;font-weight:700;padding:4px 0;color:${i===0?'#e5484d':(i===6?'#4a90d9':'#bcbcbc')}`
+    }));
+    const calCells = [];
+    for(let i=0;i<startDow;i++) calCells.push({ empty:true, day:'', hasSpend:false, amount:'', pick:()=>{}, style:'aspect-ratio:1;background:none;border:none', numStyle:'', amtStyle:'display:none' });
+    for(let d=1; d<=daysInMonth; d++){
+      const ds = `${CY}-${pad2(CM)}-${pad2(d)}`;
+      const total = dayTotals[ds] || 0;
+      const sel = s.selDay===ds, has = total>0, isToday = ds===TODAY;
+      calCells.push({
+        empty:false, day:String(d), hasSpend:has, amount:compact(total),
+        pick:()=>this.setState({selDay:ds}),
+        style:`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;aspect-ratio:1;padding:2px;border:none;border-radius:11px;cursor:pointer;background:${sel?M.ac:(has?M.soft:'transparent')};transition:transform .12s,background .15s`,
+        numStyle:`font-size:13px;font-weight:${(sel||isToday)?'800':'600'};line-height:1;color:${sel?'#fff':(isToday?M.ac:'#555')}`,
+        amtStyle:`font-size:9px;font-weight:700;line-height:1;color:${sel?'rgba(255,255,255,.85)':'#e5484d'}`,
+      });
+    }
+    const selDayExps = s.selDay ? sortedExps.filter(e=>e.date===s.selDay) : [];
+    const selDayTotalNum = selDayExps.reduce((a,e)=>a+e.amount,0);
+    const dayExpenseRows = selDayExps.map(mkRow);
+
+    // ---- 저축·투자 (지출 카테고리 자동 연동) ----
+    const deletedAccts = s.deletedAccts || [];
+    const savingExps = exps.filter(e=>e.category==='저축');
+    const investExps = exps.filter(e=>e.category==='투자');
+    const investMonth = investExps.reduce((a,e)=>a+e.amount,0);
+    // 적금별 집계: 이번 달 '저축' 지출을 item 이름으로 묶어 각 적금 계좌에 합산
+    const savingByItem = {};
+    savingExps.forEach(e=>{ savingByItem[e.item] = (savingByItem[e.item]||0) + e.amount; });
+    const acctNames = [...this.SAVING_ACCOUNTS, ...(s.customAccts||[])].map(a=>a.name).filter(n=>!deletedAccts.includes(n));
+    Object.keys(savingByItem).forEach(n=>{ if(!acctNames.includes(n) && !deletedAccts.includes(n)) acctNames.push(n); });
+    const acctMeta = {}; [...this.SAVING_ACCOUNTS, ...(s.customAccts||[])].forEach((a,i)=>{ acctMeta[a.name]={base:a.base,color:a.color}; });
+    const fallbackColors = ['#7cc9c4','#96d6d1','#b0e0dc'];
+    const acctData = acctNames.map((name,i)=>{
+      const m = acctMeta[name] || { base:0, color:fallbackColors[i%fallbackColors.length] };
+      const month = savingByItem[name] || 0;
+      return { name, base:m.base, color:m.color, month, total:m.base + month };
+    }).sort((a,b)=>b.total-a.total);
+    // 합계는 삭제되지 않은 적금만 반영
+    const savedMonth = acctData.reduce((a,x)=>a+x.month,0);
+    const savedTotal = acctData.reduce((a,x)=>a+x.total,0);
+    const maxAcct = acctData.length ? Math.max(...acctData.map(a=>a.total)) : 1;
+    const savingGoals = s.savingGoals || {};
+    const savingAccounts = acctData.map(a=>{
+      const goal = savingGoals[a.name] || 0;
+      const hasG = goal > 0;
+      const gp = hasG ? Math.min(Math.round(a.total/goal*100), 100) : 0;
+      const remain = Math.max(goal - a.total, 0);
+      const fillPct = hasG ? gp : (a.total/maxAcct)*100;
+      return {
+        name:a.name, color:a.color, totalStr:this.won(a.total),
+        hasMonth:a.month>0, monthStr:'+'+this.won(a.month),
+        hasGoal:hasG, noGoal:!hasG, goalPct:gp,
+        goalLabel: hasG ? ('목표 '+this.won(goal)+' · '+this.won(remain)+' 남음') : '목표 미설정',
+        bar:`height:100%;border-radius:999px;background:${a.color};width:${fillPct}%;transition:width .55s cubic-bezier(.22,1,.36,1)`,
+        editGoal:()=>this.setState({ showGoalSheet:true, goalAcctName:a.name, goalDraft: goal?String(goal):'' }),
+        deleteAcct:()=>this.deleteSavingAcct(a.name),
+      };
+    });
+    const totalGoal = Object.keys(savingGoals).reduce((sum,k)=> sum + (acctNames.includes(k)?(savingGoals[k]||0):0), 0);
+    const hasTotalGoal = totalGoal > 0;
+    const totalGoalPct = hasTotalGoal ? Math.min(Math.round(savedTotal/totalGoal*100),100) : 0;
+    const investPrincipal = s.investedBase + investMonth;   // 투자 원금
+    const investRate = parseFloat(s.investReturn);           // 수익률 %
+    const hasRate = s.investReturn.trim() !== '' && !isNaN(investRate);
+    const investValue = hasRate ? Math.round(investPrincipal * (1 + investRate/100)) : investPrincipal; // 평가금액
+    const investPnl = investValue - investPrincipal;         // 평가손익
+    const investTotal = investValue;
+    // ---- 세이빙 박스 ----
+    const boxTxns = s.boxTxns || [];
+    const boxIn  = boxTxns.filter(t=>t.type==='in').reduce((a,t)=>a+t.amount,0);
+    const boxOut = boxTxns.filter(t=>t.type==='out').reduce((a,t)=>a+t.amount,0);
+    const boxBalance = boxIn - boxOut;
+    const boxFromSavings = boxTxns.filter(t=>t.type==='in'&&t.source==='savings').reduce((a,t)=>a+t.amount,0);
+    const displayedSaved = Math.max(0, savedTotal - boxFromSavings);   // 박스로 이체한 만큼 저축에서 차감
+    const boxRows = [...boxTxns].sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0)).map(t=>{
+      const isIn = t.type==='in';
+      const col = isIn ? '#c08a15' : '#e5484d';
+      return {
+        memo: t.memo || (isIn?'입금':'출금'),
+        date: this.mdLabel(t.date),
+        fromSavings: t.source==='savings',
+        sign: isIn?'+':'−',
+        icon:`flex:none;width:34px;height:34px;border-radius:11px;background:${isIn?'#fbf1d7':'#fdecec'};color:${col};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;line-height:1`,
+        amount:(isIn?'+':'-')+this.won(t.amount), color:col,
+        del:()=>{ this.setState(p=>({boxTxns:(p.boxTxns||[]).filter(x=>x.id!==t.id)})); this.toast('기록을 삭제했어요'); },
+      };
+    });
+    const boxSrcSeg = on => `flex:1;height:44px;border:1.5px solid ${on?'#171717':'#ececec'};border-radius:12px;background:${on?'#f5f5f5':'#fff'};font:inherit;font-size:13.5px;font-weight:700;color:${on?'#171717':'#888'};cursor:pointer;transition:all .14s`;
+    const netWorth = displayedSaved + investTotal;
+    const monthContrib = savedMonth + investMonth;
+    const contribExps = [...savingExps.filter(e=>acctNames.includes(e.item)), ...investExps].sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
+    const contribRows = contribExps.map(e=>{ const c = catMap[e.category]||{color:'#20a4a4'}; return { ...mkRow(e), amount:'+'+this.won(e.amount), amtColor:c.color }; });
+    const goalPresets = [10000000,30000000,50000000,100000000].map(v=>({
+      label: v>=100000000 ? (v/100000000)+'억' : (v/10000000)+'천만',
+      pick:()=>this.setState({goalDraft:String(v)}),
+    }));
+    const catChips = CATS.map(c=>{
+      const on = s.exCat===c.key;
+      return { name:c.key, pick:()=>this.setState({exCat:c.key}),
+        style:`display:flex;align-items:center;gap:7px;border:1.5px solid ${on?c.color:'#ececec'};border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:${on?c.color:'#777'};background:${on?c.color+'14':'#fff'};cursor:pointer;transition:all .14s`,
+        dot:`width:8px;height:8px;border-radius:50%;background:${c.color}` };
+    });
+    const methodChips = this.METHODS.map(m=>{
+      const on = s.exMethod===m;
+      return { name:m, pick:()=>this.setState({exMethod:m}),
+        style:`border:1.5px solid ${on?M.ac:'#ececec'};border-radius:999px;padding:9px 16px;font:inherit;font-size:13.5px;font-weight:700;color:${on?M.ac:'#777'};background:${on?M.tint:'#fff'};cursor:pointer;transition:all .14s` };
+    });
+
+    return {
+      // controls
+      moods, mobBtn:segBtn(!isDesk), deskBtn:segBtn(isDesk),
+      pickMobile:()=>this.setState({device:'mobile'}), pickDesktop:()=>this.setState({device:'desktop'}),
+      screen:s.screen, jump:e=>this.setState({screen:e.target.value, countdown: e.target.value==='unlock'?180:s.countdown}),
+      frameStyle, bezelStyle, screenStyle,
+
+      // screen flags
+      isOnboarding:s.screen==='onboarding', isRecovery:s.screen==='recovery', isUnlock:s.screen==='unlock',
+      isRecover:s.screen==='recover', isList:s.screen==='list', isDetail:s.screen==='detail',
+      isForm:s.screen==='form', isReference:s.screen==='reference', isBackup:s.screen==='backup', isNotFound:s.screen==='notfound',
+      isAsset:s.screen==='asset', isExpense:s.screen==='expense',
+
+      // onboarding
+      goRecovery:()=>this.go('recovery'),
+      bootToken:s.bootToken, setBootToken:e=>this.setState({bootToken:e.target.value}),
+      onboardDisabled:!s.bootToken.trim(),
+      onboardBtnStyle: s.bootToken.trim()
+        ? 'width:100%;height:54px;border:none;border-radius:16px;background:var(--ac,#171717);color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .2s;box-shadow:0 8px 22px -8px var(--ac,#171717)'
+        : 'width:100%;height:54px;border:none;border-radius:16px;background:#f0f0f0;color:#b0b0b0;font:inherit;font-size:16px;font-weight:700;cursor:not-allowed;transition:transform .12s',
+
+      // recovery
+      recoveryParts:['7QK4-2MXP','9FW1-AB3D','LZ8N-6RTV','C5HY-PJ02','EK39-W7QM','4DXN-1SLB'],
+      copyRecovery:()=>{ this.setState({copiedRec:true}); this.toast('복구코드 복사됨'); },
+      copyRecLabel: s.copiedRec ? '✓ 복사됨' : '복사',
+      toggleSaved:()=>this.setState(p=>({saved:!p.saved})),
+      checkBox:`flex-shrink:0;width:22px;height:22px;border-radius:7px;border:2px solid ${s.saved?M.ac:'#d2d2d2'};background:${s.saved?M.ac:'#fff'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;transition:all .16s`,
+      checkMark: s.saved ? '✓' : '',
+      notSaved: !s.saved,
+      recDoneBtn:`width:100%;height:54px;border:none;border-radius:16px;font:inherit;font-size:16px;font-weight:700;transition:all .2s;${s.saved?`background:${M.ac};color:#fff;cursor:pointer;box-shadow:0 8px 22px -8px ${M.ac}`:'background:#ececec;color:#b8b8b8;cursor:not-allowed'}`,
+      finishOnboard:()=>{ if(s.saved) this.go('unlock',{unlock:'idle'}); },
+
+      // unlock
+      unlockRing, unlockDot,
+      unlockIdle: ust==='idle' || ust==='authing'===false && ust!=='fail' && ust!=='authing',
+      unlockFail: ust==='fail',
+      unlockTitle: ust==='authing'?'인증 중…' : ust==='fail'?'인증에 실패했어요' : '잠겨 있어요',
+      unlockSub: ust==='authing'?'기기에서 생체 인증을 완료해 주세요.' : ust==='fail'?'다시 시도하거나 복구코드로 접근할 수 있어요.' : '패스키로 본인을 확인하고 보관함을 엽니다.',
+      unlockCta: ust==='fail'?'다시 시도' : '패스키로 잠금해제',
+      doUnlock:()=>{ this.setState({unlock:'authing'}); clearTimeout(this._u); this._u=setTimeout(()=>{ this.setState({unlock:'idle', screen:'list', countdown:180}); },1400); },
+      goRecover:()=>this.go('recover'), goUnlock:()=>this.go('unlock',{unlock:'idle'}),
+
+      // recover
+      recInputs:['7QK4','2MXP','9FW1','AB3D','LZ8N','6RTV'],
+      doRecover:()=>{ this.toast('복구 완료 · 새 패스키를 등록하세요'); this.go('onboarding'); },
+
+      // list
+      itemCount: items.length, countdown:this.fmt(s.countdown),
+      query:s.query, setQuery:e=>this.setState({query:e.target.value}),
+      filteredItems, hasItems: filtered.length>0, emptyItems: filtered.length===0,
+      lockNow:()=>this.go('unlock',{unlock:'idle',countdown:180}),
+      // 카테고리 관리
+      showCatMgr:s.showCatMgr, catMgrList: s.catMgrMode!=='edit', catMgrEdit: s.catMgrMode==='edit',
+      catMgrTitle: s.catMgrMode==='edit' ? (s.catEditKey?'카테고리 수정':'카테고리 추가') : '카테고리 관리',
+      openCatMgr:()=>this.setState({showCatMgr:true, catMgrMode:'list'}),
+      closeCatMgr:()=>this.setState({showCatMgr:false}),
+      backCatList:()=>this.setState({catMgrMode:'list'}),
+      catMgrRows: CATS.map(c=>({
+        name:c.key, color:c.color, code:c.code||'—', hasCode:!!c.code,
+        dot:`flex:none;width:12px;height:12px;border-radius:50%;background:${c.color}`,
+        edit:()=>this.setState({catMgrMode:'edit', catEditKey:c.key, catName:c.key, catColor:c.color, catCode:c.code||''}),
+        del:()=>this.deleteCategory(c.key),
+      })),
+      newCategory:()=>this.setState({catMgrMode:'edit', catEditKey:null, catName:'', catColor:this.CAT_COLORS[0], catCode:''}),
+      catName:s.catName, setCatName:e=>this.setState({catName:e.target.value.slice(0,12)}),
+      catCode:s.catCode, setCatCode:e=>this.setState({catCode:e.target.value.replace(/[^a-zA-Z0-9_]/g,'').toUpperCase().slice(0,10)}),
+      catColorVal:s.catColor,
+      catColorHex:(s.catColor||'').replace('#','').toUpperCase(),
+      setCatColorHex:e=>{ const h=e.target.value.replace(/[^0-9a-fA-F]/g,'').slice(0,6).toUpperCase(); this.setState({catColor:'#'+h}); },
+      catColorSwatches:this.CAT_COLORS.map(col=>({
+        pick:()=>this.setState({catColor:col}),
+        style:`width:34px;height:34px;border-radius:50%;background:${col};cursor:pointer;border:${s.catColor===col?'3px solid #171717':'3px solid transparent'};box-shadow:0 0 0 1px #e6e6e6;transition:transform .12s`,
+      })),
+      catEditKey:s.catEditKey, catEditIsEdit:!!s.catEditKey,
+      saveCategory:()=>this.saveCategory(),
+      deleteEditingCat:()=>this.deleteCategory(s.catEditKey),      goNew:()=>this.go('form',{formMode:'new',formStep:'edit',formTitle:'',formCategory:'',formNote:'',formFields:[{name:'아이디',value:'',sensitive:false},{name:'비밀번호',value:'',sensitive:true}]}),
+
+      // detail
+      curAvatar:avatar, curInitial:cur.title?cur.title[0]:'', curTitle:cur.title,
+      curFields, curHasNote: !!cur.note, curNote:cur.note,
+      curHasDates: !!cur.created,
+      curDates: cur.created ? ('수정 '+(cur.updated||cur.created)+' · 생성 '+cur.created) : '',
+      goList:()=>this.go('list'), goBackup:()=>this.go('backup'),
+      goEdit:()=>this.go('form',{formMode:'edit',formStep:'edit',formTitle:cur.title,formNote:cur.note||'',formFields:cur.fields.map(f=>({...f, sensitive: f.sensitive!==undefined?f.sensitive:this.isSensitiveName(f.name)}))}),
+      deleteItem:()=>{ this.setState(p=>({items:p.items.filter(i=>i.id!==cur.id)})); this.toast('항목을 삭제했어요'); this.go('list'); },
+
+      // form
+      formStepEdit: s.formStep==='edit', formStepReview: s.formStep==='review',
+      formTitle: s.formMode==='edit'?'항목 수정':'새 항목',
+      ftitle:s.formTitle, setFtitle:e=>this.setState({formTitle:e.target.value}),
+      formFields, fieldCount:s.formFields.length, atMaxField:s.formFields.length>=20,
+      addBlankField:()=>this.addField(''), quickAdds,
+      fnote:s.formNote, setFnote:e=>this.setState({formNote:e.target.value}),
+      reviewFields, reviewHasNote: !!s.formNote.trim(),
+      goReview:()=>{ if(!s.formTitle.trim()){ this.toast('제목을 입력하세요'); return; } this.setState({formStep:'review'}); },
+      backToEdit:()=>this.setState({formStep:'edit'}),
+      cancelForm:()=>this.go(s.formMode==='edit'?'detail':'list'),
+      confirmSave:()=>{
+        const fields = s.formFields.filter(f=>f.name.trim()).map(f=>({name:f.name.trim(),value:f.value, sensitive:f.sensitive!==false}));
+        this.setState(p=>{
+          if(p.formMode==='edit'){
+            return { items: p.items.map(i=> i.id===p.selectedId ? {...i, title:p.formTitle.trim(), note:p.formNote, fields} : i) };
+          }
+          const id = 'it'+Date.now();
+          return { items:[{ id, title:p.formTitle.trim(), note:p.formNote, fields }, ...p.items], selectedId:id };
+        });
+        this.toast(s.formMode==='edit'?'수정 내용을 저장했어요':'새 항목을 추가했어요');
+        this.go(s.formMode==='edit'?'detail':'list');
+      },
+
+      // suggestions
+      suggestGroups,
+
+      // asset dashboard
+      goAsset:()=>this.go('asset'),
+      tabVaultStyle: 'flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:none;cursor:pointer;padding:8px 0 6px;position:relative;transition:transform .12s;color:'+(['list','detail','form','reference','backup'].includes(s.screen)?M.ac:'#bcbcbc'),
+      tabVaultBar: 'position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;border-radius:2px;transition:background .18s;background:'+(['list','detail','form','reference','backup'].includes(s.screen)?M.ac:'transparent'),
+      tabAssetStyle: 'flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:none;cursor:pointer;padding:8px 0 6px;position:relative;transition:transform .12s;color:'+(['asset','expense'].includes(s.screen)?M.ac:'#bcbcbc'),
+      tabAssetBar: 'position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;border-radius:2px;transition:background .18s;background:'+(['asset','expense'].includes(s.screen)?M.ac:'transparent'),
+      assetMonth:'2026년 6월',
+      remainingStr:this.won(remaining), remainColor: over?'#e5484d':'#171717',
+      incomeStr:this.won(income), spentStr:this.won(spent),
+      spentPct: income>0 ? Math.round(spent/income*100) : 0,
+      spentBar:`height:100%;border-radius:999px;background:${over?'#e5484d':M.ac};width:${spentRatio*100}%;transition:width .6s cubic-bezier(.22,1,.36,1)`,
+      expCount: exps.length, hasCats: catRows.length>0, catRows,
+      weekdays, calCells,
+      hasDaySel: !!s.selDay, selDayLabel: s.selDay ? this.mdLabel(s.selDay) : '',
+      selDayTotal: this.won(selDayTotalNum),
+      hasDayExps: selDayExps.length>0, dayEmpty: selDayExps.length===0,
+      dayExpenseRows,
+      assetTab:s.assetTab, isBudgetTab: s.assetTab!=='savings', isSavingsTab: s.assetTab==='savings',
+      showBudget:()=>this.setState({assetTab:'budget'}), showSavings:()=>this.setState({assetTab:'savings'}),
+      segBudgetStyle:'flex:1;height:34px;border:none;border-radius:9px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s'+(s.assetTab!=='savings'?';background:#fff;color:#171717;box-shadow:0 1px 3px rgba(0,0,0,.09)':';background:none;color:#9a9a9a'),
+      segSavingsStyle:'flex:1;height:34px;border:none;border-radius:9px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s'+(s.assetTab==='savings'?';background:#fff;color:#171717;box-shadow:0 1px 3px rgba(0,0,0,.09)':';background:none;color:#9a9a9a'),
+      netWorthStr:this.won(netWorth), monthContribStr:'+'+this.won(monthContrib), contribCount:contribExps.length,
+      savedTotalStr:this.won(displayedSaved), investTotalStr:this.won(investTotal),
+      // 세이빙 박스
+      boxBalanceStr:this.won(boxBalance), boxTxnCount:boxTxns.length,
+      boxRows, hasBoxTxns:boxTxns.length>0, noBoxTxns:boxTxns.length===0,
+      showBoxSheet:s.showBoxSheet, boxIsIn:s.boxMode==='in', boxSrcSavings:s.boxSource==='savings',
+      openBoxIn:()=>this.setState({showBoxSheet:true,boxMode:'in',boxDraft:'',boxMemo:'',boxSource:'cash'}),
+      openBoxOut:()=>this.setState({showBoxSheet:true,boxMode:'out',boxDraft:'',boxMemo:'',boxSource:'cash'}),
+      closeBox:()=>this.setState({showBoxSheet:false}),
+      showBoxDetail:s.showBoxDetail,
+      openBoxDetail:()=>this.setState({showBoxDetail:true, boxShown:10}),
+      closeBoxDetail:()=>this.setState({showBoxDetail:false}),
+      boxRowsShown: boxRows.slice(0, s.boxShown),
+      boxHasMore: boxRows.length > s.boxShown,
+      boxMoreCount: Math.min(10, boxRows.length - s.boxShown),
+      showMoreBox:()=>this.setState(p=>({boxShown:p.boxShown+10})),
+      boxSheetTitle:s.boxMode==='in'?'입금':'출금',
+      boxSheetDesc:s.boxMode==='in'?'저축·투자·지출하고 남은 돈을 박스에 넣어두세요.':'박스에서 돈을 꺼내 쓴 내역을 기록해요.',
+      boxSaveLabel:s.boxMode==='in'?'입금 기록':'출금 기록',
+      boxMemoPlaceholder:s.boxMode==='in'?'예: 6월 남은 생활비':'예: 경조사비',
+      boxDraftFmt: s.boxDraft ? Number(s.boxDraft).toLocaleString('ko-KR') : '',
+      setBoxDraft:e=>this.setState({boxDraft:e.target.value.replace(/[^0-9]/g,'').slice(0,10)}),
+      boxMemo:s.boxMemo, setBoxMemo:e=>this.setState({boxMemo:e.target.value.slice(0,20)}),
+      pickSrcCash:()=>this.setState({boxSource:'cash'}), pickSrcSavings:()=>this.setState({boxSource:'savings'}),
+      srcCashStyle:boxSrcSeg(s.boxSource==='cash'), srcSavingsStyle:boxSrcSeg(s.boxSource==='savings'),
+      savedAvailStr:this.won(displayedSaved),
+      saveBoxTxn:()=>{
+        const amt=parseInt(s.boxDraft||'0',10)||0;
+        if(!amt){ this.toast('금액을 입력하세요'); return; }
+        if(s.boxMode==='out' && amt>boxBalance){ this.toast('박스 잔액보다 많이 출금할 수 없어요'); return; }
+        if(s.boxMode==='in' && s.boxSource==='savings' && amt>displayedSaved){ this.toast('저축 잔액보다 많이 이체할 수 없어요'); return; }
+        const src = s.boxMode==='in'?s.boxSource:'cash';
+        const memo=(s.boxMemo||'').trim() || (s.boxMode==='in'?(src==='savings'?'저축에서 이체':'직접 입금'):'출금');
+        this.setState(p=>({ boxTxns:[{ id:'b'+Date.now(), type:p.boxMode, amount:amt, memo, source:src, date:'2026-06-28' }, ...(p.boxTxns||[])], showBoxSheet:false }));
+        this.toast(s.boxMode==='in' ? (src==='savings'?'저축에서 이체했어요':'박스에 입금했어요') : '박스에서 출금했어요');
+      },
+      investReturn:s.investReturn,
+      investReturnStr:(hasRate?(investRate>=0?'+':'')+investRate:'0')+'%',
+      showReturnSheet:s.showReturnSheet,
+      openReturn:()=>this.setState({showReturnSheet:true, returnDraft:s.investReturn}),
+      closeReturn:()=>this.setState({showReturnSheet:false}),
+      returnDraft:s.returnDraft, setReturnDraft:e=>this.setState({returnDraft:e.target.value.replace(/[^0-9.\-]/g,'').slice(0,6)}),
+      returnPresets:['-5','0','5','10'].map(v=>({ label:(v[0]==='-'?v:'+'+v)+'%', pick:()=>this.setState({returnDraft:v}) })),
+      saveReturn:()=>{ this.setState({investReturn:s.returnDraft, showReturnSheet:false}); this.toast('투자 수익률을 저장했어요'); },
+      investPrincipalStr:this.won(investPrincipal),
+      investPnlStr:(investPnl>=0?'+':'-')+this.won(Math.abs(investPnl)),
+      investPnlColor: investPnl>=0 ? '#7b61ff' : '#e5484d',
+      hasRate,
+      savedMonthStr:'+'+this.won(savedMonth), investMonthStr:'+'+this.won(investMonth),
+      savingAccounts, savingAcctCount: savingAccounts.length,
+      savingsEach: s.savingsView!=='total', savingsTotal: s.savingsView==='total',
+      savingsByEach:()=>this.setState({savingsView:'each'}), savingsByTotal:()=>this.setState({savingsView:'total'}),
+      svEachStyle:'border:none;border-radius:7px;padding:5px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s'+(s.savingsView!=='total'?';background:#fff;color:#171717;box-shadow:0 1px 3px rgba(0,0,0,.09)':';background:none;color:#9a9a9a'),
+      svTotalStyle:'border:none;border-radius:7px;padding:5px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s'+(s.savingsView==='total'?';background:#fff;color:#171717;box-shadow:0 1px 3px rgba(0,0,0,.09)':';background:none;color:#9a9a9a'),
+      hasTotalGoal, totalGoalPct, totalGoalStr:this.won(totalGoal),
+      totalGoalBar:`height:100%;border-radius:999px;background:#20a4a4;width:${totalGoalPct}%;transition:width .6s cubic-bezier(.22,1,.36,1)`,
+      showGoalSheet:s.showGoalSheet,
+      goalAcctName:s.goalAcctName,
+      goalAcctColor:(acctMeta[s.goalAcctName]||{color:'#20a4a4'}).color,
+      goalAcctCurStr:this.won((acctMeta[s.goalAcctName]?acctMeta[s.goalAcctName].base:0) + (savingByItem[s.goalAcctName]||0)),
+      goalAcctHasGoal:(savingGoals[s.goalAcctName]||0) > 0,
+      closeGoal:()=>this.setState({showGoalSheet:false}),
+      deleteGoalAcct:()=>this.deleteSavingAcct(s.goalAcctName),
+      // 적금 추가
+      showAddAcct:s.showAddAcct,
+      openAddAcct:()=>this.setState({showAddAcct:true, addName:'', addBase:'', addGoal:''}),
+      closeAddAcct:()=>this.setState({showAddAcct:false}),
+      addName:s.addName, setAddName:e=>this.setState({addName:e.target.value.slice(0,16)}),
+      addBaseFmt: s.addBase ? Number(s.addBase).toLocaleString('ko-KR') : '',
+      setAddBase:e=>this.setState({addBase:e.target.value.replace(/[^0-9]/g,'').slice(0,12)}),
+      addGoalFmt: s.addGoal ? Number(s.addGoal).toLocaleString('ko-KR') : '',
+      setAddGoal:e=>this.setState({addGoal:e.target.value.replace(/[^0-9]/g,'').slice(0,12)}),
+      addGoalPresets:[10000000,30000000,50000000,100000000].map(v=>({
+        label: v>=100000000 ? (v/100000000)+'억' : (v/10000000)+'천만',
+        pick:()=>this.setState({addGoal:String(v)}),
+      })),
+      saveAddAcct:()=>{
+        const name=(s.addName||'').trim();
+        if(!name){ this.toast('적금 이름을 입력하세요'); return; }
+        if(acctNames.includes(name)){ this.toast('이미 있는 적금 이름이에요'); return; }
+        const base=parseInt(s.addBase||'0',10)||0;
+        const goal=parseInt(s.addGoal||'0',10)||0;
+        const color=this.ADD_COLORS[(s.customAccts||[]).length % this.ADD_COLORS.length];
+        this.setState(p=>({
+          customAccts:[...(p.customAccts||[]), {name, base, color}],
+          savingGoals: goal ? {...p.savingGoals, [name]:goal} : p.savingGoals,
+          deletedAccts:(p.deletedAccts||[]).filter(n=>n!==name),
+          showAddAcct:false, addName:'', addBase:'', addGoal:'',
+        }));
+        this.toast(name+' 적금을 추가했어요');
+      },
+      goalDraftFmt: s.goalDraft ? Number(s.goalDraft).toLocaleString('ko-KR') : '',
+      setGoalDraft:e=>this.setState({goalDraft:e.target.value.replace(/[^0-9]/g,'').slice(0,12)}),
+      goalPresets,
+      saveGoal:()=>{
+        const amt = parseInt(s.goalDraft||'0',10)||0;
+        if(!amt){ this.toast('목표 금액을 입력하세요'); return; }
+        this.setState(p=>({ savingGoals:{...p.savingGoals, [p.goalAcctName]:amt}, showGoalSheet:false }));
+        this.toast(s.goalAcctName+' 목표를 저장했어요');
+      },
+      removeGoal:()=>{ this.setState(p=>{ const g={...p.savingGoals}; delete g[p.goalAcctName]; return {savingGoals:g, showGoalSheet:false}; }); this.toast('목표를 삭제했어요'); },
+      contribRows, hasContribs:contribRows.length>0, noContribs:contribRows.length===0,
+      newExpense:()=>this.setState({screen:'expense',expMode:'new',expSel:null,exItem:'',exAmount:'',exDate:'2026-06-28',exMethod:'카드',exCat:'식비',exRecur:false,exMonths:''}),
+      openIncome:()=>this.setState({showIncomeSheet:true, incomeDraft:String(income)}),
+      closeIncome:()=>this.setState({showIncomeSheet:false}),
+      showIncomeSheet:s.showIncomeSheet, stop:e=>e.stopPropagation(),
+      incomeDraftFmt: s.incomeDraft ? Number(s.incomeDraft).toLocaleString('ko-KR') : '',
+      setIncomeDraft:e=>this.setState({incomeDraft:e.target.value.replace(/[^0-9]/g,'').slice(0,9)}),
+      saveIncome:()=>{ this.setState({income:parseInt(s.incomeDraft||'0',10)||0, showIncomeSheet:false}); this.toast('예산을 저장했어요'); },
+
+      // expense form
+      expFormTitle: s.expMode==='edit'?'지출 수정':'지출 추가', expEditMode: s.expMode==='edit',
+      exAmountFmt: s.exAmount ? Number(s.exAmount).toLocaleString('ko-KR') : '',
+      setExAmount:e=>this.setState({exAmount:e.target.value.replace(/[^0-9]/g,'').slice(0,9)}),
+      exItem:s.exItem, setExItem:e=>this.setState({exItem:e.target.value}),
+      exDate:s.exDate, setExDate:e=>this.setState({exDate:e.target.value}),
+      exRecur:s.exRecur, exMonths:s.exMonths,
+      setExMonths:e=>this.setState({exMonths:e.target.value.replace(/[^0-9]/g,'').slice(0,3)}),
+      toggleRecur:()=>this.setState(p=>({exRecur:!p.exRecur, exMonths:p.exRecur?'':p.exMonths})),
+      recurTrack:`position:relative;width:50px;height:30px;border-radius:999px;border:none;cursor:pointer;background:${s.exRecur?M.ac:'#dcdcdc'};transition:background .2s,transform .12s`,
+      recurKnob:`position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s;transform:translateX(${s.exRecur?'20px':'0'})`,
+      catChips, methodChips,
+      cancelExpense:()=>this.go('asset'),
+      saveExpense:()=>{
+        const amt = parseInt(s.exAmount||'0',10);
+        if(!s.exItem.trim()){ this.toast('항목을 입력하세요'); return; }
+        if(!amt){ this.toast('금액을 입력하세요'); return; }
+        this.setState(p=>{
+          if(p.expMode==='edit'){
+            return { expenses: p.expenses.map(x=> x.id===p.expSel ? {...x, item:p.exItem.trim(), amount:amt, date:p.exDate, method:p.exMethod, category:p.exCat, recurring:p.exRecur, months:p.exRecur?(parseInt(p.exMonths||'0',10)||null):null} : x) };
+          }
+          const id='ex'+Date.now();
+          return { expenses:[{ id, item:p.exItem.trim(), amount:amt, date:p.exDate, method:p.exMethod, category:p.exCat, recurring:p.exRecur, months:p.exRecur?(parseInt(p.exMonths||'0',10)||null):null }, ...p.expenses] };
+        });
+        this.toast(s.expMode==='edit'?'지출을 수정했어요':'지출을 추가했어요');
+        this.setState({selDay:s.exDate});
+        this.go('asset');
+      },
+      deleteExpense:()=>{ if(s.exRecur){ this.setState({showDeleteSheet:true}); return; } this.setState(p=>({expenses:p.expenses.filter(x=>x.id!==p.expSel)})); this.toast('지출을 삭제했어요'); this.go('asset'); },
+      showDeleteSheet:s.showDeleteSheet,
+      closeDeleteSheet:()=>this.setState({showDeleteSheet:false}),
+      unsetRecur:()=>{ this.setState(p=>({ expenses:p.expenses.map(x=> x.id===p.expSel?{...x,recurring:false,months:null}:x), exRecur:false })); this.toast('고정 지출을 해제했어요'); },
+      deleteRecurAll:()=>{ this.setState(p=>({expenses:p.expenses.filter(x=>x.id!==p.expSel), showDeleteSheet:false})); this.toast('고정 지출 전체를 삭제했어요'); this.go('asset'); },
+      deleteThisMonth:()=>{ this.setState(p=>({expenses:p.expenses.filter(x=>x.id!==p.expSel), showDeleteSheet:false})); this.toast('이번 달 지출만 삭제했어요'); this.go('asset'); },
+
+      // backup
+      conflictModes, noop:()=>this.toast('암호화 백업을 준비했어요'), doRestore:()=>this.toast('백업에서 복원을 시작했어요'),
+
+      // toast
+      showToast: !!s.toast, toastMsg:s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -15,7 +15,13 @@ interface Props {
 
 const CLEAR_AFTER_MS = 30_000
 
-export function CopyField({ label, value, sensitive, onActivity }: Props) {
+export function CopyField({
+    label,
+    value,
+    sensitive,
+    onActivity,
+    onDelete,
+}: Props) {
     const [revealed, setRevealed] = useState(false)
     const [status, setStatus] = useState<string>("")
     const [remaining, setRemaining] = useState<number | null>(null)
@@ -105,6 +111,26 @@ export function CopyField({ label, value, sensitive, onActivity }: Props) {
                     >
                         {remaining !== null ? `복사됨 ${remaining}s` : "복사"}
                     </button>
+                    {onDelete && (
+                        <button
+                            type="button"
+                            className="secret-btn"
+                            style={{
+                                fontSize: 12,
+                                minWidth: 0,
+                                minHeight: 0,
+                                padding: "2px 6px",
+                                color: "#d99",
+                            }}
+                            onClick={() => {
+                                onActivity?.()
+                                onDelete()
+                            }}
+                            aria-label={`${label} 필드 삭제`}
+                        >
+                            삭제
+                        </button>
+                    )}
                 </span>
             </div>
             <span
@@ -125,6 +151,9 @@ export function CopyField({ label, value, sensitive, onActivity }: Props) {
                                 width: `${(remaining / (CLEAR_AFTER_MS / 1000)) * 100}%`,
                             }}
                         />
+                    </span>
+                    <span className="secret-drain-count" aria-hidden="true">
+                        {remaining}s
                     </span>
                 </div>
             )}
