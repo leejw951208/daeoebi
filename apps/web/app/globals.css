@@ -685,7 +685,7 @@ a:hover {
 .fab {
     position: fixed;
     right: calc(50% - 240px + 20px);
-    bottom: calc(var(--bottom-tab-height) + 28px);
+    bottom: calc(var(--bottom-tab-height) + 16px);
     width: 56px;
     height: 56px;
     border: none;
