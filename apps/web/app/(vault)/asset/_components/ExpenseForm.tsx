@@ -221,6 +221,7 @@ export function ExpenseForm({
             </div>
 
             <div
+                className="stagger"
                 style={{
                     padding: "14px 4px 50px",
                     display: "flex",
@@ -343,7 +344,7 @@ export function ExpenseForm({
                                             borderRadius: "50%",
                                             background: c.color,
                                             display: "inline-block",
-                                            marginRight: 7,
+                                            marginRight: 6,
                                         }}
                                     />
                                     {c.name}
