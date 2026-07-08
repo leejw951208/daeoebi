@@ -102,7 +102,7 @@ export function CategoryAddSection({
                     display: "flex",
                     flexWrap: "wrap",
                     gap: 11,
-                    marginBottom: 24,
+                    marginBottom: 12,
                 }}
             >
                 {CATEGORY_PALETTE.map((swatch) => (
@@ -130,6 +130,81 @@ export function CategoryAddSection({
                         }}
                     />
                 ))}
+            </div>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 24,
+                }}
+            >
+                <span
+                    aria-hidden="true"
+                    style={{
+                        flexShrink: 0,
+                        width: 38,
+                        height: 38,
+                        borderRadius: 10,
+                        background: isValidHexColor(color)
+                            ? color
+                            : "var(--soft)",
+                        boxShadow: "0 0 0 1px #e6e6e6",
+                    }}
+                />
+                <div
+                    style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        border: "1.5px solid #ececec",
+                        borderRadius: 12,
+                        background: "var(--tint)",
+                        padding: "0 14px",
+                        height: 48,
+                    }}
+                >
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            fontSize: 16,
+                            fontWeight: 800,
+                            color: "#cfcfcf",
+                        }}
+                    >
+                        #
+                    </span>
+                    <input
+                        type="text"
+                        value={color.replace(/^#/, "")}
+                        placeholder="F2994A"
+                        maxLength={6}
+                        spellCheck={false}
+                        autoCapitalize="characters"
+                        aria-label="색상 HEX 코드"
+                        onChange={(e) => {
+                            onActivity()
+                            const hex = e.target.value
+                                .replace(/[^0-9a-fA-F]/g, "")
+                                .slice(0, 6)
+                            setColor(`#${hex}`)
+                        }}
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            border: "none",
+                            background: "none",
+                            font: "inherit",
+                            fontSize: 15,
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            outline: "none",
+                            color: "#333",
+                        }}
+                    />
+                </div>
             </div>
 
             <Button
