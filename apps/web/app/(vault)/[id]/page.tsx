@@ -244,7 +244,7 @@ export default function SecretDetailPage() {
                 <Link className="btn-text" href="/">
                     ← 보관함
                 </Link>
-                <LockTimer compact />
+                <LockTimer compact bare />
             </div>
 
             {error && (
@@ -262,7 +262,7 @@ export default function SecretDetailPage() {
                         marginBottom: 22,
                     }}
                 >
-                    <span className="avatar lg" aria-hidden="true">
+                    <span className="avatar" aria-hidden="true">
                         {data.label.trim()[0] ?? "·"}
                     </span>
                     <div style={{ minWidth: 0 }}>
@@ -273,7 +273,7 @@ export default function SecretDetailPage() {
                                     display: "inline-flex",
                                     alignItems: "center",
                                     marginTop: 6,
-                                    padding: "3px 10px",
+                                    padding: "4px 10px",
                                     borderRadius: 999,
                                     background: "var(--soft)",
                                     fontSize: 11,
@@ -281,7 +281,7 @@ export default function SecretDetailPage() {
                                     color: "#8a8a8a",
                                 }}
                             >
-                                {formatDateChip(data.createdAt)} 생성
+                                {`수정 ${formatDateChip(data.updatedAt || data.createdAt)} · 생성 ${formatDateChip(data.createdAt)}`}
                             </div>
                         )}
                     </div>
@@ -328,7 +328,7 @@ export default function SecretDetailPage() {
                     <button
                         type="button"
                         className="btn secondary"
-                        style={{ flex: 1, minHeight: 48 }}
+                        style={{ flex: 1, minHeight: 48, fontSize: 14 }}
                         onClick={() => setMode("edit")}
                     >
                         수정
@@ -336,7 +336,7 @@ export default function SecretDetailPage() {
                     <button
                         type="button"
                         className="btn danger"
-                        style={{ flex: 1, minHeight: 48 }}
+                        style={{ flex: 1, minHeight: 48, fontSize: 14 }}
                         onClick={() => setConfirmDelete(true)}
                     >
                         삭제

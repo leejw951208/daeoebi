@@ -52,14 +52,37 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
     const parts = code.split("-")
 
     return (
-        <section style={{ maxWidth: 480, margin: "0 auto", paddingTop: 24 }}>
+        <section
+            style={{
+                maxWidth: 480,
+                margin: "0 auto",
+                padding: "54px 24px 28px",
+                background: "#fff",
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "100dvh",
+            }}
+        >
             <div
-                className="progress-dots"
-                style={{ marginBottom: 26 }}
+                style={{ display: "flex", gap: 6, marginBottom: 26 }}
                 aria-hidden="true"
             >
-                <span className="dot" />
-                <span className="dot active" />
+                <span
+                    style={{
+                        width: 18,
+                        height: 5,
+                        borderRadius: 3,
+                        background: "#dcdcdc",
+                    }}
+                />
+                <span
+                    style={{
+                        width: 18,
+                        height: 5,
+                        borderRadius: 3,
+                        background: "#171717",
+                    }}
+                />
             </div>
             <h1 style={{ fontSize: 24 }}>복구코드를 저장하세요</h1>
             <p
@@ -93,7 +116,14 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                 </div>
             </div>
 
-            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <div
+                style={{
+                    display: "flex",
+                    gap: 10,
+                    marginTop: 8,
+                    marginBottom: "auto",
+                }}
+            >
                 <button
                     type="button"
                     className="btn secondary"
@@ -102,6 +132,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                         minHeight: 48,
                         fontSize: 14,
                         borderRadius: 14,
+                        color: "#222",
                     }}
                     onClick={handleCopy}
                 >
@@ -115,6 +146,7 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                         minHeight: 48,
                         fontSize: 14,
                         borderRadius: 14,
+                        color: "#222",
                     }}
                     onClick={handleDownload}
                 >
@@ -127,7 +159,38 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
                     type="checkbox"
                     checked={acknowledged}
                     onChange={(e) => setAcknowledged(e.target.checked)}
+                    style={{
+                        position: "absolute",
+                        width: 1,
+                        height: 1,
+                        padding: 0,
+                        margin: -1,
+                        overflow: "hidden",
+                        clip: "rect(0,0,0,0)",
+                        whiteSpace: "nowrap",
+                        border: 0,
+                    }}
                 />
+                <span
+                    aria-hidden="true"
+                    style={{
+                        flex: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 22,
+                        height: 22,
+                        borderRadius: 7,
+                        border: `2px solid ${acknowledged ? "#171717" : "#d2d2d2"}`,
+                        background: acknowledged ? "#171717" : "#fff",
+                        color: "#fff",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        lineHeight: 1,
+                    }}
+                >
+                    {acknowledged ? "✓" : ""}
+                </span>
                 <span
                     style={{
                         fontSize: 13.5,

@@ -43,6 +43,8 @@ export function ExpenseForm({
 }: Props) {
     const { vaultKey, resetIdle } = useVault()
     const isEdit = initial !== null
+    // 이 지출이 현재 고정(템플릿 연결)인지. 토글 초기값·전환 판단에 쓴다.
+    const wasRecurring = initial?.recurringId != null
 
     const [amount, setAmount] = useState(
         initial ? String(initial.payload.amount) : "",
@@ -52,7 +54,7 @@ export function ExpenseForm({
         initial?.categoryId ?? categories[0]?.id ?? null,
     )
     const [date, setDate] = useState(initial?.date ?? todayISO())
-    const [recurring, setRecurring] = useState(false)
+    const [recurring, setRecurring] = useState(initial?.recurringId != null)
     const [termMonths, setTermMonths] = useState("")
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -87,11 +89,38 @@ export function ExpenseForm({
             }
             if (isEdit) {
                 const blob = await sealExpense(vaultKey, payload)
-                await updateExpense(initial.id, {
-                    date,
-                    categoryId: categoryId ?? undefined,
-                    ...blob,
-                })
+                if (!wasRecurring && recurring) {
+                    // 단건 → 고정 전환: 템플릿을 만들고 이 지출을 연결한다.
+                    const tmplBlob = await sealExpense(vaultKey, payload)
+                    const term = Number(termMonths)
+                    const tmpl = await createRecurring({
+                        dayOfMonth: Number(date.slice(8, 10)),
+                        startMonth: monthOf(date),
+                        categoryId: categoryId ?? undefined,
+                        ...(Number.isInteger(term) && term >= 1
+                            ? { termMonths: term }
+                            : {}),
+                        ...tmplBlob,
+                    })
+                    await updateExpense(initial.id, {
+                        date,
+                        categoryId: categoryId ?? undefined,
+                        recurringId: tmpl.id,
+                        period: monthOf(date),
+                        ...blob,
+                    })
+                } else {
+                    await updateExpense(initial.id, {
+                        date,
+                        categoryId: categoryId ?? undefined,
+                        ...blob,
+                    })
+                    const linkedId = initial.recurringId
+                    if (wasRecurring && !recurring && linkedId) {
+                        // 고정 해제: 이후 자동 생성만 중단(과거·이번 달 인스턴스는 유지).
+                        await updateRecurring(linkedId, { active: false })
+                    }
+                }
             } else if (recurring) {
                 const tmplBlob = await sealExpense(vaultKey, payload)
                 const term = Number(termMonths)
@@ -129,18 +158,6 @@ export function ExpenseForm({
                     ? e.message
                     : "저장에 실패했습니다. 다시 시도하세요.",
             )
-        }
-    }
-
-    async function handleDeactivate() {
-        if (!initial?.recurringId) return
-        setBusy(true)
-        try {
-            await updateRecurring(initial.recurringId, { active: false })
-            onDeleted()
-        } catch (e) {
-            setBusy(false)
-            setError(isApiError(e) ? e.message : "해제에 실패했습니다.")
         }
     }
 
@@ -204,6 +221,7 @@ export function ExpenseForm({
             </div>
 
             <div
+                className="stagger"
                 style={{
                     padding: "14px 4px 50px",
                     display: "flex",
@@ -321,11 +339,12 @@ export function ExpenseForm({
                                     <span
                                         aria-hidden="true"
                                         style={{
-                                            width: 9,
-                                            height: 9,
+                                            width: 8,
+                                            height: 8,
                                             borderRadius: "50%",
                                             background: c.color,
                                             display: "inline-block",
+                                            marginRight: 6,
                                         }}
                                     />
                                     {c.name}
@@ -357,8 +376,8 @@ export function ExpenseForm({
                     />
                 </div>
 
-                {/* 고정 지출 토글(신규만) */}
-                {!isEdit && (
+                {/* 고정 지출 토글(신규·수정 공용) */}
+                {
                     <div className="asset-toggle-row">
                         <span>
                             <span
@@ -393,12 +412,12 @@ export function ExpenseForm({
                             style={{
                                 flexShrink: 0,
                                 position: "relative",
-                                width: 44,
-                                height: 26,
+                                width: 50,
+                                height: 30,
                                 border: "none",
                                 borderRadius: 999,
                                 padding: 0,
-                                background: recurring ? "var(--ac)" : "#e2e2e2",
+                                background: recurring ? "var(--ac)" : "#dcdcdc",
                                 cursor: "pointer",
                                 transition: "background .18s",
                             }}
@@ -407,26 +426,29 @@ export function ExpenseForm({
                                 aria-hidden="true"
                                 style={{
                                     position: "absolute",
-                                    top: 2,
-                                    left: 2,
-                                    width: 22,
-                                    height: 22,
+                                    top: 3,
+                                    left: 3,
+                                    width: 24,
+                                    height: 24,
                                     borderRadius: "50%",
                                     background: "#fff",
-                                    boxShadow: "0 1px 3px rgba(0,0,0,.25)",
+                                    boxShadow: "0 2px 5px rgba(0,0,0,.2)",
                                     transform: recurring
-                                        ? "translateX(18px)"
+                                        ? "translateX(20px)"
                                         : "translateX(0)",
                                     transition: "transform .18s",
                                 }}
                             />
                         </button>
                     </div>
-                )}
+                }
 
-                {/* 개월 수(고정 ON 일 때만, 선택) */}
-                {!isEdit && recurring && (
-                    <div className="form-row" style={{ margin: 0 }}>
+                {/* 개월 수(고정 ON 전환 시에만, 선택) */}
+                {recurring && !wasRecurring && (
+                    <div
+                        className="form-row"
+                        style={{ margin: 0, marginTop: -12 }}
+                    >
                         <label htmlFor="term-months">
                             개월 수{" "}
                             <span
@@ -443,6 +465,7 @@ export function ExpenseForm({
                             inputMode="numeric"
                             className="field-control"
                             placeholder="비우면 무기한"
+                            style={{ fontSize: 15, fontWeight: 600 }}
                             value={termMonths}
                             onChange={(e) => {
                                 resetIdle()
@@ -467,43 +490,49 @@ export function ExpenseForm({
                     </div>
                 )}
 
-                {/* 액션(수정만) */}
-                {isEdit && (
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 8,
-                        }}
-                    >
-                        {initial?.recurringId ? (
-                            <>
-                                <Button
-                                    variant="secondary"
-                                    onClick={handleDeactivate}
-                                    loading={busy}
-                                >
-                                    고정 해제(이후 자동 생성 중단)
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    onClick={() => setDeleteMenu(true)}
-                                    disabled={busy}
-                                >
-                                    삭제
-                                </Button>
-                            </>
-                        ) : (
-                            <Button
-                                variant="danger"
-                                onClick={handleDeleteThisMonth}
-                                loading={busy}
-                            >
-                                이 지출 삭제
-                            </Button>
-                        )}
-                    </div>
-                )}
+                {/* 삭제(수정만) */}
+                {isEdit &&
+                    (initial?.recurringId ? (
+                        <button
+                            type="button"
+                            onClick={() => setDeleteMenu(true)}
+                            disabled={busy}
+                            style={{
+                                height: 50,
+                                border: "1px solid #f3dcdc",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#e5484d",
+                                cursor: "pointer",
+                                marginTop: 4,
+                            }}
+                        >
+                            삭제
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleDeleteThisMonth}
+                            disabled={busy}
+                            style={{
+                                height: 50,
+                                border: "1px solid #f3dcdc",
+                                borderRadius: 14,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#e5484d",
+                                cursor: "pointer",
+                                marginTop: 4,
+                            }}
+                        >
+                            이 지출 삭제
+                        </button>
+                    ))}
             </div>
 
             {deleteMenu && (
@@ -520,51 +549,85 @@ export function ExpenseForm({
                         <div className="sheet-grip" aria-hidden="true" />
                         <div
                             style={{
-                                fontSize: 17,
+                                fontSize: 18,
                                 fontWeight: 800,
+                                letterSpacing: "-0.02em",
                                 marginBottom: 4,
                             }}
                         >
                             고정 지출 삭제
                         </div>
                         <p
-                            className="muted"
                             style={{
                                 fontSize: 13,
                                 lineHeight: 1.5,
-                                marginBottom: 16,
+                                color: "var(--color-text-muted)",
+                                marginBottom: 18,
                             }}
                         >
-                            무엇을 삭제할지 선택하세요.
+                            매월 반복되는 지출이에요. 어떻게 삭제할까요?
                         </p>
-                        <Button
-                            variant="danger"
-                            style={{ width: "100%", marginBottom: 8 }}
+                        <button
+                            type="button"
                             onClick={() => {
                                 setDeleteMenu(false)
                                 void handleDeleteAll()
                             }}
-                            loading={busy}
+                            disabled={busy}
+                            style={{
+                                width: "100%",
+                                height: 54,
+                                border: "none",
+                                borderRadius: 16,
+                                background: "#e5484d",
+                                font: "inherit",
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: "#fff",
+                                cursor: "pointer",
+                                marginBottom: 9,
+                            }}
                         >
-                            이 고정 전체 삭제(모든 달 기록 제거)
-                        </Button>
-                        <Button
-                            variant="danger"
-                            style={{ width: "100%", marginBottom: 8 }}
+                            고정 전체 삭제
+                        </button>
+                        <button
+                            type="button"
                             onClick={() => {
                                 setDeleteMenu(false)
                                 void handleDeleteThisMonth()
                             }}
-                            loading={busy}
+                            disabled={busy}
+                            style={{
+                                width: "100%",
+                                height: 54,
+                                border: "1.5px solid #ececec",
+                                borderRadius: 16,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: "#222",
+                                cursor: "pointer",
+                                marginBottom: 9,
+                            }}
                         >
                             이번 달만 삭제
-                        </Button>
+                        </button>
                         <button
                             type="button"
-                            className="btn secondary"
-                            style={{ width: "100%" }}
                             onClick={() => setDeleteMenu(false)}
                             disabled={busy}
+                            style={{
+                                width: "100%",
+                                height: 50,
+                                border: "none",
+                                background: "none",
+                                font: "inherit",
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#888",
+                                cursor: "pointer",
+                            }}
                         >
                             취소
                         </button>

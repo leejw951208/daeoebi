@@ -59,12 +59,25 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 13,
+                                padding: "13px 14px",
+                                borderRadius: 16,
                             }}
                         >
                             <span
-                                className="avatar"
                                 aria-hidden="true"
-                                style={{ background: resolved.color }}
+                                style={{
+                                    flexShrink: 0,
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 12,
+                                    background: `${resolved.color}1f`,
+                                    color: resolved.color,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 15,
+                                    fontWeight: 800,
+                                }}
                             >
                                 {resolved.name.slice(0, 1)}
                             </span>
@@ -78,6 +91,7 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                         display: "flex",
                                         alignItems: "center",
                                         gap: 6,
+                                        fontSize: 15,
                                     }}
                                 >
                                     {e.item || resolved.name}
@@ -102,6 +116,7 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                     fontSize: 15,
                                     fontWeight: 800,
                                     letterSpacing: "-0.02em",
+                                    color: "#1f1f1f",
                                 }}
                             >
                                 {formatWon(e.amount)}

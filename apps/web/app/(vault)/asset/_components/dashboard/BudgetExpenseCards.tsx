@@ -20,7 +20,12 @@ export function BudgetExpenseCards({
             <button
                 type="button"
                 className="asset-card"
-                style={{ flex: 1, textAlign: "left", cursor: "pointer" }}
+                style={{
+                    flex: 1,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    padding: 16,
+                }}
                 onClick={onOpenBudget}
             >
                 <div className="asset-card-label">이번 달 예산</div>
@@ -38,7 +43,7 @@ export function BudgetExpenseCards({
                     수정 ›
                 </div>
             </button>
-            <div className="asset-card" style={{ flex: 1 }}>
+            <div className="asset-card" style={{ flex: 1, padding: 16 }}>
                 <div className="asset-card-label">지출</div>
                 <div
                     className="asset-card-value"

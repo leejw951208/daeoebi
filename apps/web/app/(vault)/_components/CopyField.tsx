@@ -69,6 +69,7 @@ export function CopyField({
     }
 
     const masked = sensitive && !revealed
+    const maskDots = "•".repeat(Math.min(12, value.length || 8))
 
     return (
         <div className="secret-plate">
@@ -81,6 +82,13 @@ export function CopyField({
                         <button
                             type="button"
                             className="secret-btn"
+                            style={{
+                                fontSize: 12,
+                                minWidth: 0,
+                                minHeight: 0,
+                                padding: "2px 6px",
+                                color: "#999",
+                            }}
                             onClick={() => {
                                 onActivity?.()
                                 setRevealed((v) => !v)
@@ -93,6 +101,12 @@ export function CopyField({
                     <button
                         type="button"
                         className="secret-btn accent"
+                        style={{
+                            fontSize: 12,
+                            minWidth: 0,
+                            minHeight: 0,
+                            padding: "2px 4px",
+                        }}
                         onClick={handleCopy}
                     >
                         {remaining !== null ? `복사됨 ${remaining}s` : "복사"}
@@ -101,7 +115,13 @@ export function CopyField({
                         <button
                             type="button"
                             className="secret-btn"
-                            style={{ color: "#d99" }}
+                            style={{
+                                fontSize: 12,
+                                minWidth: 0,
+                                minHeight: 0,
+                                padding: "2px 6px",
+                                color: "#c9555a",
+                            }}
                             onClick={() => {
                                 onActivity?.()
                                 onDelete()
@@ -116,7 +136,7 @@ export function CopyField({
             <span
                 className={`secret-value${masked ? " masked" : revealed ? " revealed" : ""}`}
             >
-                {masked ? MASK : value}
+                {masked ? maskDots : value}
             </span>
 
             {remaining !== null && (
@@ -148,6 +168,3 @@ export function CopyField({
         </div>
     )
 }
-
-// 길이를 노출하지 않도록 고정 길이 마스크.
-const MASK = "•".repeat(10)

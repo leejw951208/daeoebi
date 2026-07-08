@@ -194,13 +194,13 @@ export default function AssetPage() {
     const [savingsState, setSavingsState] = useState<SavingsState>({
         status: "idle",
     })
+    const [returnSheetOpen, setReturnSheetOpen] = useState(false)
+    const [boxSheetMode, setBoxSheetMode] = useState<"in" | "out" | null>(null)
+    const [boxDetailOpen, setBoxDetailOpen] = useState(false)
     const [addAccountSheetOpen, setAddAccountSheetOpen] = useState(false)
     const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
         null,
     )
-    const [returnSheetOpen, setReturnSheetOpen] = useState(false)
-    const [boxSheetMode, setBoxSheetMode] = useState<"in" | "out" | null>(null)
-    const [boxDetailOpen, setBoxDetailOpen] = useState(false)
 
     const load = useCallback(async () => {
         setState({ status: "loading" })
@@ -460,13 +460,15 @@ export default function AssetPage() {
         const monthContribs = filterByMonth(contribAll, month)
         const monthSummary = savingsSummary(monthContribs, categories)
         const contributions: Contribution[] = monthContribs.map((c) => {
-            const { name } = resolveCategory(c.categoryId, categories)
+            const { name, color } = resolveCategory(c.categoryId, categories)
             return {
                 id: c.id,
                 item: c.item,
                 amount: c.amount,
                 categoryName: name,
                 date: c.date,
+                color,
+                recurring: c.recurringId !== null,
             }
         })
         // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
@@ -546,7 +548,10 @@ export default function AssetPage() {
 
     return (
         <section style={{ minHeight: "100%" }}>
-            <div className="sticky-header">
+            <div
+                className="sticky-header"
+                style={{ padding: "30px 18px 12px" }}
+            >
                 <div
                     style={{
                         display: "flex",
@@ -562,7 +567,7 @@ export default function AssetPage() {
                                 letterSpacing: "-0.03em",
                             }}
                         >
-                            자산
+                            지출
                         </div>
                         <div
                             style={{
@@ -576,22 +581,66 @@ export default function AssetPage() {
                         >
                             <button
                                 type="button"
-                                className="btn-text"
                                 aria-label="이전 달"
                                 onClick={() => setMonth((m) => addMonth(m, -1))}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 22,
+                                    height: 22,
+                                    border: "none",
+                                    background: "none",
+                                    color: "#c2c2c2",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                }}
                             >
-                                ‹
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M15 6l-6 6 6 6" />
+                                </svg>
                             </button>
                             <span style={{ minWidth: 72, textAlign: "center" }}>
                                 {monthLabel(month)}
                             </span>
                             <button
                                 type="button"
-                                className="btn-text"
                                 aria-label="다음 달"
                                 onClick={() => setMonth((m) => addMonth(m, 1))}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 22,
+                                    height: 22,
+                                    border: "none",
+                                    background: "none",
+                                    color: "#c2c2c2",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                }}
                             >
-                                ›
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 6l6 6-6 6" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -599,7 +648,7 @@ export default function AssetPage() {
                         style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 12,
+                            gap: 8,
                         }}
                     >
                         <button
@@ -643,6 +692,75 @@ export default function AssetPage() {
                         <LockTimer />
                     </div>
                 </div>
+                {state.status === "ready" && (
+                    <div
+                        style={{
+                            display: "flex",
+                            gap: 4,
+                            marginTop: 14,
+                            padding: 4,
+                            background: "var(--soft)",
+                            borderRadius: 12,
+                        }}
+                    >
+                        <button
+                            type="button"
+                            aria-pressed={assetTab === "budget"}
+                            style={{
+                                flex: 1,
+                                height: 34,
+                                border: "none",
+                                borderRadius: 9,
+                                font: "inherit",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                ...(assetTab === "budget"
+                                    ? {
+                                          background: "#fff",
+                                          color: "#171717",
+                                          boxShadow:
+                                              "0 1px 3px rgba(0,0,0,0.09)",
+                                      }
+                                    : {
+                                          background: "transparent",
+                                          color: "#888",
+                                      }),
+                            }}
+                            onClick={() => handleAssetTab("budget")}
+                        >
+                            이번 달
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={assetTab === "savings"}
+                            style={{
+                                flex: 1,
+                                height: 34,
+                                border: "none",
+                                borderRadius: 9,
+                                font: "inherit",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                ...(assetTab === "savings"
+                                    ? {
+                                          background: "#fff",
+                                          color: "#171717",
+                                          boxShadow:
+                                              "0 1px 3px rgba(0,0,0,0.09)",
+                                      }
+                                    : {
+                                          background: "transparent",
+                                          color: "#888",
+                                      }),
+                            }}
+                            onClick={() => handleAssetTab("savings")}
+                        >
+                            저축·투자
+                        </button>
+                    </div>
+                )}
             </div>
 
             {state.status === "loading" && <SkeletonCard lines={4} />}
@@ -667,7 +785,6 @@ export default function AssetPage() {
                         setSheetOpen(true)
                     }}
                     assetTab={assetTab}
-                    onTab={handleAssetTab}
                     savings={savingsView}
                 />
             )}
@@ -690,23 +807,6 @@ export default function AssetPage() {
                 <CategoryManager
                     onChanged={load}
                     onClose={() => setCategorySheetOpen(false)}
-                />
-            )}
-
-            {addAccountSheetOpen && (
-                <SavingsAccountAddSheet
-                    accountCount={savingsAccounts.length}
-                    existingNames={savingsAccounts.map((a) => a.name)}
-                    onSaved={reloadAccounts}
-                    onClose={() => setAddAccountSheetOpen(false)}
-                />
-            )}
-
-            {editingAccount && (
-                <SavingsAccountGoalSheet
-                    account={editingAccount}
-                    onChanged={reloadAccounts}
-                    onClose={() => setEditingAccount(null)}
                 />
             )}
 
@@ -735,6 +835,23 @@ export default function AssetPage() {
                     txns={boxTxns}
                     onChanged={reloadBox}
                     onClose={() => setBoxDetailOpen(false)}
+                />
+            )}
+
+            {addAccountSheetOpen && (
+                <SavingsAccountAddSheet
+                    accountCount={savingsAccounts.length}
+                    existingNames={savingsAccounts.map((a) => a.name)}
+                    onSaved={reloadAccounts}
+                    onClose={() => setAddAccountSheetOpen(false)}
+                />
+            )}
+
+            {editingAccount && (
+                <SavingsAccountGoalSheet
+                    account={editingAccount}
+                    onChanged={reloadAccounts}
+                    onClose={() => setEditingAccount(null)}
                 />
             )}
         </section>

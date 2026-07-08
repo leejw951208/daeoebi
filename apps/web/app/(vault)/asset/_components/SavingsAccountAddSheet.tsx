@@ -86,10 +86,17 @@ export function SavingsAccountAddSheet({
         >
             <div className="sheet">
                 <div className="sheet-grip" aria-hidden="true" />
-                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
+                <div
+                    style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                        letterSpacing: "-0.02em",
+                    }}
+                >
                     적금 추가
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
+                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
                     지출을 이 이름의 &lsquo;저축&rsquo;으로 분류하면 매달
                     자동으로 합산돼요.
                 </p>
@@ -115,7 +122,7 @@ export function SavingsAccountAddSheet({
                         setName(e.target.value)
                         setErrorMessage(null)
                     }}
-                    style={{ marginBottom: 16 }}
+                    style={{ marginBottom: 16, fontWeight: 600 }}
                 />
 
                 <div
@@ -134,6 +141,7 @@ export function SavingsAccountAddSheet({
                 <div
                     className="income-input"
                     style={{
+                        height: 56,
                         marginBottom: 16,
                         ...(focusedField === "base"
                             ? { borderColor: ACCENT }
@@ -142,9 +150,12 @@ export function SavingsAccountAddSheet({
                     onFocus={() => setFocusedField("base")}
                     onBlur={() => setFocusedField(null)}
                 >
-                    <span aria-hidden="true">₩</span>
+                    <span aria-hidden="true" style={{ fontSize: 22 }}>
+                        ₩
+                    </span>
                     <input
                         inputMode="numeric"
+                        style={{ fontSize: 23 }}
                         value={base ? formatAmount(baseValue) : ""}
                         placeholder="0"
                         aria-label="현재 저축액"
@@ -175,6 +186,7 @@ export function SavingsAccountAddSheet({
                 <div
                     className="income-input"
                     style={{
+                        height: 56,
                         marginBottom: 12,
                         ...(focusedField === "goal"
                             ? { borderColor: ACCENT }
@@ -183,9 +195,12 @@ export function SavingsAccountAddSheet({
                     onFocus={() => setFocusedField("goal")}
                     onBlur={() => setFocusedField(null)}
                 >
-                    <span aria-hidden="true">₩</span>
+                    <span aria-hidden="true" style={{ fontSize: 22 }}>
+                        ₩
+                    </span>
                     <input
                         inputMode="numeric"
+                        style={{ fontSize: 23 }}
                         value={goal ? formatAmount(goalValue) : ""}
                         placeholder="0"
                         aria-label="목표 금액"
@@ -238,7 +253,11 @@ export function SavingsAccountAddSheet({
 
                 <Button
                     variant="primary"
-                    style={{ width: "100%", background: ACCENT }}
+                    style={{
+                        width: "100%",
+                        background: ACCENT,
+                        boxShadow: "0 8px 22px -8px #20a4a4",
+                    }}
                     onClick={() => {
                         resetIdle()
                         void save()

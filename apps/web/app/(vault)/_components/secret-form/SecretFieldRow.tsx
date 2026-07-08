@@ -101,7 +101,7 @@ export function SecretFieldRow({
                     <button
                         type="button"
                         className="secret-btn"
-                        style={{ color: "#d99" }}
+                        style={{ color: "#d99", fontSize: 15 }}
                         onClick={onRemove}
                         aria-label={`필드 ${index + 1} 삭제`}
                     >
@@ -122,6 +122,10 @@ export function SecretFieldRow({
                     border: "1px solid #e9e9e9",
                     borderRadius: 10,
                     background: "#fff",
+                    padding: "0 13px",
+                    fontSize: 14.5,
+                    fontWeight: 400,
+                    color: "#333",
                 }}
             />
         </div>

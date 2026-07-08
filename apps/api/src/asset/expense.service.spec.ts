@@ -136,6 +136,35 @@ describe("ExpenseService.update", () => {
         const data = prisma.expense.update.mock.calls[0][0].data
         expect(Object.keys(data)).toEqual(["date"])
     })
+
+    it("단건 → 고정 전환 시 recurringId·period 를 함께 세팅한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.update.mockResolvedValue(
+            row({ recurringId: "r1", period: "2026-06" }),
+        )
+        const view = await makeService(prisma).update("e1", {
+            recurringId: "r1",
+            period: "2026-06",
+        } as never)
+        const data = prisma.expense.update.mock.calls[0][0].data
+        expect(data.recurringId).toBe("r1")
+        expect(data.period).toBe("2026-06")
+        expect(view.recurringId).toBe("r1")
+        expect(view.period).toBe("2026-06")
+    })
+
+    it("전환이 기존 인스턴스와 충돌(P2002)하면 EXPENSE_DUPLICATE", async () => {
+        const prisma = makePrisma()
+        prisma.expense.update.mockRejectedValue({ code: "P2002" })
+        await expect(
+            makeService(prisma).update("e1", {
+                recurringId: "r1",
+                period: "2026-06",
+            } as never),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.EXPENSE_DUPLICATE },
+        })
+    })
 })
 
 describe("ExpenseService.listByMonth — removed 필터", () => {

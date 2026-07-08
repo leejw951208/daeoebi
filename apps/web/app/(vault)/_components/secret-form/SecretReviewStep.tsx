@@ -66,6 +66,9 @@ export function SecretReviewStep({
                     flexDirection: "column",
                     gap: 14,
                     flex: 1,
+                    marginInline: "calc(-1 * var(--container-padding))",
+                    paddingInline: 18,
+                    paddingTop: 22,
                 }}
             >
                 <div>
@@ -186,8 +189,8 @@ export function SecretReviewStep({
                 style={{
                     position: "sticky",
                     bottom: 0,
-                    padding: "14px 0 22px",
-                    marginTop: 14,
+                    padding: "14px 18px 22px",
+                    marginInline: "calc(-1 * var(--container-padding))",
                     background:
                         "linear-gradient(180deg, rgba(255,255,255,0), #fff 30%)",
                 }}

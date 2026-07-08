@@ -10,10 +10,54 @@ function formatMmSs(total: number): string {
 }
 
 // compact: 상세 화면처럼 "잠그기" 텍스트 없이 남은 시간만 표시한다.
-export function LockTimer({ compact = false }: { compact?: boolean }) {
+// bare: 알약(pill) 없이 점+시간만 표시하는 상세 화면용 변형.
+export function LockTimer({
+    compact = false,
+    bare = false,
+}: {
+    compact?: boolean
+    bare?: boolean
+}) {
     const idle = useIdleSeconds()
     const { onLock } = useVault()
     const remaining = Math.max(0, idle)
+
+    if (bare) {
+        return (
+            <button
+                type="button"
+                onClick={onLock}
+                aria-label={`자동 잠금까지 ${remaining}초. 지금 잠그기`}
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#888",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                }}
+            >
+                <span
+                    aria-hidden="true"
+                    style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "var(--ac)",
+                        animation: "pulse 2s infinite",
+                    }}
+                />
+                {compact
+                    ? formatMmSs(remaining)
+                    : `${formatMmSs(remaining)} 잠그기`}
+            </button>
+        )
+    }
+
     return (
         <button
             type="button"

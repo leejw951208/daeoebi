@@ -109,6 +109,53 @@ export function DemoAssetScreen() {
                 </button>
             </div>
 
+            <div
+                style={{
+                    display: "flex",
+                    gap: 4,
+                    marginTop: 14,
+                    marginBottom: 12,
+                    padding: 4,
+                    background: "var(--soft)",
+                    borderRadius: 12,
+                }}
+            >
+                {(["budget", "savings"] as const).map((t) => {
+                    const on = assetTab === t
+                    return (
+                        <button
+                            key={t}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => setAssetTab(t)}
+                            style={{
+                                flex: 1,
+                                height: 34,
+                                border: "none",
+                                borderRadius: 9,
+                                font: "inherit",
+                                fontSize: 13,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                ...(on
+                                    ? {
+                                          background: "#fff",
+                                          color: "#171717",
+                                          boxShadow:
+                                              "0 1px 3px rgba(0,0,0,0.09)",
+                                      }
+                                    : {
+                                          background: "transparent",
+                                          color: "#888",
+                                      }),
+                            }}
+                        >
+                            {t === "budget" ? "이번 달" : "저축·투자"}
+                        </button>
+                    )
+                })}
+            </div>
+
             <AssetDashboard
                 month={DEMO_MONTH}
                 data={data}
@@ -119,7 +166,6 @@ export function DemoAssetScreen() {
                     /* 데모: 예산은 표시만 */
                 }}
                 assetTab={assetTab}
-                onTab={setAssetTab}
                 savings={demoSavings}
             />
 

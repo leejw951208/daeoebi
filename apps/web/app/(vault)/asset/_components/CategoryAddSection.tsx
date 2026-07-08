@@ -51,7 +51,7 @@ export function CategoryAddSection({
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="field-label" style={{ marginBottom: 8 }}>
+            <div className="field-label" style={{ marginBottom: 7 }}>
                 카테고리명
             </div>
             <input
@@ -68,7 +68,7 @@ export function CategoryAddSection({
                 style={{ marginBottom: 18, fontWeight: 600 }}
             />
 
-            <div className="field-label" style={{ marginBottom: 8 }}>
+            <div className="field-label" style={{ marginBottom: 7 }}>
                 코드{" "}
                 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
                     · 영문·숫자
@@ -102,7 +102,7 @@ export function CategoryAddSection({
                     display: "flex",
                     flexWrap: "wrap",
                     gap: 11,
-                    marginBottom: 24,
+                    marginBottom: 12,
                 }}
             >
                 {CATEGORY_PALETTE.map((swatch) => (
@@ -116,19 +116,95 @@ export function CategoryAddSection({
                             setColor(swatch)
                         }}
                         style={{
-                            width: 32,
-                            height: 32,
+                            width: 34,
+                            height: 34,
                             borderRadius: "50%",
                             background: swatch,
                             border:
                                 swatch === color
-                                    ? "3px solid var(--color-text-primary)"
-                                    : "1px solid var(--color-border)",
+                                    ? "3px solid #171717"
+                                    : "3px solid transparent",
+                            boxShadow: "0 0 0 1px #e6e6e6",
                             padding: 0,
                             cursor: "pointer",
                         }}
                     />
                 ))}
+            </div>
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 24,
+                }}
+            >
+                <span
+                    aria-hidden="true"
+                    style={{
+                        flexShrink: 0,
+                        width: 38,
+                        height: 38,
+                        borderRadius: 10,
+                        background: isValidHexColor(color)
+                            ? color
+                            : "var(--soft)",
+                        boxShadow: "0 0 0 1px #e6e6e6",
+                    }}
+                />
+                <div
+                    style={{
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        border: "1.5px solid #ececec",
+                        borderRadius: 12,
+                        background: "var(--tint)",
+                        padding: "0 14px",
+                        height: 48,
+                    }}
+                >
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            fontSize: 16,
+                            fontWeight: 800,
+                            color: "#cfcfcf",
+                        }}
+                    >
+                        #
+                    </span>
+                    <input
+                        type="text"
+                        value={color.replace(/^#/, "")}
+                        placeholder="F2994A"
+                        maxLength={6}
+                        spellCheck={false}
+                        autoCapitalize="characters"
+                        aria-label="색상 HEX 코드"
+                        onChange={(e) => {
+                            onActivity()
+                            const hex = e.target.value
+                                .replace(/[^0-9a-fA-F]/g, "")
+                                .slice(0, 6)
+                            setColor(`#${hex}`)
+                        }}
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            border: "none",
+                            background: "none",
+                            font: "inherit",
+                            fontSize: 15,
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            outline: "none",
+                            color: "#333",
+                        }}
+                    />
+                </div>
             </div>
 
             <Button
@@ -147,7 +223,9 @@ export function CategoryAddSection({
                     className="btn-text"
                     style={{
                         width: "100%",
-                        marginTop: 8,
+                        height: 46,
+                        marginTop: 2,
+                        fontWeight: 700,
                         color: "#e5484d",
                     }}
                     onClick={() => {

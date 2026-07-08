@@ -1,9 +1,7 @@
 "use client"
 // 잠금해제 화면. passkey 로그인으로 PRF→VK 언랩하거나, 복구코드로 VK 확보 후 새 passkey 를 재등록한다.
 import { useState } from "react"
-import { Lock } from "lucide-react"
 import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
 import {
     getLoginOptions,
     getRegisterOptions,
@@ -33,6 +31,9 @@ import { DEV_AUTH, devUnlock } from "@/lib/dev-auth"
 
 type Mode = "passkey" | "recovery"
 type Busy = "idle" | "unlocking" | "recovering"
+
+// 복구 6칸 입력의 형식 힌트 placeholder(디자인 mock 예시값). 실제 값이 아니라 4자 형식 안내용이다.
+const RECOVERY_PLACEHOLDERS = ["7QK4", "2MXP", "9FW1", "AB3D", "LZ8N", "6RTV"]
 
 interface Props {
     onUnlocked: (vaultKey: CryptoKey) => void
@@ -205,23 +206,19 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
         return (
             <section
                 style={{
-                    maxWidth: 440,
-                    margin: "0 auto",
+                    minHeight: "100dvh",
                     padding: "40px 28px",
                     background: "linear-gradient(180deg,#fff,#fafafa)",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
-                    minHeight: "70vh",
                 }}
             >
                 <div
                     style={{
-                        flex: 1,
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "center",
                         alignItems: "center",
                     }}
                 >
@@ -241,7 +238,32 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                                         !
                                     </span>
                                 ) : (
-                                    <Icon icon={Lock} size={28} />
+                                    <div
+                                        aria-hidden="true"
+                                        style={{
+                                            width: 22,
+                                            height: 26,
+                                            border: "3px solid #fff",
+                                            borderTop: "none",
+                                            borderRadius: 7,
+                                            position: "relative",
+                                            marginTop: 5,
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                position: "absolute",
+                                                left: "50%",
+                                                top: -14,
+                                                transform: "translateX(-50%)",
+                                                width: 20,
+                                                height: 20,
+                                                border: "3px solid #fff",
+                                                borderBottom: "none",
+                                                borderRadius: "10px 10px 0 0",
+                                            }}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -260,6 +282,8 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                         {sub}
                     </p>
                 </div>
+
+                <div style={{ flex: 1 }} aria-hidden="true" />
 
                 {error && (
                     <div
@@ -289,6 +313,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                         width: "100%",
                         height: 48,
                         marginTop: 6,
+                        justifyContent: "center",
                         color: "#888",
                     }}
                     onClick={() => {
@@ -306,11 +331,23 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
 
     // ── recovery 모드: 복구코드 입력 ──
     return (
-        <section style={{ maxWidth: 440, margin: "0 auto", paddingTop: 24 }}>
+        <section
+            style={{
+                minHeight: "100dvh",
+                display: "flex",
+                flexDirection: "column",
+                padding: "54px 24px 28px",
+                background: "#fff",
+            }}
+        >
             <button
                 type="button"
                 className="btn-text"
-                style={{ marginBottom: 16, marginLeft: -8, color: "#888" }}
+                style={{
+                    alignSelf: "flex-start",
+                    marginBottom: 22,
+                    color: "#888",
+                }}
                 onClick={() => {
                     setMode("passkey")
                     setError(null)
@@ -334,7 +371,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     e.preventDefault()
                     if (busy === "idle") void handleRecover()
                 }}
-                style={{ marginTop: 24 }}
+                style={{
+                    marginTop: 24,
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                }}
             >
                 <div
                     style={{
@@ -349,6 +391,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                             key={i}
                             type="text"
                             aria-label={`복구코드 ${i + 1}번째 칸`}
+                            placeholder={RECOVERY_PLACEHOLDERS[i]}
                             autoComplete="off"
                             autoCapitalize="characters"
                             autoCorrect="off"
@@ -379,7 +422,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 </div>
                 <p
                     className="muted"
-                    style={{ fontSize: 12.5, marginTop: -4, color: "#a0a0a0" }}
+                    style={{
+                        fontSize: 12.5,
+                        marginTop: -4,
+                        marginBottom: "auto",
+                        color: "#a0a0a0",
+                    }}
                 >
                     대소문자 구분 없이 입력하세요. 5회 실패 시 잠시 후 다시
                     시도할 수 있습니다.

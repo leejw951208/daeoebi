@@ -4,7 +4,7 @@
 :root {
     /* Color — Surface (라이트 셸) */
     --ac: #171717; /* 액센트/주요 버튼/포커스 */
-    --soft: #f1f1f1; /* 보조 표면(검색바·칩 트랙) */
+    --soft: #f4f4f4; /* 보조 표면(검색바·칩 트랙) */
     --tint: #fafafa; /* 입력 배경·화면 틴트 */
 
     --color-bg: #ffffff; /* 화면 배경 */
@@ -100,7 +100,7 @@
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Container */
-    --container-padding: var(--space-4);
+    --container-padding: 18px;
     --container-max-width: 480px;
 
     /* Touch target */
@@ -351,7 +351,11 @@ a:hover {
     border-bottom: 1px solid var(--color-border);
     margin: calc(-1 * var(--container-padding));
     margin-bottom: var(--space-3);
-    padding: 30px var(--container-padding) var(--space-3);
+    padding: 30px var(--container-padding) 14px;
+}
+/* 헤더 내 텍스트 버튼(취소·저장·← 뒤로)은 목업과 동일하게 15px. */
+.sticky-header .btn-text {
+    font-size: 15px;
 }
 
 /* 항목 이니셜 아바타 */
@@ -383,7 +387,7 @@ a:hover {
     gap: 9px;
     height: 42px;
     padding: 0 14px;
-    border-radius: var(--radius-md);
+    border-radius: 13px;
     background: var(--soft);
 }
 
@@ -394,7 +398,7 @@ a:hover {
     font: inherit;
     font-size: 15px;
     outline: none;
-    color: var(--color-text-primary);
+    color: #222;
 }
 
 .search-bar input::placeholder {
@@ -490,7 +494,6 @@ a:hover {
     font-family: var(--font-body);
     font-weight: 700;
     font-size: var(--font-md);
-    letter-spacing: -0.01em;
     box-shadow: var(--shadow-accent);
     transition:
         background-color var(--motion-fast) var(--ease),
@@ -615,7 +618,7 @@ a:hover {
 .fab {
     position: fixed;
     right: calc(50% - 240px + 20px);
-    bottom: var(--bottom-tab-height);
+    bottom: calc(var(--bottom-tab-height) + 28px);
     width: 56px;
     height: 56px;
     border: none;
@@ -656,7 +659,6 @@ a:hover {
     color: var(--color-text-muted);
     font-size: 11.5px;
     font-weight: 700;
-    letter-spacing: 0.02em;
 }
 
 .form-row input,
@@ -667,7 +669,7 @@ a:hover {
     min-height: 52px;
     padding: 0 15px;
     border: 1.5px solid #ececec;
-    border-radius: var(--radius-md);
+    border-radius: 13px;
     font-size: var(--font-md); /* 16px — iOS auto-zoom 방지 */
     font-family: inherit;
     font-weight: 500;
@@ -820,7 +822,7 @@ input[type="date"].field-control {
     padding: 14px;
     background: var(--color-surface-1);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
+    border-radius: 16px;
     color: var(--color-text-primary);
     text-decoration: none;
     overflow: hidden;
@@ -980,8 +982,8 @@ input[type="date"].field-control {
 
 /* 마스킹된 점 */
 .secret-value.masked {
-    color: var(--color-text-secondary);
-    letter-spacing: 0.18em;
+    color: #1f1f1f;
+    letter-spacing: 0.04em;
 }
 
 /* 드러난 비밀값 */
@@ -1044,7 +1046,7 @@ input[type="date"].field-control {
 .secret-drain-track {
     flex: 1;
     height: 3px;
-    border-radius: var(--radius-full);
+    border-radius: 3px;
     background: var(--soft);
     overflow: hidden;
 }
@@ -1083,6 +1085,16 @@ input[type="date"].field-control {
     background: var(--ac);
     color: #fff;
     margin-bottom: var(--space-5);
+}
+
+/* 인증 전 화면(온보딩·잠금·로딩·에러)은 풀스크린 — 하단 탭바를 숨기고 컨테이너
+   패딩을 걷어낸다(각 화면이 자체 패딩·전체 높이로 채운다). */
+html[data-auth-screen] .bottom-tab-bar {
+    display: none;
+}
+
+html[data-auth-screen] .container {
+    padding: 0;
 }
 
 /* 잠금해제 링(인증 중 회전) */
@@ -1398,7 +1410,6 @@ input[type="date"].field-control {
     color: var(--color-text-muted);
     font-size: 11.5px;
     font-weight: 700;
-    letter-spacing: 0.02em;
     margin-bottom: 7px;
 }
 
@@ -1415,7 +1426,7 @@ input[type="date"].field-control {
     gap: 12px;
     padding: 15px 16px;
     border: 1.5px solid #ececec;
-    border-radius: var(--radius-md);
+    border-radius: 13px;
     background: var(--tint);
     cursor: pointer;
 }
@@ -1467,31 +1478,48 @@ input[type="date"].field-control {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: var(--tint);
+    gap: 1px;
+    padding: 2px;
+    border: none;
+    border-radius: 11px;
+    background: transparent;
     cursor: pointer;
     font: inherit;
-    transition: transform var(--motion-fast) var(--ease);
+    transition:
+        transform var(--motion-fast) var(--ease),
+        background var(--motion-fast) var(--ease);
 }
 .cal-cell:active {
     transform: scale(0.9);
 }
-.cal-cell.active {
-    border-color: var(--ac);
+.cal-cell.has-spend {
     background: var(--soft);
 }
+.cal-cell.active {
+    background: var(--ac);
+}
 .cal-day {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-secondary);
+    line-height: 1;
+    color: #555;
+}
+.cal-cell.today .cal-day {
+    font-weight: 800;
+    color: var(--ac);
+}
+.cal-cell.active .cal-day {
+    font-weight: 800;
+    color: #fff;
 }
 .cal-amt {
     font-size: 9px;
     font-weight: 700;
     color: var(--color-danger-fg);
     line-height: 1;
+}
+.cal-cell.active .cal-amt {
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* 고정 지출 배지 */
@@ -1516,7 +1544,7 @@ input[type="date"].field-control {
     animation: sheetUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
     /* 내용이 길어지면(카테고리·수입 많을 때) 시트 위쪽이 화면 밖으로 잘리지 않도록
        높이를 제한하고 내부 스크롤한다. dvh 로 모바일 브라우저 UI 높이 변화 대응. */
-    max-height: 88dvh;
+    max-height: 74dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
 }
@@ -1544,6 +1572,7 @@ input[type="date"].field-control {
 }
 .income-input input {
     flex: 1;
+    min-width: 0; /* 값이 길어도 옆의 단위(₩·%)를 박스 밖으로 밀지 않도록 축소 허용 */
     border: none;
     background: none;
     outline: none;

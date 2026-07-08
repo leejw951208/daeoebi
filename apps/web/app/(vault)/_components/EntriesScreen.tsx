@@ -136,7 +136,11 @@ export function EntriesScreen() {
 
             <IdleWarning />
 
-            <nav aria-label="대외비 관리" className="toolbar">
+            <nav
+                aria-label="대외비 관리"
+                className="toolbar"
+                style={{ padding: "16px 18px 0", margin: 0 }}
+            >
                 <Link
                     href="/backup"
                     style={{
@@ -178,7 +182,7 @@ export function EntriesScreen() {
                 </div>
             )}
 
-            <div>
+            <div style={{ padding: "14px 16px 22px" }}>
                 {(state === "loading" || siteState.status === "loading") && (
                     <SkeletonCard lines={3} />
                 )}
@@ -209,7 +213,23 @@ export function EntriesScreen() {
                             }}
                             aria-hidden="true"
                         >
-                            +
+                            {query.trim() ? (
+                                <svg
+                                    width="28"
+                                    height="28"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="M20.5 20.5 16 16" />
+                                </svg>
+                            ) : (
+                                "+"
+                            )}
                         </div>
                         <div
                             style={{
@@ -231,7 +251,7 @@ export function EntriesScreen() {
                             }}
                         >
                             {query.trim()
-                                ? "다른 검색어로 다시 시도해 보세요."
+                                ? `‘${query.trim()}’와 일치하는 항목을 찾지 못했어요. 다른 이름으로 검색해 보세요.`
                                 : "첫 번째 비밀번호를 추가하면 여기에 안전하게 보관됩니다."}
                         </p>
                     </div>
