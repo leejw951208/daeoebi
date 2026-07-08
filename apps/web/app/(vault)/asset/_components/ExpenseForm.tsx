@@ -14,6 +14,7 @@ import {
     type AssetCategory,
 } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
+import { toast } from "@/components/toast"
 import { formatAmount } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
 import { monthOf, todayISO } from "../_lib/asset-dates"
@@ -57,7 +58,6 @@ export function ExpenseForm({
     const [recurring, setRecurring] = useState(initial?.recurringId != null)
     const [termMonths, setTermMonths] = useState("")
     const [busy, setBusy] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [deleteMenu, setDeleteMenu] = useState(false)
 
     // 신규 폼에서 카테고리 목록이 비동기로 도착했을 때 첫 항목을 자동 선택한다.
@@ -77,11 +77,10 @@ export function ExpenseForm({
 
     async function handleSave() {
         if (amountNum <= 0) {
-            setError("금액을 입력하세요.")
+            toast("금액을 입력하세요.")
             return
         }
         setBusy(true)
-        setError(null)
         try {
             const payload: ExpensePayload = {
                 item: item.trim(),
@@ -153,7 +152,7 @@ export function ExpenseForm({
             onSaved()
         } catch (e) {
             setBusy(false)
-            setError(
+            toast(
                 isApiError(e)
                     ? e.message
                     : "저장에 실패했습니다. 다시 시도하세요.",
@@ -169,7 +168,7 @@ export function ExpenseForm({
             onDeleted()
         } catch (e) {
             setBusy(false)
-            setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
+            toast(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         }
     }
 
@@ -185,7 +184,7 @@ export function ExpenseForm({
             onDeleted()
         } catch (e) {
             setBusy(false)
-            setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
+            toast(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         }
     }
 
@@ -203,7 +202,7 @@ export function ExpenseForm({
                     type="button"
                     className="btn-text"
                     onClick={onCancel}
-                    style={{ color: "var(--color-text-muted)" }}
+                    style={{ color: "#888" }}
                 >
                     취소
                 </button>
@@ -223,18 +222,12 @@ export function ExpenseForm({
             <div
                 className="stagger"
                 style={{
-                    padding: "14px 4px 50px",
+                    padding: "14px 18px 50px",
                     display: "flex",
                     flexDirection: "column",
                     gap: 24,
                 }}
             >
-                {error && (
-                    <div role="alert" className="error-box">
-                        {error}
-                    </div>
-                )}
-
                 {/* 금액 */}
                 <div style={{ textAlign: "center", padding: "14px 0 4px" }}>
                     <div
@@ -263,6 +256,7 @@ export function ExpenseForm({
                         </span>
                         <input
                             inputMode="numeric"
+                            size={6}
                             value={amount ? formatAmount(amountNum) : ""}
                             onChange={(e) => onAmountInput(e.target.value)}
                             placeholder="0"
@@ -344,7 +338,7 @@ export function ExpenseForm({
                                             borderRadius: "50%",
                                             background: c.color,
                                             display: "inline-block",
-                                            marginRight: 6,
+                                            marginRight: 7,
                                         }}
                                     />
                                     {c.name}
@@ -393,7 +387,7 @@ export function ExpenseForm({
                                 style={{
                                     display: "block",
                                     fontSize: 12,
-                                    color: "var(--color-text-muted)",
+                                    color: "#9a9a9a",
                                     marginTop: 2,
                                 }}
                             >
@@ -419,7 +413,7 @@ export function ExpenseForm({
                                 padding: 0,
                                 background: recurring ? "var(--ac)" : "#dcdcdc",
                                 cursor: "pointer",
-                                transition: "background .18s",
+                                transition: "background .2s, transform .12s",
                             }}
                         >
                             <span
@@ -436,24 +430,27 @@ export function ExpenseForm({
                                     transform: recurring
                                         ? "translateX(20px)"
                                         : "translateX(0)",
-                                    transition: "transform .18s",
+                                    transition: "transform .2s",
                                 }}
                             />
                         </button>
                     </div>
                 }
 
-                {/* 개월 수(고정 ON 전환 시에만, 선택) */}
-                {recurring && !wasRecurring && (
+                {/* 개월 수(고정 ON 이면 표시, 선택) */}
+                {recurring && (
                     <div
                         className="form-row"
-                        style={{ margin: 0, marginTop: -12 }}
+                        style={{ margin: 0, marginTop: -12, gap: 0 }}
                     >
-                        <label htmlFor="term-months">
+                        <label
+                            htmlFor="term-months"
+                            style={{ color: "#a0a0a0", marginBottom: 7 }}
+                        >
                             개월 수{" "}
                             <span
                                 style={{
-                                    color: "var(--color-text-muted)",
+                                    color: "#cbcbcb",
                                     fontWeight: 600,
                                 }}
                             >
@@ -465,7 +462,11 @@ export function ExpenseForm({
                             inputMode="numeric"
                             className="field-control"
                             placeholder="비우면 무기한"
-                            style={{ fontSize: 15, fontWeight: 600 }}
+                            style={{
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: "#333",
+                            }}
                             value={termMonths}
                             onChange={(e) => {
                                 resetIdle()
@@ -490,12 +491,46 @@ export function ExpenseForm({
                     </div>
                 )}
 
-                {/* 삭제(수정만) */}
-                {isEdit &&
-                    (initial?.recurringId ? (
+                {/* 액션(수정만): 고정 해제 · 삭제 */}
+                {isEdit && (
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 9,
+                            marginTop: 4,
+                        }}
+                    >
+                        {recurring && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    resetIdle()
+                                    setRecurring(false)
+                                }}
+                                disabled={busy}
+                                style={{
+                                    height: 50,
+                                    border: "1px solid #ececec",
+                                    borderRadius: 14,
+                                    background: "#fff",
+                                    font: "inherit",
+                                    fontSize: 14,
+                                    fontWeight: 700,
+                                    color: "#555",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                고정 해제
+                            </button>
+                        )}
                         <button
                             type="button"
-                            onClick={() => setDeleteMenu(true)}
+                            onClick={
+                                initial?.recurringId
+                                    ? () => setDeleteMenu(true)
+                                    : handleDeleteThisMonth
+                            }
                             disabled={busy}
                             style={{
                                 height: 50,
@@ -507,32 +542,12 @@ export function ExpenseForm({
                                 fontWeight: 700,
                                 color: "#e5484d",
                                 cursor: "pointer",
-                                marginTop: 4,
-                            }}
-                        >
-                            삭제
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={handleDeleteThisMonth}
-                            disabled={busy}
-                            style={{
-                                height: 50,
-                                border: "1px solid #f3dcdc",
-                                borderRadius: 14,
-                                background: "#fff",
-                                font: "inherit",
-                                fontSize: 14,
-                                fontWeight: 700,
-                                color: "#e5484d",
-                                cursor: "pointer",
-                                marginTop: 4,
                             }}
                         >
                             이 지출 삭제
                         </button>
-                    ))}
+                    </div>
+                )}
             </div>
 
             {deleteMenu && (
@@ -561,7 +576,7 @@ export function ExpenseForm({
                             style={{
                                 fontSize: 13,
                                 lineHeight: 1.5,
-                                color: "var(--color-text-muted)",
+                                color: "#9a9a9a",
                                 marginBottom: 18,
                             }}
                         >

@@ -10,7 +10,12 @@ export default function VaultBackupPage() {
                 className="sticky-header"
                 style={{ display: "flex", alignItems: "center", gap: 10 }}
             >
-                <Link className="btn-text" href="/" aria-label="대외비로">
+                <Link
+                    className="btn-text"
+                    href="/"
+                    aria-label="대외비로"
+                    style={{ color: "#666", fontWeight: 400 }}
+                >
                     ←
                 </Link>
                 <div

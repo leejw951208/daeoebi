@@ -3,6 +3,7 @@
 // createSavingsBoxTxn 으로 저장한다. 출금은 출처 선택 없이 금액·메모만 받는다(source 는 "cash" 고정).
 import { useState } from "react"
 import { Button } from "@/components/Button"
+import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import { createSavingsBoxTxn } from "@/lib/vault-client"
 import { sealBoxTxn } from "../_lib/asset-payload"
@@ -43,8 +44,8 @@ export function SavingsBoxSheet({
     const [amount, setAmount] = useState("")
     const [memo, setMemo] = useState("")
     const [saving, setSaving] = useState(false)
-    const [saveFailed, setSaveFailed] = useState(false)
     const [amountFocused, setAmountFocused] = useState(false)
+    const [memoFocused, setMemoFocused] = useState(false)
 
     const isIn = mode === "in"
     const title = isIn ? "입금" : "출금"
@@ -61,7 +62,6 @@ export function SavingsBoxSheet({
     async function save() {
         if (saving || amountValue <= 0) return
         setSaving(true)
-        setSaveFailed(false)
         try {
             const blob = await sealBoxTxn(vaultKey, {
                 amount: amountValue,
@@ -71,7 +71,7 @@ export function SavingsBoxSheet({
             await onSaved()
             onClose()
         } catch {
-            setSaveFailed(true)
+            toast("저장하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setSaving(false)
         }
@@ -99,7 +99,15 @@ export function SavingsBoxSheet({
                 >
                     세이빙 박스 {title}
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
+                <p
+                    className="muted"
+                    style={{
+                        fontSize: 13,
+                        color: "#9a9a9a",
+                        lineHeight: 1.5,
+                        marginBottom: 18,
+                    }}
+                >
                     {desc}
                 </p>
 
@@ -119,7 +127,7 @@ export function SavingsBoxSheet({
                             style={{
                                 display: "flex",
                                 gap: 7,
-                                marginBottom: source === "savings" ? 8 : 16,
+                                marginBottom: 16,
                             }}
                         >
                             <button
@@ -179,7 +187,7 @@ export function SavingsBoxSheet({
                                     fontSize: 12,
                                     color: "#20a4a4",
                                     fontWeight: 700,
-                                    marginBottom: 16,
+                                    margin: "-8px 0 16px",
                                     lineHeight: 1.5,
                                 }}
                             >
@@ -245,22 +253,20 @@ export function SavingsBoxSheet({
                     value={memo}
                     maxLength={MAX_MEMO_LENGTH}
                     aria-label="메모"
+                    onFocus={() => setMemoFocused(true)}
+                    onBlur={() => setMemoFocused(false)}
                     onChange={(e) => {
                         resetIdle()
                         setMemo(e.target.value)
                     }}
-                    style={{ marginBottom: 20, fontWeight: 600 }}
+                    style={{
+                        marginBottom: 20,
+                        fontWeight: 600,
+                        ...(memoFocused
+                            ? { borderColor: ACCENT, background: "#fff" }
+                            : {}),
+                    }}
                 />
-
-                {saveFailed && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginBottom: 12 }}
-                    >
-                        저장하지 못했어요. 다시 시도해 주세요.
-                    </div>
-                )}
 
                 <Button
                     variant="primary"

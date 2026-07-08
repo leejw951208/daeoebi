@@ -4,7 +4,7 @@
 :root {
     /* Color — Surface (라이트 셸) */
     --ac: #171717; /* 액센트/주요 버튼/포커스 */
-    --soft: #f4f4f4; /* 보조 표면(검색바·칩 트랙) */
+    --soft: #f1f1f1; /* 보조 표면(검색바·칩 트랙) */
     --tint: #fafafa; /* 입력 배경·화면 틴트 */
 
     --color-bg: #ffffff; /* 화면 배경 */
@@ -183,11 +183,9 @@ a:hover {
 /* ── Keyframes (프로토타입에서 이식) ─────────────────── */
 @keyframes fadeUp {
     from {
-        opacity: 0;
         transform: translateY(10px);
     }
     to {
-        opacity: 1;
         transform: translateY(0);
     }
 }
@@ -249,6 +247,15 @@ a:hover {
     }
 }
 
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 @keyframes slide-up {
     from {
         transform: translateY(20px);
@@ -263,6 +270,7 @@ a:hover {
 /* 목록·상세 진입 stagger */
 .stagger > * {
     animation: fadeUp 0.42s var(--ease) both;
+    opacity: 1;
 }
 .stagger > *:nth-child(1) {
     animation-delay: 0.02s;
@@ -301,7 +309,9 @@ a:hover {
 .phone-frame {
     position: relative;
     min-height: 100vh;
-    background: var(--color-bg);
+    /* 디자인 mock: 화면 배경은 #fafafa(--tint) 풀블리드. 자체 배경(온보딩·잠금 그라데이션,
+       복구·폼 #fff)을 가진 화면은 그 위를 덮는다. */
+    background: var(--tint);
 }
 
 .container {
@@ -345,12 +355,11 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
     margin: calc(-1 * var(--container-padding));
-    margin-bottom: var(--space-3);
     padding: 30px var(--container-padding) 14px;
 }
 /* 헤더 내 텍스트 버튼(취소·저장·← 뒤로)은 목업과 동일하게 15px. */
@@ -451,12 +460,18 @@ a:hover {
     gap: 3px;
     color: var(--color-text-muted);
     font-family: var(--font-body);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     min-height: var(--touch-target-min);
     text-decoration: none;
-    transition: color var(--motion-fast) var(--ease);
+    transition:
+        color var(--motion-fast) var(--ease),
+        transform var(--motion-fast) var(--ease);
+}
+
+.bottom-tab-bar a:active {
+    transform: scale(0.92);
 }
 
 .bottom-tab-bar a[aria-current="page"] {
@@ -563,14 +578,12 @@ a:hover {
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
-    min-height: var(--touch-target-min);
-    padding: 0 var(--space-2);
     border: none;
     background: none;
     color: var(--color-text-muted);
     font: inherit;
     font-size: var(--font-sm);
-    font-weight: 600;
+    font-weight: 400;
     cursor: pointer;
     transition: opacity var(--motion-fast) var(--ease);
 }
@@ -586,7 +599,7 @@ a:hover {
 /* 추천 칩(가로 스크롤 quick-add) */
 .chip {
     flex-shrink: 0;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     min-height: 0;
     border: 1.5px solid #ececec;
@@ -606,7 +619,7 @@ a:hover {
 }
 
 .chip:active:not(:disabled) {
-    transform: scale(0.94);
+    transform: scale(0.95);
 }
 
 .chip:disabled {
@@ -630,7 +643,7 @@ a:hover {
     line-height: 1;
     cursor: pointer;
     box-shadow: 0 12px 28px -8px var(--ac);
-    transition: transform var(--motion-fast) var(--ease);
+    transition: transform 0.14s var(--ease);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -815,7 +828,6 @@ input[type="date"].field-control {
 }
 
 .entry-card {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 13px;
@@ -825,10 +837,9 @@ input[type="date"].field-control {
     border-radius: 16px;
     color: var(--color-text-primary);
     text-decoration: none;
-    overflow: hidden;
     transition:
-        transform var(--motion-fast) var(--ease),
-        box-shadow var(--motion-normal) var(--ease);
+        transform 0.14s var(--ease),
+        box-shadow 0.2s var(--ease);
 }
 
 .entry-card:hover {
@@ -902,12 +913,16 @@ input[type="date"].field-control {
     font-family: var(--font-body);
     font-size: 12.5px;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
     color: var(--color-text-secondary);
     background: #fff;
     border: 1px solid #ececec;
     border-radius: var(--radius-full);
     padding: 0 13px;
+    transition: transform 0.12s var(--ease);
+}
+
+.lock-timer:active {
+    transform: scale(0.95);
 }
 
 .lock-timer .dot {
@@ -916,15 +931,6 @@ input[type="date"].field-control {
     border-radius: var(--radius-full);
     background: var(--ac);
     animation: pulse 2s infinite;
-}
-
-.lock-timer.urgent {
-    color: var(--color-danger-fg);
-    border-color: var(--color-danger-border);
-}
-
-.lock-timer.urgent .dot {
-    background: var(--color-danger-fg);
 }
 
 /* ── Detail rows (상세 메타) ────────────────────────── */
@@ -1060,9 +1066,10 @@ input[type="date"].field-control {
 
 .secret-drain-count {
     font-family: var(--font-mono);
-    font-size: var(--font-xs);
+    font-size: 10.5px;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: var(--ac);
+    color: #b0b0b0;
     min-width: 28px;
     text-align: right;
 }
@@ -1179,12 +1186,12 @@ html[data-auth-screen] .container {
 .dialog-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.32);
+    background: rgba(0, 0, 0, 0.3);
     z-index: 100;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    animation: fade-in var(--motion-fast) var(--ease);
+    animation: fade 0.2s var(--ease);
 }
 
 .dialog {
@@ -1423,12 +1430,10 @@ html[data-auth-screen] .container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
     padding: 15px 16px;
     border: 1.5px solid #ececec;
     border-radius: 13px;
     background: var(--tint);
-    cursor: pointer;
 }
 .asset-toggle-row input[type="checkbox"] {
     width: 22px;
@@ -1445,6 +1450,10 @@ html[data-auth-screen] .container {
     padding: 18px;
     font: inherit;
     color: inherit;
+    transition: transform 0.12s var(--ease);
+}
+.asset-card:active {
+    transform: scale(0.98);
 }
 .asset-card-label {
     font-size: 12px;

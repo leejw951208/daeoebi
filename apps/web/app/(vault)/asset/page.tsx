@@ -1,7 +1,13 @@
 "use client"
 // 자산 대시보드(디자인 화면 11). 예산(서버 Income 재사용)·월 지출·고정 템플릿을 불러와
 // 머티리얼라이즈한 뒤 VK 로 복호화·집계해 대시보드를 그린다. 상태·로드만 담당하고 본문은 AssetDashboard 가 그린다.
-import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    type PointerEvent,
+} from "react"
 import Link from "next/link"
 import {
     listIncomes,
@@ -168,6 +174,21 @@ type State =
     | { status: "loading" }
     | { status: "error"; message: string }
     | { status: "ready"; data: Loaded }
+
+// 누름(active) 시 축소 스케일. 디자인 style-active 를 인라인 포인터 이벤트로 재현한다.
+function pressScale(scale: number) {
+    const reset = (e: PointerEvent<HTMLElement>) => {
+        e.currentTarget.style.transform = ""
+    }
+    return {
+        onPointerDown: (e: PointerEvent<HTMLElement>) => {
+            e.currentTarget.style.transform = `scale(${scale})`
+        },
+        onPointerUp: reset,
+        onPointerLeave: reset,
+        onPointerCancel: reset,
+    }
+}
 
 // localStorage 래퍼: SSR/서버 환경에서 안전하게 동작한다.
 function getMigrationGuard(month: string): boolean {
@@ -583,6 +604,7 @@ export default function AssetPage() {
                                 type="button"
                                 aria-label="이전 달"
                                 onClick={() => setMonth((m) => addMonth(m, -1))}
+                                {...pressScale(0.82)}
                                 style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -594,6 +616,7 @@ export default function AssetPage() {
                                     color: "#c2c2c2",
                                     cursor: "pointer",
                                     padding: 0,
+                                    transition: "transform .12s",
                                 }}
                             >
                                 <svg
@@ -609,13 +632,20 @@ export default function AssetPage() {
                                     <path d="M15 6l-6 6 6 6" />
                                 </svg>
                             </button>
-                            <span style={{ minWidth: 72, textAlign: "center" }}>
+                            <span
+                                style={{
+                                    minWidth: 72,
+                                    textAlign: "center",
+                                    color: "#9a9a9a",
+                                }}
+                            >
                                 {monthLabel(month)}
                             </span>
                             <button
                                 type="button"
                                 aria-label="다음 달"
                                 onClick={() => setMonth((m) => addMonth(m, 1))}
+                                {...pressScale(0.82)}
                                 style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -627,6 +657,7 @@ export default function AssetPage() {
                                     color: "#c2c2c2",
                                     cursor: "pointer",
                                     padding: 0,
+                                    transition: "transform .12s",
                                 }}
                             >
                                 <svg
@@ -668,11 +699,13 @@ export default function AssetPage() {
                                 fontWeight: 700,
                                 color: "#444",
                                 cursor: "pointer",
+                                transition: "transform .12s",
                             }}
                             onClick={() => {
                                 resetIdle()
                                 setCategorySheetOpen(true)
                             }}
+                            {...pressScale(0.95)}
                         >
                             <svg
                                 width="14"
@@ -715,6 +748,7 @@ export default function AssetPage() {
                                 fontSize: 13,
                                 fontWeight: 700,
                                 cursor: "pointer",
+                                transition: "transform .12s",
                                 ...(assetTab === "budget"
                                     ? {
                                           background: "#fff",
@@ -728,6 +762,7 @@ export default function AssetPage() {
                                       }),
                             }}
                             onClick={() => handleAssetTab("budget")}
+                            {...pressScale(0.98)}
                         >
                             이번 달
                         </button>
@@ -743,6 +778,7 @@ export default function AssetPage() {
                                 fontSize: 13,
                                 fontWeight: 700,
                                 cursor: "pointer",
+                                transition: "transform .12s",
                                 ...(assetTab === "savings"
                                     ? {
                                           background: "#fff",
@@ -756,6 +792,7 @@ export default function AssetPage() {
                                       }),
                             }}
                             onClick={() => handleAssetTab("savings")}
+                            {...pressScale(0.98)}
                         >
                             저축·투자
                         </button>

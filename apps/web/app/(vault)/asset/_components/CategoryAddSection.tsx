@@ -51,7 +51,10 @@ export function CategoryAddSection({
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="field-label" style={{ marginBottom: 7 }}>
+            <div
+                className="field-label"
+                style={{ marginBottom: 7, color: "#a0a0a0" }}
+            >
                 카테고리명
             </div>
             <input
@@ -68,7 +71,10 @@ export function CategoryAddSection({
                 style={{ marginBottom: 18, fontWeight: 600 }}
             />
 
-            <div className="field-label" style={{ marginBottom: 7 }}>
+            <div
+                className="field-label"
+                style={{ marginBottom: 7, color: "#a0a0a0" }}
+            >
                 코드{" "}
                 <span style={{ color: "#cbcbcb", fontWeight: 600 }}>
                     · 영문·숫자
@@ -92,7 +98,10 @@ export function CategoryAddSection({
                 }}
             />
 
-            <div className="field-label" style={{ marginBottom: 10 }}>
+            <div
+                className="field-label"
+                style={{ marginBottom: 10, color: "#a0a0a0" }}
+            >
                 색상
             </div>
             <div
@@ -224,6 +233,7 @@ export function CategoryAddSection({
                     style={{
                         width: "100%",
                         height: 46,
+                        justifyContent: "center",
                         marginTop: 2,
                         fontWeight: 700,
                         color: "#e5484d",

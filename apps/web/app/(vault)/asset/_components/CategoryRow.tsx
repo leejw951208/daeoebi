@@ -52,19 +52,17 @@ export function CategoryRow({
                 >
                     {category.name}
                 </div>
-                {category.code && (
-                    <div
-                        style={{
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            color: "#b0b0b0",
-                            letterSpacing: "0.03em",
-                            marginTop: 1,
-                        }}
-                    >
-                        {category.code}
-                    </div>
-                )}
+                <div
+                    style={{
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: "#b0b0b0",
+                        letterSpacing: "0.03em",
+                        marginTop: 1,
+                    }}
+                >
+                    {category.code}
+                </div>
             </div>
             <button
                 type="button"

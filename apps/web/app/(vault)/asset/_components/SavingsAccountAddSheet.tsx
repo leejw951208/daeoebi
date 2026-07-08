@@ -4,6 +4,7 @@
 // 계좌 개수만큼 순환해 배정한다(설계 v5 ADD_COLORS 팔레트).
 import { useState } from "react"
 import { Button } from "@/components/Button"
+import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import { createSavingsAccount } from "@/lib/vault-client"
 import { sealAccount } from "../_lib/asset-payload"
@@ -43,7 +44,6 @@ export function SavingsAccountAddSheet({
     const [base, setBase] = useState("")
     const [goal, setGoal] = useState("")
     const [saving, setSaving] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [focusedField, setFocusedField] = useState<string | null>(null)
 
     const baseValue = Number(base || "0")
@@ -53,11 +53,10 @@ export function SavingsAccountAddSheet({
     async function save() {
         if (saving || !trimmedName) return
         if (existingNames.includes(trimmedName)) {
-            setErrorMessage("이미 있는 적금 이름이에요.")
+            toast("이미 있는 적금 이름이에요.")
             return
         }
         setSaving(true)
-        setErrorMessage(null)
         try {
             const color = ADD_COLORS[accountCount % ADD_COLORS.length]
             const blob = await sealAccount(vaultKey, {
@@ -68,7 +67,7 @@ export function SavingsAccountAddSheet({
             await onSaved()
             onClose()
         } catch {
-            setErrorMessage("저장하지 못했어요. 다시 시도해 주세요.")
+            toast("저장하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setSaving(false)
         }
@@ -96,7 +95,15 @@ export function SavingsAccountAddSheet({
                 >
                     적금 추가
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
+                <p
+                    className="muted"
+                    style={{
+                        fontSize: 13,
+                        color: "#9a9a9a",
+                        lineHeight: 1.5,
+                        marginBottom: 18,
+                    }}
+                >
                     지출을 이 이름의 &lsquo;저축&rsquo;으로 분류하면 매달
                     자동으로 합산돼요.
                 </p>
@@ -117,12 +124,19 @@ export function SavingsAccountAddSheet({
                     value={name}
                     maxLength={MAX_NAME_LENGTH}
                     aria-label="적금 이름"
+                    onFocus={() => setFocusedField("name")}
+                    onBlur={() => setFocusedField(null)}
                     onChange={(e) => {
                         resetIdle()
                         setName(e.target.value)
-                        setErrorMessage(null)
                     }}
-                    style={{ marginBottom: 16, fontWeight: 600 }}
+                    style={{
+                        marginBottom: 16,
+                        fontWeight: 600,
+                        ...(focusedField === "name"
+                            ? { borderColor: ACCENT, background: "#fff" }
+                            : {}),
+                    }}
                 />
 
                 <div
@@ -240,16 +254,6 @@ export function SavingsAccountAddSheet({
                         </button>
                     ))}
                 </div>
-
-                {errorMessage && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginBottom: 12 }}
-                    >
-                        {errorMessage}
-                    </div>
-                )}
 
                 <Button
                     variant="primary"

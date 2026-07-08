@@ -49,6 +49,9 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
     const [recoverySegments, setRecoverySegments] = useState<string[]>(() =>
         Array(6).fill(""),
     )
+    // 세그먼트 인라인 input 은 .field-control 이 아니라 focus CSS 가 없다 —
+    // 디자인의 focus(테두리 #171717·배경 #fff)를 상태로 재현한다.
+    const [focusedSegment, setFocusedSegment] = useState<number | null>(null)
 
     // passkey 로그인 → PRF 출력으로 wrappedVkPrf 언랩 → VK 확보.
     async function handlePasskeyUnlock() {
@@ -212,76 +215,65 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    justifyContent: "center",
                     textAlign: "center",
                 }}
             >
                 <div
+                    className={`unlock-ring ${ringState}`}
+                    role="img"
+                    aria-label={title}
+                >
+                    {ringState !== "authing" && (
+                        <div className={`unlock-dot${failed ? " fail" : ""}`}>
+                            {failed ? (
+                                <span style={{ fontSize: 30, lineHeight: 1 }}>
+                                    !
+                                </span>
+                            ) : (
+                                <div
+                                    aria-hidden="true"
+                                    style={{
+                                        width: 22,
+                                        height: 26,
+                                        border: "3px solid #fff",
+                                        borderTop: "none",
+                                        borderRadius: 7,
+                                        position: "relative",
+                                        marginTop: 5,
+                                    }}
+                                >
+                                    <span
+                                        style={{
+                                            position: "absolute",
+                                            left: "50%",
+                                            top: -14,
+                                            transform: "translateX(-50%)",
+                                            width: 20,
+                                            height: 20,
+                                            border: "3px solid #fff",
+                                            borderBottom: "none",
+                                            borderRadius: "10px 10px 0 0",
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <h1 style={{ marginTop: 30 }}>{title}</h1>
+                <p
+                    className="muted"
                     style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
+                        marginTop: 8,
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        maxWidth: 260,
+                        color: "#6b6b6b",
                     }}
                 >
-                    <div
-                        className={`unlock-ring ${ringState}`}
-                        role="img"
-                        aria-label={title}
-                    >
-                        {ringState !== "authing" && (
-                            <div
-                                className={`unlock-dot${failed ? " fail" : ""}`}
-                            >
-                                {failed ? (
-                                    <span
-                                        style={{ fontSize: 30, lineHeight: 1 }}
-                                    >
-                                        !
-                                    </span>
-                                ) : (
-                                    <div
-                                        aria-hidden="true"
-                                        style={{
-                                            width: 22,
-                                            height: 26,
-                                            border: "3px solid #fff",
-                                            borderTop: "none",
-                                            borderRadius: 7,
-                                            position: "relative",
-                                            marginTop: 5,
-                                        }}
-                                    >
-                                        <span
-                                            style={{
-                                                position: "absolute",
-                                                left: "50%",
-                                                top: -14,
-                                                transform: "translateX(-50%)",
-                                                width: 20,
-                                                height: 20,
-                                                border: "3px solid #fff",
-                                                borderBottom: "none",
-                                                borderRadius: "10px 10px 0 0",
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    <h1 style={{ marginTop: 30 }}>{title}</h1>
-                    <p
-                        className="muted"
-                        style={{
-                            marginTop: 8,
-                            fontSize: 14,
-                            lineHeight: 1.6,
-                            maxWidth: 260,
-                            color: "#6b6b6b",
-                        }}
-                    >
-                        {sub}
-                    </p>
-                </div>
+                    {sub}
+                </p>
 
                 <div style={{ flex: 1 }} aria-hidden="true" />
 
@@ -346,6 +338,9 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 style={{
                     alignSelf: "flex-start",
                     marginBottom: 22,
+                    padding: 0,
+                    minHeight: "auto",
+                    fontWeight: 400,
                     color: "#888",
                 }}
                 onClick={() => {
@@ -360,7 +355,12 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
             <h1 style={{ fontSize: 24 }}>복구코드로 접근</h1>
             <p
                 className="muted"
-                style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}
+                style={{
+                    marginTop: 8,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: "#6b6b6b",
+                }}
             >
                 발급받은 복구코드를 입력하면 접근을 복구하고 새 패스키를
                 등록합니다.
@@ -381,9 +381,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 <div
                     style={{
                         display: "grid",
-                        // 1fr=minmax(auto,1fr) 은 input 내재너비(~20자)를 최소로 잡아
-                        // 좁은 뷰포트에서 우측 열이 화면 밖으로 넘친다. 0 까지 줄게 고정.
-                        gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
+                        gridTemplateColumns: "1fr 1fr",
                         gap: 10,
                         marginBottom: 16,
                     }}
@@ -405,20 +403,25 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                                 setRecoverySegments(next)
                                 setError(null)
                             }}
+                            onFocus={() => setFocusedSegment(i)}
+                            onBlur={() => setFocusedSegment(null)}
                             disabled={busy !== "idle"}
                             style={{
                                 minWidth: 0,
                                 height: 50,
-                                border: "1.5px solid #e3e3e6",
+                                border: `1.5px solid ${focusedSegment === i ? "#171717" : "#e3e3e6"}`,
                                 borderRadius: 12,
-                                background: "#fafafa",
+                                background:
+                                    focusedSegment === i ? "#fff" : "#fafafa",
                                 textAlign: "center",
                                 fontFamily: "ui-monospace,monospace",
-                                fontSize: 16, // iOS Safari 포커스 자동 확대 방지(16px 미만 금지)
+                                fontSize: 15,
                                 fontWeight: 600,
                                 letterSpacing: ".08em",
                                 color: "#222",
                                 outline: "none",
+                                transition:
+                                    "border-color .15s ease, background .15s ease",
                             }}
                         />
                     ))}
@@ -427,7 +430,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                     className="muted"
                     style={{
                         fontSize: 12.5,
-                        marginTop: -4,
+                        marginTop: 0,
                         marginBottom: "auto",
                         color: "#a0a0a0",
                     }}
@@ -448,7 +451,11 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 <Button
                     type="submit"
                     variant="primary"
-                    style={{ width: "100%", marginTop: 22 }}
+                    style={{
+                        width: "100%",
+                        marginTop: 22,
+                        boxShadow: "none",
+                    }}
                     loading={busy === "recovering"}
                 >
                     검증하고 복구

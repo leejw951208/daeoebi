@@ -5,6 +5,7 @@
 import { useState } from "react"
 import { createSecret, updateSecret } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
+import { toast } from "@/components/toast"
 import { useVault, type SecretField } from "../../_lib/vault-context"
 import { sealPayload } from "../../_lib/secret-payload"
 import { isSensitiveFieldName } from "../../_lib/field-suggestions"
@@ -53,14 +54,10 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             : [makeRow()],
     )
     const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    // 1단계에서 "다음"을 누른 뒤 제목 미입력 등 인라인 안내(토스트 대체).
-    const [hint, setHint] = useState<string | null>(null)
 
     function changeLabel(value: string) {
         resetIdle()
         setLabel(value)
-        if (hint) setHint(null)
     }
 
     function changeMemo(value: string) {
@@ -104,22 +101,19 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
     function goReview() {
         resetIdle()
         if (!label.trim()) {
-            setHint("제목을 입력하세요.")
+            toast("제목을 입력하세요.")
             return
         }
         const names = rows.map((r) => r.name.trim()).filter(Boolean)
         if (new Set(names).size !== names.length) {
-            setHint("필드 이름이 중복되었습니다.")
+            toast("필드 이름이 중복되었습니다.")
             return
         }
-        setHint(null)
-        setError(null)
         setStep("review")
     }
 
     function backToEdit() {
         resetIdle()
-        setError(null)
         setStep("edit")
     }
 
@@ -137,7 +131,6 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             .filter((f) => f.name)
 
         setSubmitting(true)
-        setError(null)
         try {
             const blob = await sealPayload(vaultKey, { fields, memo })
 
@@ -163,13 +156,12 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             await onSuccess()
         } catch (err) {
             // 저장 실패 시 편집으로 돌려 보내 사용자가 값을 잃지 않게 한다.
-            setError(isApiError(err) ? err.message : (err as Error).message)
+            toast(isApiError(err) ? err.message : (err as Error).message)
             setStep("edit")
             setSubmitting(false)
         }
     }
 
-    const usedNames = new Set(rows.map((r) => r.name.trim()).filter(Boolean))
     const reviewFields = rows.filter((r) => r.name.trim())
 
     if (step === "review") {
@@ -178,8 +170,6 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
                 label={label}
                 reviewFields={reviewFields}
                 memo={memo}
-                error={error}
-                submitting={submitting}
                 onBack={backToEdit}
                 onConfirm={confirmSave}
             />
@@ -194,10 +184,6 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             memo={memo}
             onMemoChange={changeMemo}
             rows={rows}
-            usedNames={usedNames}
-            hint={hint}
-            error={error}
-            submitting={submitting}
             onCancel={onCancel}
             onNext={goReview}
             onAddRow={addRow}

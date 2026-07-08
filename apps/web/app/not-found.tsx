@@ -58,6 +58,20 @@ export default function NotFound() {
             <Link
                 className="btn"
                 href="/"
+                // 디자인 style-active="transform:scale(.96)". .btn 기본 :active 는
+                // scale(.97) 이라 프레스 동안 인라인 transform 으로 .96 을 덮는다.
+                onPointerDown={(e) => {
+                    e.currentTarget.style.transform = "scale(0.96)"
+                }}
+                onPointerUp={(e) => {
+                    e.currentTarget.style.transform = ""
+                }}
+                onPointerLeave={(e) => {
+                    e.currentTarget.style.transform = ""
+                }}
+                onPointerCancel={(e) => {
+                    e.currentTarget.style.transform = ""
+                }}
                 style={{
                     borderRadius: 14,
                     boxShadow: "none",

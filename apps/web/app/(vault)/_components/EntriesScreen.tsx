@@ -4,11 +4,10 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { listSecrets, searchSecrets, type SecretMeta } from "@/lib/vault-client"
-import { SkeletonCard } from "@/components/Skeleton"
+import { toast } from "@/components/toast"
 import { useVault } from "../_lib/vault-context"
 import { useDefaultSite } from "../_lib/use-default-site"
 import { LockTimer } from "./LockTimer"
-import { IdleWarning } from "./IdleWarning"
 
 type ListState = "idle" | "loading" | "loaded" | "error"
 
@@ -25,7 +24,6 @@ export function EntriesScreen() {
 
     const [secrets, setSecrets] = useState<SecretMeta[]>([])
     const [state, setState] = useState<ListState>("idle")
-    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         return () => {
@@ -46,11 +44,10 @@ export function EntriesScreen() {
             if (cancelled) return
             setSecrets(items)
             setState("loaded")
-            setError(null)
         }).catch((e) => {
             if (cancelled) return
             setState("error")
-            setError(e instanceof Error ? e.message : "알 수 없는 오류")
+            toast(e instanceof Error ? e.message : "알 수 없는 오류")
         })
         return () => {
             cancelled = true
@@ -84,7 +81,13 @@ export function EntriesScreen() {
     }
 
     return (
-        <section>
+        <section
+            style={{
+                minHeight: "100%",
+                display: "flex",
+                flexDirection: "column",
+            }}
+        >
             <div className="sticky-header">
                 <div
                     style={{
@@ -134,8 +137,6 @@ export function EntriesScreen() {
                 </div>
             </div>
 
-            <IdleWarning />
-
             <nav
                 aria-label="대외비 관리"
                 className="toolbar"
@@ -176,124 +177,157 @@ export function EntriesScreen() {
                 </Link>
             </nav>
 
-            {error && (
-                <div role="alert" className="error-box">
-                    {error}
-                </div>
+            {state === "loaded" && secrets.length > 0 && (
+                <ul
+                    className="entry-list stagger"
+                    style={{ padding: "14px 16px 96px", flex: 1 }}
+                >
+                    {secrets.map((secret) => (
+                        <li key={secret.id}>
+                            <Link href={`/${secret.id}`} className="entry-card">
+                                <span className="avatar" aria-hidden="true">
+                                    {firstChar(secret.label)}
+                                </span>
+                                <span className="entry-main">
+                                    <span className="entry-label">
+                                        {secret.label}
+                                    </span>
+                                </span>
+                                <span className="entry-side">
+                                    <svg
+                                        className="entry-chevron"
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.4"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        aria-hidden="true"
+                                    >
+                                        <path d="M9 6l6 6-6 6" />
+                                    </svg>
+                                </span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
             )}
-
-            <div style={{ padding: "14px 16px 22px" }}>
-                {(state === "loading" || siteState.status === "loading") && (
-                    <SkeletonCard lines={3} />
-                )}
-                {state === "loaded" && secrets.length === 0 && (
+            {state === "loaded" && secrets.length === 0 && !query.trim() && (
+                <div
+                    style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 40,
+                        textAlign: "center",
+                        animation: "fadeUp 0.4s both",
+                    }}
+                >
                     <div
                         style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 20,
+                            background: "var(--soft)",
                             display: "flex",
-                            flexDirection: "column",
                             alignItems: "center",
                             justifyContent: "center",
-                            padding: 40,
-                            textAlign: "center",
-                            animation: "fadeUp 0.4s both",
+                            fontSize: 26,
+                            color: "#bbb",
+                            marginBottom: 18,
+                        }}
+                        aria-hidden="true"
+                    >
+                        +
+                    </div>
+                    <div
+                        style={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            marginBottom: 6,
                         }}
                     >
-                        <div
-                            style={{
-                                width: 64,
-                                height: 64,
-                                borderRadius: 20,
-                                background: "var(--soft)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 26,
-                                color: "#bbb",
-                                marginBottom: 18,
-                            }}
-                            aria-hidden="true"
-                        >
-                            {query.trim() ? (
-                                <svg
-                                    width="28"
-                                    height="28"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <circle cx="11" cy="11" r="7" />
-                                    <path d="M20.5 20.5 16 16" />
-                                </svg>
-                            ) : (
-                                "+"
-                            )}
-                        </div>
-                        <div
-                            style={{
-                                fontSize: 16,
-                                fontWeight: 700,
-                                marginBottom: 6,
-                            }}
-                        >
-                            {query.trim()
-                                ? "검색 결과가 없어요"
-                                : "아직 항목이 없어요"}
-                        </div>
-                        <p
-                            className="muted"
-                            style={{
-                                fontSize: 13.5,
-                                lineHeight: 1.5,
-                                maxWidth: 220,
-                            }}
-                        >
-                            {query.trim()
-                                ? `‘${query.trim()}’와 일치하는 항목을 찾지 못했어요. 다른 이름으로 검색해 보세요.`
-                                : "첫 번째 비밀번호를 추가하면 여기에 안전하게 보관됩니다."}
-                        </p>
+                        아직 항목이 없어요
                     </div>
-                )}
-                {state === "loaded" && secrets.length > 0 && (
-                    <ul className="entry-list stagger">
-                        {secrets.map((secret) => (
-                            <li key={secret.id}>
-                                <Link
-                                    href={`/${secret.id}`}
-                                    className="entry-card"
-                                >
-                                    <span className="avatar" aria-hidden="true">
-                                        {firstChar(secret.label)}
-                                    </span>
-                                    <span className="entry-main">
-                                        <span className="entry-label">
-                                            {secret.label}
-                                        </span>
-                                    </span>
-                                    <span className="entry-side">
-                                        <svg
-                                            className="entry-chevron"
-                                            width="18"
-                                            height="18"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.4"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            aria-hidden="true"
-                                        >
-                                            <path d="M9 6l6 6-6 6" />
-                                        </svg>
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
+                    <p
+                        style={{
+                            fontSize: 13.5,
+                            color: "#9a9a9a",
+                            lineHeight: 1.5,
+                            maxWidth: 220,
+                        }}
+                    >
+                        첫 번째 비밀번호를 추가하면 여기에 안전하게 보관됩니다.
+                    </p>
+                </div>
+            )}
+            {state === "loaded" && secrets.length === 0 && query.trim() && (
+                <div
+                    style={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 40,
+                        textAlign: "center",
+                        animation: "fadeUp 0.4s both",
+                    }}
+                >
+                    <div
+                        style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 20,
+                            background: "var(--soft)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#bbb",
+                            marginBottom: 18,
+                        }}
+                        aria-hidden="true"
+                    >
+                        <svg
+                            width="28"
+                            height="28"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M20.5 20.5 16 16" />
+                        </svg>
+                    </div>
+                    <div
+                        style={{
+                            fontSize: 16,
+                            fontWeight: 700,
+                            marginBottom: 6,
+                        }}
+                    >
+                        검색 결과가 없어요
+                    </div>
+                    <p
+                        style={{
+                            fontSize: 13.5,
+                            color: "#9a9a9a",
+                            lineHeight: 1.5,
+                            maxWidth: 220,
+                        }}
+                    >
+                        ‘{query.trim()}’와 일치하는 항목을 찾지 못했어요. 다른
+                        이름으로 검색해 보세요.
+                    </p>
+                </div>
+            )}
 
             <Link className="fab" href="/new" aria-label="새 항목 추가">
                 <span aria-hidden="true">+</span>

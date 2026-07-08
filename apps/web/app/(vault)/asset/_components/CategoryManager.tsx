@@ -4,7 +4,7 @@
 // FORM: 이름 + 코드 + 색상 스와치 + 저장, 수정 중엔 "카테고리 삭제" 도 노출.
 // 모든 쓰기 후 목록 재조회 및 onChanged 콜백 호출.
 import { useState, useEffect } from "react"
-import { ConfirmDialog } from "@/components/ConfirmDialog"
+import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import {
     listAssetCategories,
@@ -30,13 +30,9 @@ export function CategoryManager({ onClose, onChanged }: Props) {
     const { resetIdle } = useVault()
     const [categories, setCategories] = useState<AssetCategory[]>([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const [mode, setMode] = useState<Mode>("list")
     const [editingCategory, setEditingCategory] =
         useState<AssetCategory | null>(null)
-    const [pendingDelete, setPendingDelete] = useState<AssetCategory | null>(
-        null,
-    )
     const [deleting, setDeleting] = useState(false)
     // 시트가 열려 있는 동안 쓰기가 1회 이상 발생했는지 추적한다.
     // 닫힐 때만 onChanged 를 호출해 부모 리로드를 1회로 합친다.
@@ -44,12 +40,11 @@ export function CategoryManager({ onClose, onChanged }: Props) {
 
     async function loadCategories() {
         setLoading(true)
-        setError(null)
         try {
             const data = await listAssetCategories()
             setCategories(data)
         } catch (e) {
-            setError(isApiError(e) ? e.message : "불러오지 못했습니다.")
+            toast(isApiError(e) ? e.message : "불러오지 못했습니다.")
         } finally {
             setLoading(false)
         }
@@ -69,27 +64,23 @@ export function CategoryManager({ onClose, onChanged }: Props) {
 
     function openAddForm() {
         resetIdle()
-        setError(null)
         setEditingCategory(null)
         setMode("form")
     }
 
     function openEditForm(category: AssetCategory) {
         resetIdle()
-        setError(null)
         setEditingCategory(category)
         setMode("form")
     }
 
     function backToList() {
         resetIdle()
-        setError(null)
         setMode("list")
         setEditingCategory(null)
     }
 
     async function handleSave(data: CategoryFormData) {
-        setError(null)
         try {
             if (editingCategory) {
                 await updateAssetCategory(editingCategory.id, data)
@@ -101,7 +92,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             setMode("list")
             setEditingCategory(null)
         } catch (e) {
-            setError(
+            toast(
                 isApiError(e)
                     ? e.message
                     : editingCategory
@@ -112,11 +103,10 @@ export function CategoryManager({ onClose, onChanged }: Props) {
         }
     }
 
-    async function confirmDelete() {
-        if (!pendingDelete) return
-        const target = pendingDelete
+    // 디자인은 확인 단계 없이 바로 삭제한다.
+    async function deleteCategory(target: AssetCategory) {
+        if (deleting) return
         setDeleting(true)
-        setError(null)
         try {
             await deleteAssetCategory(target.id)
             await loadCategories()
@@ -124,10 +114,9 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             setMode("list")
             setEditingCategory(null)
         } catch (e) {
-            setError(isApiError(e) ? e.message : "삭제에 실패했습니다.")
+            toast(isApiError(e) ? e.message : "삭제에 실패했습니다.")
         } finally {
             setDeleting(false)
-            setPendingDelete(null)
         }
     }
 
@@ -237,16 +226,6 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                         padding: "16px 22px 26px",
                     }}
                 >
-                    {error && (
-                        <div
-                            role="alert"
-                            className="error-box"
-                            style={{ marginBottom: 12 }}
-                        >
-                            {error}
-                        </div>
-                    )}
-
                     {mode === "list" ? (
                         <>
                             {loading ? (
@@ -289,7 +268,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                                             onEdit={openEditForm}
                                             onDelete={(c) => {
                                                 resetIdle()
-                                                setPendingDelete(c)
+                                                void deleteCategory(c)
                                             }}
                                             onActivity={resetIdle}
                                         />
@@ -328,7 +307,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                                 editingCategory
                                     ? () => {
                                           resetIdle()
-                                          setPendingDelete(editingCategory)
+                                          void deleteCategory(editingCategory)
                                       }
                                     : undefined
                             }
@@ -337,22 +316,6 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                     )}
                 </div>
             </div>
-
-            {pendingDelete && (
-                <ConfirmDialog
-                    open
-                    title="카테고리 삭제"
-                    message="이 카테고리의 지출은 미분류가 됩니다."
-                    confirmLabel="삭제"
-                    destructive
-                    confirmLoading={deleting}
-                    onConfirm={confirmDelete}
-                    onCancel={() => {
-                        resetIdle()
-                        setPendingDelete(null)
-                    }}
-                />
-            )}
         </div>
     )
 }

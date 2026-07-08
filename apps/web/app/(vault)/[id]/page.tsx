@@ -5,8 +5,7 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { deleteSecret, getSecret, updateSecret } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
-import { ConfirmDialog } from "@/components/ConfirmDialog"
-import { SkeletonCard } from "@/components/Skeleton"
+import { toast } from "@/components/toast"
 import { CopyField } from "../_components/CopyField"
 import {
     SecretForm,
@@ -39,10 +38,7 @@ export default function SecretDetailPage() {
     const [state, setState] = useState<LoadState>("idle")
     const [error, setError] = useState<string | null>(null)
     const [mode, setMode] = useState<"view" | "edit">("view")
-    const [confirmDelete, setConfirmDelete] = useState(false)
     const [deleteBusy, setDeleteBusy] = useState(false)
-    // 삭제 확인 중인 필드 인덱스(null 이면 다이얼로그 닫힘). 필드 단위 삭제용.
-    const [fieldToDelete, setFieldToDelete] = useState<number | null>(null)
     const [fieldBusy, setFieldBusy] = useState(false)
     const [, startTransition] = useTransition()
 
@@ -95,16 +91,14 @@ export default function SecretDetailPage() {
     async function handleDelete() {
         if (!data) return
         setDeleteBusy(true)
-        setError(null)
         try {
             await deleteSecret(data.id)
             router.push("/")
             startTransition(() => router.refresh())
         } catch (e) {
-            setError((e as Error).message)
+            toast((e as Error).message)
         } finally {
             setDeleteBusy(false)
-            setConfirmDelete(false)
         }
     }
 
@@ -112,7 +106,6 @@ export default function SecretDetailPage() {
     async function handleDeleteField(idx: number) {
         if (!data) return
         setFieldBusy(true)
-        setError(null)
         try {
             const nextFields = data.fields.filter((_, i) => i !== idx)
             const blob = await sealPayload(vaultKey, {
@@ -128,20 +121,14 @@ export default function SecretDetailPage() {
             })
             await reload()
         } catch (e) {
-            setError(isApiError(e) ? e.message : (e as Error).message)
+            toast(isApiError(e) ? e.message : (e as Error).message)
         } finally {
             setFieldBusy(false)
-            setFieldToDelete(null)
         }
     }
 
     if (state === "loading" || state === "idle") {
-        return (
-            <section>
-                <h1>항목 상세</h1>
-                <SkeletonCard lines={3} />
-            </section>
-        )
+        return null
     }
 
     if (state === "missing") {
@@ -241,17 +228,22 @@ export default function SecretDetailPage() {
                     justifyContent: "space-between",
                 }}
             >
-                <Link className="btn-text" href="/">
+                <Link
+                    className="btn-text"
+                    href="/"
+                    style={{
+                        fontSize: 15,
+                        color: "#666",
+                        padding: 6,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                    }}
+                >
                     ← 보관함
                 </Link>
                 <LockTimer compact bare />
             </div>
-
-            {error && (
-                <div role="alert" className="error-box">
-                    {error}
-                </div>
-            )}
 
             <div className="stagger">
                 <div
@@ -306,29 +298,35 @@ export default function SecretDetailPage() {
                                     ? undefined
                                     : () => {
                                           resetIdle()
-                                          setFieldToDelete(idx)
+                                          void handleDeleteField(idx)
                                       }
                             }
                         />
                     ))}
-                    {data.memo && (
-                        <div className="secret-plate">
-                            <div
-                                className="secret-label"
-                                style={{ marginBottom: 6, color: "#a0a0a0" }}
-                            >
-                                메모
-                            </div>
-                            <div className="secret-memo">{data.memo}</div>
-                        </div>
-                    )}
                 </div>
+
+                {data.memo && (
+                    <div className="secret-plate" style={{ marginTop: 9 }}>
+                        <div
+                            className="secret-label"
+                            style={{ marginBottom: 6, color: "#a0a0a0" }}
+                        >
+                            메모
+                        </div>
+                        <div className="secret-memo">{data.memo}</div>
+                    </div>
+                )}
 
                 <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
                     <button
                         type="button"
                         className="btn secondary"
-                        style={{ flex: 1, minHeight: 48, fontSize: 14 }}
+                        style={{
+                            flex: 1,
+                            height: 48,
+                            fontSize: 14,
+                            color: "#222",
+                        }}
                         onClick={() => setMode("edit")}
                     >
                         수정
@@ -336,42 +334,14 @@ export default function SecretDetailPage() {
                     <button
                         type="button"
                         className="btn danger"
-                        style={{ flex: 1, minHeight: 48, fontSize: 14 }}
-                        onClick={() => setConfirmDelete(true)}
+                        style={{ flex: 1, height: 48, fontSize: 14 }}
+                        disabled={deleteBusy}
+                        onClick={() => void handleDelete()}
                     >
                         삭제
                     </button>
                 </div>
             </div>
-
-            <ConfirmDialog
-                open={confirmDelete}
-                title="항목 삭제"
-                message="정말 삭제하시겠습니까?"
-                confirmLabel="삭제"
-                destructive
-                confirmLoading={deleteBusy}
-                onConfirm={handleDelete}
-                onCancel={() => setConfirmDelete(false)}
-            />
-
-            <ConfirmDialog
-                open={fieldToDelete !== null}
-                title="필드 삭제"
-                message={
-                    fieldToDelete !== null && data.fields[fieldToDelete]
-                        ? `"${data.fields[fieldToDelete].name}" 필드를 삭제하시겠습니까?`
-                        : "이 필드를 삭제하시겠습니까?"
-                }
-                confirmLabel="삭제"
-                destructive
-                confirmLoading={fieldBusy}
-                onConfirm={() => {
-                    if (fieldToDelete !== null)
-                        void handleDeleteField(fieldToDelete)
-                }}
-                onCancel={() => setFieldToDelete(null)}
-            />
         </section>
     )
 }

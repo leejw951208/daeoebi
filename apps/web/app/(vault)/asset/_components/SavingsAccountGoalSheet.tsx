@@ -3,7 +3,7 @@
 // 저장=updateSavingsAccount(id, sealAccount({base,goal})). 계좌 자체를 지우는 "적금 삭제"도 여기서 처리한다.
 import { useState } from "react"
 import { Button } from "@/components/Button"
-import { ConfirmDialog } from "@/components/ConfirmDialog"
+import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import { updateSavingsAccount, deleteSavingsAccount } from "@/lib/vault-client"
 import { sealAccount } from "../_lib/asset-payload"
@@ -44,8 +44,6 @@ export function SavingsAccountGoalSheet({
     )
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [focused, setFocused] = useState(false)
     const goalValue = Number(goal || "0")
     const currentTotal = account.base + account.month
@@ -53,7 +51,6 @@ export function SavingsAccountGoalSheet({
     async function save() {
         if (saving || goalValue <= 0) return
         setSaving(true)
-        setErrorMessage(null)
         try {
             const blob = await sealAccount(vaultKey, {
                 base: account.base,
@@ -63,22 +60,21 @@ export function SavingsAccountGoalSheet({
             await onChanged()
             onClose()
         } catch {
-            setErrorMessage("저장하지 못했어요. 다시 시도해 주세요.")
+            toast("저장하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setSaving(false)
         }
     }
 
-    async function confirmDelete() {
+    async function deleteAccount() {
+        if (deleting) return
         setDeleting(true)
-        setErrorMessage(null)
         try {
             await deleteSavingsAccount(account.id)
             await onChanged()
             onClose()
         } catch {
-            setErrorMessage("삭제하지 못했어요. 다시 시도해 주세요.")
-            setShowDeleteConfirm(false)
+            toast("삭제하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setDeleting(false)
         }
@@ -123,7 +119,15 @@ export function SavingsAccountGoalSheet({
                         {account.name} 목표
                     </div>
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
+                <p
+                    className="muted"
+                    style={{
+                        fontSize: 13,
+                        color: "#9a9a9a",
+                        lineHeight: 1.5,
+                        marginBottom: 18,
+                    }}
+                >
                     이 적금에서 모을 금액을 정하면 진행률이 자동으로 계산돼요.
                     현재 {formatWon(currentTotal)} 모았어요.
                 </p>
@@ -190,16 +194,6 @@ export function SavingsAccountGoalSheet({
                     ))}
                 </div>
 
-                {errorMessage && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginBottom: 12 }}
-                    >
-                        {errorMessage}
-                    </div>
-                )}
-
                 <Button
                     variant="primary"
                     style={{
@@ -230,28 +224,12 @@ export function SavingsAccountGoalSheet({
                     disabled={saving || deleting}
                     onClick={() => {
                         resetIdle()
-                        setShowDeleteConfirm(true)
+                        void deleteAccount()
                     }}
                 >
                     적금 삭제
                 </button>
             </div>
-
-            {showDeleteConfirm && (
-                <ConfirmDialog
-                    open
-                    title="적금 삭제"
-                    message={`'${account.name}' 적금을 삭제합니다. 계좌만 삭제되고 이미 기록된 지출은 남아요.`}
-                    confirmLabel="삭제"
-                    destructive
-                    confirmLoading={deleting}
-                    onConfirm={confirmDelete}
-                    onCancel={() => {
-                        resetIdle()
-                        setShowDeleteConfirm(false)
-                    }}
-                />
-            )}
         </div>
     )
 }

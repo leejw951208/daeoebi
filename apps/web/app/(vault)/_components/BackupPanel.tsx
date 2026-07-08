@@ -1,17 +1,33 @@
 "use client"
 // 백업/복원 패널. E2E 암호문 패스스루이므로 별도 마스터 입력이 없다. export 다운로드 + import 업로드 + 충돌 모드 선택.
-import { ChangeEvent, useRef, useState } from "react"
+import { ChangeEvent, PointerEvent, useRef, useState } from "react"
 import { exportStore, importStore, type ImportMode } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
+import { toast } from "@/components/toast"
 import { Button } from "@/components/Button"
 
 interface Props {
     onImported: () => Promise<void> | void
 }
 
+// 디자인의 style-active="transform:scale(.99)" 프레스 효과. 인라인 스타일은
+// :active 를 표현할 수 없어 포인터 이벤트로 transform 을 토글한다.
+function pressScale(scale: number) {
+    const set = (e: PointerEvent<HTMLElement>) => {
+        e.currentTarget.style.transform = `scale(${scale})`
+    }
+    const reset = (e: PointerEvent<HTMLElement>) => {
+        e.currentTarget.style.transform = ""
+    }
+    return {
+        onPointerDown: set,
+        onPointerUp: reset,
+        onPointerLeave: reset,
+        onPointerCancel: reset,
+    }
+}
+
 export function BackupPanel({ onImported }: Props) {
-    const [status, setStatus] = useState<string | null>(null)
-    const [error, setError] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
     const [mode, setMode] = useState<ImportMode>("reject")
     const [pendingPayload, setPendingPayload] = useState<unknown>(null)
@@ -20,8 +36,6 @@ export function BackupPanel({ onImported }: Props) {
 
     async function handleExport() {
         setBusy(true)
-        setStatus(null)
-        setError(null)
         try {
             const blob = await exportStore()
             const url = URL.createObjectURL(blob)
@@ -30,17 +44,15 @@ export function BackupPanel({ onImported }: Props) {
             a.download = `daeoebi-backup-${new Date().toISOString().slice(0, 10)}.json`
             a.click()
             URL.revokeObjectURL(url)
-            setStatus("백업 파일을 다운로드했습니다.")
+            toast("백업 파일을 다운로드했습니다.")
         } catch (e) {
-            setError(isApiError(e) ? e.message : (e as Error).message)
+            toast(isApiError(e) ? e.message : (e as Error).message)
         } finally {
             setBusy(false)
         }
     }
 
     function handleFileChosen(e: ChangeEvent<HTMLInputElement>) {
-        setError(null)
-        setStatus(null)
         const file = e.target.files?.[0]
         if (!file) {
             setPendingPayload(null)
@@ -54,13 +66,13 @@ export function BackupPanel({ onImported }: Props) {
                 setPendingPayload(JSON.parse(reader.result as string))
                 setPendingName(file.name)
             } catch {
-                setError("백업 파일이 올바른 JSON 형식이 아닙니다.")
+                toast("백업 파일이 올바른 JSON 형식이 아닙니다.")
                 setPendingPayload(null)
                 setPendingName(null)
             }
         }
         reader.onerror = () => {
-            setError("파일을 읽지 못했습니다.")
+            toast("파일을 읽지 못했습니다.")
             setPendingPayload(null)
             setPendingName(null)
         }
@@ -69,17 +81,15 @@ export function BackupPanel({ onImported }: Props) {
 
     async function handleImport() {
         if (pendingPayload === null) {
-            setError("복원할 파일을 먼저 선택하세요.")
+            toast("복원할 파일을 먼저 선택하세요.")
             return
         }
         setBusy(true)
-        setStatus(null)
-        setError(null)
         try {
             const result = await importStore(pendingPayload, mode)
             const line = (label: string, c: typeof result.secrets) =>
                 `${label} 추가 ${c.created} / 건너뜀 ${c.skipped} / 덮어쓰기 ${c.replaced}`
-            setStatus(
+            toast(
                 `복원 완료. ${line("비밀번호", result.secrets)}, ${line("카테고리", result.categories)}, ${line("사이트", result.sites)}.`,
             )
             setPendingPayload(null)
@@ -87,7 +97,7 @@ export function BackupPanel({ onImported }: Props) {
             if (inputRef.current) inputRef.current.value = ""
             await onImported()
         } catch (e) {
-            setError(isApiError(e) ? e.message : (e as Error).message)
+            toast(isApiError(e) ? e.message : (e as Error).message)
         } finally {
             setBusy(false)
         }
@@ -223,6 +233,7 @@ export function BackupPanel({ onImported }: Props) {
                         return (
                             <label
                                 key={m.value}
+                                {...pressScale(0.99)}
                                 style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -304,22 +315,6 @@ export function BackupPanel({ onImported }: Props) {
                     복원 실행
                 </Button>
             </section>
-
-            {status && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="card"
-                    style={{ fontSize: 13.5, color: "#444" }}
-                >
-                    {status}
-                </div>
-            )}
-            {error && (
-                <div role="alert" className="error-box">
-                    {error}
-                </div>
-            )}
         </div>
     )
 }

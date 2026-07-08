@@ -118,7 +118,14 @@ describe("SavingsTab", () => {
                 onEditAccountGoal={() => {}}
             />,
         )
-        fireEvent.click(screen.getByText("+ 적금 추가"))
+        fireEvent.click(
+            screen.getByText(
+                (_, el) =>
+                    el?.textContent?.replace(/\s+/g, " ").trim() ===
+                    "+ 적금 추가",
+                { selector: "button" },
+            ),
+        )
         expect(onAddAccount).toHaveBeenCalledTimes(1)
     })
 

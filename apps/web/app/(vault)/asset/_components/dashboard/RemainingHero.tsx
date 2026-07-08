@@ -18,7 +18,7 @@ export function RemainingHero({ left, pct, budget }: Props) {
                 style={{
                     fontSize: 12.5,
                     fontWeight: 700,
-                    color: "var(--color-text-muted)",
+                    color: "#9a9a9a",
                     marginBottom: 7,
                 }}
             >
@@ -50,7 +50,7 @@ export function RemainingHero({ left, pct, budget }: Props) {
                     justifyContent: "space-between",
                     fontSize: 12,
                     fontWeight: 600,
-                    color: "var(--color-text-muted)",
+                    color: "#a0a0a0",
                 }}
             >
                 <span>지출 {pct}%</span>

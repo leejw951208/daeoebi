@@ -96,7 +96,10 @@ export function AssetDashboard({
                 display: "flex",
                 flexDirection: "column",
                 gap: 12,
-                paddingTop: 4,
+                // 디자인 본문 컨테이너: 좌우 16px(.container 의 18px 를 -2 로 상쇄), 상단 16px.
+                paddingTop: 16,
+                marginLeft: -2,
+                marginRight: -2,
             }}
         >
             {assetTab === "budget" && (

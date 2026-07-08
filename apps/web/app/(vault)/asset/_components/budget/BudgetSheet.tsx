@@ -3,6 +3,7 @@
 // 저장 시 단건으로 수렴한다(planBudgetSave). 금액은 VK 로 암호화 저장.
 import { useState } from "react"
 import { Button } from "@/components/Button"
+import { toast } from "@/components/toast"
 import { isApiError } from "@/lib/api-error"
 import { useVault } from "../../../_lib/vault-context"
 import {
@@ -50,14 +51,13 @@ export function BudgetSheet({ month, budgetRows, onChanged, onClose }: Props) {
         initialAmount > 0 ? String(initialAmount) : "",
     )
     const [saving, setSaving] = useState(false)
-    const [saveFailed, setSaveFailed] = useState(false)
+    const [focused, setFocused] = useState(false)
 
     const value = Number(amount || "0")
 
     async function save() {
         if (saving) return
         setSaving(true)
-        setSaveFailed(false)
         try {
             const blob = await sealIncome(vaultKey, {
                 item: BUDGET_ITEM,
@@ -78,7 +78,7 @@ export function BudgetSheet({ month, budgetRows, onChanged, onClose }: Props) {
             await onChanged()
             onClose()
         } catch {
-            setSaveFailed(true)
+            toast("저장하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setSaving(false)
         }
@@ -106,11 +106,24 @@ export function BudgetSheet({ month, budgetRows, onChanged, onClose }: Props) {
                 >
                     월 예산
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
+                <p
+                    className="muted"
+                    style={{
+                        fontSize: 13,
+                        color: "#9a9a9a",
+                        lineHeight: 1.5,
+                        marginBottom: 18,
+                    }}
+                >
                     이번 달 쓸 수 있는 돈을 정해두세요.
                 </p>
 
-                <div className="income-input">
+                <div
+                    className="income-input"
+                    style={focused ? { borderColor: "#171717" } : undefined}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                >
                     <span aria-hidden="true">₩</span>
                     <input
                         inputMode="numeric"
@@ -128,16 +141,6 @@ export function BudgetSheet({ month, budgetRows, onChanged, onClose }: Props) {
                         aria-label="월 예산 금액"
                     />
                 </div>
-
-                {saveFailed && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginTop: 12 }}
-                    >
-                        저장하지 못했어요. 다시 시도해 주세요.
-                    </div>
-                )}
 
                 <div style={{ marginTop: 16 }}>
                     <Button

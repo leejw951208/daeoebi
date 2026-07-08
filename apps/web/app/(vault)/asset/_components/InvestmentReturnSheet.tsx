@@ -3,6 +3,7 @@
 // 저장 시 base 를 sealInvestment 로 암호화해 returnRate(평문)와 함께 보낸다.
 import { useState } from "react"
 import { Button } from "@/components/Button"
+import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import { saveInvestment } from "@/lib/vault-client"
 import { sealInvestment } from "../_lib/asset-payload"
@@ -28,7 +29,6 @@ export function InvestmentReturnSheet({
     const [returnDraft, setReturnDraft] = useState(returnRate)
     const [baseDraft, setBaseDraft] = useState(base > 0 ? String(base) : "")
     const [saving, setSaving] = useState(false)
-    const [saveFailed, setSaveFailed] = useState(false)
     const [focusedField, setFocusedField] = useState<string | null>(null)
 
     const baseValue = Number(baseDraft || "0")
@@ -36,14 +36,13 @@ export function InvestmentReturnSheet({
     async function save() {
         if (saving) return
         setSaving(true)
-        setSaveFailed(false)
         try {
             const blob = await sealInvestment(vaultKey, { base: baseValue })
             await saveInvestment(returnDraft.trim(), blob)
             await onChanged()
             onClose()
         } catch {
-            setSaveFailed(true)
+            toast("저장하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setSaving(false)
         }
@@ -71,20 +70,34 @@ export function InvestmentReturnSheet({
                 >
                     투자 수익률
                 </div>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
+                <p
+                    className="muted"
+                    style={{
+                        fontSize: 13,
+                        color: "#9a9a9a",
+                        lineHeight: 1.5,
+                        marginBottom: 18,
+                    }}
+                >
                     투자 원금과 현재 수익률을 입력하면 평가금액과 손익이
                     자동으로 계산돼요.
                 </p>
 
                 <div
                     className="field-label"
-                    style={{ marginBottom: 7, fontSize: 11.5 }}
+                    style={{
+                        marginBottom: 7,
+                        fontSize: 11.5,
+                        color: "#a0a0a0",
+                    }}
                 >
                     투자 원금
                 </div>
                 <div
                     className="income-input"
                     style={{
+                        height: 58,
+                        padding: "0 18px",
                         marginBottom: 8,
                         ...(focusedField === "base"
                             ? { borderColor: ACCENT }
@@ -130,7 +143,7 @@ export function InvestmentReturnSheet({
                         fontSize: 11.5,
                         fontWeight: 600,
                         lineHeight: 1.5,
-                        color: "var(--color-text-muted)",
+                        color: "#bcbcbc",
                         marginBottom: 18,
                     }}
                 >
@@ -140,7 +153,11 @@ export function InvestmentReturnSheet({
 
                 <div
                     className="field-label"
-                    style={{ marginBottom: 7, fontSize: 11.5 }}
+                    style={{
+                        marginBottom: 7,
+                        fontSize: 11.5,
+                        color: "#a0a0a0",
+                    }}
                 >
                     수익률
                 </div>
@@ -211,16 +228,6 @@ export function InvestmentReturnSheet({
                         </button>
                     ))}
                 </div>
-
-                {saveFailed && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ marginBottom: 12 }}
-                    >
-                        저장하지 못했어요. 다시 시도해 주세요.
-                    </div>
-                )}
 
                 <Button
                     variant="primary"

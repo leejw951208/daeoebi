@@ -78,26 +78,24 @@ export function CopyField({
                     {label}
                 </span>
                 <span className="secret-actions">
-                    {sensitive && (
-                        <button
-                            type="button"
-                            className="secret-btn"
-                            style={{
-                                fontSize: 12,
-                                minWidth: 0,
-                                minHeight: 0,
-                                padding: "2px 6px",
-                                color: "#999",
-                            }}
-                            onClick={() => {
-                                onActivity?.()
-                                setRevealed((v) => !v)
-                            }}
-                            aria-pressed={revealed}
-                        >
-                            {revealed ? "숨김" : "표시"}
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        className="secret-btn"
+                        style={{
+                            fontSize: 12,
+                            minWidth: 0,
+                            minHeight: 0,
+                            padding: "2px 6px",
+                            color: "#999",
+                        }}
+                        onClick={() => {
+                            onActivity?.()
+                            setRevealed((v) => !v)
+                        }}
+                        aria-pressed={revealed}
+                    >
+                        {revealed ? "숨김" : "표시"}
+                    </button>
                     <button
                         type="button"
                         className="secret-btn accent"
@@ -111,26 +109,25 @@ export function CopyField({
                     >
                         {remaining !== null ? `복사됨 ${remaining}s` : "복사"}
                     </button>
-                    {onDelete && (
-                        <button
-                            type="button"
-                            className="secret-btn"
-                            style={{
-                                fontSize: 12,
-                                minWidth: 0,
-                                minHeight: 0,
-                                padding: "2px 6px",
-                                color: "#c9555a",
-                            }}
-                            onClick={() => {
-                                onActivity?.()
-                                onDelete()
-                            }}
-                            aria-label={`${label} 필드 삭제`}
-                        >
-                            삭제
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        className="secret-btn"
+                        style={{
+                            fontSize: 12,
+                            minWidth: 0,
+                            minHeight: 0,
+                            padding: "2px 4px",
+                            color: "#c9555a",
+                        }}
+                        disabled={!onDelete}
+                        onClick={() => {
+                            onActivity?.()
+                            onDelete?.()
+                        }}
+                        aria-label={`${label} 필드 삭제`}
+                    >
+                        삭제
+                    </button>
                 </span>
             </div>
             <span
@@ -139,21 +136,28 @@ export function CopyField({
                 {masked ? maskDots : value}
             </span>
 
-            {remaining !== null && (
+            {masked && (
                 <div
                     className="secret-drain"
-                    aria-label={`${remaining}초 후 클립보드 자동 삭제`}
+                    aria-label={
+                        remaining !== null
+                            ? `${remaining}초 후 클립보드 자동 삭제`
+                            : "가려진 값"
+                    }
                 >
                     <span className="secret-drain-track">
                         <span
                             className="secret-drain-fill"
                             style={{
-                                width: `${(remaining / (CLEAR_AFTER_MS / 1000)) * 100}%`,
+                                width:
+                                    remaining !== null
+                                        ? `${(remaining / (CLEAR_AFTER_MS / 1000)) * 100}%`
+                                        : "100%",
                             }}
                         />
                     </span>
                     <span className="secret-drain-count" aria-hidden="true">
-                        {remaining}s
+                        {remaining !== null ? `${remaining}s` : maskDots.length}
                     </span>
                 </div>
             )}

@@ -1,6 +1,7 @@
 "use client"
 // 시크릿 폼 1단계: 편집. 제목(평문)·필드(암호화)·메모를 구성한다.
 // 필드 한 행은 SecretFieldRow 가 그리고, 상태는 상위(SecretForm)가 보유한다.
+import type { PointerEvent } from "react"
 import type { SecretField } from "../../_lib/vault-context"
 import { FIELD_SUGGESTIONS } from "../../_lib/field-suggestions"
 import { MAX_FIELDS, type FieldRow } from "./types"
@@ -13,16 +14,29 @@ interface Props {
     memo: string
     onMemoChange: (value: string) => void
     rows: FieldRow[]
-    usedNames: Set<string>
-    hint: string | null
-    error: string | null
-    submitting: boolean
     onCancel: () => void
     onNext: () => void
     onAddRow: (name?: string) => void
     onUpdateRow: (index: number, patch: Partial<SecretField>) => void
     onMoveRow: (index: number, dir: -1 | 1) => void
     onRemoveRow: (index: number) => void
+}
+
+// 디자인의 style-active 프레스 효과. 인라인 스타일은 :active 를 표현할 수 없어
+// 포인터 이벤트로 transform 을 토글한다.
+function pressScale(scale: number) {
+    const set = (e: PointerEvent<HTMLElement>) => {
+        e.currentTarget.style.transform = `scale(${scale})`
+    }
+    const reset = (e: PointerEvent<HTMLElement>) => {
+        e.currentTarget.style.transform = ""
+    }
+    return {
+        onPointerDown: set,
+        onPointerUp: reset,
+        onPointerLeave: reset,
+        onPointerCancel: reset,
+    }
 }
 
 export function SecretEditStep({
@@ -32,10 +46,6 @@ export function SecretEditStep({
     memo,
     onMemoChange,
     rows,
-    usedNames,
-    hint,
-    error,
-    submitting,
     onCancel,
     onNext,
     onAddRow,
@@ -62,8 +72,8 @@ export function SecretEditStep({
                 <button
                     type="button"
                     className="btn-text"
+                    style={{ color: "#888", fontWeight: 400 }}
                     onClick={onCancel}
-                    disabled={submitting}
                 >
                     취소
                 </button>
@@ -95,26 +105,7 @@ export function SecretEditStep({
                     paddingBottom: 70,
                 }}
             >
-                {hint && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ margin: 0 }}
-                    >
-                        {hint}
-                    </div>
-                )}
-                {error && (
-                    <div
-                        role="alert"
-                        className="error-box"
-                        style={{ margin: 0 }}
-                    >
-                        {error}
-                    </div>
-                )}
-
-                <div className="form-row" style={{ margin: 0 }}>
+                <div className="form-row" style={{ margin: 0, gap: 7 }}>
                     <label htmlFor="secret-label" style={{ color: "#a0a0a0" }}>
                         제목{" "}
                         <span
@@ -213,10 +204,7 @@ export function SecretEditStep({
                                 key={s.name}
                                 type="button"
                                 onClick={() => onAddRow(s.name)}
-                                disabled={
-                                    usedNames.has(s.name) ||
-                                    rows.length >= MAX_FIELDS
-                                }
+                                {...pressScale(0.94)}
                                 style={{
                                     flexShrink: 0,
                                     border: "1px solid #e8e8e8",
@@ -227,16 +215,7 @@ export function SecretEditStep({
                                     fontWeight: 600,
                                     color: "#666",
                                     background: "#fff",
-                                    cursor:
-                                        usedNames.has(s.name) ||
-                                        rows.length >= MAX_FIELDS
-                                            ? "not-allowed"
-                                            : "pointer",
-                                    opacity:
-                                        usedNames.has(s.name) ||
-                                        rows.length >= MAX_FIELDS
-                                            ? 0.45
-                                            : 1,
+                                    cursor: "pointer",
                                 }}
                             >
                                 + {s.name}
@@ -264,6 +243,7 @@ export function SecretEditStep({
                             type="button"
                             onClick={() => onAddRow()}
                             disabled={rows.length >= MAX_FIELDS}
+                            {...pressScale(0.98)}
                             style={{
                                 minHeight: 46,
                                 border: "1.5px dashed #d8d8d8",
@@ -273,11 +253,7 @@ export function SecretEditStep({
                                 fontSize: 14,
                                 fontWeight: 700,
                                 color: "var(--ac)",
-                                cursor:
-                                    rows.length >= MAX_FIELDS
-                                        ? "not-allowed"
-                                        : "pointer",
-                                opacity: rows.length >= MAX_FIELDS ? 0.5 : 1,
+                                cursor: "pointer",
                             }}
                         >
                             + 필드 추가
@@ -285,7 +261,7 @@ export function SecretEditStep({
                     </div>
                 </fieldset>
 
-                <div className="form-row" style={{ margin: 0 }}>
+                <div className="form-row" style={{ margin: 0, gap: 7 }}>
                     <label htmlFor="secret-memo" style={{ color: "#a0a0a0" }}>
                         메모{" "}
                         <span

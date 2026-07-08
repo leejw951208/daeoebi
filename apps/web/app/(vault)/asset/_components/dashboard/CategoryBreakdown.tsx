@@ -53,7 +53,7 @@ export function CategoryBreakdown({ cats }: Props) {
                                 <span
                                     style={{
                                         fontSize: 11.5,
-                                        color: "var(--color-text-muted)",
+                                        color: "#bcbcbc",
                                         fontWeight: 600,
                                     }}
                                 >

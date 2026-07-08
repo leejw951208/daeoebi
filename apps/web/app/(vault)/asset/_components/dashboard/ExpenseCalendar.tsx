@@ -46,7 +46,7 @@ export function ExpenseCalendar({
                 <span
                     style={{
                         fontSize: 12,
-                        color: "var(--color-text-muted)",
+                        color: "#9a9a9a",
                         fontWeight: 600,
                     }}
                 >

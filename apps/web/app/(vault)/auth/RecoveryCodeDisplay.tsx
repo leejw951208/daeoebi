@@ -87,7 +87,12 @@ export function RecoveryCodeDisplay({ code, onConfirmed }: Props) {
             <h1 style={{ fontSize: 24 }}>복구코드를 저장하세요</h1>
             <p
                 className="muted"
-                style={{ marginTop: 8, fontSize: 14, lineHeight: 1.6 }}
+                style={{
+                    marginTop: 8,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: "#6b6b6b",
+                }}
             >
                 기기를 잃어버리면 이 코드로만 대외비를 되찾을 수 있습니다. 화면
                 캡처 대신 안전한 곳에 따로 보관하세요.

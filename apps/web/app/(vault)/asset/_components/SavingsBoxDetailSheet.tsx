@@ -2,6 +2,7 @@
 // 세이빙 박스 입출금 내역 바텀시트. 복호화된 거래를 날짜 내림차순으로 보여주고
 // 개별 삭제·더보기 페이지네이션을 지원한다. 목록은 page 가 복호화해 props 로 넘긴다.
 import { useState } from "react"
+import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import { deleteSavingsBoxTxn } from "@/lib/vault-client"
 import { formatWon } from "../_lib/asset-categories"
@@ -39,7 +40,6 @@ export function SavingsBoxDetailSheet({
     const { resetIdle } = useVault()
     const [shown, setShown] = useState(PAGE_SIZE)
     const [deletingId, setDeletingId] = useState<string | null>(null)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
     const sorted = [...txns].sort((a, b) => b.date.localeCompare(a.date))
     const rows = sorted.slice(0, shown)
@@ -48,12 +48,11 @@ export function SavingsBoxDetailSheet({
     async function handleDelete(id: string) {
         resetIdle()
         setDeletingId(id)
-        setErrorMessage(null)
         try {
             await deleteSavingsBoxTxn(id)
             await onChanged()
         } catch {
-            setErrorMessage("삭제하지 못했어요. 다시 시도해 주세요.")
+            toast("삭제하지 못했어요. 다시 시도해 주세요.")
         } finally {
             setDeletingId(null)
         }
@@ -112,6 +111,7 @@ export function SavingsBoxDetailSheet({
                         <button
                             type="button"
                             className="btn-text"
+                            style={{ color: "#888" }}
                             onClick={() => {
                                 resetIdle()
                                 onClose()
@@ -155,23 +155,13 @@ export function SavingsBoxDetailSheet({
                         padding: "16px 22px 26px",
                     }}
                 >
-                    {errorMessage && (
-                        <div
-                            role="alert"
-                            className="error-box"
-                            style={{ marginBottom: 12 }}
-                        >
-                            {errorMessage}
-                        </div>
-                    )}
-
                     {rows.length === 0 ? (
                         <div
                             style={{
                                 textAlign: "center",
                                 padding: "36px 8px",
                                 fontSize: 13,
-                                color: "var(--color-text-muted)",
+                                color: "#bcbcbc",
                                 fontWeight: 600,
                                 lineHeight: 1.5,
                             }}

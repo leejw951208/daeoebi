@@ -122,8 +122,6 @@ export function OnboardingScreen({ onUnlocked }: Props) {
     return (
         <section
             style={{
-                maxWidth: 440,
-                margin: "0 auto",
                 padding: "56px 26px 30px",
                 background: "linear-gradient(180deg,#fafafa,#fff)",
                 display: "flex",
@@ -217,10 +215,13 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 </li>
             </ul>
 
-            <div className="form-row" style={{ margin: "0 0 14px" }}>
+            <div style={{ margin: "0 0 14px" }}>
                 <label
                     htmlFor="bootstrap-token"
                     style={{
+                        display: "block",
+                        fontSize: 11.5,
+                        fontWeight: 700,
                         color: "#a0a0a0",
                         letterSpacing: "normal",
                         marginBottom: 7,

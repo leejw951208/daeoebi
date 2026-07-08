@@ -61,7 +61,7 @@ export function LockTimer({
     return (
         <button
             type="button"
-            className={`lock-timer${idle <= 60 ? " urgent" : ""}`}
+            className="lock-timer"
             onClick={onLock}
             aria-label={`자동 잠금까지 ${remaining}초. 지금 잠그기`}
         >

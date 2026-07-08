@@ -98,7 +98,10 @@ export function SavingsTab({
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
     const investPnlColor = pnlColor(investment.pnl)
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div
+            className="stagger"
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
+        >
             {/* 순자산 */}
             <div
                 className="asset-card"
@@ -280,6 +283,7 @@ export function SavingsTab({
                     <button
                         type="button"
                         onClick={onBoxIn}
+                        className="sv-box-btn"
                         style={{
                             flex: 1,
                             height: 46,
@@ -298,6 +302,7 @@ export function SavingsTab({
                     <button
                         type="button"
                         onClick={onBoxOut}
+                        className="sv-box-btn"
                         style={{
                             flex: 1,
                             height: 46,
@@ -317,6 +322,7 @@ export function SavingsTab({
                 <button
                     type="button"
                     onClick={onBoxDetail}
+                    className="sv-detail"
                     style={{
                         display: "flex",
                         alignItems: "center",
@@ -351,13 +357,14 @@ export function SavingsTab({
             </div>
 
             {/* 적금 계좌 목록 */}
-            <div className="asset-card">
+            <div className="asset-card" style={{ padding: "18px 16px 16px" }}>
                 <div
                     style={{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        marginBottom: 13,
+                        marginBottom: 14,
+                        padding: "0 2px",
                     }}
                 >
                     <span style={{ fontSize: 13, fontWeight: 800 }}>
@@ -367,7 +374,7 @@ export function SavingsTab({
                         <span
                             style={{
                                 fontSize: 11.5,
-                                color: "var(--color-text-muted)",
+                                color: "#bcbcbc",
                                 fontWeight: 700,
                             }}
                         >
@@ -375,44 +382,44 @@ export function SavingsTab({
                         </span>
                     )}
                 </div>
+                {accounts.length === 0 && (
+                    <div
+                        style={{
+                            textAlign: "center",
+                            padding: "16px 12px 4px",
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: 13.5,
+                                fontWeight: 700,
+                                color: "#8a8a8a",
+                                marginBottom: 5,
+                            }}
+                        >
+                            아직 적금이 없어요
+                        </div>
+                        <p
+                            style={{
+                                fontSize: 12.5,
+                                fontWeight: 600,
+                                lineHeight: 1.5,
+                                color: "#bcbcbc",
+                            }}
+                        >
+                            적금을 추가하고 목표를 설정하면
+                            <br />
+                            매달 저축 현황이 자동으로 쌓여요.
+                        </p>
+                    </div>
+                )}
                 <div
                     style={{
                         display: "flex",
                         flexDirection: "column",
-                        gap: 10,
+                        gap: 12,
                     }}
                 >
-                    {accounts.length === 0 && (
-                        <div
-                            style={{
-                                textAlign: "center",
-                                padding: "16px 12px 4px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontSize: 13.5,
-                                    fontWeight: 700,
-                                    color: "var(--color-text-muted)",
-                                    marginBottom: 5,
-                                }}
-                            >
-                                아직 적금이 없어요
-                            </div>
-                            <p
-                                style={{
-                                    fontSize: 12.5,
-                                    fontWeight: 600,
-                                    lineHeight: 1.5,
-                                    color: "var(--color-text-muted)",
-                                }}
-                            >
-                                적금을 추가하고 목표를 설정하면
-                                <br />
-                                매달 저축 현황이 자동으로 쌓여요.
-                            </p>
-                        </div>
-                    )}
                     {accounts.map((a) => {
                         const hasGoal = a.goal > 0
                         const fillPct = hasGoal
@@ -423,10 +430,11 @@ export function SavingsTab({
                                 key={a.name}
                                 type="button"
                                 onClick={() => onEditAccountGoal(a.name)}
+                                className="sv-acct"
                                 style={{
                                     textAlign: "left",
                                     width: "100%",
-                                    border: "1px solid var(--color-border)",
+                                    border: "1px solid #f1f1f1",
                                     borderRadius: 15,
                                     background: "var(--tint)",
                                     padding: "14px 15px",
@@ -440,7 +448,7 @@ export function SavingsTab({
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "space-between",
-                                        marginBottom: 8,
+                                        marginBottom: 9,
                                     }}
                                 >
                                     <div
@@ -464,7 +472,7 @@ export function SavingsTab({
                                             style={{
                                                 fontSize: 14,
                                                 fontWeight: 700,
-                                                color: "#333",
+                                                color: "#222",
                                                 whiteSpace: "nowrap",
                                                 overflow: "hidden",
                                                 textOverflow: "ellipsis",
@@ -476,11 +484,11 @@ export function SavingsTab({
                                             <span
                                                 style={{
                                                     flexShrink: 0,
-                                                    fontSize: 11,
-                                                    fontWeight: 700,
+                                                    fontSize: 10,
+                                                    fontWeight: 800,
                                                     color: "#20a4a4",
                                                     background: "#e6f6f5",
-                                                    padding: "2px 7px",
+                                                    padding: "2px 6px",
                                                     borderRadius: 6,
                                                 }}
                                             >
@@ -494,7 +502,7 @@ export function SavingsTab({
                                             fontSize: 15,
                                             fontWeight: 800,
                                             letterSpacing: "-0.02em",
-                                            color: "#1f1f1f",
+                                            color: "#171717",
                                         }}
                                     >
                                         {formatWon(a.total)}
@@ -526,7 +534,7 @@ export function SavingsTab({
                                         alignItems: "center",
                                         fontSize: 11.5,
                                         fontWeight: 600,
-                                        color: "var(--color-text-muted)",
+                                        color: "#a0a0a0",
                                         marginTop: 7,
                                     }}
                                 >
@@ -558,35 +566,42 @@ export function SavingsTab({
                             </button>
                         )
                     })}
-                    <button
-                        type="button"
-                        onClick={onAddAccount}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 6,
-                            width: "100%",
-                            height: 48,
-                            border: "1.5px dashed #d8d8d8",
-                            borderRadius: 14,
-                            background: "none",
-                            font: "inherit",
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: "#20a4a4",
-                            cursor: "pointer",
-                        }}
-                    >
-                        + 적금 추가
-                    </button>
                 </div>
+                <button
+                    type="button"
+                    onClick={onAddAccount}
+                    className="sv-add"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        width: "100%",
+                        height: 48,
+                        marginTop: 12,
+                        border: "1.5px dashed #d6d6d6",
+                        borderRadius: 14,
+                        background: "none",
+                        font: "inherit",
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        color: "#20a4a4",
+                        cursor: "pointer",
+                    }}
+                >
+                    <span
+                        style={{ fontSize: 17, lineHeight: 1, marginTop: -1 }}
+                    >
+                        +
+                    </span>{" "}
+                    적금 추가
+                </button>
             </div>
 
             {/* 투자 수익률 */}
             <button
                 type="button"
-                className="asset-card"
+                className="asset-card sv-return"
                 onClick={onEditReturn}
                 style={{ textAlign: "left", cursor: "pointer" }}
             >
@@ -673,7 +688,7 @@ export function SavingsTab({
                             style={{
                                 fontSize: 13,
                                 fontWeight: 600,
-                                color: "var(--color-text-muted)",
+                                color: "#9a9a9a",
                             }}
                         >
                             투자 원금
@@ -699,7 +714,7 @@ export function SavingsTab({
                             style={{
                                 fontSize: 13,
                                 fontWeight: 600,
-                                color: "var(--color-text-muted)",
+                                color: "#9a9a9a",
                             }}
                         >
                             평가금액
@@ -781,7 +796,7 @@ export function SavingsTab({
                             textAlign: "center",
                             padding: "14px 8px 8px",
                             fontSize: 13,
-                            color: "var(--color-text-muted)",
+                            color: "#bcbcbc",
                             fontWeight: 600,
                             lineHeight: 1.5,
                         }}
@@ -805,7 +820,7 @@ export function SavingsTab({
                                     key={c.id}
                                     href={`/asset/${c.id}`}
                                     className="entry-card"
-                                    style={{ gap: 13 }}
+                                    style={{ gap: 13, padding: "13px 14px" }}
                                 >
                                     <span
                                         aria-hidden="true"
@@ -880,6 +895,13 @@ export function SavingsTab({
                     </div>
                 )}
             </div>
+            {/* mock 파리티: 인라인으로 표현 불가한 :active/:hover 상태.
+                stagger 자식 순서에 영향을 주지 않도록 마지막에 둔다(<style>은 display:none). */}
+            <style
+                dangerouslySetInnerHTML={{
+                    __html: `.sv-box-btn{transition:transform .12s}.sv-box-btn:active{transform:scale(.97)}.sv-detail:active{opacity:.6}.sv-acct{transition:transform .12s}.sv-acct:active{transform:scale(.99)}.sv-add{transition:all .14s}.sv-add:active{transform:scale(.99)}.sv-add:hover{border-color:#20a4a4;background:#f2fbfa}.sv-return{transition:transform .12s}.sv-return:active{transform:scale(.99)}`,
+                }}
+            />
         </div>
     )
 }
