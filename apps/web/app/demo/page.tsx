@@ -200,24 +200,6 @@ export default function DemoPage() {
                         )}
                     </div>
 
-                    <dl
-                        className="secret-plate"
-                        style={{ marginTop: 9, display: "grid", gap: 8 }}
-                    >
-                        <DetailRow
-                            label="생성"
-                            value={new Date(current.createdAt).toLocaleString(
-                                "ko-KR",
-                            )}
-                        />
-                        <DetailRow
-                            label="수정"
-                            value={new Date(current.updatedAt).toLocaleString(
-                                "ko-KR",
-                            )}
-                        />
-                    </dl>
-
                     <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
                         <Button
                             variant="secondary"
@@ -409,15 +391,6 @@ export default function DemoPage() {
                 <span aria-hidden="true">+</span>
             </button>
         </section>
-    )
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="detail-row">
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-        </div>
     )
 }
 
