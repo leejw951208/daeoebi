@@ -136,28 +136,22 @@ export function CopyField({
                 {masked ? maskDots : value}
             </span>
 
-            {masked && (
+            {/* 디자인 mock: 드레인 바는 복사 후 자동삭제 카운트다운 중에만 표시한다. */}
+            {remaining !== null && (
                 <div
                     className="secret-drain"
-                    aria-label={
-                        remaining !== null
-                            ? `${remaining}초 후 클립보드 자동 삭제`
-                            : "가려진 값"
-                    }
+                    aria-label={`${remaining}초 후 클립보드 자동 삭제`}
                 >
                     <span className="secret-drain-track">
                         <span
                             className="secret-drain-fill"
                             style={{
-                                width:
-                                    remaining !== null
-                                        ? `${(remaining / (CLEAR_AFTER_MS / 1000)) * 100}%`
-                                        : "100%",
+                                width: `${(remaining / (CLEAR_AFTER_MS / 1000)) * 100}%`,
                             }}
                         />
                     </span>
                     <span className="secret-drain-count" aria-hidden="true">
-                        {remaining !== null ? `${remaining}s` : maskDots.length}
+                        {remaining}s
                     </span>
                 </div>
             )}
