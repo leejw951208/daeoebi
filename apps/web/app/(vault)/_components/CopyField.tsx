@@ -120,7 +120,7 @@ export function CopyField({
                                 minWidth: 0,
                                 minHeight: 0,
                                 padding: "2px 6px",
-                                color: "#d99",
+                                color: "#c9555a",
                             }}
                             onClick={() => {
                                 onActivity?.()
