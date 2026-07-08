@@ -43,10 +43,10 @@ describe("SavingsTab", () => {
                 onEditAccountGoal={() => {}}
             />,
         )
-        expect(screen.getByText("아직 등록한 적금이 없어요.")).not.toBeNull()
+        expect(screen.getByText("아직 적금이 없어요")).not.toBeNull()
     })
 
-    it("계좌 행에 이름·총액·목표 미설정을 표시한다", () => {
+    it("계좌 행에 이름·총액·목표 설정 유도를 표시한다", () => {
         render(
             <SavingsTab
                 {...baseProps}
@@ -57,7 +57,6 @@ describe("SavingsTab", () => {
         )
         expect(screen.getByText("여행 자금")).not.toBeNull()
         expect(screen.getByText("₩100,000")).not.toBeNull()
-        expect(screen.getByText("목표 미설정")).not.toBeNull()
         expect(screen.getByText("+ 목표 설정")).not.toBeNull()
     })
 
