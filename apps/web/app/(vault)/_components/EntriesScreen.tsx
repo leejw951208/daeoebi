@@ -83,7 +83,8 @@ export function EntriesScreen() {
     return (
         <section
             style={{
-                minHeight: "100%",
+                flex: 1,
+                minHeight: 0,
                 display: "flex",
                 flexDirection: "column",
             }}

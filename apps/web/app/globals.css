@@ -309,6 +309,10 @@ a:hover {
 .phone-frame {
     position: relative;
     min-height: 100vh;
+    /* 화면 셸을 세로 flex 로 두어 .container 가 뷰포트 높이를 채우게 한다.
+       그래야 화면의 minHeight:100% 와 빈 상태의 flex:1 세로 중앙정렬이 목업처럼 동작한다. */
+    display: flex;
+    flex-direction: column;
     /* 디자인 mock: 화면 배경은 #fafafa(--tint) 풀블리드. 자체 배경(온보딩·잠금 그라데이션,
        복구·폼 #fff)을 가진 화면은 그 위를 덮는다. */
     background: var(--tint);
@@ -316,7 +320,15 @@ a:hover {
 
 .container {
     max-width: 100%;
+    /* flex 컬럼(.phone-frame)의 자식이라 auto 마진이 stretch 를 이겨 콘텐츠 폭으로
+       줄어드는 것을 막기 위해 폭을 명시한다. flex:1 로 뷰포트 높이를 채운다. */
+    width: 100%;
     margin: 0 auto;
+    flex: 1;
+    /* 세로 flex 컬럼으로 두어, flex:1 인 화면(목록 빈 상태 등)이 뷰포트를 채우고
+       내부 flex 중앙정렬이 목업처럼 동작하게 한다. */
+    display: flex;
+    flex-direction: column;
     padding: var(--container-padding);
     padding-top: var(--space-5);
     /* 하단 탭바 + 그 위에 뜨는 FAB(56px) 높이만큼 비워, 마지막 항목 금액이
