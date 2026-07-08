@@ -11,11 +11,12 @@ interface Props {
     count: number
 }
 
-// 달력 셀 금액 축약(8500→"8.5천", 142000→"14만").
+// 달력 셀 금액 축약. 디자인 mock 기준: 만 단위는 1자리 소수(142000→"14.2만"),
+// 그 미만은 천 단위로 반올림(8500→"9천").
 function abbrev(n: number): string {
-    if (n >= 10000) return `${Math.round(n / 10000)}만`
-    if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}천`
-    return String(n)
+    if (n >= 10000)
+        return `${(Math.round(n / 1000) / 10).toString().replace(/\.0$/, "")}만`
+    return `${Math.round(n / 1000)}천`
 }
 
 export function ExpenseCalendar({
@@ -63,7 +64,7 @@ export function ExpenseCalendar({
                 {WEEKDAYS.map((w, i) => {
                     // 일(0)·토(6)만 요일색으로 구분하고 나머지는 muted 로 둔다.
                     const color =
-                        i === 0 ? "#e5484d" : i === 6 ? "#4a90d9" : "#9a9a9a"
+                        i === 0 ? "#e5484d" : i === 6 ? "#4a90d9" : "#bcbcbc"
                     return (
                         <div
                             key={w}

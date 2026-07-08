@@ -1,6 +1,6 @@
 "use client"
 // 자산 대시보드의 카테고리별 지출 카드. 카테고리마다 색 점·비율·금액·진행 바를 그린다.
-// 지출이 있는 카테고리만 넘어온다고 가정한다(빈 목록은 상위에서 렌더하지 않음).
+// 지출이 없으면(빈 목록) 목업의 noCats 빈 상태 카드를 대신 렌더한다.
 import { formatWon } from "../../_lib/asset-categories"
 import type { CategoryBreakdown as CategorySlice } from "../../_lib/asset-compute"
 
@@ -9,6 +9,39 @@ interface Props {
 }
 
 export function CategoryBreakdown({ cats }: Props) {
+    if (cats.length === 0) {
+        return (
+            <div
+                className="asset-card"
+                style={{ padding: "30px 18px", textAlign: "center" }}
+            >
+                <div
+                    style={{
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        color: "#8a8a8a",
+                        marginBottom: 5,
+                    }}
+                >
+                    아직 지출이 없어요
+                </div>
+                <div
+                    style={{
+                        fontSize: 12.5,
+                        color: "#bcbcbc",
+                        lineHeight: 1.5,
+                    }}
+                >
+                    지출을 추가하면 카테고리별 분석이
+                    <br />
+                    여기에 표시돼요
+                </div>
+            </div>
+        )
+    }
+    // 진행 바 폭은 최대 지출 카테고리 대비 비율(가장 큰 카테고리가 100%).
+    // 라벨의 %는 총 지출 대비 비율(c.pct)로 별개 기준이다.
+    const maxAmount = Math.max(...cats.map((c) => c.amount), 1)
     return (
         <div className="asset-card" style={{ padding: "18px 18px 20px" }}>
             <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 15 }}>
@@ -74,7 +107,7 @@ export function CategoryBreakdown({ cats }: Props) {
                             <div
                                 className="asset-bar-fill"
                                 style={{
-                                    width: `${c.pct}%`,
+                                    width: `${(c.amount / maxAmount) * 100}%`,
                                     background: c.color,
                                 }}
                             />

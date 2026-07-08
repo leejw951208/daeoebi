@@ -115,7 +115,7 @@ export function AssetDashboard({
                         count={data.expenses.length}
                         onOpenBudget={onOpenBudget}
                     />
-                    {cats.length > 0 && <CategoryBreakdown cats={cats} />}
+                    <CategoryBreakdown cats={cats} />
                     <ExpenseCalendar
                         month={month}
                         dayTotals={dayTotals}

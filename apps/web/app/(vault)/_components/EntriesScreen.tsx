@@ -88,7 +88,7 @@ export function EntriesScreen() {
                 flexDirection: "column",
             }}
         >
-            <div className="sticky-header">
+            <div className="sticky-header translucent">
                 <div
                     style={{
                         display: "flex",

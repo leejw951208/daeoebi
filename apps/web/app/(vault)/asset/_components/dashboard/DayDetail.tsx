@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { resolveCategory, formatWon } from "../../_lib/asset-categories"
 import { totalSpent, type ComputedExpense } from "../../_lib/asset-compute"
+import { monthDayLabel } from "../../_lib/asset-dates"
 import type { AssetCategory } from "@/lib/vault-client"
 
 interface Props {
@@ -25,7 +26,7 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                 }}
             >
                 <span style={{ fontSize: 13, fontWeight: 800 }}>
-                    {Number(selectedDay.slice(8, 10))}일
+                    {monthDayLabel(selectedDay)}
                 </span>
                 <span
                     style={{
@@ -120,7 +121,8 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                             fontWeight: 500,
                                         }}
                                     >
-                                        {resolved.name}
+                                        {resolved.name} ·{" "}
+                                        {monthDayLabel(e.date)}
                                     </span>
                                 </span>
                                 <span

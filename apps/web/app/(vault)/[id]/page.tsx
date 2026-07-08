@@ -221,7 +221,7 @@ export default function SecretDetailPage() {
     return (
         <section>
             <div
-                className="sticky-header tight"
+                className="sticky-header tight translucent"
                 style={{
                     display: "flex",
                     alignItems: "center",

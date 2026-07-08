@@ -366,6 +366,10 @@ a:hover {
 .sticky-header.tight {
     padding: 30px 16px 14px;
 }
+/* 목록·자산·상세 헤더는 목업 기준 배경 불투명도 .82(폼·백업·지출폼은 .85). */
+.sticky-header.translucent {
+    background: rgba(255, 255, 255, 0.82);
+}
 /* 헤더 내 텍스트 버튼(취소·저장·← 뒤로)은 목업과 동일하게 15px. */
 .sticky-header .btn-text {
     font-size: 15px;

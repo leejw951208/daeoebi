@@ -35,6 +35,12 @@ export function monthLabel(month: string): string {
     return `${y}년 ${m}월`
 }
 
+// "YYYY-MM-DD" → "M월 D일"
+export function monthDayLabel(isoDate: string): string {
+    const [, m, d] = isoDate.split("-").map(Number)
+    return `${m}월 ${d}일`
+}
+
 export function daysInMonth(month: string): number {
     const [y, m] = month.split("-").map(Number)
     return new Date(y, m, 0).getDate()

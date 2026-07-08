@@ -49,9 +49,7 @@ export function BudgetExpenseCards({
                 <div className="asset-card-label" style={{ color: "#9a9a9a" }}>
                     이번 달 예산
                 </div>
-                <div className="asset-card-value">
-                    {budget ? formatWon(budget) : "설정하기"}
-                </div>
+                <div className="asset-card-value">{formatWon(budget)}</div>
                 <div
                     style={{
                         fontSize: 11,

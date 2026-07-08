@@ -570,7 +570,7 @@ export default function AssetPage() {
     return (
         <section style={{ minHeight: "100%" }}>
             <div
-                className="sticky-header"
+                className="sticky-header translucent"
                 style={{ padding: "30px 18px 12px" }}
             >
                 <div
@@ -725,7 +725,7 @@ export default function AssetPage() {
                             </svg>
                             카테고리
                         </button>
-                        <LockTimer />
+                        <LockTimer style={{ padding: "0 13px" }} />
                     </div>
                 </div>
                 <div
@@ -759,7 +759,7 @@ export default function AssetPage() {
                                   }
                                 : {
                                       background: "transparent",
-                                      color: "#888",
+                                      color: "#9a9a9a",
                                   }),
                         }}
                         onClick={() => handleAssetTab("budget")}
@@ -788,7 +788,7 @@ export default function AssetPage() {
                                   }
                                 : {
                                       background: "transparent",
-                                      color: "#888",
+                                      color: "#9a9a9a",
                                   }),
                         }}
                         onClick={() => handleAssetTab("savings")}

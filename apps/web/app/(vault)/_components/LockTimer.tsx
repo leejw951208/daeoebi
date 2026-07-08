@@ -1,6 +1,7 @@
 "use client"
 // 헤더의 자동잠금 카운트다운 버튼. 매초 변하는 남은 시간을 표시하므로,
 // idle 컨텍스트를 구독하는 이 잎 컴포넌트만 매초 리렌더된다(화면 본문은 영향 없음).
+import type { CSSProperties } from "react"
 import { useVault, useIdleSeconds } from "../_lib/vault-context"
 
 function formatMmSs(total: number): string {
@@ -14,9 +15,11 @@ function formatMmSs(total: number): string {
 export function LockTimer({
     compact = false,
     bare = false,
+    style,
 }: {
     compact?: boolean
     bare?: boolean
+    style?: CSSProperties
 }) {
     const idle = useIdleSeconds()
     const { onLock } = useVault()
@@ -64,6 +67,7 @@ export function LockTimer({
             className="lock-timer"
             onClick={onLock}
             aria-label={`자동 잠금까지 ${remaining}초. 지금 잠그기`}
+            style={style}
         >
             <span className="dot" aria-hidden="true" />
             {compact
