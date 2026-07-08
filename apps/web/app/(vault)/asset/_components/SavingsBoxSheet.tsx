@@ -132,6 +132,7 @@ export function SavingsBoxSheet({
                         >
                             <button
                                 type="button"
+                                className="press-98"
                                 aria-pressed={source === "cash"}
                                 onClick={() => {
                                     resetIdle()
@@ -157,6 +158,7 @@ export function SavingsBoxSheet({
                             </button>
                             <button
                                 type="button"
+                                className="press-98"
                                 aria-pressed={source === "savings"}
                                 onClick={() => {
                                     resetIdle()

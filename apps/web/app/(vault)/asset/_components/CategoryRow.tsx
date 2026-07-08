@@ -87,6 +87,7 @@ export function CategoryRow({
             </button>
             <button
                 type="button"
+                className="press-dim6"
                 aria-label="삭제"
                 onClick={() => {
                     onActivity()

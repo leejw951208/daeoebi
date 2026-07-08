@@ -594,7 +594,8 @@ export default function AssetPage() {
                             style={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 8,
+                                gap: 6,
+                                marginTop: 3,
                                 fontSize: 12,
                                 color: "var(--color-text-muted)",
                                 fontWeight: 600,
@@ -684,7 +685,7 @@ export default function AssetPage() {
                     >
                         <button
                             type="button"
-                            aria-label="카테고리"
+                            aria-label="카테고리 관리"
                             style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -699,6 +700,8 @@ export default function AssetPage() {
                                 fontWeight: 700,
                                 color: "#444",
                                 cursor: "pointer",
+                                whiteSpace: "nowrap",
+                                flex: "none",
                                 transition: "transform .12s",
                             }}
                             onClick={() => {
@@ -725,79 +728,75 @@ export default function AssetPage() {
                         <LockTimer />
                     </div>
                 </div>
-                {state.status === "ready" && (
-                    <div
+                <div
+                    style={{
+                        display: "flex",
+                        gap: 4,
+                        marginTop: 14,
+                        padding: 4,
+                        background: "var(--soft)",
+                        borderRadius: 12,
+                    }}
+                >
+                    <button
+                        type="button"
+                        aria-pressed={assetTab === "budget"}
                         style={{
-                            display: "flex",
-                            gap: 4,
-                            marginTop: 14,
-                            padding: 4,
-                            background: "var(--soft)",
-                            borderRadius: 12,
+                            flex: 1,
+                            height: 34,
+                            border: "none",
+                            borderRadius: 9,
+                            font: "inherit",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "transform .12s",
+                            ...(assetTab === "budget"
+                                ? {
+                                      background: "#fff",
+                                      color: "#171717",
+                                      boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
+                                  }
+                                : {
+                                      background: "transparent",
+                                      color: "#888",
+                                  }),
                         }}
+                        onClick={() => handleAssetTab("budget")}
+                        {...pressScale(0.98)}
                     >
-                        <button
-                            type="button"
-                            aria-pressed={assetTab === "budget"}
-                            style={{
-                                flex: 1,
-                                height: 34,
-                                border: "none",
-                                borderRadius: 9,
-                                font: "inherit",
-                                fontSize: 13,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                transition: "transform .12s",
-                                ...(assetTab === "budget"
-                                    ? {
-                                          background: "#fff",
-                                          color: "#171717",
-                                          boxShadow:
-                                              "0 1px 3px rgba(0,0,0,0.09)",
-                                      }
-                                    : {
-                                          background: "transparent",
-                                          color: "#888",
-                                      }),
-                            }}
-                            onClick={() => handleAssetTab("budget")}
-                            {...pressScale(0.98)}
-                        >
-                            이번 달
-                        </button>
-                        <button
-                            type="button"
-                            aria-pressed={assetTab === "savings"}
-                            style={{
-                                flex: 1,
-                                height: 34,
-                                border: "none",
-                                borderRadius: 9,
-                                font: "inherit",
-                                fontSize: 13,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                transition: "transform .12s",
-                                ...(assetTab === "savings"
-                                    ? {
-                                          background: "#fff",
-                                          color: "#171717",
-                                          boxShadow:
-                                              "0 1px 3px rgba(0,0,0,0.09)",
-                                      }
-                                    : {
-                                          background: "transparent",
-                                          color: "#888",
-                                      }),
-                            }}
-                            onClick={() => handleAssetTab("savings")}
-                            {...pressScale(0.98)}
-                        >
-                            저축·투자
-                        </button>
-                    </div>
-                )}
+                        이번 달
+                    </button>
+                    <button
+                        type="button"
+                        aria-pressed={assetTab === "savings"}
+                        style={{
+                            flex: 1,
+                            height: 34,
+                            border: "none",
+                            borderRadius: 9,
+                            font: "inherit",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "transform .12s",
+                            ...(assetTab === "savings"
+                                ? {
+                                      background: "#fff",
+                                      color: "#171717",
+                                      boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
+                                  }
+                                : {
+                                      background: "transparent",
+                                      color: "#888",
+                                  }),
+                        }}
+                        onClick={() => handleAssetTab("savings")}
+                        {...pressScale(0.98)}
+                    >
+                        저축·투자
+                    </button>
+                </div>
             </div>
 
             {state.status === "loading" && <SkeletonCard lines={4} />}

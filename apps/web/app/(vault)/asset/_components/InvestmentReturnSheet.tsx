@@ -207,6 +207,7 @@ export function InvestmentReturnSheet({
                         <button
                             key={p.value}
                             type="button"
+                            className="press-95"
                             onClick={() => {
                                 resetIdle()
                                 setReturnDraft(String(p.value))

@@ -63,11 +63,7 @@ export function ExpenseCalendar({
                 {WEEKDAYS.map((w, i) => {
                     // 일(0)·토(6)만 요일색으로 구분하고 나머지는 muted 로 둔다.
                     const color =
-                        i === 0
-                            ? "#e5484d"
-                            : i === 6
-                              ? "#4a90d9"
-                              : "var(--color-text-muted)"
+                        i === 0 ? "#e5484d" : i === 6 ? "#4a90d9" : "#9a9a9a"
                     return (
                         <div
                             key={w}

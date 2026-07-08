@@ -7,7 +7,7 @@ export default function VaultBackupPage() {
     return (
         <section>
             <div
-                className="sticky-header"
+                className="sticky-header tight"
                 style={{ display: "flex", alignItems: "center", gap: 10 }}
             >
                 <Link
@@ -29,7 +29,7 @@ export default function VaultBackupPage() {
                 </div>
             </div>
 
-            <div>
+            <div style={{ paddingTop: 22 }}>
                 <BackupPanel onImported={async () => undefined} />
             </div>
         </section>

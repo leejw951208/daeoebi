@@ -62,7 +62,7 @@ export function SecretEditStep({
             }}
         >
             <div
-                className="sticky-header"
+                className="sticky-header tight"
                 style={{
                     display: "flex",
                     alignItems: "center",

@@ -27,6 +27,12 @@ interface Props {
 const PAGE_SIZE = 10
 
 // 메모가 비어 있으면 유형별 기본 라벨을 보여준다.
+function formatMonthDay(iso: string): string {
+    const m = Number(iso.slice(5, 7))
+    const d = Number(iso.slice(8, 10))
+    return `${m}월 ${d}일`
+}
+
 function rowLabel(t: BoxTxnRow): string {
     return t.memo.trim() || (t.type === "in" ? "입금" : "출금")
 }
@@ -260,7 +266,7 @@ export function SavingsBoxDetailSheet({
                                                 fontWeight: 600,
                                             }}
                                         >
-                                            {t.date}
+                                            {formatMonthDay(t.date)}
                                         </div>
                                     </div>
                                     <span
@@ -280,6 +286,7 @@ export function SavingsBoxDetailSheet({
                                     </span>
                                     <button
                                         type="button"
+                                        className="press-dim5"
                                         aria-label="삭제"
                                         disabled={deletingId === t.id}
                                         onClick={() => void handleDelete(t.id)}

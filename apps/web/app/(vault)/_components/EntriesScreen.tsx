@@ -128,7 +128,7 @@ export function EntriesScreen() {
                         ⌕
                     </span>
                     <input
-                        type="search"
+                        type="text"
                         placeholder="제목 검색"
                         value={input}
                         onChange={(e) => onSearchChange(e.target.value)}

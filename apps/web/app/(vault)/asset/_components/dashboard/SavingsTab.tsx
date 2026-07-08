@@ -545,8 +545,8 @@ export function SavingsTab({
                                     ) : (
                                         <span
                                             style={{
-                                                color: "#20a4a4",
-                                                fontWeight: 700,
+                                                color: "#a0a0a0",
+                                                fontWeight: 600,
                                             }}
                                         >
                                             + 목표 설정

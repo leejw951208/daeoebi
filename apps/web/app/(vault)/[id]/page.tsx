@@ -221,7 +221,7 @@ export default function SecretDetailPage() {
     return (
         <section>
             <div
-                className="sticky-header"
+                className="sticky-header tight"
                 style={{
                     display: "flex",
                     alignItems: "center",
@@ -245,7 +245,7 @@ export default function SecretDetailPage() {
                 <LockTimer compact bare />
             </div>
 
-            <div className="stagger">
+            <div className="stagger" style={{ paddingTop: 22 }}>
                 <div
                     style={{
                         display: "flex",

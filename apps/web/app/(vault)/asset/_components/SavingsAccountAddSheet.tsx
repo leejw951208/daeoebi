@@ -233,6 +233,7 @@ export function SavingsAccountAddSheet({
                         <button
                             key={p.value}
                             type="button"
+                            className="press-95"
                             onClick={() => {
                                 resetIdle()
                                 setGoal(String(p.value))

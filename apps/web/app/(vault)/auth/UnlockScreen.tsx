@@ -307,6 +307,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                         marginTop: 6,
                         justifyContent: "center",
                         color: "#888",
+                        fontWeight: 600,
                     }}
                     onClick={() => {
                         setMode("recovery")

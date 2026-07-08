@@ -396,6 +396,7 @@ export function ExpenseForm({
                         </span>
                         <button
                             type="button"
+                            className="press-96"
                             role="switch"
                             aria-checked={recurring}
                             aria-label="고정 지출"
@@ -504,6 +505,7 @@ export function ExpenseForm({
                         {recurring && (
                             <button
                                 type="button"
+                                className="press-98"
                                 onClick={() => {
                                     resetIdle()
                                     setRecurring(false)
@@ -526,6 +528,7 @@ export function ExpenseForm({
                         )}
                         <button
                             type="button"
+                            className="press-98"
                             onClick={
                                 initial?.recurringId
                                     ? () => setDeleteMenu(true)
@@ -584,6 +587,7 @@ export function ExpenseForm({
                         </p>
                         <button
                             type="button"
+                            className="press-98"
                             onClick={() => {
                                 setDeleteMenu(false)
                                 void handleDeleteAll()
@@ -607,6 +611,7 @@ export function ExpenseForm({
                         </button>
                         <button
                             type="button"
+                            className="press-98"
                             onClick={() => {
                                 setDeleteMenu(false)
                                 void handleDeleteThisMonth()
@@ -630,6 +635,7 @@ export function ExpenseForm({
                         </button>
                         <button
                             type="button"
+                            className="press-dim6"
                             onClick={() => setDeleteMenu(false)}
                             disabled={busy}
                             style={{
