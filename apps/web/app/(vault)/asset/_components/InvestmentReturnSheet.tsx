@@ -72,8 +72,8 @@ export function InvestmentReturnSheet({
                     투자 수익률
                 </div>
                 <p className="muted" style={{ fontSize: 13, marginBottom: 18 }}>
-                    투자 원금과 수익률을 입력하면 평가금액과 손익이 자동으로
-                    계산돼요.
+                    투자 원금과 현재 수익률을 입력하면 평가금액과 손익이
+                    자동으로 계산돼요.
                 </p>
 
                 <div
@@ -85,7 +85,7 @@ export function InvestmentReturnSheet({
                 <div
                     className="income-input"
                     style={{
-                        marginBottom: 16,
+                        marginBottom: 8,
                         ...(focusedField === "base"
                             ? { borderColor: ACCENT }
                             : {}),
@@ -93,7 +93,17 @@ export function InvestmentReturnSheet({
                     onFocus={() => setFocusedField("base")}
                     onBlur={() => setFocusedField(null)}
                 >
-                    <span aria-hidden="true">₩</span>
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            fontSize: 22,
+                            fontWeight: 800,
+                            color: ACCENT,
+                            flexShrink: 0,
+                        }}
+                    >
+                        ₩
+                    </span>
                     <input
                         inputMode="numeric"
                         value={baseDraft ? formatAmount(baseValue) : ""}
@@ -107,8 +117,26 @@ export function InvestmentReturnSheet({
                                     .slice(0, MAX_AMOUNT_DIGITS),
                             )
                         }}
+                        style={{
+                            textAlign: "right",
+                            fontSize: 26,
+                            fontWeight: 800,
+                            color: ACCENT,
+                        }}
                     />
                 </div>
+                <p
+                    style={{
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        lineHeight: 1.5,
+                        color: "var(--color-text-muted)",
+                        marginBottom: 18,
+                    }}
+                >
+                    이번 달 지출 중 ‘투자’로 분류한 금액은 여기에 자동으로
+                    더해져요.
+                </p>
 
                 <div
                     className="field-label"
