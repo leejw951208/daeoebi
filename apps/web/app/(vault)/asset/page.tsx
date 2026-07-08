@@ -581,22 +581,66 @@ export default function AssetPage() {
                         >
                             <button
                                 type="button"
-                                className="btn-text"
                                 aria-label="이전 달"
                                 onClick={() => setMonth((m) => addMonth(m, -1))}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 22,
+                                    height: 22,
+                                    border: "none",
+                                    background: "none",
+                                    color: "#c2c2c2",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                }}
                             >
-                                ‹
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M15 6l-6 6 6 6" />
+                                </svg>
                             </button>
                             <span style={{ minWidth: 72, textAlign: "center" }}>
                                 {monthLabel(month)}
                             </span>
                             <button
                                 type="button"
-                                className="btn-text"
                                 aria-label="다음 달"
                                 onClick={() => setMonth((m) => addMonth(m, 1))}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 22,
+                                    height: 22,
+                                    border: "none",
+                                    background: "none",
+                                    color: "#c2c2c2",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                }}
                             >
-                                ›
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 6l6 6-6 6" />
+                                </svg>
                             </button>
                         </div>
                     </div>
