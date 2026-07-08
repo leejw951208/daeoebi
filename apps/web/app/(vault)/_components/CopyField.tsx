@@ -6,7 +6,6 @@ import { scheduleClipboardClear } from "../_lib/clipboard-clear"
 interface Props {
     label: string
     value: string
-    sensitive?: boolean
     // 복사·보기 등 사용자 활동 시 자동잠금 타이머를 초기화하는 콜백.
     onActivity?: () => void
     // 지정 시 이 필드만 삭제하는 휴지통 버튼을 노출한다(상세 화면 전용).
@@ -15,13 +14,7 @@ interface Props {
 
 const CLEAR_AFTER_MS = 30_000
 
-export function CopyField({
-    label,
-    value,
-    sensitive,
-    onActivity,
-    onDelete,
-}: Props) {
+export function CopyField({ label, value, onActivity, onDelete }: Props) {
     const [revealed, setRevealed] = useState(false)
     const [status, setStatus] = useState<string>("")
     const [remaining, setRemaining] = useState<number | null>(null)
@@ -68,7 +61,8 @@ export function CopyField({
         }
     }
 
-    const masked = sensitive && !revealed
+    // 모든 필드를 기본 마스킹하고 "표시" 클릭 시에만 원문을 드러낸다.
+    const masked = !revealed
     const maskDots = "•".repeat(Math.min(12, value.length || 8))
 
     return (

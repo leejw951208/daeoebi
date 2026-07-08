@@ -8,7 +8,6 @@ import { isApiError } from "@/lib/api-error"
 import { toast } from "@/components/toast"
 import { useVault, type SecretField } from "../../_lib/vault-context"
 import { sealPayload } from "../../_lib/secret-payload"
-import { isSensitiveFieldName } from "../../_lib/field-suggestions"
 import { MAX_FIELDS, type FieldRow } from "./types"
 import { SecretEditStep } from "./SecretEditStep"
 import { SecretReviewStep } from "./SecretReviewStep"
@@ -31,15 +30,10 @@ interface Props {
 let rowSeq = 0
 function makeRow(field?: SecretField): FieldRow {
     rowSeq += 1
-    // 저장된 sensitive 가 있으면 그대로, 없으면(추천칩·구버전) 이름 휴리스틱으로 기본값을 정한다.
-    const sensitive =
-        field?.sensitive ??
-        (field?.name ? isSensitiveFieldName(field.name) : false)
     return {
         key: `f${rowSeq}`,
         name: field?.name ?? "",
         value: field?.value ?? "",
-        sensitive,
     }
 }
 
@@ -126,7 +120,6 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             .map((r) => ({
                 name: r.name.trim(),
                 value: r.value,
-                sensitive: r.sensitive ?? false,
             }))
             .filter((f) => f.name)
 

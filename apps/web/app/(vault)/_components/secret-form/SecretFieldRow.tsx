@@ -1,5 +1,5 @@
 "use client"
-// 시크릿 편집 1단계의 필드 한 행. 이름·값 입력과 마스킹 토글·재정렬·삭제 버튼을 묶는다.
+// 시크릿 편집 1단계의 필드 한 행. 이름·값 입력과 재정렬·삭제 버튼을 묶는다.
 // 상태는 보유하지 않고 상위(SecretForm)가 내려준 콜백만 호출하는 표현 컴포넌트다.
 import type { PointerEvent } from "react"
 import type { SecretField } from "../../_lib/vault-context"
@@ -36,7 +36,6 @@ interface Props {
     index: number
     name: string
     value: string
-    sensitive: boolean
     isFirst: boolean
     isLast: boolean
     onUpdate: (patch: Partial<SecretField>) => void
@@ -48,7 +47,6 @@ export function SecretFieldRow({
     index,
     name,
     value,
-    sensitive,
     isFirst,
     isLast,
     onUpdate,
@@ -100,28 +98,6 @@ export function SecretFieldRow({
                     }}
                 />
                 <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <button
-                        type="button"
-                        onClick={() => onUpdate({ sensitive: !sensitive })}
-                        {...pressOpacity(0.4, sensitive ? 1 : 0.5)}
-                        aria-pressed={sensitive}
-                        aria-label={`필드 ${index + 1} 값 ${sensitive ? "표시로 전환" : "가림으로 전환"}`}
-                        title={
-                            sensitive
-                                ? "상세에서 가림(마스킹)"
-                                : "상세에서 표시"
-                        }
-                        style={{
-                            ...rowBtnBase,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 13,
-                            opacity: sensitive ? 1 : 0.5,
-                        }}
-                    >
-                        {sensitive ? "🔒" : "👁"}
-                    </button>
                     <button
                         type="button"
                         onClick={() => onMove(-1)}

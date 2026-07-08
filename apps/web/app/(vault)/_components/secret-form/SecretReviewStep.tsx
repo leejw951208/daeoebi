@@ -1,5 +1,5 @@
 "use client"
-// 시크릿 폼 2단계: 저장 전 확인. 제목·필드(마스킹 반영)·메모를 요약해 보여주고
+// 시크릿 폼 2단계: 저장 전 확인. 제목·필드(값 원문 표시)·메모를 요약해 보여주고
 // "암호화하여 저장"으로 확정한다. 상태 없이 상위가 내려준 값·콜백만 사용한다.
 import type { PointerEvent } from "react"
 import type { FieldRow } from "./types"
@@ -130,34 +130,20 @@ export function SecretReviewStep({
                             >
                                 {r.name.trim()}
                             </span>
-                            {r.sensitive ? (
-                                <span
-                                    aria-label="값 숨김"
-                                    style={{
-                                        fontFamily: "var(--font-mono)",
-                                        fontSize: 14,
-                                        letterSpacing: "0.04em",
-                                        color: "#999",
-                                    }}
-                                >
-                                    ••••••••
-                                </span>
-                            ) : (
-                                <span
-                                    style={{
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        color: "#333",
-                                        textAlign: "right",
-                                        maxWidth: 150,
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                    }}
-                                >
-                                    {r.value.trim() || "—"}
-                                </span>
-                            )}
+                            <span
+                                style={{
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    color: "#333",
+                                    textAlign: "right",
+                                    maxWidth: 150,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                {r.value.trim() || "—"}
+                            </span>
                         </div>
                     ))}
                 </div>

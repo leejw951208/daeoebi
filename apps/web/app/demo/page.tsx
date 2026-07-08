@@ -6,7 +6,6 @@ import { type CSSProperties, useMemo, useState } from "react"
 import { Button } from "@/components/Button"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { CopyField } from "../(vault)/_components/CopyField"
-import { isSensitiveFieldName } from "../(vault)/_lib/field-suggestions"
 import { DemoAssetScreen } from "./DemoAssetScreen"
 import { DemoSecretForm } from "./DemoSecretForm"
 import { DEMO_SEED, type DemoField, type DemoSecret } from "./demo-data"
@@ -183,10 +182,6 @@ export default function DemoPage() {
                                 key={`${field.name}-${idx}`}
                                 label={field.name}
                                 value={field.value}
-                                sensitive={
-                                    field.sensitive ??
-                                    isSensitiveFieldName(field.name)
-                                }
                                 onDelete={() => setFieldToDelete(idx)}
                             />
                         ))}

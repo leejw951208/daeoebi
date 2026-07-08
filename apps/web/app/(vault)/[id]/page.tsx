@@ -13,7 +13,6 @@ import {
 } from "../_components/secret-form/SecretForm"
 import { useVault, type SecretField } from "../_lib/vault-context"
 import { openPayload, sealPayload } from "../_lib/secret-payload"
-import { isSensitiveFieldName } from "../_lib/field-suggestions"
 import { LockTimer } from "../_components/LockTimer"
 
 type LoadState = "idle" | "loading" | "loaded" | "missing" | "error"
@@ -271,10 +270,6 @@ export default function SecretDetailPage() {
                             key={`${field.name}-${idx}`}
                             label={field.name}
                             value={field.value}
-                            sensitive={
-                                field.sensitive ??
-                                isSensitiveFieldName(field.name)
-                            }
                             onActivity={resetIdle}
                             onDelete={
                                 fieldBusy

@@ -2,10 +2,7 @@
 // 데모용 신규/수정 폼. 실제 SecretForm 의 2단계 흐름(편집 → 저장 전 확인)을 충실히 재현하되
 // 암호화·서버 저장 없이 메모리 상태로만 동작한다. vault-client·VK 를 쓰지 않는다.
 import { useState } from "react"
-import {
-    FIELD_SUGGESTIONS,
-    isSensitiveFieldName,
-} from "../(vault)/_lib/field-suggestions"
+import { FIELD_SUGGESTIONS } from "../(vault)/_lib/field-suggestions"
 import type { DemoField, DemoSecret } from "./demo-data"
 
 const MAX_FIELDS = 20
@@ -17,14 +14,10 @@ interface FieldRow extends DemoField {
 let rowSeq = 0
 function makeRow(field?: DemoField): FieldRow {
     rowSeq += 1
-    const sensitive =
-        field?.sensitive ??
-        (field?.name ? isSensitiveFieldName(field.name) : false)
     return {
         key: `d${rowSeq}`,
         name: field?.name ?? "",
         value: field?.value ?? "",
-        sensitive,
     }
 }
 
@@ -93,7 +86,6 @@ export function DemoSecretForm({ initial, onSave, onCancel }: Props) {
             .map((r) => ({
                 name: r.name.trim(),
                 value: r.value,
-                sensitive: r.sensitive ?? false,
             }))
             .filter((f) => f.name)
         onSave({ label: label.trim(), fields, memo })
@@ -197,31 +189,17 @@ export function DemoSecretForm({ initial, onSave, onCancel }: Props) {
                                     >
                                         {r.name.trim()}
                                     </span>
-                                    {r.sensitive ? (
-                                        <span
-                                            aria-label="값 숨김"
-                                            style={{
-                                                fontFamily: "var(--font-mono)",
-                                                fontSize: 14,
-                                                letterSpacing: "0.04em",
-                                                color: "var(--color-text-muted)",
-                                            }}
-                                        >
-                                            ••••••••
-                                        </span>
-                                    ) : (
-                                        <span
-                                            style={{
-                                                fontSize: 14,
-                                                color: "var(--color-text-secondary)",
-                                                wordBreak: "break-all",
-                                                textAlign: "right",
-                                                minWidth: 0,
-                                            }}
-                                        >
-                                            {r.value.trim() || "—"}
-                                        </span>
-                                    )}
+                                    <span
+                                        style={{
+                                            fontSize: 14,
+                                            color: "var(--color-text-secondary)",
+                                            wordBreak: "break-all",
+                                            textAlign: "right",
+                                            minWidth: 0,
+                                        }}
+                                    >
+                                        {r.value.trim() || "—"}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -507,26 +485,6 @@ export function DemoSecretForm({ initial, onSave, onCancel }: Props) {
                                             gap: 2,
                                         }}
                                     >
-                                        <button
-                                            type="button"
-                                            className="secret-btn"
-                                            onClick={() =>
-                                                updateRow(idx, {
-                                                    sensitive: !row.sensitive,
-                                                })
-                                            }
-                                            aria-pressed={
-                                                row.sensitive ?? false
-                                            }
-                                            aria-label={`필드 ${idx + 1} 값 ${row.sensitive ? "표시로 전환" : "가림으로 전환"}`}
-                                            title={
-                                                row.sensitive
-                                                    ? "상세에서 가림(마스킹)"
-                                                    : "상세에서 표시"
-                                            }
-                                        >
-                                            {row.sensitive ? "🔒" : "👁"}
-                                        </button>
                                         <button
                                             type="button"
                                             className="secret-btn"
