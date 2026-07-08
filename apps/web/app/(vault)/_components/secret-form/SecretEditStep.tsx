@@ -91,6 +91,8 @@ export function SecretEditStep({
                     minWidth: 0,
                     marginInline: "calc(-1 * var(--container-padding))",
                     paddingInline: 18,
+                    paddingTop: 20,
+                    paddingBottom: 70,
                 }}
             >
                 {hint && (
