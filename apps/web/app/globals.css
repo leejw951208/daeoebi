@@ -1223,6 +1223,10 @@ html[data-auth-screen] .container {
     justify-content: center;
     animation: fade 0.2s var(--ease);
 }
+/* 세이빙 박스 상세·카테고리 관리 시트는 목업 기준 배경 .32. */
+.dialog-backdrop.dim {
+    background: rgba(0, 0, 0, 0.32);
+}
 
 .dialog {
     background: var(--color-surface-1);
@@ -1482,8 +1486,10 @@ html[data-auth-screen] .container {
     color: inherit;
     transition: transform 0.12s var(--ease);
 }
-.asset-card:active {
-    transform: scale(0.98);
+/* asset-card 는 카드 표면일 뿐이라 기본 프레스 없음(목업: 정적 컨테이너는 눌러도 안 줄어듦).
+   실제 눌리는 카드만 개별로 프레스 스케일을 준다(예산 카드는 JS pressScale, 투자 카드는 .sv-return:active). */
+.sv-return:active {
+    transform: scale(0.99);
 }
 .asset-card-label {
     font-size: 12px;

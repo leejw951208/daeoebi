@@ -129,7 +129,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
 
     return (
         <div
-            className="dialog-backdrop"
+            className="dialog-backdrop dim"
             role="dialog"
             aria-modal="true"
             aria-label="카테고리 관리"

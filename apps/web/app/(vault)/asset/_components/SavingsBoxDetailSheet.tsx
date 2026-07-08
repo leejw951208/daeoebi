@@ -66,7 +66,7 @@ export function SavingsBoxDetailSheet({
 
     return (
         <div
-            className="dialog-backdrop"
+            className="dialog-backdrop dim"
             role="dialog"
             aria-modal="true"
             aria-label="세이빙 박스 내역"
