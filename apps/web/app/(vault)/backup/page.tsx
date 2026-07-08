@@ -5,7 +5,7 @@ import { BackupPanel } from "../_components/BackupPanel"
 
 export default function VaultBackupPage() {
     return (
-        <section>
+        <section className="screen-white">
             <div
                 className="sticky-header tight"
                 style={{ display: "flex", alignItems: "center", gap: 10 }}

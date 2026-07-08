@@ -140,7 +140,8 @@ export function EntriesScreen() {
             <nav
                 aria-label="대외비 관리"
                 className="toolbar"
-                style={{ padding: "16px 18px 0", margin: 0 }}
+                // 좌우 18px 는 .container 패딩이 제공(목업의 백업 버튼 18px 인셋).
+                style={{ padding: "16px 0 0", margin: 0 }}
             >
                 <Link
                     href="/backup"
@@ -180,7 +181,13 @@ export function EntriesScreen() {
             {state === "loaded" && secrets.length > 0 && (
                 <ul
                     className="entry-list stagger"
-                    style={{ padding: "14px 16px 96px", flex: 1 }}
+                    // 목업 목록 행은 좌우 16px 인셋. .container 18px 에서 -2px 보정(자산 대시보드와 동일 패턴).
+                    style={{
+                        padding: "14px 0 96px",
+                        marginLeft: -2,
+                        marginRight: -2,
+                        flex: 1,
+                    }}
                 >
                     {secrets.map((secret) => (
                         <li key={secret.id}>
@@ -222,7 +229,8 @@ export function EntriesScreen() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        padding: 40,
+                        // 목업 빈 상태 좌우 40px. .container 18px + 22px = 40px.
+                        padding: "40px 22px",
                         textAlign: "center",
                         animation: "fadeUp 0.4s both",
                     }}
@@ -273,7 +281,8 @@ export function EntriesScreen() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        padding: 40,
+                        // 목업 빈 상태 좌우 40px. .container 18px + 22px = 40px.
+                        padding: "40px 22px",
                         textAlign: "center",
                         animation: "fadeUp 0.4s both",
                     }}

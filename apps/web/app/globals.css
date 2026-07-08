@@ -324,6 +324,15 @@ a:hover {
     padding-bottom: calc(var(--bottom-tab-height) + 56px + var(--space-4) * 2);
 }
 
+/* 목업의 풀블리드 흰 배경 화면(백업·지출 폼). .container 좌우 패딩을 상쇄해 흰 배경이
+   프레임 가장자리까지 차게 하고, 본문은 다시 좌우 18px 로 들여쓴다(헤더는 자체 -margin 으로 블리드). */
+.screen-white {
+    min-height: 100%;
+    background: #fff;
+    margin-inline: calc(-1 * var(--container-padding));
+    padding-inline: var(--container-padding);
+}
+
 .card {
     position: relative;
     background: var(--color-surface-1);

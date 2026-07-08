@@ -189,9 +189,9 @@ export function ExpenseForm({
     }
 
     return (
-        <section style={{ minHeight: "100%", background: "#fff" }}>
+        <section className="screen-white">
             <div
-                className="sticky-header"
+                className="sticky-header tight"
                 style={{
                     display: "flex",
                     alignItems: "center",
@@ -221,8 +221,9 @@ export function ExpenseForm({
 
             <div
                 className="stagger"
+                // 좌우 18px 는 .screen-white 가 제공(목업 stagger 18px 인셋).
                 style={{
-                    padding: "14px 18px 50px",
+                    padding: "14px 0 50px",
                     display: "flex",
                     flexDirection: "column",
                     gap: 24,
