@@ -6,12 +6,12 @@ import type { SecretField } from "../../_lib/vault-context"
 
 // 디자인의 style-active="opacity:.4" 프레스 효과. 인라인 스타일은 :active 를
 // 표현할 수 없어 포인터 이벤트로 opacity 를 토글한다.
-function pressOpacity(opacity: number) {
+function pressOpacity(opacity: number, rest?: number) {
     const set = (e: PointerEvent<HTMLElement>) => {
         e.currentTarget.style.opacity = String(opacity)
     }
     const reset = (e: PointerEvent<HTMLElement>) => {
-        e.currentTarget.style.opacity = ""
+        e.currentTarget.style.opacity = rest === undefined ? "" : String(rest)
     }
     return {
         onPointerDown: set,
@@ -103,7 +103,7 @@ export function SecretFieldRow({
                     <button
                         type="button"
                         onClick={() => onUpdate({ sensitive: !sensitive })}
-                        {...pressOpacity(0.4)}
+                        {...pressOpacity(0.4, sensitive ? 1 : 0.5)}
                         aria-pressed={sensitive}
                         aria-label={`필드 ${index + 1} 값 ${sensitive ? "표시로 전환" : "가림으로 전환"}`}
                         title={
@@ -116,7 +116,8 @@ export function SecretFieldRow({
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            fontSize: 15,
+                            fontSize: 13,
+                            opacity: sensitive ? 1 : 0.5,
                         }}
                     >
                         {sensitive ? "🔒" : "👁"}

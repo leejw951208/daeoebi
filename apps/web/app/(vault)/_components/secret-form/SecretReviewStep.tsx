@@ -146,10 +146,13 @@ export function SecretReviewStep({
                                 <span
                                     style={{
                                         fontSize: 14,
-                                        color: "var(--color-text-secondary)",
-                                        wordBreak: "break-all",
+                                        fontWeight: 600,
+                                        color: "#333",
                                         textAlign: "right",
-                                        minWidth: 0,
+                                        maxWidth: 150,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
                                     }}
                                 >
                                     {r.value.trim() || "—"}
