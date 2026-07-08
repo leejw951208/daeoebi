@@ -355,12 +355,16 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
     margin: calc(-1 * var(--container-padding));
-    padding: 30px var(--container-padding) 14px;
+    padding: 30px var(--container-padding) 12px;
+}
+/* 상세·폼·백업 헤더는 목업 기준 좌우 16px(목록/자산은 18px 유지). */
+.sticky-header.tight {
+    padding: 30px 16px 14px;
 }
 /* 헤더 내 텍스트 버튼(취소·저장·← 뒤로)은 목업과 동일하게 15px. */
 .sticky-header .btn-text {
@@ -611,7 +615,7 @@ a:hover {
     color: #777;
     background: #fff;
     cursor: pointer;
-    transition: transform var(--motion-fast) var(--ease);
+    transition: all 0.14s var(--ease);
 }
 
 .chip:hover:not(:disabled) {
@@ -620,6 +624,28 @@ a:hover {
 
 .chip:active:not(:disabled) {
     transform: scale(0.95);
+}
+
+/* 인라인 스타일 버튼의 프레스 피드백(디자인 style-active 대응). */
+.press-95,
+.press-96,
+.press-98 {
+    transition: transform 0.12s var(--ease);
+}
+.press-95:active:not(:disabled) {
+    transform: scale(0.95);
+}
+.press-96:active:not(:disabled) {
+    transform: scale(0.96);
+}
+.press-98:active:not(:disabled) {
+    transform: scale(0.98);
+}
+.press-dim5:active:not(:disabled) {
+    opacity: 0.5;
+}
+.press-dim6:active:not(:disabled) {
+    opacity: 0.6;
 }
 
 .chip:disabled {
@@ -917,7 +943,7 @@ input[type="date"].field-control {
     background: #fff;
     border: 1px solid #ececec;
     border-radius: var(--radius-full);
-    padding: 0 13px;
+    padding: 0 14px;
     transition: transform 0.12s var(--ease);
 }
 
@@ -1393,7 +1419,7 @@ html[data-auth-screen] .container {
         width: 480px;
         max-width: 100%;
         margin: 0 auto;
-        background: var(--color-bg);
+        background: var(--tint);
         min-height: 100vh;
         border-left: 1px solid var(--color-border);
         border-right: 1px solid var(--color-border);
