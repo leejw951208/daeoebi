@@ -381,7 +381,9 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                 <div
                     style={{
                         display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
+                        // 1fr=minmax(auto,1fr) 은 input 내재너비(~20자)를 최소로 잡아
+                        // 좁은 뷰포트에서 우측 열이 화면 밖으로 넘친다. 0 까지 줄게 고정.
+                        gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
                         gap: 10,
                         marginBottom: 16,
                     }}
@@ -405,13 +407,14 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                             }}
                             disabled={busy !== "idle"}
                             style={{
+                                minWidth: 0,
                                 height: 50,
                                 border: "1.5px solid #e3e3e6",
                                 borderRadius: 12,
                                 background: "#fafafa",
                                 textAlign: "center",
                                 fontFamily: "ui-monospace,monospace",
-                                fontSize: 15,
+                                fontSize: 16, // iOS Safari 포커스 자동 확대 방지(16px 미만 금지)
                                 fontWeight: 600,
                                 letterSpacing: ".08em",
                                 color: "#222",
