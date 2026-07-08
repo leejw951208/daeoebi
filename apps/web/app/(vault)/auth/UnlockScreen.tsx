@@ -32,6 +32,9 @@ import { DEV_AUTH, devUnlock } from "@/lib/dev-auth"
 type Mode = "passkey" | "recovery"
 type Busy = "idle" | "unlocking" | "recovering"
 
+// 복구 6칸 입력의 형식 힌트 placeholder(디자인 mock 예시값). 실제 값이 아니라 4자 형식 안내용이다.
+const RECOVERY_PLACEHOLDERS = ["7QK4", "2MXP", "9FW1", "AB3D", "LZ8N", "6RTV"]
+
 interface Props {
     onUnlocked: (vaultKey: CryptoKey) => void
     onReregistered: (vaultKey: CryptoKey) => void
@@ -388,6 +391,7 @@ export function UnlockScreen({ onUnlocked, onReregistered }: Props) {
                             key={i}
                             type="text"
                             aria-label={`복구코드 ${i + 1}번째 칸`}
+                            placeholder={RECOVERY_PLACEHOLDERS[i]}
                             autoComplete="off"
                             autoCapitalize="characters"
                             autoCorrect="off"
