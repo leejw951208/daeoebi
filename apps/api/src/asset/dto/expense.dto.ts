@@ -45,6 +45,16 @@ export class UpdateExpenseDto {
     @IsISO8601()
     date?: string
 
+    // 단건 지출을 고정으로 전환할 때 새 템플릿에 연결한다(고정 해제·재연결은 recurring API 담당).
+    @IsOptional()
+    @IsString()
+    @MinLength(1)
+    recurringId?: string
+
+    @IsOptional()
+    @Matches(MONTH_RE, { message: "period 는 YYYY-MM 형식이어야 합니다." })
+    period?: string
+
     // 본문 갱신 시 세 필드를 함께 보낸다(부분 암호문 불허).
     @IsOptional()
     @IsBase64url()
