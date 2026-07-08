@@ -259,23 +259,6 @@ export default function SecretDetailPage() {
                     </span>
                     <div style={{ minWidth: 0 }}>
                         <h1 style={{ fontSize: 21 }}>{data.label}</h1>
-                        {data.createdAt && (
-                            <div
-                                style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    marginTop: 6,
-                                    padding: "4px 10px",
-                                    borderRadius: 999,
-                                    background: "var(--soft)",
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    color: "#8a8a8a",
-                                }}
-                            >
-                                {`수정 ${formatDateChip(data.updatedAt || data.createdAt)} · 생성 ${formatDateChip(data.createdAt)}`}
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -344,14 +327,4 @@ export default function SecretDetailPage() {
             </div>
         </section>
     )
-}
-
-// 상세 제목 아래 칩에 쓰는 날짜 포맷(YYYY.MM.DD).
-function formatDateChip(iso: string): string {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return ""
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    return `${y}.${m}.${day}`
 }

@@ -1031,10 +1031,12 @@ input[type="date"].field-control {
 }
 
 .secret-value {
-    font-family: var(--font-mono);
+    /* 값이 보일 때(비민감·표시)는 본문 폰트(목업 revealed=inherit).
+       가려진 값(점)일 때만 .masked 에서 모노로 바꾼다. */
+    font-family: inherit;
     font-size: 15.5px;
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
     word-break: break-all;
     color: #1f1f1f;
     display: block;
@@ -1042,6 +1044,7 @@ input[type="date"].field-control {
 
 /* 마스킹된 점 */
 .secret-value.masked {
+    font-family: var(--font-mono);
     color: #1f1f1f;
     letter-spacing: 0.04em;
 }
