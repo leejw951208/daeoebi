@@ -538,6 +538,9 @@ export async function updateExpense(
         date?: string
         removed?: boolean
         categoryId?: string
+        // 단건 → 고정 전환 시 새 템플릿에 연결한다.
+        recurringId?: string
+        period?: string
     },
 ): Promise<ExpenseView> {
     const { data } = await vaultClient.patch<ExpenseView>(
