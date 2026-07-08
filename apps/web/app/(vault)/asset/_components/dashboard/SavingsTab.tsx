@@ -427,9 +427,9 @@ export function SavingsTab({
                                     textAlign: "left",
                                     width: "100%",
                                     border: "1px solid var(--color-border)",
-                                    borderRadius: 14,
+                                    borderRadius: 15,
                                     background: "var(--tint)",
-                                    padding: "13px 14px",
+                                    padding: "14px 15px",
                                     cursor: "pointer",
                                     font: "inherit",
                                     color: "inherit",
@@ -462,7 +462,7 @@ export function SavingsTab({
                                         />
                                         <span
                                             style={{
-                                                fontSize: 13.5,
+                                                fontSize: 14,
                                                 fontWeight: 700,
                                                 color: "#333",
                                                 whiteSpace: "nowrap",
@@ -479,7 +479,7 @@ export function SavingsTab({
                                                     fontSize: 11,
                                                     fontWeight: 700,
                                                     color: "#20a4a4",
-                                                    background: "#fff",
+                                                    background: "#e6f6f5",
                                                     padding: "2px 7px",
                                                     borderRadius: 6,
                                                 }}
@@ -491,7 +491,7 @@ export function SavingsTab({
                                     <span
                                         style={{
                                             flexShrink: 0,
-                                            fontSize: 14,
+                                            fontSize: 15,
                                             fontWeight: 800,
                                             letterSpacing: "-0.02em",
                                             color: "#1f1f1f",
@@ -504,7 +504,7 @@ export function SavingsTab({
                                     style={{
                                         height: 7,
                                         borderRadius: 999,
-                                        background: "#fff",
+                                        background: "#ececec",
                                         overflow: "hidden",
                                     }}
                                 >
@@ -567,9 +567,9 @@ export function SavingsTab({
                             justifyContent: "center",
                             gap: 6,
                             width: "100%",
-                            height: 46,
+                            height: 48,
                             border: "1.5px dashed #d8d8d8",
-                            borderRadius: 13,
+                            borderRadius: 14,
                             background: "none",
                             font: "inherit",
                             fontSize: 14,
