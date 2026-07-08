@@ -567,7 +567,7 @@ export function ExpenseForm({
                         <div className="sheet-grip" aria-hidden="true" />
                         <div
                             style={{
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: 800,
                                 letterSpacing: "-0.02em",
                                 marginBottom: 4,
@@ -580,10 +580,10 @@ export function ExpenseForm({
                                 fontSize: 13,
                                 lineHeight: 1.5,
                                 color: "var(--color-text-muted)",
-                                marginBottom: 16,
+                                marginBottom: 18,
                             }}
                         >
-                            무엇을 삭제할지 선택하세요.
+                            매월 반복되는 지출이에요. 어떻게 삭제할까요?
                         </p>
                         <button
                             type="button"
