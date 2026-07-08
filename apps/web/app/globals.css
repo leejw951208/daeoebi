@@ -879,6 +879,9 @@ input[type="date"].field-control {
     margin: 0;
     display: grid;
     gap: 9px;
+    /* flex:1 로 늘어난 컨테이너에서 그리드 기본 align-content(stretch)가
+       행을 늘려 항목 간격이 벌어지는 것을 막고, 목업처럼 상단에 밀착시킨다. */
+    align-content: start;
 }
 
 .entry-card {
