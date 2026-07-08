@@ -2,6 +2,7 @@
 import type { Metadata, Viewport } from "next"
 import { BottomTabBar } from "@/components/BottomTabBar"
 import { UpdateToast } from "@/components/UpdateToast"
+import { ToastHost } from "@/components/toast"
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister"
 import "./globals.css"
 
@@ -47,6 +48,7 @@ export default function RootLayout({
                     <main className="container">{children}</main>
                     <BottomTabBar />
                     <UpdateToast />
+                    <ToastHost />
                 </div>
                 <ServiceWorkerRegister />
             </body>
