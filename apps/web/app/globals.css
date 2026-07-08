@@ -4,7 +4,7 @@
 :root {
     /* Color — Surface (라이트 셸) */
     --ac: #171717; /* 액센트/주요 버튼/포커스 */
-    --soft: #f1f1f1; /* 보조 표면(검색바·칩 트랙) */
+    --soft: #f4f4f4; /* 보조 표면(검색바·칩 트랙) */
     --tint: #fafafa; /* 입력 배경·화면 틴트 */
 
     --color-bg: #ffffff; /* 화면 배경 */
@@ -100,7 +100,7 @@
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Container */
-    --container-padding: var(--space-4);
+    --container-padding: 18px;
     --container-max-width: 480px;
 
     /* Touch target */
@@ -345,13 +345,17 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
     margin: calc(-1 * var(--container-padding));
     margin-bottom: var(--space-3);
-    padding: 30px var(--container-padding) var(--space-3);
+    padding: 30px var(--container-padding) 14px;
+}
+/* 헤더 내 텍스트 버튼(취소·저장·← 뒤로)은 목업과 동일하게 15px. */
+.sticky-header .btn-text {
+    font-size: 15px;
 }
 
 /* 항목 이니셜 아바타 */
@@ -614,7 +618,7 @@ a:hover {
 .fab {
     position: fixed;
     right: calc(50% - 240px + 20px);
-    bottom: var(--bottom-tab-height);
+    bottom: calc(var(--bottom-tab-height) + 28px);
     width: 56px;
     height: 56px;
     border: none;
@@ -1422,7 +1426,7 @@ html[data-auth-screen] .container {
     gap: 12px;
     padding: 15px 16px;
     border: 1.5px solid #ececec;
-    border-radius: var(--radius-md);
+    border-radius: 13px;
     background: var(--tint);
     cursor: pointer;
 }
@@ -1540,7 +1544,7 @@ html[data-auth-screen] .container {
     animation: sheetUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
     /* 내용이 길어지면(카테고리·수입 많을 때) 시트 위쪽이 화면 밖으로 잘리지 않도록
        높이를 제한하고 내부 스크롤한다. dvh 로 모바일 브라우저 UI 높이 변화 대응. */
-    max-height: 88dvh;
+    max-height: 74dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
 }

@@ -363,15 +363,17 @@ export function SavingsTab({
                     <span style={{ fontSize: 13, fontWeight: 800 }}>
                         저축 현황
                     </span>
-                    <span
-                        style={{
-                            fontSize: 12,
-                            color: "var(--color-text-muted)",
-                            fontWeight: 600,
-                        }}
-                    >
-                        {accounts.length}개 적금
-                    </span>
+                    {accounts.length > 0 && (
+                        <span
+                            style={{
+                                fontSize: 11.5,
+                                color: "var(--color-text-muted)",
+                                fontWeight: 700,
+                            }}
+                        >
+                            {accounts.length}개 적금
+                        </span>
+                    )}
                 </div>
                 <div
                     style={{
@@ -384,13 +386,31 @@ export function SavingsTab({
                         <div
                             style={{
                                 textAlign: "center",
-                                padding: "8px 8px 14px",
-                                fontSize: 13,
-                                color: "var(--color-text-muted)",
-                                fontWeight: 600,
+                                padding: "16px 12px 4px",
                             }}
                         >
-                            아직 등록한 적금이 없어요.
+                            <div
+                                style={{
+                                    fontSize: 13.5,
+                                    fontWeight: 700,
+                                    color: "var(--color-text-muted)",
+                                    marginBottom: 5,
+                                }}
+                            >
+                                아직 적금이 없어요
+                            </div>
+                            <p
+                                style={{
+                                    fontSize: 12.5,
+                                    fontWeight: 600,
+                                    lineHeight: 1.5,
+                                    color: "var(--color-text-muted)",
+                                }}
+                            >
+                                적금을 추가하고 목표를 설정하면
+                                <br />
+                                매달 저축 현황이 자동으로 쌓여요.
+                            </p>
                         </div>
                     )}
                     {accounts.map((a) => {
@@ -407,9 +427,9 @@ export function SavingsTab({
                                     textAlign: "left",
                                     width: "100%",
                                     border: "1px solid var(--color-border)",
-                                    borderRadius: 14,
+                                    borderRadius: 15,
                                     background: "var(--tint)",
-                                    padding: "13px 14px",
+                                    padding: "14px 15px",
                                     cursor: "pointer",
                                     font: "inherit",
                                     color: "inherit",
@@ -442,7 +462,7 @@ export function SavingsTab({
                                         />
                                         <span
                                             style={{
-                                                fontSize: 13.5,
+                                                fontSize: 14,
                                                 fontWeight: 700,
                                                 color: "#333",
                                                 whiteSpace: "nowrap",
@@ -459,7 +479,7 @@ export function SavingsTab({
                                                     fontSize: 11,
                                                     fontWeight: 700,
                                                     color: "#20a4a4",
-                                                    background: "#fff",
+                                                    background: "#e6f6f5",
                                                     padding: "2px 7px",
                                                     borderRadius: 6,
                                                 }}
@@ -471,7 +491,7 @@ export function SavingsTab({
                                     <span
                                         style={{
                                             flexShrink: 0,
-                                            fontSize: 14,
+                                            fontSize: 15,
                                             fontWeight: 800,
                                             letterSpacing: "-0.02em",
                                             color: "#1f1f1f",
@@ -484,7 +504,7 @@ export function SavingsTab({
                                     style={{
                                         height: 7,
                                         borderRadius: 999,
-                                        background: "#fff",
+                                        background: "#ececec",
                                         overflow: "hidden",
                                     }}
                                 >
@@ -503,20 +523,16 @@ export function SavingsTab({
                                     style={{
                                         display: "flex",
                                         justifyContent: "space-between",
+                                        alignItems: "center",
                                         fontSize: 11.5,
                                         fontWeight: 600,
-                                        color: "#a3a3a3",
+                                        color: "var(--color-text-muted)",
                                         marginTop: 7,
                                     }}
                                 >
                                     {hasGoal ? (
-                                        <span
-                                            style={{
-                                                color: a.color,
-                                                fontWeight: 800,
-                                            }}
-                                        >
-                                            {a.goalPct}%
+                                        <span>
+                                            {`목표 ${formatWon(a.goal)} · ${formatWon(a.remain)} 남음`}
                                         </span>
                                     ) : (
                                         <span
@@ -528,11 +544,16 @@ export function SavingsTab({
                                             + 목표 설정
                                         </span>
                                     )}
-                                    <span>
-                                        {hasGoal
-                                            ? `목표 ${formatWon(a.goal)} · ${formatWon(a.remain)} 남음`
-                                            : "목표 미설정"}
-                                    </span>
+                                    {hasGoal && (
+                                        <span
+                                            style={{
+                                                color: a.color,
+                                                fontWeight: 800,
+                                            }}
+                                        >
+                                            {a.goalPct}%
+                                        </span>
+                                    )}
                                 </div>
                             </button>
                         )
@@ -546,9 +567,9 @@ export function SavingsTab({
                             justifyContent: "center",
                             gap: 6,
                             width: "100%",
-                            height: 46,
+                            height: 48,
                             border: "1.5px dashed #d8d8d8",
-                            borderRadius: 13,
+                            borderRadius: 14,
                             background: "none",
                             font: "inherit",
                             fontSize: 14,

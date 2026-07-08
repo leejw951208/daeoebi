@@ -131,6 +131,9 @@ export class ExpenseService {
 
         if (dto.removed !== undefined) data.removed = dto.removed
         if (dto.categoryId !== undefined) data.categoryId = dto.categoryId
+        // 단건 → 고정 전환: 새 템플릿에 연결(recurringId·period 를 함께 세팅해 멱등 키를 채운다).
+        if (dto.recurringId !== undefined) data.recurringId = dto.recurringId
+        if (dto.period !== undefined) data.period = dto.period
 
         try {
             const row = await this.prisma.expense.update({
@@ -140,6 +143,13 @@ export class ExpenseService {
             return toView(row)
         } catch (e: unknown) {
             if (this.isRecordNotFound(e)) throw this.notFound()
+            // 같은 (recurringId, period) 가 이미 있으면 고정 인스턴스 중복.
+            if (this.isUniqueViolation(e)) {
+                throw new ConflictException({
+                    code: ASSET_ERRORS.EXPENSE_DUPLICATE,
+                    message: "해당 월의 고정 지출이 이미 존재합니다.",
+                })
+            }
             throw e
         }
     }

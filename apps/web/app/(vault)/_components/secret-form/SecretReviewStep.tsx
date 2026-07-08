@@ -68,6 +68,7 @@ export function SecretReviewStep({
                     flex: 1,
                     marginInline: "calc(-1 * var(--container-padding))",
                     paddingInline: 18,
+                    paddingTop: 22,
                 }}
             >
                 <div>
