@@ -272,7 +272,7 @@ export function OnboardingScreen({ onUnlocked }: Props) {
                 style={{
                     width: "100%",
                     ...(!token.trim() || phase === "registering"
-                        ? { background: "#ececec", color: "#b8b8b8" }
+                        ? { background: "#f0f0f0", color: "#b0b0b0" }
                         : {}),
                 }}
                 onClick={handleRegister}

@@ -461,8 +461,8 @@ a:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    color: var(--color-text-muted);
+    gap: 4px;
+    color: #bcbcbc;
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 700;
@@ -740,10 +740,10 @@ textarea.field-control {
     border-color: #e0e0e0;
 }
 
-.form-row input:focus-visible,
-.form-row select:focus-visible,
-.form-row textarea:focus-visible,
-.field-control:focus-visible {
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus,
+.field-control:focus {
     border-color: var(--ac);
     background: #fff;
     outline: none;
@@ -1196,7 +1196,7 @@ html[data-auth-screen] .container {
     align-items: flex-start;
     padding: 15px;
     border-radius: var(--radius-md);
-    background: #f4f4f4;
+    background: var(--soft);
     cursor: pointer;
 }
 
