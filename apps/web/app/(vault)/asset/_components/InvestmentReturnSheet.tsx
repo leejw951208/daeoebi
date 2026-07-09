@@ -1,19 +1,18 @@
 "use client"
-// 투자 현황 입력 바텀시트. 투자 원금(base)과 수익률(returnRate)을 함께 수정한다.
-// 저장 시 base 를 sealInvestment 로 암호화해 returnRate(평문)와 함께 보낸다.
+// 투자 현황 입력 바텀시트. 수익률(returnRate)만 수정한다.
+// 저장 시 기존 투자 원금(base)을 그대로 sealInvestment 로 암호화해 returnRate(평문)와 함께 보낸다.
 import { useState } from "react"
 import { Button } from "@/components/Button"
 import { toast } from "@/components/toast"
 import { useVault } from "../../_lib/vault-context"
 import { saveInvestment } from "@/lib/vault-client"
 import { sealInvestment } from "../_lib/asset-payload"
-import { RETURN_RATE_PRESETS, formatAmount } from "../_lib/asset-categories"
+import { RETURN_RATE_PRESETS } from "../_lib/asset-categories"
 
-const MAX_AMOUNT_DIGITS = 12
 const ACCENT = "#7b61ff"
 
 interface Props {
-    base: number // 현재 투자 원금 베이스(수정 가능).
+    base: number // 현재 투자 원금 베이스(수정하지 않고 그대로 유지).
     returnRate: string // 현재 저장된 수익률(빈 문자열=미설정).
     onChanged: () => void | Promise<void>
     onClose: () => void
@@ -27,17 +26,14 @@ export function InvestmentReturnSheet({
 }: Props) {
     const { vaultKey, resetIdle } = useVault()
     const [returnDraft, setReturnDraft] = useState(returnRate)
-    const [baseDraft, setBaseDraft] = useState(base > 0 ? String(base) : "")
     const [saving, setSaving] = useState(false)
     const [focusedField, setFocusedField] = useState<string | null>(null)
-
-    const baseValue = Number(baseDraft || "0")
 
     async function save() {
         if (saving) return
         setSaving(true)
         try {
-            const blob = await sealInvestment(vaultKey, { base: baseValue })
+            const blob = await sealInvestment(vaultKey, { base })
             await saveInvestment(returnDraft.trim(), blob)
             await onChanged()
             onClose()
@@ -79,76 +75,7 @@ export function InvestmentReturnSheet({
                         marginBottom: 18,
                     }}
                 >
-                    투자 원금과 현재 수익률을 입력하면 평가금액과 손익이
-                    자동으로 계산돼요.
-                </p>
-
-                <div
-                    className="field-label"
-                    style={{
-                        marginBottom: 7,
-                        fontSize: 11.5,
-                        color: "#a0a0a0",
-                    }}
-                >
-                    투자 원금
-                </div>
-                <div
-                    className="income-input"
-                    style={{
-                        height: 58,
-                        padding: "0 18px",
-                        marginBottom: 8,
-                        ...(focusedField === "base"
-                            ? { borderColor: ACCENT }
-                            : {}),
-                    }}
-                    onFocus={() => setFocusedField("base")}
-                    onBlur={() => setFocusedField(null)}
-                >
-                    <span
-                        aria-hidden="true"
-                        style={{
-                            fontSize: 22,
-                            fontWeight: 800,
-                            color: ACCENT,
-                            flexShrink: 0,
-                        }}
-                    >
-                        ₩
-                    </span>
-                    <input
-                        inputMode="numeric"
-                        value={baseDraft ? formatAmount(baseValue) : ""}
-                        placeholder="0"
-                        aria-label="투자 원금"
-                        onChange={(e) => {
-                            resetIdle()
-                            setBaseDraft(
-                                e.target.value
-                                    .replace(/[^\d]/g, "")
-                                    .slice(0, MAX_AMOUNT_DIGITS),
-                            )
-                        }}
-                        style={{
-                            textAlign: "right",
-                            fontSize: 26,
-                            fontWeight: 800,
-                            color: ACCENT,
-                        }}
-                    />
-                </div>
-                <p
-                    style={{
-                        fontSize: 11.5,
-                        fontWeight: 600,
-                        lineHeight: 1.5,
-                        color: "#bcbcbc",
-                        marginBottom: 18,
-                    }}
-                >
-                    이번 달 지출 중 ‘투자’로 분류한 금액은 여기에 자동으로
-                    더해져요.
+                    현재 수익률을 입력하면 평가금액과 손익이 자동으로 계산돼요.
                 </p>
 
                 <div
