@@ -27,7 +27,7 @@ function fixedCat(
 export const DEMO_ASSET_CATEGORIES: AssetCategory[] = [
     fixedCat("c-food", "식비", "#f2994a", "FOOD", 1),
     fixedCat("c-cafe", "카페·간식", "#eb5757", "CAFE", 2),
-    fixedCat("c-mart", "편의점·마트", "#e0689a", "MART", 3),
+    fixedCat("c-mart", "편의점·마트·잡화", "#e0689a", "MART", 3),
     fixedCat("c-shop", "쇼핑", "#9b6bd6", "SHOPPING", 4),
     fixedCat("c-health", "의료·건강", "#7b61ff", "HEALTH", 5),
     fixedCat("c-housing", "주거·통신", "#4a90d9", "HOUSING", 6),

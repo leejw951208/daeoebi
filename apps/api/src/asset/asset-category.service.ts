@@ -20,7 +20,7 @@ export const FIXED_CATEGORIES: { name: string; color: string; code: string }[] =
     [
         { name: "식비", color: "#f2994a", code: "FOOD" },
         { name: "카페·간식", color: "#eb5757", code: "CAFE" },
-        { name: "편의점·마트", color: "#e0689a", code: "MART" },
+        { name: "편의점·마트·잡화", color: "#e0689a", code: "MART" },
         { name: "쇼핑", color: "#9b6bd6", code: "SHOPPING" },
         { name: "의료·건강", color: "#7b61ff", code: "HEALTH" },
         { name: "주거·통신", color: "#4a90d9", code: "HOUSING" },
