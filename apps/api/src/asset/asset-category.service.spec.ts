@@ -22,11 +22,13 @@ describe("AssetCategoryService", () => {
     describe("list", () => {
         it("없는 고정 카테고리를 시드하고 고정→사용자 순으로 정렬한다", async () => {
             const prisma = makePrisma()
-            // ensureFixedCategories: 고정이 하나도 없음
+            // 1차 조회: 고정이 하나도 없음(사용자 1건만). → createMany 후 2차 재조회.
             prisma.assetCategory.findMany
-                .mockResolvedValueOnce([]) // where code not null
                 .mockResolvedValueOnce([
-                    // 목록 재조회: 사용자 먼저, 고정이 뒤섞인 상태
+                    { id: "u1", name: "여행", color: "#111111", code: null },
+                ])
+                .mockResolvedValueOnce([
+                    // 재조회: 사용자 먼저, 고정이 뒤섞인 상태
                     { id: "u1", name: "여행", color: "#111111", code: null },
                     {
                         id: "f-etc",
@@ -60,18 +62,22 @@ describe("AssetCategoryService", () => {
             ])
         })
 
-        it("고정이 모두 있으면 시드하지 않는다", async () => {
+        it("고정이 모두 있으면 조회 1번으로 끝내고 시드하지 않는다", async () => {
             const prisma = makePrisma()
-            prisma.assetCategory.findMany
-                .mockResolvedValueOnce(
-                    FIXED_CATEGORIES.map((c) => ({ code: c.code })),
-                )
-                .mockResolvedValueOnce([])
+            prisma.assetCategory.findMany.mockResolvedValueOnce(
+                FIXED_CATEGORIES.map((c, i) => ({
+                    id: `f${i}`,
+                    name: c.name,
+                    color: c.color,
+                    code: c.code,
+                })),
+            )
             const svc = new AssetCategoryService(prisma as never)
 
             await svc.list()
 
             expect(prisma.assetCategory.createMany).not.toHaveBeenCalled()
+            expect(prisma.assetCategory.findMany).toHaveBeenCalledTimes(1)
         })
     })
 

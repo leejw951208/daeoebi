@@ -40,10 +40,21 @@ export class AssetCategoryService {
     constructor(private readonly prisma: PrismaService) {}
 
     async list() {
-        await this.ensureFixedCategories()
-        const rows = await this.prisma.assetCategory.findMany({
+        // 정상 상태(고정 12종 이미 시드됨)에서는 조회 1번으로 끝난다.
+        // 누락 고정이 있을 때만 createMany + 재조회한다(사실상 최초 1회뿐).
+        let rows = await this.prisma.assetCategory.findMany({
             orderBy: { createdAt: "asc" },
         })
+        const missing = this.missingFixedCategories(rows)
+        if (missing.length > 0) {
+            await this.prisma.assetCategory.createMany({
+                data: missing,
+                skipDuplicates: true,
+            })
+            rows = await this.prisma.assetCategory.findMany({
+                orderBy: { createdAt: "asc" },
+            })
+        }
         return this.sortFixedThenUser(rows)
     }
 
@@ -85,21 +96,14 @@ export class AssetCategoryService {
         }
     }
 
-    // 고정 카테고리 12종을 code 기준으로 멱등 보장한다(없는 것만 생성).
-    private async ensureFixedCategories(): Promise<void> {
-        const existing = await this.prisma.assetCategory.findMany({
-            where: { code: { not: null } },
-            select: { code: true },
-        })
-        const existingCodes = new Set(existing.map((c) => c.code))
-        const missing = FIXED_CATEGORIES.filter(
-            (c) => !existingCodes.has(c.code),
+    // 이미 조회한 rows 에서 아직 없는 고정 카테고리 정의를 골라낸다(추가 쿼리 없음).
+    private missingFixedCategories(
+        rows: readonly { code: string | null }[],
+    ): { name: string; color: string; code: string }[] {
+        const existingCodes = new Set(
+            rows.map((r) => r.code).filter((c): c is string => c !== null),
         )
-        if (missing.length === 0) return
-        await this.prisma.assetCategory.createMany({
-            data: missing,
-            skipDuplicates: true,
-        })
+        return FIXED_CATEGORIES.filter((c) => !existingCodes.has(c.code))
     }
 
     // 고정(code 있음)을 정의 순서로, 이어서 사용자 생성(code null)을 생성순으로 정렬한다.
