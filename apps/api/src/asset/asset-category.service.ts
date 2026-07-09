@@ -1,6 +1,6 @@
 // 자산(지출) 카테고리 CRUD. 전역 평문.
 // 카테고리는 고정(code 보유, 수정·삭제 불가)과 사용자 생성(code null)으로 나뉜다.
-// 고정 12종은 list() 에서 code 기준으로 멱등 시드한다. 저축·투자 대시보드는 code 를 앵커로 쓴다.
+// 고정 13종은 list() 에서 code 기준으로 멱등 시드한다. 저축·투자 대시보드는 code 를 앵커로 쓴다.
 import {
     ConflictException,
     ForbiddenException,
@@ -14,7 +14,7 @@ import {
 } from "./dto/asset-category.dto"
 import { ASSET_ERRORS } from "./asset.types"
 
-// 고정 카테고리 12종. code 는 안정 식별자(고유)이며 색은 자동 배정값이다.
+// 고정 카테고리 13종. code 는 안정 식별자(고유)이며 색은 자동 배정값이다.
 // 순서는 목록 정렬(고정 먼저)에 사용한다. INVESTMENT/SAVINGS 는 저축·투자 대시보드 앵커.
 export const FIXED_CATEGORIES: { name: string; color: string; code: string }[] =
     [
@@ -27,6 +27,7 @@ export const FIXED_CATEGORIES: { name: string; color: string; code: string }[] =
         { name: "보험·세금", color: "#2d9cdb", code: "INSURANCE_TAX" },
         { name: "미용", color: "#20a4a4", code: "BEAUTY" },
         { name: "교통", color: "#3bb273", code: "TRANSPORT" },
+        { name: "구독", color: "#bb6bd9", code: "SUBSCRIPTION" },
         { name: "투자", color: "#6fcf97", code: "INVESTMENT" },
         { name: "저축", color: "#f2c94c", code: "SAVINGS" },
         { name: "기타", color: "#98a0a8", code: "ETC" },
@@ -40,7 +41,7 @@ export class AssetCategoryService {
     constructor(private readonly prisma: PrismaService) {}
 
     async list() {
-        // 정상 상태(고정 12종 이미 시드됨)에서는 조회 1번으로 끝난다.
+        // 정상 상태(고정 13종 이미 시드됨)에서는 조회 1번으로 끝난다.
         // 누락 고정이 있을 때만 createMany + 재조회한다(사실상 최초 1회뿐).
         let rows = await this.prisma.assetCategory.findMany({
             orderBy: { createdAt: "asc" },

@@ -12,7 +12,7 @@ import {
 // 고정 표시 월(예시). 실제 오늘과 무관한 상수.
 export const DEMO_MONTH = "2026-06"
 
-// 고정 카테고리 12종(코드 보유). 데모는 서버 없이 이 목록을 그대로 쓴다.
+// 고정 카테고리 13종(코드 보유). 데모는 서버 없이 이 목록을 그대로 쓴다.
 function fixedCat(
     id: string,
     name: string,
@@ -34,9 +34,10 @@ export const DEMO_ASSET_CATEGORIES: AssetCategory[] = [
     fixedCat("c-insurance", "보험·세금", "#2d9cdb", "INSURANCE_TAX", 7),
     fixedCat("c-beauty", "미용", "#20a4a4", "BEAUTY", 8),
     fixedCat("c-transport", "교통", "#3bb273", "TRANSPORT", 9),
-    fixedCat("c-invest", "투자", "#6fcf97", "INVESTMENT", 10),
-    fixedCat("c-savings", "저축", "#f2c94c", "SAVINGS", 11),
-    fixedCat("c-etc", "기타", "#98a0a8", "ETC", 12),
+    fixedCat("c-subscription", "구독", "#bb6bd9", "SUBSCRIPTION", 10),
+    fixedCat("c-invest", "투자", "#6fcf97", "INVESTMENT", 11),
+    fixedCat("c-savings", "저축", "#f2c94c", "SAVINGS", 12),
+    fixedCat("c-etc", "기타", "#98a0a8", "ETC", 13),
 ]
 
 // 현재월 여러 날짜에 분산된 예시 지출. categoryId 는 위 카테고리를 참조.
