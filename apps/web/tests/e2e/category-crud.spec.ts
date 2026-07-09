@@ -54,12 +54,10 @@ async function enterVaultAt(page: Page, targetPath: string): Promise<void> {
 }
 
 async function waitForAssetDashboard(page: Page): Promise<void> {
-    await expect(
-        page
-            .locator("div")
-            .filter({ hasText: /^자산$/ })
-            .first(),
-    ).toBeVisible({ timeout: 30_000 })
+    // 대시보드 헤더의 "카테고리" 버튼이 뜨면 보관함이 열리고 대시보드가 렌더된 것이다.
+    await expect(page.getByRole("button", { name: "카테고리" })).toBeVisible({
+        timeout: 30_000,
+    })
 }
 
 async function openCategoryManager(page: Page): Promise<Locator> {
@@ -97,12 +95,9 @@ test.describe.serial("카테고리 관리", () => {
         const unlockBtn = pg.getByRole("button", { name: "패스키로 잠금해제" })
         await unlockBtn.waitFor({ state: "visible", timeout: 15_000 })
         await unlockBtn.click()
-        await expect(
-            pg
-                .locator("div")
-                .filter({ hasText: /^자산$/ })
-                .first(),
-        ).toBeVisible({ timeout: 30_000 })
+        await expect(pg.getByRole("button", { name: "카테고리" })).toBeVisible({
+            timeout: 30_000,
+        })
 
         await pg.getByRole("button", { name: "카테고리" }).click()
         const dialog = pg.getByRole("dialog", { name: "카테고리 관리" })

@@ -58,12 +58,10 @@ async function enterVaultAt(page: Page, targetPath: string): Promise<void> {
 
 /** Wait until the "자산" heading is visible (vault unlocked, dashboard rendered). */
 async function waitForAssetDashboard(page: Page): Promise<void> {
-    await expect(
-        page
-            .locator("div")
-            .filter({ hasText: /^자산$/ })
-            .first(),
-    ).toBeVisible({ timeout: 30_000 })
+    // 대시보드 헤더의 "카테고리" 버튼이 뜨면 보관함이 열리고 대시보드가 렌더된 것이다.
+    await expect(page.getByRole("button", { name: "카테고리" })).toBeVisible({
+        timeout: 30_000,
+    })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
