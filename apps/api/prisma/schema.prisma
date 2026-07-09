@@ -45,29 +45,13 @@ model Site {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  categories Category[]
-  secrets    Secret[]
+  secrets Secret[]
 
   @@index([label])
   @@index([label(ops: raw("gin_trgm_ops"))], type: Gin, map: "Site_label_trgm_idx")
 }
 
-// 사이트 하위의 선택적 1계층 묶음. 자유 입력 라벨이다.
-model Category {
-  id        String   @id @default(cuid())
-  siteId    String
-  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  label     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  secrets Secret[]
-
-  @@index([siteId, label])
-  @@index([label(ops: raw("gin_trgm_ops"))], type: Gin, map: "Category_label_trgm_idx")
-}
-
-// 자산(지출) 카테고리. 전역 평문(이름·색). 비밀번호 Category 패턴이되 부모(Site) 없음.
+// 자산(지출) 카테고리. 전역 평문(이름·색). 부모(Site) 없음.
 model AssetCategory {
   id        String   @id @default(cuid())
   name      String
@@ -198,8 +182,6 @@ model Secret {
   id         String    @id @default(cuid())
   siteId     String
   site       Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   label      String
   iv         Bytes
   ciphertext Bytes
@@ -209,6 +191,5 @@ model Secret {
   updatedAt  DateTime  @updatedAt
 
   @@index([siteId, label])
-  @@index([categoryId])
   @@index([label(ops: raw("gin_trgm_ops"))], type: Gin, map: "Secret_label_trgm_idx")
 }

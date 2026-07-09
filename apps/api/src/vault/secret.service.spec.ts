@@ -1,4 +1,4 @@
-// SecretService 단위 테스트(Prisma 모킹). 사이트/카테고리 검증, 암호문 base64url 패스스루,
+// SecretService 단위 테스트(Prisma 모킹). 사이트 검증, 암호문 base64url 패스스루,
 // 부분 암호문 거부(CIPHERTEXT_INCOMPLETE), not-found 경로를 검증한다. 서버는 본문을 복호화하지 않는다.
 import { NotFoundException } from "@nestjs/common"
 import { SecretService } from "./secret.service"
@@ -8,7 +8,6 @@ import { VAULT_ERRORS } from "./vault.types"
 function makePrisma() {
     return {
         site: { findUnique: jest.fn() },
-        category: { findUnique: jest.fn() },
         secret: {
             findMany: jest.fn(),
             findUnique: jest.fn(),
@@ -37,14 +36,15 @@ describe("SecretService.listBySite", () => {
         )
     })
 
-    it("categoryId 가 주어지면 where 에 포함해 조회한다", async () => {
+    it("사이트 id 로 라벨순 조회한다", async () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue({ id: "site1" })
         prisma.secret.findMany.mockResolvedValue([])
-        await makeService(prisma).listBySite("site1", "cat1")
+        await makeService(prisma).listBySite("site1")
         expect(prisma.secret.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
-                where: { siteId: "site1", categoryId: "cat1" },
+                where: { siteId: "site1" },
+                orderBy: { label: "asc" },
             }),
         )
     })
@@ -67,7 +67,6 @@ describe("SecretService.detail", () => {
         prisma.secret.findUnique.mockResolvedValue({
             id: "s1",
             siteId: "site1",
-            categoryId: null,
             label: "깃허브",
             iv,
             ciphertext: ct,
@@ -98,24 +97,6 @@ describe("SecretService.create", () => {
         ).rejects.toThrow(NotFoundException)
     })
 
-    it("categoryId 가 다른 사이트 소속이면 CATEGORY_SITE_MISMATCH", async () => {
-        const prisma = makePrisma()
-        prisma.site.findUnique.mockResolvedValue({ id: "site1" })
-        prisma.category.findUnique.mockResolvedValue({ siteId: "other" })
-        await expect(
-            makeService(prisma).create({
-                siteId: "site1",
-                categoryId: "cat1",
-                label: "x",
-                iv: IV,
-                ciphertext: CT,
-                authTag: TAG,
-            } as never),
-        ).rejects.toMatchObject({
-            response: { code: VAULT_ERRORS.CATEGORY_SITE_MISMATCH },
-        })
-    })
-
     it("정상 입력은 base64url 을 디코드해 생성한다", async () => {
         const prisma = makePrisma()
         prisma.site.findUnique.mockResolvedValue({ id: "site1" })
@@ -129,7 +110,6 @@ describe("SecretService.create", () => {
         } as never)
         const data = prisma.secret.create.mock.calls[0][0].data
         expect(data.label).toBe("깃허브")
-        expect(data.categoryId).toBeNull()
         expect(Buffer.from(data.iv)).toEqual(Buffer.alloc(12, 1))
         expect(Buffer.from(data.ciphertext)).toEqual(Buffer.alloc(64, 2))
         expect(Buffer.from(data.authTag)).toEqual(Buffer.alloc(16, 3))

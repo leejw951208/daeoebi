@@ -1,5 +1,6 @@
 // BackupService 단위 테스트(Prisma 모킹). export 형태, import 무결성 검사·충돌 모드(reject/skip/replace)를 검증한다.
 // 서버는 본문을 복호화하지 않고 암호문 블롭(base64url)을 패스스루한다.
+// categories 는 레거시 호환용으로 수용만 하고 무시한다(비밀번호 분류 제거됨).
 import { BadRequestException } from "@nestjs/common"
 import { BackupService } from "./backup.service"
 import { toBase64url } from "../common/base64url"
@@ -23,12 +24,10 @@ function siteRow(id: string): ImportBackupDto["sites"][number] {
 function secretRow(
     id: string,
     siteId: string,
-    categoryId: string | null = null,
 ): ImportBackupDto["secrets"][number] {
     return {
         id,
         siteId,
-        categoryId,
         label: `비번-${id}`,
         iv: IV,
         ciphertext: CT,
@@ -39,20 +38,11 @@ function secretRow(
 }
 
 // import 트랜잭션용 tx 모킹. existing* 로 기존 행 id 를 주입한다.
-function makeTx(existing: {
-    sites?: string[]
-    categories?: string[]
-    secrets?: string[]
-}) {
+function makeTx(existing: { sites?: string[]; secrets?: string[] }) {
     const ids = (arr?: string[]) => (arr ?? []).map((id) => ({ id }))
     return {
         site: {
             findMany: jest.fn().mockResolvedValue(ids(existing.sites)),
-            createMany: jest.fn().mockResolvedValue({ count: 0 }),
-            update: jest.fn().mockResolvedValue({}),
-        },
-        category: {
-            findMany: jest.fn().mockResolvedValue(ids(existing.categories)),
             createMany: jest.fn().mockResolvedValue({ count: 0 }),
             update: jest.fn().mockResolvedValue({}),
         },
@@ -76,14 +66,13 @@ function importDto(partial: Partial<ImportBackupDto> = {}): ImportBackupDto {
     return {
         version: "1",
         sites: [],
-        categories: [],
         secrets: [],
         ...partial,
     }
 }
 
 describe("BackupService.export", () => {
-    it("모든 행을 base64url 블롭 포함해 version 1 로 내보낸다", async () => {
+    it("모든 행을 base64url 블롭 포함해 version 1 로 내보낸다(categories 는 빈 배열)", async () => {
         const prisma = {
             site: {
                 findMany: jest.fn().mockResolvedValue([
@@ -96,13 +85,11 @@ describe("BackupService.export", () => {
                     },
                 ]),
             },
-            category: { findMany: jest.fn().mockResolvedValue([]) },
             secret: {
                 findMany: jest.fn().mockResolvedValue([
                     {
                         id: "s1",
                         siteId: "site1",
-                        categoryId: null,
                         label: "깃허브",
                         iv: Buffer.alloc(12, 1),
                         ciphertext: Buffer.alloc(64, 2),
@@ -117,6 +104,7 @@ describe("BackupService.export", () => {
         const out = await service.export()
         expect(out.version).toBe("1")
         expect(out.sites).toHaveLength(1)
+        expect(out.categories).toEqual([])
         expect(out.secrets[0]).toMatchObject({
             id: "s1",
             label: "깃허브",
@@ -129,26 +117,6 @@ describe("BackupService.export", () => {
 })
 
 describe("BackupService.import 무결성", () => {
-    it("카테고리가 참조하는 사이트가 백업에 없으면 IMPORT_INVALID", async () => {
-        const { prisma } = makePrismaForImport({})
-        const service = new BackupService(prisma as unknown as never)
-        const dto = importDto({
-            categories: [
-                {
-                    id: "c1",
-                    siteId: "ghost",
-                    label: "x",
-                    createdAt: ISO,
-                    updatedAt: ISO,
-                },
-            ],
-        })
-        await expect(service.import(dto, "reject")).rejects.toMatchObject({
-            response: { code: VAULT_ERRORS.IMPORT_INVALID },
-        })
-        expect(prisma.$transaction).not.toHaveBeenCalled()
-    })
-
     it("비밀번호가 참조하는 사이트가 백업에 없으면 IMPORT_INVALID", async () => {
         const { prisma } = makePrismaForImport({})
         const service = new BackupService(prisma as unknown as never)
@@ -156,6 +124,21 @@ describe("BackupService.import 무결성", () => {
         await expect(service.import(dto, "reject")).rejects.toThrow(
             BadRequestException,
         )
+    })
+
+    it("레거시 categories 는 수용만 하고 무시한다", async () => {
+        const { prisma } = makePrismaForImport({})
+        const service = new BackupService(prisma as unknown as never)
+        const dto = importDto({
+            sites: [siteRow("site1")],
+            categories: [{ id: "c1", siteId: "ghost", label: "x" }],
+        })
+        const result = await service.import(dto, "reject")
+        expect(result.categories).toEqual({
+            created: 0,
+            skipped: 0,
+            replaced: 0,
+        })
     })
 })
 

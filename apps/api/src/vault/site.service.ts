@@ -12,7 +12,7 @@ export class SiteService {
         return this.prisma.site.findMany({
             orderBy: { label: "asc" },
             include: {
-                _count: { select: { categories: true, secrets: true } },
+                _count: { select: { secrets: true } },
             },
         })
     }
@@ -21,7 +21,6 @@ export class SiteService {
         const site = await this.prisma.site.findUnique({
             where: { id },
             include: {
-                categories: { orderBy: { label: "asc" } },
                 _count: { select: { secrets: true } },
             },
         })

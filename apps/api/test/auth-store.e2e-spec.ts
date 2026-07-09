@@ -142,7 +142,6 @@ describe("auth·store e2e (WebAuthn 검증만 모킹)", () => {
         await prisma.recurringExpense.deleteMany()
         await prisma.income.deleteMany()
         await prisma.secret.deleteMany()
-        await prisma.category.deleteMany()
         await prisma.site.deleteMany()
         await prisma.webauthnCredential.deleteMany()
         await prisma.recoveryWrap.deleteMany()

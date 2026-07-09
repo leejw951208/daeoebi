@@ -18,11 +18,8 @@ export class SecretController {
     constructor(private readonly service: SecretService) {}
 
     @Get()
-    list(
-        @Query("siteId") siteId: string,
-        @Query("categoryId") categoryId?: string,
-    ) {
-        return this.service.listBySite(siteId, categoryId)
+    list(@Query("siteId") siteId: string) {
+        return this.service.listBySite(siteId)
     }
 
     // 암호문 블롭(base64url)을 포함해 반환한다. 복호화는 클라이언트가 수행한다.

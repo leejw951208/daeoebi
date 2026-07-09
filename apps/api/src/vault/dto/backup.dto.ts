@@ -35,27 +35,6 @@ export class BackupSiteDto {
     updatedAt!: string
 }
 
-export class BackupCategoryDto {
-    @IsString()
-    @MinLength(1)
-    id!: string
-
-    @IsString()
-    @MinLength(1)
-    siteId!: string
-
-    @IsString()
-    @MinLength(1)
-    @MaxLength(100)
-    label!: string
-
-    @IsISO8601()
-    createdAt!: string
-
-    @IsISO8601()
-    updatedAt!: string
-}
-
 export class BackupSecretDto {
     @IsString()
     @MinLength(1)
@@ -65,6 +44,7 @@ export class BackupSecretDto {
     @MinLength(1)
     siteId!: string
 
+    // 레거시 백업 호환: 옛 백업에 남아있을 수 있어 수용만 하고 무시한다(비밀번호 분류 제거됨).
     @IsOptional()
     @IsString()
     categoryId?: string | null
@@ -108,11 +88,11 @@ export class ImportBackupDto {
     @Type(() => BackupSiteDto)
     sites!: BackupSiteDto[]
 
+    // 레거시 백업 호환: 옛 백업의 categories 배열을 수용만 하고 무시한다(비밀번호 분류 제거됨).
+    @IsOptional()
     @IsArray()
     @ArrayMaxSize(MAX_IMPORT_ITEMS)
-    @ValidateNested({ each: true })
-    @Type(() => BackupCategoryDto)
-    categories!: BackupCategoryDto[]
+    categories?: unknown[]
 
     @IsArray()
     @ArrayMaxSize(MAX_IMPORT_ITEMS)

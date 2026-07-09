@@ -19,10 +19,10 @@ export class BackupService {
     constructor(private readonly prisma: PrismaService) {}
 
     // 전체 행을 암호문 블롭(base64url) 포함해 내보낸다.
+    // categories 는 레거시 호환용 빈 배열이다(비밀번호 분류 기능 제거됨).
     async export() {
-        const [sites, categories, secrets] = await Promise.all([
+        const [sites, secrets] = await Promise.all([
             this.prisma.site.findMany({ orderBy: { createdAt: "asc" } }),
-            this.prisma.category.findMany({ orderBy: { createdAt: "asc" } }),
             this.prisma.secret.findMany({ orderBy: { createdAt: "asc" } }),
         ])
 
@@ -36,17 +36,10 @@ export class BackupService {
                 createdAt: s.createdAt.toISOString(),
                 updatedAt: s.updatedAt.toISOString(),
             })),
-            categories: categories.map((c) => ({
-                id: c.id,
-                siteId: c.siteId,
-                label: c.label,
-                createdAt: c.createdAt.toISOString(),
-                updatedAt: c.updatedAt.toISOString(),
-            })),
+            categories: [] as never[],
             secrets: secrets.map((s) => ({
                 id: s.id,
                 siteId: s.siteId,
-                categoryId: s.categoryId,
                 label: s.label,
                 iv: toBase64url(s.iv),
                 ciphertext: toBase64url(s.ciphertext),
@@ -67,17 +60,9 @@ export class BackupService {
         categories: { created: number; skipped: number; replaced: number }
         secrets: { created: number; skipped: number; replaced: number }
     }> {
-        // 무결성: secret.siteId / category.siteId 참조가 백업 안에서 닫혀 있는지 검사한다.
+        // 무결성: secret.siteId 참조가 백업 안에서 닫혀 있는지 검사한다.
+        // dto.categories 는 레거시 백업 호환용으로 수용만 하고 무시한다(비밀번호 분류 제거됨).
         const siteIds = new Set(dto.sites.map((s) => s.id))
-        const categoryIds = new Set(dto.categories.map((c) => c.id))
-        for (const c of dto.categories) {
-            if (!siteIds.has(c.siteId)) {
-                throw new BadRequestException({
-                    code: VAULT_ERRORS.IMPORT_INVALID,
-                    message: "카테고리가 참조하는 사이트가 백업에 없습니다.",
-                })
-            }
-        }
         for (const s of dto.secrets) {
             if (!siteIds.has(s.siteId)) {
                 throw new BadRequestException({
@@ -85,28 +70,19 @@ export class BackupService {
                     message: "비밀번호가 참조하는 사이트가 백업에 없습니다.",
                 })
             }
-            if (s.categoryId && !categoryIds.has(s.categoryId)) {
-                throw new BadRequestException({
-                    code: VAULT_ERRORS.IMPORT_INVALID,
-                    message: "비밀번호가 참조하는 카테고리가 백업에 없습니다.",
-                })
-            }
         }
 
         return this.prisma.$transaction(async (tx) => {
-            const [existSites, existCats, existSecrets] = await Promise.all([
+            const [existSites, existSecrets] = await Promise.all([
                 tx.site.findMany({ select: { id: true } }),
-                tx.category.findMany({ select: { id: true } }),
                 tx.secret.findMany({ select: { id: true } }),
             ])
             const haveSites = new Set(existSites.map((r) => r.id))
-            const haveCats = new Set(existCats.map((r) => r.id))
             const haveSecrets = new Set(existSecrets.map((r) => r.id))
 
             if (mode === "reject") {
                 const conflict =
                     dto.sites.some((s) => haveSites.has(s.id)) ||
-                    dto.categories.some((c) => haveCats.has(c.id)) ||
                     dto.secrets.some((s) => haveSecrets.has(s.id))
                 if (conflict) {
                     throw new ConflictException({
@@ -118,10 +94,9 @@ export class BackupService {
             }
 
             const sites = { created: 0, skipped: 0, replaced: 0 }
-            const categories = { created: 0, skipped: 0, replaced: 0 }
             const secrets = { created: 0, skipped: 0, replaced: 0 }
 
-            // 외래키 순서대로 사이트 → 카테고리 → 비밀번호 순으로 적재한다.
+            // 외래키 순서대로 사이트 → 비밀번호 순으로 적재한다.
             // 신규 행은 테이블별 createMany 로 일괄 삽입(왕복 최소화), 충돌 행만 개별 update.
             const newSites = dto.sites.filter((s) => !haveSites.has(s.id))
             const conflictSites = dto.sites.filter((s) => haveSites.has(s.id))
@@ -149,34 +124,6 @@ export class BackupService {
                 sites.created += newSites.length
             }
 
-            const newCats = dto.categories.filter((c) => !haveCats.has(c.id))
-            const conflictCats = dto.categories.filter((c) =>
-                haveCats.has(c.id),
-            )
-            if (mode === "skip") {
-                categories.skipped += conflictCats.length
-            } else {
-                for (const c of conflictCats) {
-                    await tx.category.update({
-                        where: { id: c.id },
-                        data: { siteId: c.siteId, label: c.label },
-                    })
-                    categories.replaced += 1
-                }
-            }
-            if (newCats.length > 0) {
-                await tx.category.createMany({
-                    data: newCats.map((c) => ({
-                        id: c.id,
-                        siteId: c.siteId,
-                        label: c.label,
-                        createdAt: new Date(c.createdAt),
-                        updatedAt: new Date(c.updatedAt),
-                    })),
-                })
-                categories.created += newCats.length
-            }
-
             const newSecrets = dto.secrets.filter((s) => !haveSecrets.has(s.id))
             const conflictSecrets = dto.secrets.filter((s) =>
                 haveSecrets.has(s.id),
@@ -189,7 +136,6 @@ export class BackupService {
                         where: { id: s.id },
                         data: {
                             siteId: s.siteId,
-                            categoryId: s.categoryId ?? null,
                             label: s.label,
                             iv: prismaBytes(fromBase64url(s.iv)),
                             ciphertext: prismaBytes(
@@ -206,7 +152,6 @@ export class BackupService {
                     data: newSecrets.map((s) => ({
                         id: s.id,
                         siteId: s.siteId,
-                        categoryId: s.categoryId ?? null,
                         label: s.label,
                         iv: prismaBytes(fromBase64url(s.iv)),
                         ciphertext: prismaBytes(fromBase64url(s.ciphertext)),
@@ -218,6 +163,8 @@ export class BackupService {
                 secrets.created += newSecrets.length
             }
 
+            // categories 는 레거시 호환용 0건(비밀번호 분류 제거됨).
+            const categories = { created: 0, skipped: 0, replaced: 0 }
             return { sites, categories, secrets }
         })
     }

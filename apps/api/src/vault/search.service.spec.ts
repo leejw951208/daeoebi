@@ -1,11 +1,11 @@
 // SearchService 단위 테스트(Prisma 모킹). 라벨 부분 일치·빈 질의 단락·응답 형태(secrets 메타)를 검증한다.
 // 회귀 고정: secret select 가 SecretMeta(웹 클라이언트가 기대하는 형태)에 필요한 createdAt/updatedAt 을 포함해야 한다.
+// categories 는 레거시 호환용 빈 배열이다(비밀번호 분류 제거됨).
 import { SearchService } from "./search.service"
 
 function makePrisma() {
     return {
         site: { findMany: jest.fn().mockResolvedValue([]) },
-        category: { findMany: jest.fn().mockResolvedValue([]) },
         secret: { findMany: jest.fn().mockResolvedValue([]) },
     }
 }
@@ -30,7 +30,6 @@ describe("SearchService", () => {
             secrets: [],
         })
         expect(prisma.site.findMany).not.toHaveBeenCalled()
-        expect(prisma.category.findMany).not.toHaveBeenCalled()
         expect(prisma.secret.findMany).not.toHaveBeenCalled()
     })
 
@@ -42,9 +41,6 @@ describe("SearchService", () => {
 
         const contains = { contains: "PASS", mode: "insensitive" }
         expect(prisma.site.findMany).toHaveBeenCalledWith(
-            expect.objectContaining({ where: { label: contains } }),
-        )
-        expect(prisma.category.findMany).toHaveBeenCalledWith(
             expect.objectContaining({ where: { label: contains } }),
         )
         expect(prisma.secret.findMany).toHaveBeenCalledWith(
@@ -63,7 +59,6 @@ describe("SearchService", () => {
             expect.objectContaining({
                 id: true,
                 siteId: true,
-                categoryId: true,
                 label: true,
                 createdAt: true,
                 updatedAt: true,
@@ -71,12 +66,11 @@ describe("SearchService", () => {
         )
     })
 
-    it("세 종류 결과를 {sites,categories,secrets} 로 묶어 반환한다", async () => {
+    it("결과를 {sites,categories,secrets} 로 묶어 반환한다(categories 는 빈 배열)", async () => {
         const prisma = makePrisma()
         const secretRow = {
             id: "s1",
             siteId: "site1",
-            categoryId: null,
             label: "PASS 앱",
             createdAt: new Date("2026-01-01T00:00:00.000Z"),
             updatedAt: new Date("2026-01-01T00:00:00.000Z"),

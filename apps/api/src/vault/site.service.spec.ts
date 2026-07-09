@@ -20,14 +20,14 @@ function makeService(prisma: ReturnType<typeof makePrisma>) {
 }
 
 describe("SiteService.list", () => {
-    it("라벨 오름차순 + 카테고리/비밀번호 개수를 포함해 조회한다", async () => {
+    it("라벨 오름차순 + 비밀번호 개수를 포함해 조회한다", async () => {
         const prisma = makePrisma()
         prisma.site.findMany.mockResolvedValue([])
         await makeService(prisma).list()
         expect(prisma.site.findMany).toHaveBeenCalledWith({
             orderBy: { label: "asc" },
             include: {
-                _count: { select: { categories: true, secrets: true } },
+                _count: { select: { secrets: true } },
             },
         })
     })
@@ -42,9 +42,9 @@ describe("SiteService.get", () => {
         })
     })
 
-    it("있으면 카테고리·비밀번호 개수를 포함해 반환한다", async () => {
+    it("있으면 비밀번호 개수를 포함해 반환한다", async () => {
         const prisma = makePrisma()
-        const site = { id: "site1", label: "내 보관함", categories: [] }
+        const site = { id: "site1", label: "내 보관함" }
         prisma.site.findUnique.mockResolvedValue(site)
         await expect(makeService(prisma).get("site1")).resolves.toBe(site)
     })

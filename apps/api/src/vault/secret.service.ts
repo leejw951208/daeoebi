@@ -12,7 +12,6 @@ import { VAULT_ERRORS } from "./vault.types"
 const LIST_SELECT = {
     id: true,
     siteId: true,
-    categoryId: true,
     label: true,
     createdAt: true,
     updatedAt: true,
@@ -21,7 +20,6 @@ const LIST_SELECT = {
 const DETAIL_SELECT = {
     id: true,
     siteId: true,
-    categoryId: true,
     label: true,
     iv: true,
     ciphertext: true,
@@ -39,13 +37,10 @@ function prismaBytes(value: Uint8Array): Uint8Array<ArrayBuffer> {
 export class SecretService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async listBySite(siteId: string, categoryId?: string) {
+    async listBySite(siteId: string) {
         await this.ensureSite(siteId)
         return this.prisma.secret.findMany({
-            where: {
-                siteId,
-                ...(categoryId !== undefined ? { categoryId } : {}),
-            },
+            where: { siteId },
             orderBy: { label: "asc" },
             select: LIST_SELECT,
         })
@@ -61,7 +56,6 @@ export class SecretService {
         return {
             id: secret.id,
             siteId: secret.siteId,
-            categoryId: secret.categoryId,
             label: secret.label,
             iv: toBase64url(secret.iv),
             ciphertext: toBase64url(secret.ciphertext),
@@ -73,12 +67,9 @@ export class SecretService {
 
     async create(dto: CreateSecretDto) {
         await this.ensureSite(dto.siteId)
-        const categoryId = dto.categoryId ?? null
-        if (categoryId) await this.ensureCategoryInSite(categoryId, dto.siteId)
         return this.prisma.secret.create({
             data: {
                 siteId: dto.siteId,
-                categoryId,
                 label: dto.label,
                 iv: prismaBytes(fromBase64url(dto.iv)),
                 ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
@@ -91,18 +82,6 @@ export class SecretService {
     async update(id: string, dto: UpdateSecretDto) {
         const data: Record<string, unknown> = {}
         if (dto.label !== undefined) data.label = dto.label
-        if (dto.categoryId !== undefined) {
-            if (dto.categoryId) {
-                // siteId 가 카테고리 귀속 검증에 필요하므로 조회한다.
-                const secret = await this.prisma.secret.findUnique({
-                    where: { id },
-                    select: { siteId: true },
-                })
-                if (!secret) throw this.notFound()
-                await this.ensureCategoryInSite(dto.categoryId, secret.siteId)
-            }
-            data.categoryId = dto.categoryId
-        }
 
         // 본문 갱신은 세 필드가 모두 있을 때만 수행한다(부분 암호문 방지).
         const hasIv = dto.iv !== undefined
@@ -153,28 +132,6 @@ export class SecretService {
             throw new NotFoundException({
                 code: VAULT_ERRORS.SITE_NOT_FOUND,
                 message: "사이트를 찾을 수 없습니다.",
-            })
-        }
-    }
-
-    private async ensureCategoryInSite(
-        categoryId: string,
-        siteId: string,
-    ): Promise<void> {
-        const category = await this.prisma.category.findUnique({
-            where: { id: categoryId },
-            select: { siteId: true },
-        })
-        if (!category) {
-            throw new NotFoundException({
-                code: VAULT_ERRORS.CATEGORY_NOT_FOUND,
-                message: "카테고리를 찾을 수 없습니다.",
-            })
-        }
-        if (category.siteId !== siteId) {
-            throw new BadRequestException({
-                code: VAULT_ERRORS.CATEGORY_SITE_MISMATCH,
-                message: "카테고리가 사이트에 속하지 않습니다.",
             })
         }
     }
