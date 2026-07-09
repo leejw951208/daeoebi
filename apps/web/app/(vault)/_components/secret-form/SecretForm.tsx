@@ -15,7 +15,6 @@ import { SecretReviewStep } from "./SecretReviewStep"
 export interface SecretFormInitial {
     id: string
     label: string
-    categoryId: string | null
     fields: SecretField[]
     memo: string
 }
@@ -130,8 +129,6 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             if (initial) {
                 await updateSecret(initial.id, {
                     label: label.trim(),
-                    // 프로토타입 폼엔 카테고리가 없다. 항상 미분류로 저장한다.
-                    categoryId: null,
                     iv: blob.iv,
                     ciphertext: blob.ciphertext,
                     authTag: blob.authTag,
@@ -139,7 +136,6 @@ export function SecretForm({ siteId, initial, onSuccess, onCancel }: Props) {
             } else {
                 await createSecret({
                     siteId,
-                    categoryId: null,
                     label: label.trim(),
                     iv: blob.iv,
                     ciphertext: blob.ciphertext,

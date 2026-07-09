@@ -140,68 +140,9 @@ export async function listSites(): Promise<Site[]> {
     return data
 }
 
-export async function getSite(id: string): Promise<Site> {
-    const { data } = await vaultClient.get<Site>(`/sites/${id}`)
-    return data
-}
-
 export async function createSite(input: CreateSiteInput): Promise<Site> {
     const { data } = await vaultClient.post<Site>("/sites", input)
     return data
-}
-
-export async function updateSite(
-    id: string,
-    input: Partial<CreateSiteInput>,
-): Promise<Site> {
-    const { data } = await vaultClient.patch<Site>(`/sites/${id}`, input)
-    return data
-}
-
-export async function deleteSite(id: string): Promise<void> {
-    await vaultClient.delete(`/sites/${id}`)
-}
-
-// ─── store: 카테고리(/categories) ──────────────────────────────
-
-export interface Category {
-    id: string
-    siteId: string
-    label: string
-    createdAt: string
-    updatedAt: string
-}
-
-export async function listCategories(siteId: string): Promise<Category[]> {
-    const { data } = await vaultClient.get<Category[]>("/categories", {
-        params: { siteId },
-    })
-    return data
-}
-
-export async function createCategory(
-    siteId: string,
-    label: string,
-): Promise<Category> {
-    const { data } = await vaultClient.post<Category>("/categories", {
-        siteId,
-        label,
-    })
-    return data
-}
-
-export async function updateCategory(
-    id: string,
-    label: string,
-): Promise<Category> {
-    const { data } = await vaultClient.patch<Category>(`/categories/${id}`, {
-        label,
-    })
-    return data
-}
-
-export async function deleteCategory(id: string): Promise<void> {
-    await vaultClient.delete(`/categories/${id}`)
 }
 
 // ─── store: 시크릿(/secrets) ───────────────────────────────────
@@ -210,7 +151,6 @@ export async function deleteCategory(id: string): Promise<void> {
 export interface SecretMeta {
     id: string
     siteId: string
-    categoryId: string | null
     label: string
     createdAt: string
     updatedAt: string
@@ -226,19 +166,15 @@ export interface SecretDetail extends SecretMeta {
 // 시크릿 생성·수정 입력. label 은 평문, 본문은 클라이언트에서 seal 한 블롭.
 export interface SecretWriteInput {
     siteId: string
-    categoryId?: string | null
     label: string
     iv: string
     ciphertext: string
     authTag: string
 }
 
-export async function listSecrets(
-    siteId: string,
-    categoryId?: string,
-): Promise<SecretMeta[]> {
+export async function listSecrets(siteId: string): Promise<SecretMeta[]> {
     const { data } = await vaultClient.get<SecretMeta[]>("/secrets", {
-        params: categoryId ? { siteId, categoryId } : { siteId },
+        params: { siteId },
     })
     return data
 }

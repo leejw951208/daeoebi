@@ -20,7 +20,6 @@ type LoadState = "idle" | "loading" | "loaded" | "missing" | "error"
 interface Loaded {
     id: string
     siteId: string
-    categoryId: string | null
     label: string
     fields: SecretField[]
     memo: string
@@ -55,7 +54,6 @@ export default function SecretDetailPage() {
             setData({
                 id: detail.id,
                 siteId: detail.siteId,
-                categoryId: detail.categoryId,
                 label: detail.label,
                 fields: payload.fields,
                 memo: payload.memo,
@@ -113,7 +111,6 @@ export default function SecretDetailPage() {
             })
             await updateSecret(data.id, {
                 label: data.label,
-                categoryId: data.categoryId,
                 iv: blob.iv,
                 ciphertext: blob.ciphertext,
                 authTag: blob.authTag,
@@ -198,7 +195,6 @@ export default function SecretDetailPage() {
         const initial: SecretFormInitial = {
             id: data.id,
             label: data.label,
-            categoryId: data.categoryId,
             fields: data.fields,
             memo: data.memo,
         }
