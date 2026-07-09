@@ -29,8 +29,6 @@ const ACCOUNT_GOAL_FORMATTED = `₩${ACCOUNT_GOAL.toLocaleString("ko-KR")}`
 // 프리셋(3/5/8/10%)과 겹치지 않는 소수 값을 써서 "저장 전 우연히 같은 값" 가능성을 배제한다.
 const RETURN_RATE = "7.3"
 const RETURN_RATE_FORMATTED = `+${RETURN_RATE}%`
-// 투자 원금(base)을 함께 설정해 평가금액·평가손익이 실제로 계산되는지 검증한다.
-const INVEST_BASE = 1_000_000
 
 // 세이빙 박스 잔액은 볼트당 누적값(이전 실행 입출금이 누적)이라 정확한 총액을 검증할 수 없다.
 // 대신 이번 실행에서만 쓰는 고유 메모를 "입출금 내역"에서 찾아 입금이 반영됐는지 확인한다.
@@ -131,9 +129,7 @@ test.describe.serial("저축·투자 탭", () => {
         await expect(accountCard.getByText(/^\d+%$/)).toBeVisible()
     })
 
-    test("투자 원금·수익률 입력 → 저장 → 평가금액·평가손익 반영", async ({
-        page,
-    }) => {
+    test("수익률 입력 → 저장 → 카드에 수익률 반영", async ({ page }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
@@ -154,21 +150,16 @@ test.describe.serial("저축·투자 탭", () => {
         const sheet = page.getByRole("dialog", { name: "투자 수익률" })
         await expect(sheet).toBeVisible({ timeout: 10_000 })
 
-        // ── 원금·수익률 입력 후 저장 ──
-        await sheet.getByLabel("투자 원금").fill(String(INVEST_BASE))
+        // ── 수익률만 입력 후 저장(투자 원금은 이 시트에서 더 이상 수정하지 않는다) ──
         await sheet.getByLabel("투자 수익률(%)").fill(RETURN_RATE)
         await sheet.getByRole("button", { name: "저장" }).click()
 
         await expect(sheet).toBeHidden({ timeout: 10_000 })
 
-        // ── 수익률(%) + 평가손익(양수 ₩)이 카드에 반영됐는지 확인 ──
+        // ── 수익률(%)이 카드에 반영됐는지 확인 ──
         await expect(
             investCard.getByText(RETURN_RATE_FORMATTED, { exact: true }),
         ).toBeVisible({ timeout: 10_000 })
-        // 원금>0 · 수익률>0 이면 평가손익은 양수(+₩...) 로 표시된다.
-        await expect(investCard.getByText(/^\+₩[\d,]+$/).first()).toBeVisible({
-            timeout: 10_000,
-        })
     })
 
     test("세이빙 박스 입금 → 입출금 내역에 반영", async ({ page }) => {
