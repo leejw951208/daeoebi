@@ -47,7 +47,11 @@ import {
     type ComputedExpense,
     type ComputedIncome,
 } from "./_lib/asset-compute"
-import { resolveCategory } from "./_lib/asset-categories"
+import {
+    resolveCategory,
+    SAVINGS_CODE,
+    INVESTMENT_CODE,
+} from "./_lib/asset-categories"
 import { materializeRecurring } from "./_lib/asset-recurring"
 import {
     addMonth,
@@ -334,14 +338,15 @@ export default function AssetPage() {
         [state],
     )
 
-    // 저축/투자 카테고리 id(kind 기준). 카테고리 목록이 로드된 뒤에만 계산된다.
+    // 저축/투자 카테고리 id(고정 code 기준). 카테고리 목록이 로드된 뒤에만 계산된다.
     const savingsCategoryIds = useMemo(
         () =>
             state.status === "ready"
                 ? state.data.categories
                       .filter(
                           (c) =>
-                              c.kind === "SAVINGS" || c.kind === "INVESTMENT",
+                              c.code === SAVINGS_CODE ||
+                              c.code === INVESTMENT_CODE,
                       )
                       .map((c) => c.id)
                 : [],
@@ -463,7 +468,7 @@ export default function AssetPage() {
 
     // SavingsTab 에 넘길 뷰 모델. 저축 합계는 계좌 모델(savingsAccountsView) 기준이고,
     // 순자산(netWorth) = 그 저축 합계 + 투자 평가금액이다(지출 파생 누적 합계는 쓰지 않는다).
-    // 이번 달 투자 지출(investMonth)만은 여전히 카테고리 지출(kind=INVESTMENT)에서 파생한다.
+    // 이번 달 투자 지출(investMonth)만은 여전히 카테고리 지출(code=INVESTMENT)에서 파생한다.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
             return savingsState.status === "error"

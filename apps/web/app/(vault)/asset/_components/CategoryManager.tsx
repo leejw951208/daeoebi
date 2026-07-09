@@ -14,6 +14,7 @@ import {
     type AssetCategory,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
+import { isFixedCategory } from "../_lib/asset-categories"
 import { CategoryAddSection } from "./CategoryAddSection"
 import { CategoryRow } from "./CategoryRow"
 
@@ -22,7 +23,7 @@ interface Props {
     onChanged?: () => void
 }
 
-type CategoryFormData = { name: string; color: string; code: string }
+type CategoryFormData = { name: string; color: string }
 
 type Mode = "list" | "form"
 
@@ -85,7 +86,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
             if (editingCategory) {
                 await updateAssetCategory(editingCategory.id, data)
             } else {
-                await createAssetCategory(data.name, data.color, data.code)
+                await createAssetCategory(data.name, data.color)
             }
             await loadCategories()
             setDirty(true)
@@ -126,6 +127,10 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                 ? "카테고리 수정"
                 : "카테고리 추가"
             : "카테고리 관리"
+
+    // API 는 고정→사용자 순으로 정렬해 반환한다. 표시용으로 두 그룹으로 나눈다.
+    const fixedCategories = categories.filter(isFixedCategory)
+    const userCategories = categories.filter((c) => !isFixedCategory(c))
 
     return (
         <div
@@ -240,40 +245,68 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                                 >
                                     불러오는 중…
                                 </div>
-                            ) : categories.length === 0 ? (
-                                <div
-                                    style={{
-                                        textAlign: "center",
-                                        padding: "22px 0",
-                                        fontSize: 13,
-                                        color: "var(--color-text-muted)",
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    아직 카테고리가 없어요.
-                                </div>
                             ) : (
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 8,
-                                        marginBottom: 14,
-                                    }}
-                                >
-                                    {categories.map((cat) => (
-                                        <CategoryRow
-                                            key={cat.id}
-                                            category={cat}
-                                            onEdit={openEditForm}
-                                            onDelete={(c) => {
-                                                resetIdle()
-                                                void deleteCategory(c)
+                                <>
+                                    <SectionLabel>고정 카테고리</SectionLabel>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 8,
+                                            marginBottom: 20,
+                                        }}
+                                    >
+                                        {fixedCategories.map((cat) => (
+                                            <CategoryRow
+                                                key={cat.id}
+                                                category={cat}
+                                                onEdit={openEditForm}
+                                                onDelete={(c) => {
+                                                    resetIdle()
+                                                    void deleteCategory(c)
+                                                }}
+                                                onActivity={resetIdle}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <SectionLabel>내 카테고리</SectionLabel>
+                                    {userCategories.length === 0 ? (
+                                        <div
+                                            style={{
+                                                textAlign: "center",
+                                                padding: "16px 0",
+                                                fontSize: 13,
+                                                color: "var(--color-text-muted)",
+                                                fontWeight: 600,
                                             }}
-                                            onActivity={resetIdle}
-                                        />
-                                    ))}
-                                </div>
+                                        >
+                                            직접 만든 카테고리가 아직 없어요.
+                                        </div>
+                                    ) : (
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: 8,
+                                                marginBottom: 14,
+                                            }}
+                                        >
+                                            {userCategories.map((cat) => (
+                                                <CategoryRow
+                                                    key={cat.id}
+                                                    category={cat}
+                                                    onEdit={openEditForm}
+                                                    onDelete={(c) => {
+                                                        resetIdle()
+                                                        void deleteCategory(c)
+                                                    }}
+                                                    onActivity={resetIdle}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
                             )}
                             <button
                                 type="button"
@@ -316,6 +349,23 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                     )}
                 </div>
             </div>
+        </div>
+    )
+}
+
+// 목록 섹션 제목(고정 카테고리 / 내 카테고리).
+function SectionLabel({ children }: { children: React.ReactNode }) {
+    return (
+        <div
+            style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: "#9a9a9a",
+                letterSpacing: "-0.01em",
+                margin: "2px 2px 10px",
+            }}
+        >
+            {children}
         </div>
     )
 }

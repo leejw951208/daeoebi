@@ -333,8 +333,7 @@ export interface AssetCategory {
     id: string
     name: string
     color: string
-    code: string | null // 사용자 지정 분류 코드. null = 미지정.
-    kind: "NORMAL" | "SAVINGS" | "INVESTMENT" // 저축/투자 식별용 시스템 마커. name/code 는 사용자가 바꿀 수 있어 앵커로 쓰지 않는다.
+    code: string | null // 고정 카테고리 안정 식별자. null = 사용자 생성. 저축·투자 대시보드 앵커.
     createdAt: string
     updatedAt: string
 }
@@ -347,22 +346,17 @@ export async function listAssetCategories(): Promise<AssetCategory[]> {
 export async function createAssetCategory(
     name: string,
     color: string,
-    code?: string,
 ): Promise<AssetCategory> {
     const { data } = await vaultClient.post<AssetCategory>(
         "/asset-categories",
-        {
-            name,
-            color,
-            ...(code !== undefined ? { code } : {}),
-        },
+        { name, color },
     )
     return data
 }
 
 export async function updateAssetCategory(
     id: string,
-    patch: { name?: string; color?: string; code?: string },
+    patch: { name?: string; color?: string },
 ): Promise<AssetCategory> {
     const { data } = await vaultClient.patch<AssetCategory>(
         `/asset-categories/${id}`,

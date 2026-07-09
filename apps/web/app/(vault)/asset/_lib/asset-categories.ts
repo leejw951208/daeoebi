@@ -1,6 +1,15 @@
 // 자산 관리 고정 상수(카테고리·결제방법)와 통화 포맷. 디자인 프로토타입 값과 일치한다.
 import type { AssetCategory } from "@/lib/vault-client"
 
+// 저축·투자 대시보드 앵커 코드(고정 카테고리 code). 이름은 바뀌지 않는 고정값이다.
+export const SAVINGS_CODE = "SAVINGS"
+export const INVESTMENT_CODE = "INVESTMENT"
+
+// 고정 카테고리 여부. code 가 있으면 고정(수정·삭제 불가), 없으면 사용자 생성.
+export function isFixedCategory(category: { code: string | null }): boolean {
+    return category.code !== null
+}
+
 // 카테고리 색 선택용 고정 팔레트(임의 hex 입력 대신 선택).
 export const CATEGORY_PALETTE: string[] = [
     "#f2994a",

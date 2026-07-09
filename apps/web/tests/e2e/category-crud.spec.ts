@@ -1,15 +1,15 @@
 /**
- * E2E QA: 카테고리 관리 CRUD
- * 조회(read) · 등록(create) · 수정(update) · 삭제(delete)
+ * E2E QA: 카테고리 관리
+ * 고정 카테고리(읽기 전용) 노출 + 사용자 생성 카테고리 CRUD.
+ *
+ * 카테고리는 고정(수정·삭제 불가, 코드 보유)과 사용자 생성(이름·색만)으로 나뉜다.
+ * - 조회: 고정 12종이 "고정 카테고리" 섹션에 노출된다.
+ * - 등록: "내 카테고리" 섹션에 이름·색으로 추가한다(코드 입력 없음).
+ * - 수정: 사용자 카테고리의 이름·색을 변경한다.
+ * - 삭제: 사용자 카테고리를 삭제한다(확인 단계 없이 즉시 — 디자인).
  *
  * Auth bypass: dev 환경에서 "패스키로 잠금해제" 클릭 → devUnlock() 호출.
- * Tests run serially (test.describe.serial) so API state persists across
- * test boundaries (created category stays in DB between tests).
- * Cleanup: test 4 (delete) removes the QA category so no leftover on success.
- *
- * Viewport note: a tall viewport(1280×2000) keeps the whole sheet in view so
- * actions stay simple. 시트 자체도 max-height + overflow-y(scroll)라 실기기에서
- * 카테고리가 많아도 잘리지 않는다.
+ * Tests run serially so API state persists across test boundaries.
  */
 
 import { test, expect, type Page, type Locator } from "@playwright/test"
@@ -20,18 +20,28 @@ const SCREENSHOTS_DIR = path.join(__dirname, "__screenshots__")
 // Unique names fixed at module load time so serial tests share them.
 const UNIQUE = `QA-${Date.now()}`
 const RENAMED = `${UNIQUE.slice(0, 12)}-수정`
-// 카테고리 코드(카테고리 간 고유). UNIQUE 에서 파생해 매 실행마다 달라진다.
-const CODE = `C${UNIQUE.slice(3)}`
+
+// 고정 카테고리 12종(코드 보유, 읽기 전용).
+const FIXED_NAMES = [
+    "식비",
+    "카페·간식",
+    "편의점·마트",
+    "쇼핑",
+    "의료·건강",
+    "주거·통신",
+    "보험·세금",
+    "미용",
+    "교통",
+    "투자",
+    "저축",
+    "기타",
+]
 
 // Tall viewport so the bottom sheet never extends above the visible area.
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Navigate to targetPath, click the dev-unlock button if the VaultGate
- * lock screen appears.  Callers must wait for vault content afterward.
- */
 async function enterVaultAt(page: Page, targetPath: string): Promise<void> {
     await page.goto(targetPath)
     const unlockBtn = page.getByRole("button", { name: "패스키로 잠금해제" })
@@ -43,7 +53,6 @@ async function enterVaultAt(page: Page, targetPath: string): Promise<void> {
     }
 }
 
-/** Wait until the "자산" heading is visible (vault unlocked, dashboard rendered). */
 async function waitForAssetDashboard(page: Page): Promise<void> {
     await expect(
         page
@@ -53,7 +62,6 @@ async function waitForAssetDashboard(page: Page): Promise<void> {
     ).toBeVisible({ timeout: 30_000 })
 }
 
-/** Open the CategoryManager bottom-sheet and return a Locator scoped to it. */
 async function openCategoryManager(page: Page): Promise<Locator> {
     await page.getByRole("button", { name: "카테고리" }).click()
     const dialog = page.getByRole("dialog", { name: "카테고리 관리" })
@@ -61,10 +69,6 @@ async function openCategoryManager(page: Page): Promise<Locator> {
     return dialog
 }
 
-/**
- * Close the CategoryManager by clicking its "닫기" button.
- * With the tall viewport the button is always within the visible area.
- */
 async function closeCategoryManager(
     page: Page,
     dialog: Locator,
@@ -73,15 +77,17 @@ async function closeCategoryManager(
     await expect(dialog).toBeHidden({ timeout: 10_000 })
 }
 
+/** 이름으로 카테고리 행 Locator 를 특정한다. */
+function categoryRow(dialog: Locator, name: string): Locator {
+    return dialog
+        .locator('[data-testid="category-row"]')
+        .filter({ hasText: name })
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-test.describe.serial("카테고리 관리 CRUD", () => {
-    /**
-     * Cleanup: delete any leftover QA-prefixed categories that accumulated
-     * from previous failed test runs.  These make the category sheet taller
-     * than the default 720 px viewport used by asset.spec.ts, breaking those
-     * tests too.  Running once here keeps the list bounded.
-     */
+test.describe.serial("카테고리 관리", () => {
+    // 이전 실패 런에서 남은 QA 사용자 카테고리를 정리한다(삭제는 즉시 — 확인 없음).
     test.beforeAll(async ({ browser }) => {
         const ctx = await browser.newContext()
         const pg = await ctx.newPage()
@@ -102,29 +108,20 @@ test.describe.serial("카테고리 관리 CRUD", () => {
         const dialog = pg.getByRole("dialog", { name: "카테고리 관리" })
         await expect(dialog).toBeVisible({ timeout: 10_000 })
 
-        // Delete all categories whose name contains "QA" (leftover from failed runs).
-        // Safety cap of 30 iterations.
         for (let i = 0; i < 30; i++) {
-            const qaCount = await dialog.getByText(/QA/).count()
-            if (qaCount === 0) break
-
-            // QA categories are always appended after the 8 defaults, so the
-            // last "삭제" button always targets a QA category.
-            await dialog.getByRole("button", { name: "삭제" }).last().click()
-            const confirmDialog = pg.getByRole("dialog", {
-                name: "카테고리 삭제",
-            })
-            await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
-            await confirmDialog.getByRole("button", { name: "삭제" }).click()
-            await expect(confirmDialog).toBeHidden({ timeout: 10_000 })
+            const row = dialog
+                .locator('[data-testid="category-row"]')
+                .filter({ hasText: /QA/ })
+            if ((await row.count()) === 0) break
+            await row.first().getByRole("button", { name: "삭제" }).click()
+            await expect(row.first()).toBeHidden({ timeout: 10_000 })
         }
 
         await ctx.close()
     })
+
     // ── 1. 조회 ───────────────────────────────────────────────────────────────
-    test("1. 조회 — 시드 기본 카테고리 목록이 전부 노출된다", async ({
-        page,
-    }) => {
+    test("1. 조회 — 고정 카테고리 12종이 노출된다", async ({ page }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
@@ -133,20 +130,16 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // All eight seeded default categories must appear in the manager list.
-        const DEFAULT_NAMES = [
-            "식비",
-            "교통",
-            "주거·공과금",
-            "쇼핑",
-            "문화",
-            "저축",
-            "투자",
-            "기타",
-        ]
-        for (const name of DEFAULT_NAMES) {
-            await expect(dialog.getByText(name)).toBeVisible({ timeout: 5_000 })
+        for (const name of FIXED_NAMES) {
+            await expect(dialog.getByText(name, { exact: true })).toBeVisible({
+                timeout: 5_000,
+            })
         }
+
+        // 고정 카테고리 행에는 수정 버튼이 없다(읽기 전용).
+        await expect(
+            categoryRow(dialog, "식비").getByRole("button", { name: "수정" }),
+        ).toHaveCount(0)
 
         await page.screenshot({
             path: path.join(SCREENSHOTS_DIR, "cat-crud-01-read.png"),
@@ -155,7 +148,7 @@ test.describe.serial("카테고리 관리 CRUD", () => {
     })
 
     // ── 2. 등록 ───────────────────────────────────────────────────────────────
-    test("2. 등록 — 새 카테고리 추가 후 목록 및 지출 폼 칩에 표시된다", async ({
+    test("2. 등록 — 사용자 카테고리 추가 후 목록·지출 폼 칩에 표시된다", async ({
         page,
     }) => {
         test.setTimeout(120_000)
@@ -166,24 +159,20 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // FORM 모드로 전환 후 이름 입력 + 색상 스와치 선택 + 코드 입력(선택·고유).
+        // FORM 모드: 이름 + 색상 스와치(코드 입력 없음).
         await dialog.getByRole("button", { name: "+ 카테고리 추가" }).click()
         await dialog.getByLabel("카테고리 이름").fill(UNIQUE)
         await dialog.getByRole("button", { name: "#4a90d9" }).click()
-        await dialog.getByLabel("카테고리 코드").fill(CODE)
         await dialog.getByRole("button", { name: "저장" }).click()
 
-        // Assert new category appears in the manager list.
         await expect(dialog.getByText(UNIQUE)).toBeVisible({ timeout: 10_000 })
-        // 코드 배지가 목록 행에 노출된다.
-        await expect(dialog.getByText(CODE)).toBeVisible({ timeout: 10_000 })
 
         await page.screenshot({
             path: path.join(SCREENSHOTS_DIR, "cat-crud-02-create-manager.png"),
             fullPage: false,
         })
 
-        // Read-consistency: close manager → navigate to /asset/new → assert chip.
+        // Read-consistency: 지출 폼 칩에 노출.
         await closeCategoryManager(page, dialog)
 
         await page.getByRole("link", { name: "새 지출 추가" }).click()
@@ -203,41 +192,8 @@ test.describe.serial("카테고리 관리 CRUD", () => {
         })
     })
 
-    // ── 2-1. 코드 중복 ──────────────────────────────────────────────────────────
-    test("2-1. 코드 중복 — 같은 코드로 추가하면 거부된다", async ({ page }) => {
-        test.setTimeout(120_000)
-        await page.setViewportSize(TALL_VIEWPORT)
-
-        await enterVaultAt(page, "/asset")
-        await waitForAssetDashboard(page)
-
-        const dialog = await openCategoryManager(page)
-
-        // test 2 에서 CODE 를 가진 카테고리가 이미 존재한다. 같은 코드로 추가 시도.
-        const dupName = `${UNIQUE}-dup`
-        await dialog.getByRole("button", { name: "+ 카테고리 추가" }).click()
-        await dialog.getByLabel("카테고리 이름").fill(dupName)
-        await dialog.getByRole("button", { name: "#3bb273" }).click()
-        await dialog.getByLabel("카테고리 코드").fill(CODE)
-        await dialog.getByRole("button", { name: "저장" }).click()
-
-        // 서버 409 → 에러 문구 노출, 새 카테고리는 추가되지 않는다.
-        await expect(
-            dialog.getByText("같은 코드의 카테고리가 이미 있습니다."),
-        ).toBeVisible({ timeout: 10_000 })
-
-        // 실패 시 FORM 모드에 머무른다 → 목록으로 돌아가 미추가를 확인한다.
-        await dialog.getByRole("button", { name: "← 목록" }).click()
-        await expect(dialog.getByText(dupName)).toBeHidden()
-
-        await page.screenshot({
-            path: path.join(SCREENSHOTS_DIR, "cat-crud-02-1-code-dup.png"),
-            fullPage: false,
-        })
-    })
-
     // ── 3. 수정 ───────────────────────────────────────────────────────────────
-    test("3. 수정 — 이름·색 변경 후 목록 및 지출 폼 칩에 반영된다", async ({
+    test("3. 수정 — 이름·색 변경 후 목록·지출 폼 칩에 반영된다", async ({
         page,
     }) => {
         test.setTimeout(120_000)
@@ -248,37 +204,26 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // The QA category added in test 2 must still exist.
         await expect(dialog.getByText(UNIQUE)).toBeVisible({ timeout: 10_000 })
 
-        // Click "수정" for the UNIQUE category row (data-testid 로 행을 특정).
-        // This is robust against parallel tests adding/removing other categories.
-        const editRow = dialog
-            .locator('[data-testid="category-row"]')
-            .filter({ hasText: UNIQUE })
-        await editRow.getByRole("button", { name: "수정" }).click()
+        await categoryRow(dialog, UNIQUE)
+            .getByRole("button", { name: "수정" })
+            .click()
 
-        // FORM 모드: 이름을 바꾸고 색상 스와치를 선택한다.
         const editInput = dialog.getByLabel("카테고리 이름")
         await editInput.clear()
         await editInput.fill(RENAMED)
         await dialog.getByRole("button", { name: "#9b6bd6" }).click()
-
-        // Save.
         await dialog.getByRole("button", { name: "저장" }).click()
 
-        // Assert renamed in manager; old name must be gone.
         await expect(dialog.getByText(RENAMED)).toBeVisible({ timeout: 10_000 })
         await expect(dialog.getByText(UNIQUE)).toBeHidden()
-        // 이름·색 수정이 코드는 보존한다(코드 배지 유지).
-        await expect(dialog.getByText(CODE)).toBeVisible({ timeout: 10_000 })
 
         await page.screenshot({
             path: path.join(SCREENSHOTS_DIR, "cat-crud-03-update-manager.png"),
             fullPage: false,
         })
 
-        // Read-consistency: renamed chip visible; old name chip gone.
         await closeCategoryManager(page, dialog)
 
         await page.getByRole("link", { name: "새 지출 추가" }).click()
@@ -302,7 +247,7 @@ test.describe.serial("카테고리 관리 CRUD", () => {
     })
 
     // ── 4. 삭제 ───────────────────────────────────────────────────────────────
-    test("4. 삭제 — ConfirmDialog 미분류 문구 확인 후 목록·칩 모두 제거된다", async ({
+    test("4. 삭제 — 사용자 카테고리 삭제 후 목록·칩에서 제거된다", async ({
         page,
     }) => {
         test.setTimeout(120_000)
@@ -313,33 +258,13 @@ test.describe.serial("카테고리 관리 CRUD", () => {
 
         const dialog = await openCategoryManager(page)
 
-        // The renamed QA category from test 3 must still exist.
         await expect(dialog.getByText(RENAMED)).toBeVisible({ timeout: 10_000 })
 
-        // Click "삭제" for the RENAMED category row (data-testid 로 행을 특정).
-        const deleteRow = dialog
-            .locator('[data-testid="category-row"]')
-            .filter({ hasText: RENAMED })
-        await deleteRow.getByRole("button", { name: "삭제" }).click()
+        // 삭제는 확인 단계 없이 즉시 수행된다(디자인).
+        await categoryRow(dialog, RENAMED)
+            .getByRole("button", { name: "삭제" })
+            .click()
 
-        // ConfirmDialog must appear with the "미분류" warning.
-        const confirmDialog = page.getByRole("dialog", {
-            name: "카테고리 삭제",
-        })
-        await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
-        await expect(
-            confirmDialog.getByText("이 카테고리의 지출은 미분류가 됩니다."),
-        ).toBeVisible()
-
-        await page.screenshot({
-            path: path.join(SCREENSHOTS_DIR, "cat-crud-04-confirm.png"),
-            fullPage: false,
-        })
-
-        // Confirm deletion.
-        await confirmDialog.getByRole("button", { name: "삭제" }).click()
-
-        // Category must be gone from the manager list.
         await expect(dialog.getByText(RENAMED)).toBeHidden({ timeout: 10_000 })
 
         await page.screenshot({
@@ -347,12 +272,10 @@ test.describe.serial("카테고리 관리 CRUD", () => {
             fullPage: false,
         })
 
-        // Read-consistency: deleted category no longer a chip on /asset/new.
         await closeCategoryManager(page, dialog)
 
         await page.getByRole("link", { name: "새 지출 추가" }).click()
         await page.waitForURL("**/asset/new", { timeout: 15_000 })
-        // At least one chip (default categories) must still be present.
         await page
             .locator("button.chip")
             .first()

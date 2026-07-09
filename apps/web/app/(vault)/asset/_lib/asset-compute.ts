@@ -1,7 +1,11 @@
 // 자산 대시보드 집계(순수 함수). 복호화된 지출 목록에서 월 합계·카테고리별·일별·남은 돈을 계산한다.
 // E2E 라 서버 집계가 불가하므로 클라가 메모리에서 계산한다(월 수십~수백 건 규모).
 import type { AssetCategory } from "@/lib/vault-client"
-import { resolveCategory } from "./asset-categories"
+import {
+    resolveCategory,
+    SAVINGS_CODE,
+    INVESTMENT_CODE,
+} from "./asset-categories"
 
 // 복호화된 지출 1건(메타 + 본문).
 export interface ComputedExpense {
@@ -115,38 +119,38 @@ export interface SavingsSummary {
     netWorth: number
 }
 
-// 저축/투자 카테고리 지출을 kind 기준으로 분리 합산한다. netWorth = 저축+투자.
-// name/code 는 사용자가 바꿀 수 있어 앵커로 쓰지 않는다(카테고리 kind 로만 판별).
+// 저축/투자 카테고리 지출을 고정 code 기준으로 분리 합산한다. netWorth = 저축+투자.
+// 저축·투자는 고정 카테고리라 code(SAVINGS/INVESTMENT)가 불변 앵커다.
 export function savingsSummary(
     contribs: readonly { categoryId: string | null; amount: number }[],
-    categories: readonly { id: string; kind: string }[],
+    categories: readonly { id: string; code: string | null }[],
 ): SavingsSummary {
-    const kindById = new Map(categories.map((c) => [c.id, c.kind]))
+    const codeById = new Map(categories.map((c) => [c.id, c.code]))
     let savedTotal = 0
     let investTotal = 0
     for (const c of contribs) {
-        const kind = c.categoryId ? kindById.get(c.categoryId) : undefined
-        if (kind === "SAVINGS") savedTotal += c.amount
-        else if (kind === "INVESTMENT") investTotal += c.amount
+        const code = c.categoryId ? codeById.get(c.categoryId) : undefined
+        if (code === SAVINGS_CODE) savedTotal += c.amount
+        else if (code === INVESTMENT_CODE) investTotal += c.amount
     }
     return { savedTotal, investTotal, netWorth: savedTotal + investTotal }
 }
 
-// 이번 달 SAVINGS 카테고리 지출을 item(적금 계좌명)별로 합산한다.
-// kind 로만 판별(Unit 0) — 카테고리 이름/코드는 앵커로 쓰지 않는다.
+// 이번 달 저축(SAVINGS) 카테고리 지출을 item(적금 계좌명)별로 합산한다.
+// 고정 카테고리 code 로만 판별한다.
 export function monthSavingsByItem(
     monthExpenses: readonly {
         categoryId: string | null
         item: string
         amount: number
     }[],
-    categories: readonly { id: string; kind: string }[],
+    categories: readonly { id: string; code: string | null }[],
 ): Map<string, number> {
-    const kindById = new Map(categories.map((c) => [c.id, c.kind]))
+    const codeById = new Map(categories.map((c) => [c.id, c.code]))
     const map = new Map<string, number>()
     for (const e of monthExpenses) {
-        const kind = e.categoryId ? kindById.get(e.categoryId) : undefined
-        if (kind !== "SAVINGS") continue
+        const code = e.categoryId ? codeById.get(e.categoryId) : undefined
+        if (code !== SAVINGS_CODE) continue
         map.set(e.item, (map.get(e.item) ?? 0) + e.amount)
     }
     return map
