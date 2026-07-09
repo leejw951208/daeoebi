@@ -27,7 +27,7 @@ export const CATEGORY_PALETTE: string[] = [
 ]
 
 // 색상 hex 검증(서버 DTO 규칙과 동일: #rrggbb).
-export const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
 export function isValidHexColor(v: string): boolean {
     return HEX_COLOR_RE.test(v)
 }

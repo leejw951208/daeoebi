@@ -6,7 +6,7 @@ function pad2(n: number): string {
 }
 
 // 로컬 기준 "YYYY-MM-DD".
-export function toISODate(d: Date): string {
+function toISODate(d: Date): string {
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
@@ -41,7 +41,7 @@ export function monthDayLabel(isoDate: string): string {
     return `${m}월 ${d}일`
 }
 
-export function daysInMonth(month: string): number {
+function daysInMonth(month: string): number {
     const [y, m] = month.split("-").map(Number)
     return new Date(y, m, 0).getDate()
 }

@@ -23,7 +23,10 @@ export function toBase64Url(bytes: Uint8Array): string {
     for (let i = 0; i < bytes.byteLength; i += 1) {
         binary += String.fromCharCode(bytes[i])
     }
-    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+    return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "")
 }
 
 // base64url(패딩 없음) 디코딩.
@@ -70,7 +73,7 @@ export async function generateVaultKey(): Promise<CryptoKey> {
 }
 
 // VK 의 원시 32바이트를 추출한다(래핑 입력용).
-export async function exportVaultKeyRaw(vk: CryptoKey): Promise<Uint8Array> {
+async function exportVaultKeyRaw(vk: CryptoKey): Promise<Uint8Array> {
     const raw = await crypto.subtle.exportKey("raw", vk)
     return new Uint8Array(raw)
 }
@@ -195,7 +198,10 @@ export interface SealedBlob {
     authTag: string
 }
 
-export async function seal(vk: CryptoKey, plaintext: string): Promise<SealedBlob> {
+export async function seal(
+    vk: CryptoKey,
+    plaintext: string,
+): Promise<SealedBlob> {
     const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES))
     const data = new TextEncoder().encode(plaintext)
     const combined = new Uint8Array(

@@ -19,13 +19,3 @@ export const FIELD_SUGGESTIONS: FieldSuggestion[] = [
     { name: "보안카드", sensitive: true },
     { name: "URL", sensitive: false },
 ]
-
-// 필드 이름으로 민감 여부를 추정한다(추천 목록 + 키워드 기반).
-export function isSensitiveFieldName(name: string): boolean {
-    const lower = name.trim().toLowerCase()
-    const exact = FIELD_SUGGESTIONS.find((s) => s.name.toLowerCase() === lower)
-    if (exact) return exact.sensitive
-    return /비밀|password|pw|pin|cvc|계좌|카드번호|otp|시드|secret|보안/.test(
-        lower,
-    )
-}

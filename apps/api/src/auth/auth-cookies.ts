@@ -6,7 +6,7 @@ export const RECOVERY_COOKIE = "sm_recovery"
 
 // 운영(HTTPS)에서는 secure 를 켜 평문(http) 전송을 막는다. 로컬 http 개발에서만 false.
 // COOKIE_SECURE 로 강제 지정할 수 있고, 미지정 시 NODE_ENV=production 이면 true.
-export const SECURE_COOKIE =
+const SECURE_COOKIE =
     (process.env.COOKIE_SECURE ?? "").toLowerCase() === "true" ||
     process.env.NODE_ENV === "production"
 
