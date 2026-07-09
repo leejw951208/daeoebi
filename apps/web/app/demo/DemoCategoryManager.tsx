@@ -5,7 +5,10 @@ import type { AssetCategory } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { CategoryColorInput } from "../(vault)/asset/_components/CategoryColorInput"
-import { isValidHexColor } from "../(vault)/asset/_lib/asset-categories"
+import {
+    isValidHexColor,
+    isFixedCategory,
+} from "../(vault)/asset/_lib/asset-categories"
 
 interface DemoCategoryManagerProps {
     categories: AssetCategory[]
@@ -29,6 +32,10 @@ export function DemoCategoryManager({
         null,
     )
 
+    // 고정(읽기 전용) / 사용자 생성(수정·삭제 가능) 두 그룹으로 나눈다.
+    const fixedCategories = categories.filter(isFixedCategory)
+    const userCategories = categories.filter((c) => !isFixedCategory(c))
+
     function add() {
         if (!name.trim() || !isValidHexColor(color)) return
         demoCatSeq += 1
@@ -40,7 +47,6 @@ export function DemoCategoryManager({
                 name: name.trim(),
                 color,
                 code: null,
-                kind: "NORMAL",
                 createdAt: ts,
                 updatedAt: ts,
             },
@@ -136,8 +142,77 @@ export function DemoCategoryManager({
                     </Button>
                 </div>
 
-                {/* 목록 */}
-                {categories.map((c) =>
+                {/* 고정 카테고리(읽기 전용) */}
+                <div
+                    className="field-label"
+                    style={{ marginBottom: 8, color: "#9a9a9a" }}
+                >
+                    고정 카테고리
+                </div>
+                {fixedCategories.map((c) => (
+                    <div
+                        key={c.id}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "12px 0",
+                            borderBottom: "1px solid var(--color-border)",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                            }}
+                        >
+                            <span
+                                aria-hidden="true"
+                                style={{
+                                    width: 12,
+                                    height: 12,
+                                    borderRadius: "50%",
+                                    background: c.color,
+                                    flexShrink: 0,
+                                }}
+                            />
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>
+                                {c.name}
+                            </span>
+                        </div>
+                        <span
+                            style={{
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                color: "#c0c0c0",
+                            }}
+                        >
+                            고정
+                        </span>
+                    </div>
+                ))}
+
+                {/* 사용자 생성 카테고리 */}
+                <div
+                    className="field-label"
+                    style={{ margin: "18px 0 8px", color: "#9a9a9a" }}
+                >
+                    내 카테고리
+                </div>
+                {userCategories.length === 0 && (
+                    <div
+                        style={{
+                            fontSize: 13,
+                            color: "var(--color-text-muted)",
+                            fontWeight: 600,
+                            padding: "6px 0 4px",
+                        }}
+                    >
+                        직접 만든 카테고리가 아직 없어요.
+                    </div>
+                )}
+                {userCategories.map((c) =>
                     editId === c.id ? (
                         <div
                             key={c.id}

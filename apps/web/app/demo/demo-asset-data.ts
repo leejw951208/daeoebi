@@ -12,61 +12,31 @@ import {
 // 고정 표시 월(예시). 실제 오늘과 무관한 상수.
 export const DEMO_MONTH = "2026-06"
 
+// 고정 카테고리 12종(코드 보유). 데모는 서버 없이 이 목록을 그대로 쓴다.
+function fixedCat(
+    id: string,
+    name: string,
+    color: string,
+    code: string,
+    day: number,
+): AssetCategory {
+    const ts = `2026-01-${String(day).padStart(2, "0")}T00:00:00.000Z`
+    return { id, name, color, code, createdAt: ts, updatedAt: ts }
+}
+
 export const DEMO_ASSET_CATEGORIES: AssetCategory[] = [
-    {
-        id: "c-food",
-        name: "식비",
-        color: "#f2994a",
-        code: null,
-        kind: "NORMAL",
-        createdAt: "2026-01-01T00:00:00.000Z",
-        updatedAt: "2026-01-01T00:00:00.000Z",
-    },
-    {
-        id: "c-transport",
-        name: "교통",
-        color: "#4a90d9",
-        code: null,
-        kind: "NORMAL",
-        createdAt: "2026-01-02T00:00:00.000Z",
-        updatedAt: "2026-01-02T00:00:00.000Z",
-    },
-    {
-        id: "c-home",
-        name: "주거·공과금",
-        color: "#9b6bd6",
-        code: null,
-        kind: "NORMAL",
-        createdAt: "2026-01-03T00:00:00.000Z",
-        updatedAt: "2026-01-03T00:00:00.000Z",
-    },
-    {
-        id: "c-shop",
-        name: "쇼핑",
-        color: "#e0689a",
-        code: null,
-        kind: "NORMAL",
-        createdAt: "2026-01-04T00:00:00.000Z",
-        updatedAt: "2026-01-04T00:00:00.000Z",
-    },
-    {
-        id: "c-culture",
-        name: "문화",
-        color: "#3bb273",
-        code: null,
-        kind: "NORMAL",
-        createdAt: "2026-01-05T00:00:00.000Z",
-        updatedAt: "2026-01-05T00:00:00.000Z",
-    },
-    {
-        id: "c-etc",
-        name: "기타",
-        color: "#98a0a8",
-        code: null,
-        kind: "NORMAL",
-        createdAt: "2026-01-06T00:00:00.000Z",
-        updatedAt: "2026-01-06T00:00:00.000Z",
-    },
+    fixedCat("c-food", "식비", "#f2994a", "FOOD", 1),
+    fixedCat("c-cafe", "카페·간식", "#eb5757", "CAFE", 2),
+    fixedCat("c-mart", "편의점·마트", "#e0689a", "MART", 3),
+    fixedCat("c-shop", "쇼핑", "#9b6bd6", "SHOPPING", 4),
+    fixedCat("c-health", "의료·건강", "#7b61ff", "HEALTH", 5),
+    fixedCat("c-housing", "주거·통신", "#4a90d9", "HOUSING", 6),
+    fixedCat("c-insurance", "보험·세금", "#2d9cdb", "INSURANCE_TAX", 7),
+    fixedCat("c-beauty", "미용", "#20a4a4", "BEAUTY", 8),
+    fixedCat("c-transport", "교통", "#3bb273", "TRANSPORT", 9),
+    fixedCat("c-invest", "투자", "#6fcf97", "INVESTMENT", 10),
+    fixedCat("c-savings", "저축", "#f2c94c", "SAVINGS", 11),
+    fixedCat("c-etc", "기타", "#98a0a8", "ETC", 12),
 ]
 
 // 현재월 여러 날짜에 분산된 예시 지출. categoryId 는 위 카테고리를 참조.
@@ -93,7 +63,7 @@ export const DEMO_EXPENSES: ComputedExpense[] = [
         recurringId: null,
         item: "6월 전기요금",
         amount: 43000,
-        categoryId: "c-home",
+        categoryId: "c-housing",
     },
     {
         id: "e4",
@@ -117,7 +87,7 @@ export const DEMO_EXPENSES: ComputedExpense[] = [
         recurringId: null,
         item: "영화관",
         amount: 15000,
-        categoryId: "c-culture",
+        categoryId: "c-etc",
     },
     {
         id: "e7",
@@ -125,7 +95,7 @@ export const DEMO_EXPENSES: ComputedExpense[] = [
         recurringId: null,
         item: "마트 장보기",
         amount: 54200,
-        categoryId: "c-food",
+        categoryId: "c-mart",
     },
     {
         id: "e8",
@@ -149,7 +119,7 @@ export const DEMO_EXPENSES: ComputedExpense[] = [
         recurringId: null,
         item: "커피 정기구독",
         amount: 12900,
-        categoryId: "c-etc",
+        categoryId: "c-cafe",
     },
 ]
 
