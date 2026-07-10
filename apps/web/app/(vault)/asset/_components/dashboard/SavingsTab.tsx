@@ -141,7 +141,7 @@ export function SavingsTab({
                             color: "#171717",
                         }}
                     >
-                        이번 달 {formatWon(monthContrib)} 적립
+                        누적 {formatWon(monthContrib)} 적립
                     </span>
                     <span
                         style={{
@@ -195,7 +195,7 @@ export function SavingsTab({
                             marginTop: 5,
                         }}
                     >
-                        이번 달 {formatWon(savedMonth)}
+                        누적 {formatWon(savedMonth)}
                     </div>
                 </div>
                 <div className="asset-card" style={{ flex: 1, padding: 16 }}>
@@ -236,7 +236,7 @@ export function SavingsTab({
                             marginTop: 5,
                         }}
                     >
-                        이번 달 {formatWon(investMonth)}
+                        누적 {formatWon(investMonth)}
                     </div>
                 </div>
             </div>
@@ -549,7 +549,7 @@ export function SavingsTab({
                                                 fontWeight: 600,
                                             }}
                                         >
-                                            + 목표 설정
+                                            목표 미설정
                                         </span>
                                     )}
                                     {hasGoal && (
@@ -778,7 +778,7 @@ export function SavingsTab({
                     }}
                 >
                     <span style={{ fontSize: 13, fontWeight: 800 }}>
-                        이번 달 적립 내역
+                        최근 적립 내역
                     </span>
                     <span
                         style={{
@@ -813,7 +813,7 @@ export function SavingsTab({
                             gap: 9,
                         }}
                     >
-                        {contributions.map((c) => {
+                        {contributions.slice(0, 5).map((c) => {
                             const accent = c.color ?? "#20a4a4"
                             return (
                                 <Link

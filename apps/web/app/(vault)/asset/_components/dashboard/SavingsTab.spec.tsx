@@ -57,7 +57,7 @@ describe("SavingsTab", () => {
         )
         expect(screen.getByText("여행 자금")).not.toBeNull()
         expect(screen.getByText("₩100,000")).not.toBeNull()
-        expect(screen.getByText("+ 목표 설정")).not.toBeNull()
+        expect(screen.getByText("목표 미설정")).not.toBeNull()
     })
 
     it("목표가 있으면 진행률과 남은 금액을 표시한다", () => {
