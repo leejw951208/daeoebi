@@ -270,7 +270,7 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                                         ))}
                                     </div>
 
-                                    <SectionLabel>내 카테고리</SectionLabel>
+                                    <SectionLabel>사용자 카테고리</SectionLabel>
                                     {userCategories.length === 0 ? (
                                         <div
                                             style={{
@@ -279,9 +279,12 @@ export function CategoryManager({ onClose, onChanged }: Props) {
                                                 fontSize: 13,
                                                 color: "var(--color-text-muted)",
                                                 fontWeight: 600,
+                                                lineHeight: 1.5,
                                             }}
                                         >
-                                            직접 만든 카테고리가 아직 없어요.
+                                            아직 만든 카테고리가 없어요.
+                                            <br />
+                                            자주 쓰는 분류를 직접 추가해 보세요.
                                         </div>
                                     ) : (
                                         <div

@@ -198,7 +198,7 @@ export function DemoCategoryManager({
                     className="field-label"
                     style={{ margin: "18px 0 8px", color: "#9a9a9a" }}
                 >
-                    내 카테고리
+                    사용자 카테고리
                 </div>
                 {userCategories.length === 0 && (
                     <div
@@ -207,9 +207,12 @@ export function DemoCategoryManager({
                             color: "var(--color-text-muted)",
                             fontWeight: 600,
                             padding: "6px 0 4px",
+                            lineHeight: 1.5,
                         }}
                     >
-                        직접 만든 카테고리가 아직 없어요.
+                        아직 만든 카테고리가 없어요.
+                        <br />
+                        자주 쓰는 분류를 직접 추가해 보세요.
                     </div>
                 )}
                 {userCategories.map((c) =>
