@@ -27,6 +27,11 @@ interface Loaded {
     updatedAt: string
 }
 
+// ISO 타임스탬프를 디자인 표기(YYYY.MM.DD)로 변환한다.
+function formatDotDate(iso: string): string {
+    return iso.slice(0, 10).replace(/-/g, ".")
+}
+
 export default function SecretDetailPage() {
     const params = useParams<{ id: string }>()
     const id = params?.id
@@ -254,6 +259,26 @@ export default function SecretDetailPage() {
                     </span>
                     <div style={{ minWidth: 0 }}>
                         <h1 style={{ fontSize: 21 }}>{data.label}</h1>
+                        {data.createdAt && (
+                            <div
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    marginTop: 6,
+                                    padding: "4px 10px",
+                                    borderRadius: 999,
+                                    background: "var(--soft)",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    color: "#8a8a8a",
+                                }}
+                            >
+                                {`수정 ${formatDotDate(
+                                    data.updatedAt || data.createdAt,
+                                )} · 생성 ${formatDotDate(data.createdAt)}`}
+                            </div>
+                        )}
                     </div>
                 </div>
 
