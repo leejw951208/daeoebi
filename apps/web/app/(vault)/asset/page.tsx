@@ -585,153 +585,16 @@ export default function AssetPage() {
                         justifyContent: "space-between",
                     }}
                 >
-                    <div>
-                        <div
-                            style={{
-                                fontSize: 21,
-                                fontWeight: 800,
-                                letterSpacing: "-0.03em",
-                            }}
-                        >
-                            지출
-                        </div>
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                                marginTop: 3,
-                                fontSize: 12,
-                                color: "var(--color-text-muted)",
-                                fontWeight: 600,
-                            }}
-                        >
-                            <button
-                                type="button"
-                                aria-label="이전 달"
-                                onClick={() => setMonth((m) => addMonth(m, -1))}
-                                {...pressScale(0.82)}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 22,
-                                    height: 22,
-                                    border: "none",
-                                    background: "none",
-                                    color: "#c2c2c2",
-                                    cursor: "pointer",
-                                    padding: 0,
-                                    transition: "transform .12s",
-                                }}
-                            >
-                                <svg
-                                    width="15"
-                                    height="15"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.6"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M15 6l-6 6 6 6" />
-                                </svg>
-                            </button>
-                            <span
-                                style={{
-                                    minWidth: 72,
-                                    textAlign: "center",
-                                    color: "#9a9a9a",
-                                }}
-                            >
-                                {monthLabel(month)}
-                            </span>
-                            <button
-                                type="button"
-                                aria-label="다음 달"
-                                onClick={() => setMonth((m) => addMonth(m, 1))}
-                                {...pressScale(0.82)}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 22,
-                                    height: 22,
-                                    border: "none",
-                                    background: "none",
-                                    color: "#c2c2c2",
-                                    cursor: "pointer",
-                                    padding: 0,
-                                    transition: "transform .12s",
-                                }}
-                            >
-                                <svg
-                                    width="15"
-                                    height="15"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.6"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M9 6l6 6-6 6" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
                     <div
                         style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
+                            fontSize: 21,
+                            fontWeight: 800,
+                            letterSpacing: "-0.03em",
                         }}
                     >
-                        <button
-                            type="button"
-                            aria-label="카테고리 관리"
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                                height: 38,
-                                padding: "0 13px",
-                                border: "1px solid #ececec",
-                                borderRadius: 999,
-                                background: "#fff",
-                                font: "inherit",
-                                fontSize: 12.5,
-                                fontWeight: 700,
-                                color: "#444",
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                                flex: "none",
-                                transition: "transform .12s",
-                            }}
-                            onClick={() => {
-                                resetIdle()
-                                setCategorySheetOpen(true)
-                            }}
-                            {...pressScale(0.95)}
-                        >
-                            <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                            >
-                                <path d="M7 7h.01M7 3h5a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8l-5.6 5.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12V7a4 4 0 0 1 4-4Z" />
-                            </svg>
-                            카테고리
-                        </button>
-                        <LockTimer style={{ padding: "0 13px" }} />
+                        자산
                     </div>
+                    <LockTimer style={{ padding: "0 13px" }} />
                 </div>
                 <div
                     style={{
@@ -802,6 +665,154 @@ export default function AssetPage() {
                         저축·투자
                     </button>
                 </div>
+                {assetTab === "budget" && (
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginTop: 12,
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                            }}
+                        >
+                            <button
+                                type="button"
+                                aria-label="이전 달"
+                                onClick={() => setMonth((m) => addMonth(m, -1))}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.color = "#171717"
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.color = "#c2c2c2"
+                                }}
+                                {...pressScale(0.82)}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 26,
+                                    height: 26,
+                                    border: "none",
+                                    background: "none",
+                                    color: "#c2c2c2",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                    transition: "transform .12s",
+                                }}
+                            >
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M15 6l-6 6 6 6" />
+                                </svg>
+                            </button>
+                            <div
+                                style={{
+                                    fontSize: 13,
+                                    color: "#555",
+                                    fontWeight: 700,
+                                    minWidth: 78,
+                                    textAlign: "center",
+                                }}
+                            >
+                                {monthLabel(month)}
+                            </div>
+                            <button
+                                type="button"
+                                aria-label="다음 달"
+                                onClick={() => setMonth((m) => addMonth(m, 1))}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.color = "#171717"
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.color = "#c2c2c2"
+                                }}
+                                {...pressScale(0.82)}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 26,
+                                    height: 26,
+                                    border: "none",
+                                    background: "none",
+                                    color: "#c2c2c2",
+                                    cursor: "pointer",
+                                    padding: 0,
+                                    transition: "transform .12s",
+                                }}
+                            >
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.6"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 6l6 6-6 6" />
+                                </svg>
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            aria-label="카테고리 관리"
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                height: 34,
+                                padding: "0 13px",
+                                border: "1px solid #ececec",
+                                borderRadius: 999,
+                                background: "#fff",
+                                font: "inherit",
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                color: "#444",
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                                flex: "none",
+                                transition: "transform .12s",
+                            }}
+                            onClick={() => {
+                                resetIdle()
+                                setCategorySheetOpen(true)
+                            }}
+                            {...pressScale(0.95)}
+                        >
+                            <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M7 7h.01M7 3h5a2 2 0 0 1 1.4.6l7 7a2 2 0 0 1 0 2.8l-5.6 5.6a2 2 0 0 1-2.8 0l-7-7A2 2 0 0 1 3 12V7a4 4 0 0 1 4-4Z" />
+                            </svg>
+                            카테고리
+                        </button>
+                    </div>
+                )}
             </div>
 
             {state.status === "loading" && <SkeletonCard lines={4} />}
