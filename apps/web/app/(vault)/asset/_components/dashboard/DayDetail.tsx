@@ -92,7 +92,7 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                         fontWeight: 800,
                                     }}
                                 >
-                                    {resolved.name.slice(0, 1)}
+                                    {(e.item || resolved.name).slice(0, 1)}
                                 </span>
                                 <span
                                     className="entry-main"
@@ -133,7 +133,7 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                         color: "#1f1f1f",
                                     }}
                                 >
-                                    {formatWon(e.amount)}
+                                    -{formatWon(e.amount)}
                                 </span>
                             </Link>
                         )
