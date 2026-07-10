@@ -182,7 +182,9 @@ test.describe.serial("저축·투자 탭", () => {
         // ── 금액·메모 입력 후 저장 ──
         await sheet.getByLabel("금액").fill(String(BOX_DEPOSIT_AMOUNT))
         await sheet.getByLabel("메모").fill(BOX_DEPOSIT_MEMO)
-        await sheet.getByRole("button", { name: "입금", exact: true }).click()
+        await sheet
+            .getByRole("button", { name: "입금 기록", exact: true })
+            .click()
 
         await expect(sheet).toBeHidden({ timeout: 10_000 })
 

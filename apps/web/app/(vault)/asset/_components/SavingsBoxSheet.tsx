@@ -50,13 +50,9 @@ export function SavingsBoxSheet({
     const isIn = mode === "in"
     const title = isIn ? "입금" : "출금"
     const desc = isIn
-        ? "남는 돈을 세이빙 박스에 모아두세요."
-        : "필요한 만큼 세이빙 박스에서 꺼내 쓰세요."
-    const memoPlaceholder = !isIn
-        ? "예: 여행 경비로 사용"
-        : source === "savings"
-          ? "예: 적금에서 일부 이체"
-          : "예: 용돈에서 남은 돈"
+        ? "저축·투자·지출하고 남은 돈을 박스에 넣어두세요."
+        : "박스에서 돈을 꺼내 쓴 내역을 기록해요."
+    const memoPlaceholder = isIn ? "예: 6월 남은 생활비" : "예: 경조사비"
     const amountValue = Number(amount || "0")
 
     async function save() {
@@ -280,7 +276,7 @@ export function SavingsBoxSheet({
                     loading={saving}
                     disabled={amountValue <= 0}
                 >
-                    {title}
+                    {isIn ? "입금 기록" : "출금 기록"}
                 </Button>
             </div>
         </div>
