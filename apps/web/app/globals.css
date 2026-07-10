@@ -1,31 +1,24 @@
-/* 전역 스타일. "Ink" 디자인 시스템 — 모노크롬 라이트 + 단일 검정 액센트(claude.ai/design 프로토타입 적용).
-   토큰 → 베이스 → 키프레임 → 레이아웃(phone-frame) → 컴포넌트 → 시그니처(비밀 플레이트·잠금 타이머·엠블럼) → 접근성·모션 순. */
-
 :root {
-    /* Color — Surface (라이트 셸) */
-    --ac: #171717; /* 액센트/주요 버튼/포커스 */
-    --soft: #f1f1f1; /* 보조 표면(검색바·칩 트랙) */
-    --tint: #fafafa; /* 입력 배경·화면 틴트 */
+    --ac: #171717;
+    --soft: #f1f1f1;
+    --tint: #fafafa;
 
-    --color-bg: #ffffff; /* 화면 배경 */
-    --color-bg-outer: #e9e9ec; /* 데스크탑 셸(양옆) */
-    --color-surface-1: #ffffff; /* 카드/패널 */
-    --color-surface-2: var(--tint); /* 함몰 표면(입력) */
-    --color-plate: #ffffff; /* 비밀 플레이트 */
+    --color-bg: #ffffff;
+    --color-bg-outer: #e9e9ec;
+    --color-surface-1: #ffffff;
+    --color-surface-2: var(--tint);
+    --color-plate: #ffffff;
 
-    /* Color — Text */
     --color-text-primary: #171717;
     --color-text-secondary: #444444;
-    /* WCAG AA: 흰 배경 대비 4.5:1 이상(약 5.1:1). 가독성 위해 경계(#767676)보다 여유. */
-    --color-text-muted: #6e6e6e;
-    --color-text-inverse: #ffffff; /* 검정 위 흰 글자 */
 
-    /* Color — Border */
+    --color-text-muted: #6e6e6e;
+    --color-text-inverse: #ffffff;
+
     --color-border: #efefef;
     --color-border-strong: #e3e3e6;
     --color-edge-highlight: #efefef;
 
-    /* Color — Accent (검정 단일 브랜드 액센트) */
     --color-accent: var(--ac);
     --color-accent-hover: #000000;
     --color-accent-active: #2b2b2b;
@@ -33,10 +26,8 @@
     --color-accent-soft: var(--soft);
     --color-accent-line: #e3e3e6;
 
-    /* Color — Focus ring */
     --color-focus-ring: var(--ac);
 
-    /* Color — States (라이트 톤) */
     --color-success-bg: #eef7f1;
     --color-success-fg: #1f7a4d;
     --color-success-border: #cfe7da;
@@ -54,7 +45,6 @@
     --color-info-fg: var(--ac);
     --color-info-border: var(--color-border-strong);
 
-    /* Spacing */
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -64,19 +54,16 @@
     --space-7: 40px;
     --space-8: 48px;
 
-    /* Radius — 프로토타입 토큰 */
     --radius-sm: 10px;
     --radius-md: 14px;
     --radius-lg: 16px;
     --radius-card: 18px;
     --radius-full: 999px;
 
-    /* Shadow */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 10px 30px -8px rgba(0, 0, 0, 0.18);
     --shadow-accent: 0 8px 22px -8px var(--ac);
 
-    /* Font family — Pretendard 본문, 모노 시크릿 */
     --font-body:
         "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont,
         "Segoe UI", Roboto, system-ui, sans-serif;
@@ -84,7 +71,6 @@
     --font-mono:
         ui-monospace, "SFMono-Regular", "Menlo", "JetBrains Mono", monospace;
 
-    /* Font size */
     --font-xs: 12px;
     --font-sm: 14px;
     --font-md: 16px;
@@ -93,20 +79,16 @@
     --font-2xl: 28px;
     --font-base: var(--font-md);
 
-    /* Motion */
     --motion-fast: 120ms;
     --motion-normal: 250ms;
-    --motion-base: 550ms; /* 진행 바(width) 채우기 애니메이션 */
+    --motion-base: 550ms;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-    /* Container */
     --container-padding: 18px;
     --container-max-width: 480px;
 
-    /* Touch target */
     --touch-target-min: 44px;
 
-    /* Bottom tab bar height */
     --bottom-tab-height: 64px;
 }
 
@@ -158,7 +140,6 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Focus visible — 키보드 사용 시에만 강조 */
 *:focus {
     outline: none;
 }
@@ -168,7 +149,6 @@ a:hover {
     border-radius: var(--radius-sm);
 }
 
-/* Eyebrow — 액센트 소문자 라벨 */
 .eyebrow {
     font-family: var(--font-body);
     font-weight: 700;
@@ -180,7 +160,6 @@ a:hover {
     gap: var(--space-2);
 }
 
-/* ── Keyframes (프로토타입에서 이식) ─────────────────── */
 @keyframes fadeUp {
     from {
         transform: translateY(10px);
@@ -267,7 +246,6 @@ a:hover {
     }
 }
 
-/* 목록·상세 진입 stagger */
 .stagger > * {
     animation: fadeUp 0.42s var(--ease) both;
     opacity: 1;
@@ -297,47 +275,36 @@ a:hover {
     animation-delay: 0.3s;
 }
 
-/* 가로 스크롤 영역의 스크롤바 숨김(추천 칩) */
 .scr::-webkit-scrollbar {
     width: 0;
     height: 0;
 }
 
-/* ── Layout ─────────────────────────────────────────── */
-
-/* Phone frame — 데스크탑 가운데 정렬, 모바일 풀스크린. */
 .phone-frame {
     position: relative;
     min-height: 100vh;
-    /* 화면 셸을 세로 flex 로 두어 .container 가 뷰포트 높이를 채우게 한다.
-       그래야 화면의 minHeight:100% 와 빈 상태의 flex:1 세로 중앙정렬이 목업처럼 동작한다. */
+
     display: flex;
     flex-direction: column;
-    /* 디자인 mock: 화면 배경은 #fafafa(--tint) 풀블리드. 자체 배경(온보딩·잠금 그라데이션,
-       복구·폼 #fff)을 가진 화면은 그 위를 덮는다. */
+
     background: var(--tint);
 }
 
 .container {
     max-width: 100%;
-    /* flex 컬럼(.phone-frame)의 자식이라 auto 마진이 stretch 를 이겨 콘텐츠 폭으로
-       줄어드는 것을 막기 위해 폭을 명시한다. flex:1 로 뷰포트 높이를 채운다. */
+
     width: 100%;
     margin: 0 auto;
     flex: 1;
-    /* 세로 flex 컬럼으로 두어, flex:1 인 화면(목록 빈 상태 등)이 뷰포트를 채우고
-       내부 flex 중앙정렬이 목업처럼 동작하게 한다. */
+
     display: flex;
     flex-direction: column;
     padding: var(--container-padding);
     padding-top: var(--space-5);
-    /* 하단 탭바 + 그 위에 뜨는 FAB(56px) 높이만큼 비워, 마지막 항목 금액이
-       FAB 에 가리지 않고 위로 스크롤되게 한다. */
+
     padding-bottom: calc(var(--bottom-tab-height) + 56px + var(--space-4) * 2);
 }
 
-/* 목업의 풀블리드 흰 배경 화면(백업·지출 폼). .container 좌우 패딩을 상쇄해 흰 배경이
-   프레임 가장자리까지 차게 하고, 본문은 다시 좌우 18px 로 들여쓴다(헤더는 자체 -margin 으로 블리드). */
 .screen-white {
     min-height: 100%;
     background: #fff;
@@ -366,12 +333,10 @@ a:hover {
     color: var(--color-text-muted);
 }
 
-/* 액센트 엠블럼·아바타에 쓰는 진입 pop */
 .pop {
     animation: pop 0.5s both;
 }
 
-/* ── Sticky header (블러) ────────────────────────────── */
 .sticky-header {
     position: sticky;
     top: 0;
@@ -380,26 +345,24 @@ a:hover {
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--color-border);
-    /* 상·좌·우만 블리드(프레임 가장자리까지). 아래쪽 음수 마진은 헤더 다음 요소를
-       위로 끌어올려 목업보다 간격을 좁히므로 두지 않는다. */
+
     margin: calc(-1 * var(--container-padding))
         calc(-1 * var(--container-padding)) 0;
     padding: 30px var(--container-padding) 12px;
 }
-/* 상세·폼·백업 헤더는 목업 기준 좌우 16px(목록/자산은 18px 유지). */
+
 .sticky-header.tight {
     padding: 30px 16px 14px;
 }
-/* 목록·자산·상세 헤더는 목업 기준 배경 불투명도 .82(폼·백업·지출폼은 .85). */
+
 .sticky-header.translucent {
     background: rgba(255, 255, 255, 0.82);
 }
-/* 헤더 내 텍스트 버튼(취소·저장·← 뒤로)은 목업과 동일하게 15px. */
+
 .sticky-header .btn-text {
     font-size: 15px;
 }
 
-/* 항목 이니셜 아바타 */
 .avatar {
     flex-shrink: 0;
     width: 44px;
@@ -421,7 +384,6 @@ a:hover {
     border-radius: 15px;
 }
 
-/* 검색 바(soft 배경 + 아이콘) */
 .search-bar {
     display: flex;
     align-items: center;
@@ -446,7 +408,6 @@ a:hover {
     color: var(--color-text-muted);
 }
 
-/* 진행 점(온보딩/복구 단계) */
 .progress-dots {
     display: flex;
     gap: 6px;
@@ -462,7 +423,6 @@ a:hover {
     background: var(--ac);
 }
 
-/* ── Bottom tab bar ─────────────────────────────────── */
 .bottom-tab-bar {
     position: fixed;
     bottom: 0;
@@ -525,7 +485,6 @@ a:hover {
     text-decoration: none;
 }
 
-/* ── Buttons ────────────────────────────────────────── */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -556,7 +515,6 @@ a:hover {
     transform: scale(0.97);
 }
 
-/* 보조 버튼 — 흰 배경 + 회색 테두리 */
 .btn.secondary {
     background: #fff;
     color: var(--color-text-primary);
@@ -573,7 +531,6 @@ a:hover {
     color: var(--color-text-primary);
 }
 
-/* 삭제 버튼 — 흰 배경 + 빨강 테두리·글자 */
 .btn.danger {
     background: #fff;
     border: 1px solid var(--color-danger-border);
@@ -605,7 +562,6 @@ a:hover {
     border-color: var(--color-border);
 }
 
-/* 텍스트 버튼(링크형) */
 .btn-text {
     display: inline-flex;
     align-items: center;
@@ -628,7 +584,6 @@ a:hover {
     opacity: 0.5;
 }
 
-/* 추천 칩(가로 스크롤 quick-add) */
 .chip {
     flex-shrink: 0;
     display: flex;
@@ -654,7 +609,6 @@ a:hover {
     transform: scale(0.95);
 }
 
-/* 인라인 스타일 버튼의 프레스 피드백(디자인 style-active 대응). */
 .press-95,
 .press-96,
 .press-98 {
@@ -681,7 +635,6 @@ a:hover {
     cursor: not-allowed;
 }
 
-/* FAB(+) */
 .fab {
     position: fixed;
     right: calc(50% - 240px + 20px);
@@ -714,7 +667,6 @@ a:hover {
     }
 }
 
-/* ── Forms ──────────────────────────────────────────── */
 .form-row {
     display: grid;
     grid-template-columns: 1fr;
@@ -737,7 +689,7 @@ a:hover {
     padding: 0 15px;
     border: 1.5px solid #ececec;
     border-radius: 13px;
-    font-size: var(--font-md); /* 16px — iOS auto-zoom 방지 */
+    font-size: var(--font-md);
     font-family: inherit;
     font-weight: 500;
     background: var(--tint);
@@ -782,7 +734,6 @@ textarea.field-control {
     min-width: 140px;
 }
 
-/* ── Spinner ────────────────────────────────────────── */
 @keyframes spin {
     to {
         transform: rotate(360deg);
@@ -797,7 +748,7 @@ textarea.field-control {
     border-right-color: transparent;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
-    /* 글자 옆 정렬 보정 */
+
     vertical-align: -2px;
 }
 
@@ -811,16 +762,12 @@ textarea.field-control {
     margin-right: 8px;
 }
 
-/* iOS Safari 의 input[type="date"] 는 네이티브 컨트롤 내재 최소너비가 width:100% 를
-   무시해 컨테이너 밖으로 넘친다. appearance 해제 + min-width:0 으로 width(border-box)가
-   실제 적용되게 한다. (Chromium 은 정상이라 이 버그는 iOS 전용) */
 input[type="date"].field-control {
     -webkit-appearance: none;
     appearance: none;
     min-width: 0;
 }
 
-/* ── Toolbar / header ───────────────────────────────── */
 .toolbar {
     display: flex;
     gap: var(--space-2);
@@ -851,7 +798,6 @@ input[type="date"].field-control {
     margin: var(--space-5) 0 var(--space-3);
 }
 
-/* ── Feedback (error / empty) ───────────────────────── */
 .error-box {
     border: 1px solid var(--color-danger-border);
     background: var(--color-danger-bg);
@@ -872,15 +818,13 @@ input[type="date"].field-control {
     background: var(--tint);
 }
 
-/* ── Entry list (목록) ──────────────────────────────── */
 .entry-list {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
     gap: 9px;
-    /* flex:1 로 늘어난 컨테이너에서 그리드 기본 align-content(stretch)가
-       행을 늘려 항목 간격이 벌어지는 것을 막고, 목업처럼 상단에 밀착시킨다. */
+
     align-content: start;
 }
 
@@ -929,7 +873,7 @@ input[type="date"].field-control {
 .entry-sub {
     font-size: 12.5px;
     font-weight: 500;
-    color: var(--color-text-muted); /* WCAG AA: #a3a3a3(2.5:1) → 토큰(5.1:1) */
+    color: var(--color-text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -947,7 +891,6 @@ input[type="date"].field-control {
     font-size: var(--font-lg);
 }
 
-/* 카테고리 칩 */
 .cat-badge {
     font-family: var(--font-body);
     font-weight: 700;
@@ -961,7 +904,6 @@ input[type="date"].field-control {
     white-space: nowrap;
 }
 
-/* ── Lock timer (자동 잠금 카운트다운) ──────────────── */
 .lock-timer {
     display: inline-flex;
     align-items: center;
@@ -990,7 +932,6 @@ input[type="date"].field-control {
     animation: pulse 2s infinite;
 }
 
-/* ── Detail rows (상세 메타) ────────────────────────── */
 .detail-row {
     display: flex;
     gap: var(--space-3);
@@ -1009,7 +950,6 @@ input[type="date"].field-control {
     word-break: break-word;
 }
 
-/* ── Secret plate (시그니처: 드러내고 자가소멸) ─────── */
 .secret-plate {
     position: relative;
     padding: 14px 16px;
@@ -1034,8 +974,6 @@ input[type="date"].field-control {
 }
 
 .secret-value {
-    /* 값이 보일 때(비민감·표시)는 본문 폰트(목업 revealed=inherit).
-       가려진 값(점)일 때만 .masked 에서 모노로 바꾼다. */
     font-family: inherit;
     font-size: 15.5px;
     font-weight: 600;
@@ -1045,14 +983,12 @@ input[type="date"].field-control {
     display: block;
 }
 
-/* 마스킹된 점 */
 .secret-value.masked {
     font-family: var(--font-mono);
     color: #1f1f1f;
     letter-spacing: 0.04em;
 }
 
-/* 드러난 비밀값 */
 .secret-value.revealed {
     font-family: inherit;
     letter-spacing: 0;
@@ -1065,7 +1001,6 @@ input[type="date"].field-control {
     gap: var(--space-1);
 }
 
-/* 작은 plate 액션 버튼(표시/복사) */
 .secret-btn {
     display: inline-flex;
     align-items: center;
@@ -1101,7 +1036,6 @@ input[type="date"].field-control {
     cursor: not-allowed;
 }
 
-/* 자가소멸 게이지 — 복사 후 30초 동안 검정 라인이 줄어든다 */
 .secret-drain {
     display: flex;
     align-items: center;
@@ -1134,7 +1068,6 @@ input[type="date"].field-control {
     text-align: right;
 }
 
-/* memo */
 .secret-memo {
     white-space: pre-wrap;
     color: var(--color-text-secondary);
@@ -1142,7 +1075,6 @@ input[type="date"].field-control {
     line-height: 1.55;
 }
 
-/* ── Vault emblem (잠금/설정 화면 엠블럼) ───────────── */
 .vault-emblem {
     width: 58px;
     height: 58px;
@@ -1154,8 +1086,6 @@ input[type="date"].field-control {
     margin-bottom: var(--space-5);
 }
 
-/* 인증 전 화면(온보딩·잠금·로딩·에러)은 풀스크린 — 하단 탭바를 숨기고 컨테이너
-   패딩을 걷어낸다(각 화면이 자체 패딩·전체 높이로 채운다). */
 html[data-auth-screen] .bottom-tab-bar {
     display: none;
 }
@@ -1164,7 +1094,6 @@ html[data-auth-screen] .container {
     padding: 0;
 }
 
-/* 잠금해제 링(인증 중 회전) */
 .unlock-ring {
     position: relative;
     width: 104px;
@@ -1202,7 +1131,6 @@ html[data-auth-screen] .container {
     color: var(--color-danger-fg);
 }
 
-/* ── 복구코드 그리드 ────────────────────────────────── */
 .recovery-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1223,7 +1151,6 @@ html[data-auth-screen] .container {
     animation: fadeUp 0.4s var(--ease) both;
 }
 
-/* 체크 확인 라벨(복구코드 보관·드롭존 라디오 공용 톤) */
 .ack-label {
     display: flex;
     gap: 11px;
@@ -1242,7 +1169,6 @@ html[data-auth-screen] .container {
     flex-shrink: 0;
 }
 
-/* ── Confirm dialog ─────────────────────────────────── */
 .dialog-backdrop {
     position: fixed;
     inset: 0;
@@ -1253,7 +1179,7 @@ html[data-auth-screen] .container {
     justify-content: center;
     animation: fade 0.2s var(--ease);
 }
-/* 세이빙 박스 상세·카테고리 관리 시트는 목업 기준 배경 .32. */
+
 .dialog-backdrop.dim {
     background: rgba(0, 0, 0, 0.32);
 }
@@ -1291,7 +1217,6 @@ html[data-auth-screen] .container {
     justify-content: flex-end;
 }
 
-/* Inline bottom sheet */
 .inline-bottom-sheet {
     position: sticky;
     bottom: calc(var(--bottom-tab-height) + var(--space-2));
@@ -1308,7 +1233,6 @@ html[data-auth-screen] .container {
     justify-self: center;
 }
 
-/* ── Skeleton ───────────────────────────────────────── */
 .skeleton {
     background: linear-gradient(
         90deg,
@@ -1335,7 +1259,6 @@ html[data-auth-screen] .container {
     gap: var(--space-2);
 }
 
-/* ── Responsive table (보조 컴포넌트) ───────────────── */
 .responsive-table {
     display: block;
 }
@@ -1387,7 +1310,6 @@ html[data-auth-screen] .container {
     background: var(--tint);
 }
 
-/* ── PWA install banner ─────────────────────────────── */
 .install-banner {
     display: flex;
     justify-content: space-between;
@@ -1412,7 +1334,6 @@ html[data-auth-screen] .container {
     min-height: var(--touch-target-min);
 }
 
-/* ── Update toast (둥근 검정 토스트) ────────────────── */
 .update-toast {
     position: fixed;
     bottom: calc(var(--bottom-tab-height) + var(--space-4));
@@ -1446,7 +1367,6 @@ html[data-auth-screen] .container {
     min-height: var(--touch-target-min);
 }
 
-/* ── Desktop (≥520px) — 480px 셸 가운데 정렬, 양옆 라이트 그레이 ── */
 @media (min-width: 520px) {
     html,
     body {
@@ -1463,9 +1383,6 @@ html[data-auth-screen] .container {
         border-right: 1px solid var(--color-border);
     }
 
-    /* 데스크탑에선 백드롭을 480px 프레임 폭으로 가두되 뷰포트에 고정한다.
-       position: absolute 로 두면 내용이 긴 화면(자산 대시보드 등)에서 프레임 끝까지
-       늘어나 시트가 화면 밖 아래에 생기므로, fixed 로 뷰포트 하단에 고정한다. */
     .phone-frame .dialog-backdrop {
         position: fixed;
         left: 50%;
@@ -1476,7 +1393,6 @@ html[data-auth-screen] .container {
     }
 }
 
-/* ── Asset (자산 관리) ───────────────────────────────── */
 .field-label {
     color: var(--color-text-muted);
     font-size: 11.5px;
@@ -1484,12 +1400,10 @@ html[data-auth-screen] .container {
     margin-bottom: 7px;
 }
 
-/* 카테고리·결제방법 칩 안의 색 점 간격 */
 .chip > span[aria-hidden] {
     margin-right: 6px;
 }
 
-/* 고정 지출 토글 행 */
 .asset-toggle-row {
     display: flex;
     align-items: center;
@@ -1506,7 +1420,6 @@ html[data-auth-screen] .container {
     flex-shrink: 0;
 }
 
-/* 자산 카드 공통 */
 .asset-card {
     border: 1px solid var(--color-border);
     border-radius: 18px;
@@ -1516,8 +1429,7 @@ html[data-auth-screen] .container {
     color: inherit;
     transition: transform 0.12s var(--ease);
 }
-/* asset-card 는 카드 표면일 뿐이라 기본 프레스 없음(목업: 정적 컨테이너는 눌러도 안 줄어듦).
-   실제 눌리는 카드만 개별로 프레스 스케일을 준다(예산 카드는 JS pressScale, 투자 카드는 .sv-return:active). */
+
 .sv-return:active {
     transform: scale(0.99);
 }
@@ -1533,7 +1445,6 @@ html[data-auth-screen] .container {
     letter-spacing: -0.02em;
 }
 
-/* 진행/비율 바 */
 .asset-bar {
     height: 8px;
     border-radius: var(--radius-full);
@@ -1546,7 +1457,6 @@ html[data-auth-screen] .container {
     transition: width var(--motion-base) var(--ease);
 }
 
-/* 지출 달력 셀 */
 .cal-cell {
     aspect-ratio: 1;
     display: flex;
@@ -1597,7 +1507,6 @@ html[data-auth-screen] .container {
     color: rgba(255, 255, 255, 0.85);
 }
 
-/* 고정 지출 배지 */
 .recur-badge {
     flex-shrink: 0;
     font-size: 10px;
@@ -1608,7 +1517,6 @@ html[data-auth-screen] .container {
     border-radius: 6px;
 }
 
-/* 바텀시트(수입 설정) */
 .sheet {
     width: 100%;
     max-width: var(--app-max-width, 480px);
@@ -1617,8 +1525,7 @@ html[data-auth-screen] .container {
     border-radius: 26px 26px 0 0;
     padding: 10px 22px 26px;
     animation: sheetUp 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
-    /* 내용이 길어지면(카테고리·수입 많을 때) 시트 위쪽이 화면 밖으로 잘리지 않도록
-       높이를 제한하고 내부 스크롤한다. dvh 로 모바일 브라우저 UI 높이 변화 대응. */
+
     max-height: 74dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -1647,7 +1554,7 @@ html[data-auth-screen] .container {
 }
 .income-input input {
     flex: 1;
-    min-width: 0; /* 값이 길어도 옆의 단위(₩·%)를 박스 밖으로 밀지 않도록 축소 허용 */
+    min-width: 0;
     border: none;
     background: none;
     outline: none;
@@ -1667,7 +1574,6 @@ html[data-auth-screen] .container {
     }
 }
 
-/* ── prefers-reduced-motion ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
