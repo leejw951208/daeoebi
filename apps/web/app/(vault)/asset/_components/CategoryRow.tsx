@@ -57,16 +57,22 @@ export function CategoryRow({
                 {category.name}
             </div>
             {fixed ? (
-                <span
-                    style={{
-                        flex: "none",
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        color: "#c0c0c0",
-                    }}
+                <svg
+                    role="img"
+                    aria-label="고정"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#c9c9cd"
+                    strokeWidth={2.2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flex: "none" }}
                 >
-                    고정
-                </span>
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
             ) : (
                 <>
                     <button
