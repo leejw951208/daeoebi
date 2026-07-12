@@ -120,16 +120,8 @@ test("B. category CRUD — 추가·수정·삭제가 정상 동작한다", async
 
     // ── DELETE ────────────────────────────────────────────────────────────────
     // The edited category is still the last in the list.
+    // 삭제는 확인 다이얼로그 없이 즉시 반영된다(디자인).
     await dialog.getByRole("button", { name: "삭제" }).last().click()
-
-    // ConfirmDialog appears.
-    const confirmDialog = page.getByRole("dialog", { name: "카테고리 삭제" })
-    await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
-    await expect(
-        confirmDialog.getByText("이 카테고리의 지출은 미분류가 됩니다."),
-    ).toBeVisible()
-
-    await confirmDialog.getByRole("button", { name: "삭제" }).click()
 
     // Category is gone from the list.
     await expect(dialog.getByText(editedName)).toBeHidden({ timeout: 10_000 })
@@ -276,11 +268,8 @@ test("F. loading — 추가 버튼이 진행 중에 aria-busy 됨", async ({ pag
     // Remove the route interception.
     await page.unroute("**/asset-categories")
 
-    // Clean up: delete the category that was created.
+    // Clean up: delete the category that was created (삭제는 즉시 반영, 확인 없음).
     await dialog.getByRole("button", { name: "삭제" }).last().click()
-    const confirmDialog = page.getByRole("dialog", { name: "카테고리 삭제" })
-    await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
-    await confirmDialog.getByRole("button", { name: "삭제" }).click()
     await expect(dialog.getByText(uniqueName)).toBeHidden({ timeout: 10_000 })
 })
 
