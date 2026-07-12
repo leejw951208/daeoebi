@@ -1,6 +1,6 @@
 // 자산(지출) 카테고리 CRUD. 전역 평문.
 // 카테고리는 고정(code 보유, 수정·삭제 불가)과 사용자 생성(code null)으로 나뉜다.
-// 고정 14종은 list() 에서 code 기준으로 멱등 시드한다. 저축·투자 대시보드는 code 를 앵커로 쓴다.
+// 고정 11종은 list() 에서 code 기준으로 멱등 시드한다. 저축·투자 대시보드는 code 를 앵커로 쓴다.
 import {
     ConflictException,
     ForbiddenException,
@@ -14,21 +14,18 @@ import {
 } from "./dto/asset-category.dto"
 import { ASSET_ERRORS } from "./asset.types"
 
-// 고정 카테고리 14종. code 는 안정 식별자(고유)이며 색은 자동 배정값이다.
+// 고정 카테고리 11종. code 는 안정 식별자(고유)이며 색은 자동 배정값이다.
 // 순서는 목록 정렬(고정 먼저)에 사용한다. INVESTMENT/SAVINGS 는 저축·투자 대시보드 앵커.
 export const FIXED_CATEGORIES: { name: string; color: string; code: string }[] =
     [
-        { name: "식비", color: "#f2994a", code: "FOOD" },
-        { name: "카페·간식", color: "#eb5757", code: "CAFE" },
-        { name: "편의점·마트·잡화", color: "#e0689a", code: "MART" },
-        { name: "쇼핑", color: "#9b6bd6", code: "SHOPPING" },
-        { name: "의료·건강", color: "#7b61ff", code: "HEALTH" },
+        { name: "식비·카페", color: "#f2994a", code: "FOOD" },
+        { name: "생활·잡화", color: "#e0689a", code: "MART" },
+        { name: "쇼핑·문화", color: "#9b6bd6", code: "SHOPPING" },
+        { name: "건강·미용", color: "#7b61ff", code: "HEALTH" },
         { name: "주거·통신", color: "#4a90d9", code: "HOUSING" },
         { name: "보험·세금", color: "#2d9cdb", code: "INSURANCE_TAX" },
-        { name: "미용", color: "#20a4a4", code: "BEAUTY" },
         { name: "교통", color: "#3bb273", code: "TRANSPORT" },
         { name: "구독", color: "#bb6bd9", code: "SUBSCRIPTION" },
-        { name: "문화", color: "#d68910", code: "CULTURE" },
         { name: "투자", color: "#6fcf97", code: "INVESTMENT" },
         { name: "저축", color: "#f2c94c", code: "SAVINGS" },
         { name: "기타", color: "#98a0a8", code: "ETC" },

@@ -12,7 +12,7 @@ import {
 // 고정 표시 월(예시). 실제 오늘과 무관한 상수.
 export const DEMO_MONTH = "2026-06"
 
-// 고정 카테고리 14종(코드 보유). 데모는 서버 없이 이 목록을 그대로 쓴다.
+// 고정 카테고리 11종(코드 보유). 데모는 서버 없이 이 목록을 그대로 쓴다.
 function fixedCat(
     id: string,
     name: string,
@@ -25,20 +25,17 @@ function fixedCat(
 }
 
 export const DEMO_ASSET_CATEGORIES: AssetCategory[] = [
-    fixedCat("c-food", "식비", "#f2994a", "FOOD", 1),
-    fixedCat("c-cafe", "카페·간식", "#eb5757", "CAFE", 2),
-    fixedCat("c-mart", "편의점·마트·잡화", "#e0689a", "MART", 3),
-    fixedCat("c-shop", "쇼핑", "#9b6bd6", "SHOPPING", 4),
-    fixedCat("c-health", "의료·건강", "#7b61ff", "HEALTH", 5),
-    fixedCat("c-housing", "주거·통신", "#4a90d9", "HOUSING", 6),
-    fixedCat("c-insurance", "보험·세금", "#2d9cdb", "INSURANCE_TAX", 7),
-    fixedCat("c-beauty", "미용", "#20a4a4", "BEAUTY", 8),
-    fixedCat("c-transport", "교통", "#3bb273", "TRANSPORT", 9),
-    fixedCat("c-subscription", "구독", "#bb6bd9", "SUBSCRIPTION", 10),
-    fixedCat("c-culture", "문화", "#d68910", "CULTURE", 11),
-    fixedCat("c-invest", "투자", "#6fcf97", "INVESTMENT", 12),
-    fixedCat("c-savings", "저축", "#f2c94c", "SAVINGS", 13),
-    fixedCat("c-etc", "기타", "#98a0a8", "ETC", 14),
+    fixedCat("c-food", "식비·카페", "#f2994a", "FOOD", 1),
+    fixedCat("c-mart", "생활·잡화", "#e0689a", "MART", 2),
+    fixedCat("c-shop", "쇼핑·문화", "#9b6bd6", "SHOPPING", 3),
+    fixedCat("c-health", "건강·미용", "#7b61ff", "HEALTH", 4),
+    fixedCat("c-housing", "주거·통신", "#4a90d9", "HOUSING", 5),
+    fixedCat("c-insurance", "보험·세금", "#2d9cdb", "INSURANCE_TAX", 6),
+    fixedCat("c-transport", "교통", "#3bb273", "TRANSPORT", 7),
+    fixedCat("c-subscription", "구독", "#bb6bd9", "SUBSCRIPTION", 8),
+    fixedCat("c-invest", "투자", "#6fcf97", "INVESTMENT", 9),
+    fixedCat("c-savings", "저축", "#f2c94c", "SAVINGS", 10),
+    fixedCat("c-etc", "기타", "#98a0a8", "ETC", 11),
 ]
 
 // 현재월 여러 날짜에 분산된 예시 지출. categoryId 는 위 카테고리를 참조.
@@ -121,7 +118,7 @@ export const DEMO_EXPENSES: ComputedExpense[] = [
         recurringId: null,
         item: "커피 정기구독",
         amount: 12900,
-        categoryId: "c-cafe",
+        categoryId: "c-food",
     },
 ]
 
