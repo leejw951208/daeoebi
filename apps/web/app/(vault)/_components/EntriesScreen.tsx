@@ -184,7 +184,7 @@ export function EntriesScreen() {
                     className="entry-list stagger"
                     // 목업 목록 행은 좌우 16px 인셋. .container 18px 에서 -2px 보정(자산 대시보드와 동일 패턴).
                     style={{
-                        padding: "14px 0 96px",
+                        padding: "14px 0 0",
                         marginLeft: -2,
                         marginRight: -2,
                         flex: 1,
