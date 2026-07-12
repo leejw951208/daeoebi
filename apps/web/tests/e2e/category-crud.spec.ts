@@ -21,17 +21,19 @@ const SCREENSHOTS_DIR = path.join(__dirname, "__screenshots__")
 const UNIQUE = `QA-${Date.now()}`
 const RENAMED = `${UNIQUE.slice(0, 12)}-수정`
 
-// 고정 카테고리 12종(코드 보유, 읽기 전용).
+// 고정 카테고리 14종(코드 보유, 읽기 전용).
 const FIXED_NAMES = [
     "식비",
     "카페·간식",
-    "편의점·마트",
+    "편의점·마트·잡화",
     "쇼핑",
     "의료·건강",
     "주거·통신",
     "보험·세금",
     "미용",
     "교통",
+    "구독",
+    "문화",
     "투자",
     "저축",
     "기타",
@@ -116,7 +118,7 @@ test.describe.serial("카테고리 관리", () => {
     })
 
     // ── 1. 조회 ───────────────────────────────────────────────────────────────
-    test("1. 조회 — 고정 카테고리 12종이 노출된다", async ({ page }) => {
+    test("1. 조회 — 고정 카테고리 14종이 노출된다", async ({ page }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
