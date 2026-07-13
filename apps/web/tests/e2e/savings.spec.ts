@@ -39,6 +39,27 @@ const BOX_DEPOSIT_AMOUNT_FORMATTED = `+₩${BOX_DEPOSIT_AMOUNT.toLocaleString("k
 // Tall viewport so the bottom sheet never extends above the visible area.
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
 
+// ── 월 경계 누적 검증용 ──────────────────────────────────────────────────────
+// 적금 계좌의 total 은 base + "전체 기간" 적립이어야 한다(보고 있는 달과 무관).
+// 지난 달·이번 달에 각각 적립하고, 이번 달 화면에서 두 달치가 합쳐 보이는지 확인한다.
+// 계좌는 base=0 으로 만들어 total 이 온전히 적립분에서만 나오게 한다.
+const CARRY_ACCOUNT = `QA누적-${Date.now()}`
+const CARRY_GOAL = 1_000_000
+const PREV_SAVE = 100_000
+const CURR_SAVE = 200_000
+const CARRY_TOTAL = PREV_SAVE + CURR_SAVE // 300,000 = 목표의 30%
+
+function pad2(n: number): string {
+    return String(n).padStart(2, "0")
+}
+
+// 이번 달·지난 달의 15일("YYYY-MM-15"). 15일이라 월 길이와 무관하게 항상 유효하다.
+function midOfMonth(monthsAgo: number): string {
+    const now = new Date()
+    const d = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 15)
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-15`
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -62,6 +83,31 @@ async function waitForAssetDashboard(page: Page): Promise<void> {
     await expect(page.getByRole("button", { name: "카테고리" })).toBeVisible({
         timeout: 30_000,
     })
+}
+
+/** 지출 폼(FAB → /asset/new)으로 지출 1건을 만든다. 날짜를 지정해 과거 달에도 넣을 수 있다. */
+async function addExpense(
+    page: Page,
+    opts: { amount: number; item: string; date: string; category: string },
+): Promise<void> {
+    await enterVaultAt(page, "/asset")
+    await waitForAssetDashboard(page)
+    await page.getByRole("link", { name: "새 지출 추가" }).click()
+    await page.waitForURL("**/asset/new", { timeout: 15_000 })
+
+    await page.getByLabel("금액").fill(String(opts.amount))
+    await page.getByLabel("항목").fill(opts.item)
+    await page.getByLabel("날짜").fill(opts.date)
+
+    // 카테고리 칩이 API 로 로드된 뒤 해당 칩을 고른다.
+    const chips = page.locator("button.chip")
+    await chips.first().waitFor({ state: "visible", timeout: 20_000 })
+    const chip = page.locator("button.chip", { hasText: opts.category }).first()
+    await chip.click()
+    await expect(chip).toHaveAttribute("aria-pressed", "true")
+
+    await page.getByRole("button", { name: "저장" }).click()
+    await page.waitForURL("**/asset", { timeout: 20_000 })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -209,5 +255,67 @@ test.describe.serial("저축·투자 탭", () => {
             .filter({ hasText: BOX_DEPOSIT_AMOUNT_FORMATTED })
             .last()
         await expect(depositRow).toBeVisible({ timeout: 10_000 })
+    })
+
+    // 회귀: 적금 총액이 "이번 달" 적립만 반영해 매달 리셋되던 버그.
+    // 지난 달 적립분이 이번 달 화면에서 사라지면 목표 진행률도 매달 0%로 되돌아간다.
+    test("지난 달 적립분이 이번 달 저축 총액에 누적된다", async ({ page }) => {
+        test.setTimeout(180_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        // ── base=0 인 적금 계좌 생성(총액이 적립분에서만 나오도록) ──
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+        await page.getByRole("button", { name: "저축·투자" }).click()
+        await expect(
+            page.getByText("저축·투자 순자산", { exact: true }),
+        ).toBeVisible({ timeout: 20_000 })
+
+        await page.getByRole("button", { name: "+ 적금 추가" }).click()
+        const sheet = page.getByRole("dialog", { name: "적금 추가" })
+        await expect(sheet).toBeVisible({ timeout: 10_000 })
+        await sheet.getByLabel("적금 이름").fill(CARRY_ACCOUNT)
+        await sheet.getByLabel("현재 저축액").fill("0")
+        await sheet.getByLabel("목표 금액").fill(String(CARRY_GOAL))
+        await sheet.getByRole("button", { name: "적금 추가" }).click()
+        await expect(sheet).toBeHidden({ timeout: 10_000 })
+
+        // ── 지난 달·이번 달에 저축 지출 1건씩(item = 계좌명이 연동 앵커) ──
+        await addExpense(page, {
+            amount: PREV_SAVE,
+            item: CARRY_ACCOUNT,
+            date: midOfMonth(1),
+            category: "저축",
+        })
+        await addExpense(page, {
+            amount: CURR_SAVE,
+            item: CARRY_ACCOUNT,
+            date: midOfMonth(0),
+            category: "저축",
+        })
+
+        // ── 이번 달 화면에서 두 달치가 합산돼 보여야 한다 ──
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+        await page.getByRole("button", { name: "저축·투자" }).click()
+        await expect(
+            page.getByText("저축·투자 순자산", { exact: true }),
+        ).toBeVisible({ timeout: 20_000 })
+
+        const card = page.getByRole("button", {
+            name: new RegExp(CARRY_ACCOUNT),
+        })
+        await expect(card).toBeVisible({ timeout: 10_000 })
+
+        // 총액 = 지난 달 + 이번 달 (버그 시절엔 이번 달치만 잡혔다).
+        await expect(card).toContainText(
+            `₩${CARRY_TOTAL.toLocaleString("ko-KR")}`,
+        )
+        // 목표 진행률도 누적 기준 (300,000 / 1,000,000 = 30%).
+        await expect(card).toContainText("30%")
+        // "+금액" 배지는 이번 달 적립분만 보여준다(총액과 구분되는 값).
+        await expect(card).toContainText(
+            `+₩${CURR_SAVE.toLocaleString("ko-KR")}`,
+        )
     })
 })
