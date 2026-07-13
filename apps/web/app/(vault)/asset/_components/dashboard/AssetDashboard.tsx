@@ -146,6 +146,7 @@ export function AssetDashboard({
                     )}
                     {savings.status === "ready" && (
                         <SavingsTab
+                            month={month}
                             netWorth={savings.netWorth}
                             savedTotal={savings.savedTotal}
                             savedMonth={savings.savedMonth}

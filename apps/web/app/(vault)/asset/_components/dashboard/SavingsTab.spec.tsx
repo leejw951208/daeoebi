@@ -4,6 +4,7 @@ import { SavingsTab } from "./SavingsTab"
 import type { SavingsAccountView } from "../../_lib/asset-compute"
 
 const baseProps = {
+    month: "2026-07",
     netWorth: 0,
     savedTotal: 0,
     savedMonth: 0,
@@ -155,6 +156,26 @@ describe("SavingsTab", () => {
         expect(onBoxOut).toHaveBeenCalledTimes(1)
         fireEvent.click(screen.getByText("입출금 내역 보기"))
         expect(onBoxDetail).toHaveBeenCalledTimes(1)
+    })
+
+    it("이번 달 적립 배지에 보고 있는 달을 함께 표시한다(누적 총액과 구분)", () => {
+        render(
+            <SavingsTab
+                {...baseProps}
+                month="2026-06"
+                savedTotal={300_000}
+                savedMonth={100_000}
+                investMonth={0}
+                accounts={[]}
+                onAddAccount={() => {}}
+                onEditAccountGoal={() => {}}
+            />,
+        )
+        // 저축 카드 값은 누적 총액(300,000), 배지는 보고 있는 달(6월)의 적립분(100,000).
+        expect(screen.getByText("₩300,000")).not.toBeNull()
+        expect(screen.getAllByText("6월 +₩100,000").length).toBeGreaterThan(0)
+        // "누적" 이라는 말로 이번 달 값을 가리키지 않는다.
+        expect(screen.queryByText("누적 ₩100,000")).toBeNull()
     })
 
     it("박스로 이체된 저축분(fromSavings)을 저축 표시에서 뺀다", () => {

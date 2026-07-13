@@ -26,6 +26,11 @@ function formatMonthDay(iso: string): string {
     return `${m}월 ${d}일`
 }
 
+// "YYYY-MM" → "M월".
+function formatShortMonth(month: string): string {
+    return `${Number(month.slice(5, 7))}월`
+}
+
 // 세이빙 박스 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
 // count 는 전체 거래 건수(내역 배지 "{n}건 기록"에 쓴다).
 export interface SavingsBoxSummary {
@@ -35,9 +40,12 @@ export interface SavingsBoxSummary {
 }
 
 interface SavingsTabProps {
+    // 보고 있는 달("YYYY-MM"). 이번 달 적립 배지에 어느 달 값인지 함께 표시한다
+    // (이 탭엔 월 이동 버튼이 없어 지출 탭에서 고른 달을 그대로 따라가기 때문).
+    month: string
     // 저축·투자 순자산(hero) = 계좌 기반 저축 합계 + 투자 평가금액. 부모가 미리 더해 넘긴다.
     netWorth: number
-    // 계좌 기반 저축 합계·이번 달 적립(savingsAccountsView 의 savedTotal/savedMonth).
+    // 저축 합계는 전체 기간 누적(base + 전기간 적립), savedMonth·investMonth 는 보고 있는 달의 적립분.
     savedTotal: number
     savedMonth: number
     investMonth: number
@@ -76,6 +84,7 @@ function formatPnl(pnl: number): string {
 }
 
 export function SavingsTab({
+    month,
     netWorth,
     savedTotal,
     savedMonth,
@@ -94,6 +103,7 @@ export function SavingsTab({
     // 세이빙 박스로 이체한 저축분은 "저축" 표시에서 뺀다(박스 카드 잔액과 중복 집계 방지).
     const displayedSaved = Math.max(0, savedTotal - box.fromSavings)
     const monthContrib = savedMonth + investMonth
+    const shortMonth = formatShortMonth(month)
     // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
     const investPnlColor = pnlColor(investment.pnl)
@@ -141,7 +151,7 @@ export function SavingsTab({
                             color: "#171717",
                         }}
                     >
-                        누적 {formatWon(monthContrib)} 적립
+                        {shortMonth} +{formatWon(monthContrib)} 적립
                     </span>
                     <span
                         style={{
@@ -195,7 +205,7 @@ export function SavingsTab({
                             marginTop: 5,
                         }}
                     >
-                        누적 {formatWon(savedMonth)}
+                        {shortMonth} +{formatWon(savedMonth)}
                     </div>
                 </div>
                 <div className="asset-card" style={{ flex: 1, padding: 16 }}>
@@ -236,7 +246,7 @@ export function SavingsTab({
                             marginTop: 5,
                         }}
                     >
-                        누적 {formatWon(investMonth)}
+                        {shortMonth} +{formatWon(investMonth)}
                     </div>
                 </div>
             </div>

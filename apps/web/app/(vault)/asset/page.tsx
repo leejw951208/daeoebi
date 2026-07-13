@@ -41,7 +41,7 @@ import {
     savingsSummary,
     filterByMonth,
     savingsAccountsView,
-    monthSavingsByItem,
+    savingsByItem,
     investmentView,
     savingsBoxBalance,
     type ComputedExpense,
@@ -467,15 +467,17 @@ export default function AssetPage() {
     }, [vaultKey])
 
     // SavingsTab 에 넘길 뷰 모델. 저축 합계는 계좌 모델(savingsAccountsView) 기준이고,
-    // 순자산(netWorth) = 그 저축 합계 + 투자 평가금액이다(지출 파생 누적 합계는 쓰지 않는다).
-    // 이번 달 투자 지출(investMonth)만은 여전히 카테고리 지출(code=INVESTMENT)에서 파생한다.
+    // 순자산(netWorth) = 그 저축 합계 + 투자 평가금액이다.
+    //
+    // 저축 총액·투자 원금은 전체 기간 적립(contribAll)에서 파생한다 — 보고 있는 달을 바꿔도
+    // 지난 달 적립분이 유지된다. 이번 달 적립분(savedMonth·investMonth)은 배지 표시용으로만 쓴다.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
             return savingsState.status === "error"
                 ? { status: "error", message: savingsState.message }
                 : { status: "loading" }
         }
-        const { categories, expenses } = state.data
+        const { categories } = state.data
         const {
             contribAll,
             accounts,
@@ -484,6 +486,7 @@ export default function AssetPage() {
         } = savingsState
         const boxBalance = savingsBoxBalance(boxTxns)
         const monthContribs = filterByMonth(contribAll, month)
+        const allSummary = savingsSummary(contribAll, categories)
         const monthSummary = savingsSummary(monthContribs, categories)
         const contributions: Contribution[] = monthContribs.map((c) => {
             const { name, color } = resolveCategory(c.categoryId, categories)
@@ -497,17 +500,16 @@ export default function AssetPage() {
                 recurring: c.recurringId !== null,
             }
         })
-        // expenses 는 이미 이 달(month)로 필터된 지출이라 그대로 넘긴다.
-        const monthByItem = monthSavingsByItem(expenses, categories)
         const { rows, savedTotal, savedMonth } = savingsAccountsView(
             accounts,
-            monthByItem,
+            savingsByItem(contribAll, categories),
+            savingsByItem(monthContribs, categories),
         )
-        // investMonth(이번 달 투자 지출)는 투자 원금에 더해진다(저축 계좌의 monthByItem 과 대응되는 값).
+        // 투자 원금 = 초기 원금(base) + 전체 기간 투자 적립.
         const investment = investmentView(
             investmentState?.base ?? 0,
             investmentState?.returnRate ?? "",
-            monthSummary.investTotal,
+            allSummary.investTotal,
         )
         return {
             status: "ready",

@@ -136,10 +136,10 @@ export function savingsSummary(
     return { savedTotal, investTotal, netWorth: savedTotal + investTotal }
 }
 
-// 이번 달 저축(SAVINGS) 카테고리 지출을 item(적금 계좌명)별로 합산한다.
-// 고정 카테고리 code 로만 판별한다.
-export function monthSavingsByItem(
-    monthExpenses: readonly {
+// 저축(SAVINGS) 카테고리 지출을 item(적금 계좌명)별로 합산한다. 고정 카테고리 code 로만 판별한다.
+// 넘긴 목록의 기간이 곧 집계 기간이다 — 전체 기간을 넘기면 누적 합계, 한 달치를 넘기면 그 달 합계.
+export function savingsByItem(
+    expenses: readonly {
         categoryId: string | null
         item: string
         amount: number
@@ -148,7 +148,7 @@ export function monthSavingsByItem(
 ): Map<string, number> {
     const codeById = new Map(categories.map((c) => [c.id, c.code]))
     const map = new Map<string, number>()
-    for (const e of monthExpenses) {
+    for (const e of expenses) {
         const code = e.categoryId ? codeById.get(e.categoryId) : undefined
         if (code !== SAVINGS_CODE) continue
         map.set(e.item, (map.get(e.item) ?? 0) + e.amount)
@@ -169,6 +169,10 @@ export interface SavingsAccountView {
 
 // 적금 계좌별 진행률·합계. goalPct 는 0~100 클램프, remain 은 음수 방지.
 // rows 는 total 내림차순 정렬.
+//
+// total = base + 전체 기간 적립(totalByItem)이다. 보고 있는 달과 무관하게 지난 달 적립분이
+// 계속 쌓인다(base 는 앱을 쓰기 전부터 있던 초기 잔액). month 는 이번 달 적립분으로,
+// 계좌 카드의 "+₩X" 배지에만 쓴다.
 export function savingsAccountsView(
     accounts: readonly {
         name: string
@@ -176,12 +180,13 @@ export function savingsAccountsView(
         base: number
         goal: number
     }[],
+    totalByItem: ReadonlyMap<string, number>,
     monthByItem: ReadonlyMap<string, number>,
 ): { rows: SavingsAccountView[]; savedTotal: number; savedMonth: number } {
     const rows = accounts
         .map((a) => {
             const month = monthByItem.get(a.name) ?? 0
-            const total = a.base + month
+            const total = a.base + (totalByItem.get(a.name) ?? 0)
             const goalPct =
                 a.goal > 0
                     ? Math.min(
@@ -215,13 +220,14 @@ export interface InvestmentView {
 }
 
 // 투자 계좌 평가액·손익. rate 는 유효한 소수 문자열일 때만 채워지고, 그 외(빈 값·공백·숫자 아님)엔 null
-// 이어서 평가액은 원금과 같다(수익률 미입력 상태). investMonth 는 원금에 더해진다.
+// 이어서 평가액은 원금과 같다(수익률 미입력 상태).
+// 원금 = base(초기 원금) + contribTotal(전체 기간 투자 적립)이라 지난 달 적립분이 계속 쌓인다.
 export function investmentView(
     base: number,
     returnRate: string,
-    investMonth: number,
+    contribTotal: number,
 ): InvestmentView {
-    const principal = base + investMonth
+    const principal = base + contribTotal
     const parsed = parseFloat(returnRate)
     const rate = returnRate.trim() !== "" && !isNaN(parsed) ? parsed : null
     const value =
