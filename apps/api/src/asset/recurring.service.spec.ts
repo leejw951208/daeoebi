@@ -76,6 +76,31 @@ describe("RecurringService", () => {
         expect(data).toEqual({ active: false })
     })
 
+    // 암호문을 일부만 갈아끼우면 AES-GCM 인증이 깨져 아무도 못 여는 블롭이 된다(복구 불가).
+    it("암호문 일부만 보내면 CIPHERTEXT_INCOMPLETE_ASSET", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).update("r1", {
+                ciphertext: blob.ciphertext,
+            } as never),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.CIPHERTEXT_INCOMPLETE_ASSET },
+        })
+        expect(prisma.recurringExpense.update).not.toHaveBeenCalled()
+    })
+
+    it("암호문 세 필드를 모두 보내면 갱신한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.update.mockResolvedValue(row)
+        await makeService(prisma).update("r1", { ...blob } as never)
+        const data = prisma.recurringExpense.update.mock.calls[0][0].data
+        expect(Object.keys(data).sort()).toEqual([
+            "authTag",
+            "ciphertext",
+            "iv",
+        ])
+    })
+
     it("create 는 startMonth 를 저장하고 뷰에 포함한다", async () => {
         const prisma = makePrisma()
         prisma.recurringExpense.create.mockResolvedValue({

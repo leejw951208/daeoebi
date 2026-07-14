@@ -139,8 +139,12 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
     })
 
     // 회귀 B: 수정이 이번 달 인스턴스만 고치고 템플릿은 그대로 둬서
-    //         다음 달에 옛 제목·옛 카테고리로 다시 생성되던 버그.
-    test("제목·카테고리 수정이 다음 달 생성분에 반영된다", async ({ page }) => {
+    //         다음 달에 옛 제목·옛 카테고리로 뜨던 버그.
+    //
+    // 미래 달은 인스턴스를 만들지 않는다(열어보기만 해도 DB 에 박히면 저축·투자 누적이 부풀려진다).
+    // 대신 템플릿에서 "예정"으로 합성해 화면에만 보여준다 — 링크가 아니라 수정할 수 없다.
+    // 따라서 "다음 달에 새 내용으로 보이는가"가 곧 템플릿이 고쳐졌는지의 검증이다.
+    test("제목·카테고리 수정이 다음 달 예정분에 반영된다", async ({ page }) => {
         test.setTimeout(180_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
@@ -162,18 +166,23 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         await page.waitForURL("**/asset", { timeout: 20_000 })
         await waitForAssetDashboard(page)
 
-        // 다음 달 인스턴스는 새 제목·새 카테고리로 생성돼야 한다.
+        // 다음 달엔 새 제목·새 카테고리의 "예정" 항목이 보여야 한다.
         await page.getByRole("button", { name: "다음 달" }).click()
         await selectDay(page, DAY)
 
-        const nextMonthEntry = page.getByRole("link", {
-            name: new RegExp(itemAfter),
-        })
+        const nextMonthEntry = page
+            .getByText(new RegExp(itemAfter))
+            .locator("xpath=ancestor::*[contains(@class,'entry-card')]")
         await expect(nextMonthEntry).toBeVisible({ timeout: 20_000 })
         await expect(nextMonthEntry).toContainText(CATEGORY_AFTER)
-        // 옛 제목으로 생성된 건이 남아 있으면 템플릿이 안 고쳐진 것이다.
+        await expect(nextMonthEntry).toContainText("예정")
+
+        // 옛 제목이 남아 있으면 템플릿이 안 고쳐진 것이다.
+        await expect(page.getByText(new RegExp(itemBefore))).toHaveCount(0)
+
+        // 예정 항목은 DB 행이 아니라 수정 링크가 없어야 한다(누르면 없는 지출로 들어간다).
         await expect(
-            page.getByRole("link", { name: new RegExp(itemBefore) }),
+            page.getByRole("link", { name: new RegExp(itemAfter) }),
         ).toHaveCount(0)
     })
 

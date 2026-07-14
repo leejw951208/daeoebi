@@ -75,6 +75,7 @@ export function DemoAssetScreen() {
         // 데모엔 고정 지출 템플릿이 없다. 탭에 들어가면 빈 상태 문구가 나온다.
         recurrings: [],
         categories,
+        unreadable: 0,
     }
 
     if (overlay === "expense") {

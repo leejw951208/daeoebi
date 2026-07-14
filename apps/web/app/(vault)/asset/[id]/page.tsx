@@ -6,6 +6,7 @@ import {
     getExpense,
     listAssetCategories,
     listRecurring,
+    listSavingsAccounts,
     type AssetCategory,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
@@ -23,6 +24,7 @@ type State =
           status: "ready"
           initial: ExpenseFormInitial
           categories: AssetCategory[]
+          savingsAccounts: string[]
       }
 
 export default function EditExpensePage() {
@@ -39,8 +41,13 @@ export default function EditExpensePage() {
     useEffect(() => {
         let cancelled = false
         const id = params.id
-        Promise.all([getExpense(id), listAssetCategories(), listRecurring()])
-            .then(async ([view, categories, templates]) => {
+        Promise.all([
+            getExpense(id),
+            listAssetCategories(),
+            listRecurring(),
+            listSavingsAccounts(),
+        ])
+            .then(async ([view, categories, templates, accounts]) => {
                 const payload = await openExpense(vaultKey, view)
                 if (cancelled) return
                 // 연결된 활성 템플릿(개월 수 표시·앞으로만 반영에 필요). 해제됐으면 목록에 없다.
@@ -49,15 +56,18 @@ export default function EditExpensePage() {
                 setState({
                     status: "ready",
                     categories,
+                    savingsAccounts: accounts.map((a) => a.name),
                     initial: {
                         id: view.id,
                         date: view.date,
                         recurringId: view.recurringId,
+                        period: view.period,
                         template:
                             linked === null
                                 ? null
                                 : {
                                       id: linked.id,
+                                      startMonth: linked.startMonth,
                                       termMonths: linked.termMonths,
                                   },
                         categoryId: view.categoryId,
@@ -108,6 +118,7 @@ export default function EditExpensePage() {
     return (
         <ExpenseForm
             categories={state.categories}
+            savingsAccounts={state.savingsAccounts}
             initial={state.initial}
             onSaved={back}
             onCancel={back}

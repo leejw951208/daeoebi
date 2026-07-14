@@ -76,6 +76,54 @@ export class ExpenseService {
         return rows.map(toView)
     }
 
+    // 그 달에 이미 점유된 고정 인스턴스 슬롯 (recurringId, period).
+    //
+    // removed=true 인 슬롯("이번 달만 삭제")도 포함한다. 월 목록에는 안 나오지만 unique 키는
+    // 그대로 잡고 있어서, 클라가 없는 줄 알고 재생성하면 매 로드마다 409 를 맞는다. 그 실패
+    // 요청이 진짜 이상 409 까지 가린다.
+    async listMonthSlots(month: string) {
+        if (!MONTH_RE.test(month)) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_MONTH,
+                message: "month 는 YYYY-MM 형식이어야 합니다.",
+            })
+        }
+        const rows = await this.prisma.expense.findMany({
+            where: { period: month, recurringId: { not: null } },
+            select: { recurringId: true, period: true },
+        })
+        return rows
+    }
+
+    // 템플릿 수정 전파용: 해당 템플릿의 fromPeriod 초과(=미래) 인스턴스를 반환한다.
+    // 클라가 새 내용으로 재봉인해 갱신한다(서버는 블롭을 못 읽으므로 여기서 못 한다).
+    // @@unique([recurringId, period]) 인덱스를 그대로 타서 추가 인덱스가 필요 없다.
+    async listInstancesAfter(recurringId: string, fromPeriod: string) {
+        // Prisma 는 undefined 필터를 통째로 무시하므로, 빈 recurringId 를 넘기면
+        // 조건이 사라져 다른 템플릿의 인스턴스까지 전부 나온다. 반드시 먼저 막는다.
+        if (!recurringId) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_RECURRING_ID,
+                message: "recurringId 는 필수입니다.",
+            })
+        }
+        if (!MONTH_RE.test(fromPeriod)) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_MONTH,
+                message: "fromPeriod 는 YYYY-MM 형식이어야 합니다.",
+            })
+        }
+        const rows = await this.prisma.expense.findMany({
+            where: {
+                recurringId,
+                period: { gt: fromPeriod },
+                removed: false, // 이번 달만 삭제된 슬롯은 어떤 조회에도 안 나오므로 갱신 대상이 아니다.
+            },
+            orderBy: { period: "asc" },
+        })
+        return rows.map(toView)
+    }
+
     async detail(id: string) {
         const row = await this.prisma.expense.findUnique({ where: { id } })
         if (!row) throw this.notFound()
@@ -103,11 +151,40 @@ export class ExpenseService {
                     message: "해당 월의 고정 지출이 이미 존재합니다.",
                 })
             }
+            // 없는 카테고리·템플릿을 참조하면 FK 위반이다. 잘못된 요청이지 서버 오류가 아니다.
+            if (this.isForeignKeyViolation(e)) throw this.badReference()
             throw e
         }
     }
 
     async update(id: string, dto: UpdateExpenseDto) {
+        const row = await this.prisma.expense.findUnique({ where: { id } })
+        if (!row) throw this.notFound()
+
+        // 고정 인스턴스는 (recurringId, period) 가 멱등 키다. 템플릿에 붙이면서 period 를 빠뜨리면
+        // NULL 은 unique 에서 서로 다른 값이라 그 달 슬롯이 비어 있는 것으로 남고, 클라가 같은 달
+        // 인스턴스를 하나 더 만들어 월 합계가 이중 계상된다.
+        const nextRecurringId = dto.recurringId ?? row.recurringId
+        const nextPeriod = dto.period ?? row.period
+        if (nextRecurringId !== null && nextPeriod === null) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.EXPENSE_PERIOD_REQUIRED,
+                message: "고정 지출 인스턴스는 period 가 필요합니다.",
+            })
+        }
+        // 날짜만 다른 달로 옮기면 period 와 어긋난다. 월 조회는 date 기준, 멱등 키는 period 기준이라
+        // 원래 달에선 사라지고 옮긴 달엔 중복이 생긴다.
+        if (dto.date !== undefined && nextPeriod !== null) {
+            const dateMonth = new Date(dto.date).toISOString().slice(0, 7)
+            if (dateMonth !== nextPeriod) {
+                throw new BadRequestException({
+                    code: ASSET_ERRORS.EXPENSE_PERIOD_MISMATCH,
+                    message:
+                        "고정 지출의 날짜는 해당 월(period) 안에 있어야 합니다.",
+                })
+            }
+        }
+
         const data: Record<string, unknown> = {}
         if (dto.date !== undefined) data.date = new Date(dto.date)
 
@@ -150,6 +227,7 @@ export class ExpenseService {
                     message: "해당 월의 고정 지출이 이미 존재합니다.",
                 })
             }
+            if (this.isForeignKeyViolation(e)) throw this.badReference()
             throw e
         }
     }
@@ -177,6 +255,22 @@ export class ExpenseService {
             e !== null &&
             (e as { code?: string }).code === "P2025"
         )
+    }
+
+    // P2003 = FK 제약 위반. 없는 categoryId·recurringId 를 참조했다는 뜻이다.
+    private isForeignKeyViolation(e: unknown): boolean {
+        return (
+            typeof e === "object" &&
+            e !== null &&
+            (e as { code?: string }).code === "P2003"
+        )
+    }
+
+    private badReference(): BadRequestException {
+        return new BadRequestException({
+            code: ASSET_ERRORS.ASSET_REFERENCE_NOT_FOUND,
+            message: "존재하지 않는 카테고리 또는 고정 지출 템플릿입니다.",
+        })
     }
 
     private notFound(): NotFoundException {

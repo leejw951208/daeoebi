@@ -8,18 +8,26 @@ import { formatWon, resolveCategory } from "../../_lib/asset-categories"
 import {
     formatDayOfMonth,
     formatTerm,
+    recurringInMonth,
     sortRecurring,
     totalRecurring,
 } from "../../_lib/asset-recurring"
 
 interface RecurringTabProps {
+    month: string
     recurrings: ComputedRecurring[]
     categories: AssetCategory[]
 }
 
-export function RecurringTab({ recurrings, categories }: RecurringTabProps) {
-    const rows = sortRecurring(recurrings)
-    const total = totalRecurring(recurrings)
+export function RecurringTab({
+    month,
+    recurrings,
+    categories,
+}: RecurringTabProps) {
+    // 템플릿은 기간이 끝나도 active 로 남는다. 보고 있는 달에 실제로 나가는 것만 세운다.
+    const active = recurringInMonth(recurrings, month)
+    const rows = sortRecurring(active)
+    const total = totalRecurring(active)
 
     return (
         <div

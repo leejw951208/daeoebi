@@ -110,16 +110,18 @@ describe("ExpenseService.create", () => {
 })
 
 describe("ExpenseService.update", () => {
-    it("없으면 EXPENSE_NOT_FOUND(update 가 P2025 로 거부)", async () => {
+    it("없으면 EXPENSE_NOT_FOUND", async () => {
         const prisma = makePrisma()
-        prisma.expense.update.mockRejectedValue({ code: "P2025" })
+        prisma.expense.findUnique.mockResolvedValue(null)
         await expect(
             makeService(prisma).update("x", { date: "2026-06-01" } as never),
         ).rejects.toThrow(NotFoundException)
+        expect(prisma.expense.update).not.toHaveBeenCalled()
     })
 
     it("암호문 일부만 보내면 CIPHERTEXT_INCOMPLETE_ASSET", async () => {
         const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row())
         await expect(
             makeService(prisma).update("e1", { iv: blob.iv } as never),
         ).rejects.toMatchObject({
@@ -129,6 +131,7 @@ describe("ExpenseService.update", () => {
 
     it("날짜만 갱신하면 본문은 건드리지 않는다", async () => {
         const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row())
         prisma.expense.update.mockResolvedValue(
             row({ date: new Date("2026-06-01") }),
         )
@@ -139,6 +142,7 @@ describe("ExpenseService.update", () => {
 
     it("단건 → 고정 전환 시 recurringId·period 를 함께 세팅한다", async () => {
         const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row())
         prisma.expense.update.mockResolvedValue(
             row({ recurringId: "r1", period: "2026-06" }),
         )
@@ -155,6 +159,7 @@ describe("ExpenseService.update", () => {
 
     it("전환이 기존 인스턴스와 충돌(P2002)하면 EXPENSE_DUPLICATE", async () => {
         const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row())
         prisma.expense.update.mockRejectedValue({ code: "P2002" })
         await expect(
             makeService(prisma).update("e1", {
@@ -163,6 +168,76 @@ describe("ExpenseService.update", () => {
             } as never),
         ).rejects.toMatchObject({
             response: { code: ASSET_ERRORS.EXPENSE_DUPLICATE },
+        })
+    })
+})
+
+// (recurringId, period) 는 고정 인스턴스의 멱등 키다. 한쪽만 세팅되면 그 달 슬롯이 비어 보여
+// 클라가 같은 달 인스턴스를 하나 더 만들고, 월 합계가 이중 계상된다.
+describe("ExpenseService.update — 고정 인스턴스 불변식", () => {
+    it("recurringId 만 보내고 period 가 없으면 EXPENSE_PERIOD_REQUIRED", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row())
+        await expect(
+            makeService(prisma).update("e1", { recurringId: "r1" } as never),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.EXPENSE_PERIOD_REQUIRED },
+        })
+        expect(prisma.expense.update).not.toHaveBeenCalled()
+    })
+
+    it("고정 인스턴스의 날짜를 다른 달로 옮기면 EXPENSE_PERIOD_MISMATCH", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(
+            row({ recurringId: "r1", period: "2026-07" }),
+        )
+        await expect(
+            makeService(prisma).update("e1", { date: "2026-08-20" } as never),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.EXPENSE_PERIOD_MISMATCH },
+        })
+        expect(prisma.expense.update).not.toHaveBeenCalled()
+    })
+
+    it("같은 달 안에서의 날짜 변경은 허용한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(
+            row({ recurringId: "r1", period: "2026-07" }),
+        )
+        prisma.expense.update.mockResolvedValue(
+            row({
+                recurringId: "r1",
+                period: "2026-07",
+                date: new Date("2026-07-20"),
+            }),
+        )
+        await makeService(prisma).update("e1", { date: "2026-07-20" } as never)
+        expect(prisma.expense.update).toHaveBeenCalled()
+    })
+
+    it("고정이 아닌 지출은 아무 달로나 옮길 수 있다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row()) // recurringId·period 없음
+        prisma.expense.update.mockResolvedValue(
+            row({ date: new Date("2026-09-02") }),
+        )
+        await makeService(prisma).update("e1", { date: "2026-09-02" } as never)
+        expect(prisma.expense.update).toHaveBeenCalled()
+    })
+})
+
+describe("ExpenseService — 없는 참조(FK)", () => {
+    it("없는 categoryId 로 생성하면 400 ASSET_REFERENCE_NOT_FOUND", async () => {
+        const prisma = makePrisma()
+        prisma.expense.create.mockRejectedValue({ code: "P2003" })
+        await expect(
+            makeService(prisma).create({
+                date: "2026-06-01",
+                categoryId: "없는-카테고리",
+                ...blob,
+            } as never),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.ASSET_REFERENCE_NOT_FOUND },
         })
     })
 })
@@ -181,6 +256,7 @@ describe("ExpenseService.listByMonth — removed 필터", () => {
 describe("ExpenseService.update — removed", () => {
     it("update 는 removed 를 설정한다(소프트 삭제)", async () => {
         const prisma = makePrisma()
+        prisma.expense.findUnique.mockResolvedValue(row())
         prisma.expense.update.mockResolvedValue({
             id: "e1",
             date: new Date("2026-06-10"),
@@ -229,5 +305,82 @@ describe("ExpenseService.remove", () => {
         expect(prisma.expense.delete).toHaveBeenCalledWith({
             where: { id: "e1" },
         })
+    })
+})
+
+// 소프트 삭제된 슬롯은 월 목록에 안 나오지만 unique 키를 잡고 있다. 슬롯 조회는 removed 를
+// 거르지 않아야, 클라가 없는 줄 알고 재생성해 매 로드마다 409 를 맞는 일이 없다.
+describe("ExpenseService.listMonthSlots", () => {
+    it("잘못된 month 형식은 INVALID_MONTH", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).listMonthSlots("2026-6"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_MONTH },
+        })
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
+    })
+
+    it("그 달의 고정 슬롯을 removed 필터 없이 조회한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findMany.mockResolvedValue([
+            { recurringId: "r1", period: "2026-07" },
+        ])
+
+        const out = await makeService(prisma).listMonthSlots("2026-07")
+
+        expect(prisma.expense.findMany).toHaveBeenCalledWith({
+            where: { period: "2026-07", recurringId: { not: null } },
+            select: { recurringId: true, period: true },
+        })
+        expect(out).toEqual([{ recurringId: "r1", period: "2026-07" }])
+    })
+})
+
+describe("ExpenseService.listInstancesAfter", () => {
+    it("잘못된 fromPeriod 형식은 INVALID_MONTH", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).listInstancesAfter("r1", "2026-6"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_MONTH },
+        })
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
+    })
+
+    it("해당 템플릿의 fromPeriod 초과(미래) 인스턴스만 조회한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findMany.mockResolvedValueOnce([
+            row({ id: "e9", recurringId: "r1", period: "2026-09" }),
+        ])
+
+        const out = await makeService(prisma).listInstancesAfter(
+            "r1",
+            "2026-08",
+        )
+
+        expect(prisma.expense.findMany).toHaveBeenCalledWith({
+            where: {
+                recurringId: "r1",
+                period: { gt: "2026-08" },
+                removed: false,
+            },
+            orderBy: { period: "asc" },
+        })
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ id: "e9", period: "2026-09" })
+    })
+})
+
+describe("ExpenseService.listInstancesAfter 안전 가드", () => {
+    // recurringId 가 undefined 면 Prisma 는 그 필터를 무시한다 → 남의 지출까지 전부 긁어온다.
+    it("recurringId 가 비면 조회하지 않고 INVALID_RECURRING_ID", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).listInstancesAfter("", "2026-08"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_RECURRING_ID },
+        })
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
     })
 })

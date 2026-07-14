@@ -98,7 +98,8 @@ export function SavingsTab({
     onBoxDetail,
 }: SavingsTabProps) {
     // 쌈짓돈으로 이체한 저축분은 "저축" 표시에서 뺀다(쌈짓돈 카드 잔액과 중복 집계 방지).
-    const displayedSaved = Math.max(0, savedTotal - box.fromSavings)
+    // 0 으로 클램프하지 않는다. 클램프하면 초과분이 사라져 순자산이 실제보다 커 보인다.
+    const displayedSaved = savedTotal - box.fromSavings
     const totalContrib = savedContributed + investContributed
     // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))

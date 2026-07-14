@@ -32,9 +32,11 @@ export interface Loaded {
     budgetAmount: number
     budgetRows: ComputedIncome[] // 서버 Income 행. 예산 시트가 단건 수렴에 사용한다.
     expenses: ComputedExpense[]
-    // 활성 고정 지출 템플릿(복호화). 고정 지출 탭이 쓴다 — 월과 무관하다.
+    // 활성 고정 지출 템플릿(복호화). 고정 지출 탭이 보고 있는 달 기준으로 걸러 쓴다.
     recurrings: ComputedRecurring[]
     categories: AssetCategory[]
+    // 블롭을 읽지 못해 집계에서 빠진 행 수. 0 보다 크면 합계가 실제보다 적다는 뜻이라 화면에 알린다.
+    unreadable: number
 }
 
 export type AssetTab = "budget" | "recurring" | "savings"
@@ -106,6 +108,13 @@ export function AssetDashboard({
                 marginRight: -2,
             }}
         >
+            {/* 읽지 못한 행이 있으면 합계가 실제보다 적다. 틀린 금액을 조용히 보여주지 않는다. */}
+            {data.unreadable > 0 && (
+                <div role="alert" className="error-box">
+                    {`${data.unreadable}건을 읽지 못해 합계에서 빠졌습니다. 표시된 금액이 실제보다 적을 수 있습니다.`}
+                </div>
+            )}
+
             {assetTab === "budget" && (
                 <>
                     <RemainingHero
@@ -139,6 +148,7 @@ export function AssetDashboard({
 
             {assetTab === "recurring" && (
                 <RecurringTab
+                    month={month}
                     recurrings={data.recurrings}
                     categories={data.categories}
                 />

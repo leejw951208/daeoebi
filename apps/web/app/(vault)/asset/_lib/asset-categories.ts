@@ -62,9 +62,12 @@ export function formatAmount(n: number): string {
     return Math.round(n).toLocaleString("ko-KR")
 }
 
-// ₩ 접두 통화 표기(예: 8500 → "₩8,500").
+// ₩ 접두 통화 표기(예: 8500 → "₩8,500"). 음수는 부호를 통화 기호 앞에 둔다(-₩8,500).
 export function formatWon(n: number): string {
-    return `₩${formatAmount(n)}`
+    const rounded = Math.round(n)
+    return rounded < 0
+        ? `-₩${formatAmount(Math.abs(rounded))}`
+        : `₩${formatAmount(rounded)}`
 }
 
 // 적금 목표 금액 프리셋(설계 v5 goalPresets/addGoalPresets 와 동일한 값·라벨).

@@ -34,6 +34,8 @@ export function clearRecoveryCookie(res: Response): void {
 }
 
 // cookie-parser 없이 직접 파싱한다(구 vault/pin 과 동일한 방식).
+// 잘못 인코딩된 값("%")은 decodeURIComponent 가 URIError 를 던진다. 그대로 두면 가드가 터져
+// 모든 보호 라우트가 401 대신 500 을 낸다. 쿠키가 깨진 것은 인증 실패로 다룬다.
 export function readCookie(req: Request, name: string): string | undefined {
     const header = (req.headers.cookie as string | undefined) ?? ""
     for (const part of header.split(";")) {
@@ -41,7 +43,11 @@ export function readCookie(req: Request, name: string): string | undefined {
         const eq = trimmed.indexOf("=")
         if (eq === -1) continue
         if (trimmed.slice(0, eq) === name) {
-            return decodeURIComponent(trimmed.slice(eq + 1))
+            try {
+                return decodeURIComponent(trimmed.slice(eq + 1))
+            } catch {
+                return undefined
+            }
         }
     }
     return undefined

@@ -1,8 +1,15 @@
-// materializeRecurring 의 시작월 경계 테스트.
+// materializeRecurring 의 시작월·현재월 경계 + propagateRecurringUpdate 의 이후 달 전파·정리 테스트.
 const mockCreateExpense = jest.fn()
+const mockUpdateExpense = jest.fn()
+const mockDeleteExpense = jest.fn()
+const mockListRecurringInstances = jest.fn()
 jest.mock("@/lib/vault-client", () => ({
     __esModule: true,
     createExpense: (...a: unknown[]) => mockCreateExpense(...a),
+    updateExpense: (...a: unknown[]) => mockUpdateExpense(...a),
+    deleteExpense: (...a: unknown[]) => mockDeleteExpense(...a),
+    listRecurringInstances: (...a: unknown[]) =>
+        mockListRecurringInstances(...a),
 }))
 jest.mock("@/lib/api-error", () => ({
     __esModule: true,
@@ -20,10 +27,16 @@ jest.mock("./asset-payload", () => ({
         .mockResolvedValue({ iv: "AA", ciphertext: "BB", authTag: "CC" }),
 }))
 import {
+    endMonthOf,
     formatDayOfMonth,
     formatTerm,
     materializeRecurring,
     parseTermMonths,
+    projectRecurring,
+    propagateRecurringUpdate,
+    propagationPivot,
+    recurringInMonth,
+    removeRecurringFuture,
     sortRecurring,
     totalRecurring,
 } from "./asset-recurring"
@@ -38,6 +51,7 @@ function row(
         id: over.item,
         amount: 1000,
         dayOfMonth: 1,
+        startMonth: "2026-01",
         termMonths: null,
         categoryId: null,
         ...over,
@@ -59,6 +73,119 @@ describe("formatTerm", () => {
 
     it("개월 수가 없으면(null) '무기한' 으로 표기한다", () => {
         expect(formatTerm(null)).toBe("무기한")
+    })
+})
+
+describe("endMonthOf", () => {
+    it("무기한(null)은 종료월이 없다", () => {
+        expect(endMonthOf("2026-06", null)).toBeNull()
+    })
+
+    it("N개월은 시작월을 포함해 센다", () => {
+        expect(endMonthOf("2026-06", 3)).toBe("2026-08")
+        expect(endMonthOf("2026-06", 1)).toBe("2026-06")
+    })
+
+    it("해를 넘겨도 정확하다", () => {
+        expect(endMonthOf("2026-11", 4)).toBe("2027-02")
+    })
+})
+
+describe("propagationPivot", () => {
+    it("미래 달을 편집하면 그 달이 기준이다", () => {
+        expect(propagationPivot("2026-09", "2026-07")).toBe("2026-09")
+    })
+
+    it("과거 달을 편집하면 현재 달이 기준이다(지나간 기록 보호)", () => {
+        expect(propagationPivot("2026-03", "2026-07")).toBe("2026-07")
+    })
+
+    it("현재 달을 편집하면 현재 달이 기준이다", () => {
+        expect(propagationPivot("2026-07", "2026-07")).toBe("2026-07")
+    })
+})
+
+describe("recurringInMonth", () => {
+    const rows = [
+        row({ item: "월세", startMonth: "2026-01", termMonths: null }),
+        row({ item: "할부", startMonth: "2026-01", termMonths: 3 }), // 1·2·3월
+        row({ item: "예정", startMonth: "2026-09", termMonths: null }),
+    ]
+
+    it("무기한 템플릿은 시작월 이후 계속 나온다", () => {
+        expect(recurringInMonth(rows, "2026-07").map((r) => r.item)).toEqual([
+            "월세",
+        ])
+    })
+
+    it("기간이 끝난 템플릿은 제외한다", () => {
+        expect(recurringInMonth(rows, "2026-03").map((r) => r.item)).toEqual([
+            "월세",
+            "할부",
+        ])
+        expect(recurringInMonth(rows, "2026-04").map((r) => r.item)).toEqual([
+            "월세",
+        ])
+    })
+
+    it("아직 시작 전인 템플릿은 제외한다", () => {
+        expect(recurringInMonth(rows, "2026-09").map((r) => r.item)).toEqual([
+            "월세",
+            "예정",
+        ])
+    })
+})
+
+// 미래 달은 인스턴스를 만들지 않는다(누적 집계 부풀림 방지). 대신 화면에서만 합성해 보여준다.
+describe("projectRecurring", () => {
+    const rows = [
+        row({
+            item: "월세",
+            amount: 500_000,
+            dayOfMonth: 25,
+            startMonth: "2026-01",
+            categoryId: "c1",
+        }),
+        row({
+            item: "할부",
+            amount: 100_000,
+            dayOfMonth: 5,
+            startMonth: "2026-01",
+            termMonths: 3, // 1·2·3월
+        }),
+    ]
+
+    it("현재·과거 달은 합성하지 않는다(진짜 인스턴스가 있다)", () => {
+        expect(projectRecurring(rows, "2026-07", "2026-07")).toEqual([])
+        expect(projectRecurring(rows, "2026-06", "2026-07")).toEqual([])
+    })
+
+    it("미래 달은 템플릿에서 예정 지출을 합성한다", () => {
+        const out = projectRecurring(rows, "2026-09", "2026-07")
+
+        expect(out).toHaveLength(1) // 할부는 3월에 끝났다
+        expect(out[0]).toMatchObject({
+            date: "2026-09-25",
+            item: "월세",
+            amount: 500_000,
+            categoryId: "c1",
+            recurringId: "월세",
+            projected: true,
+        })
+    })
+
+    it("합성 행은 DB id 와 겹치지 않는 id 를 쓴다", () => {
+        const out = projectRecurring(rows, "2026-09", "2026-07")
+        expect(out[0].id).toBe("projected:월세:2026-09")
+    })
+
+    it("결제일이 말일을 넘으면 클램프한다", () => {
+        const out = projectRecurring(
+            [row({ item: "카드", dayOfMonth: 31, startMonth: "2026-01" })],
+            "2027-02",
+            "2026-07",
+        )
+        expect(out[0].date).toBe("2027-02-28")
     })
 })
 
@@ -149,35 +276,227 @@ const termTmpl: RecurringView = {
     categoryId: null,
 }
 const key = {} as CryptoKey
+const NOW = "2030-12" // 대부분의 테스트는 현재월 상한에 걸리지 않게 충분히 미래로 둔다.
 
-beforeEach(() => mockCreateExpense.mockReset())
+describe("materializeRecurring", () => {
+    beforeEach(() => {
+        mockCreateExpense.mockReset()
+        mockCreateExpense.mockResolvedValue({ id: "i" })
+    })
 
-it("startMonth 이전 달은 생성하지 않는다", async () => {
-    mockCreateExpense.mockResolvedValue({ id: "i" })
-    await materializeRecurring(key, "2026-05", [tmpl], [])
-    expect(mockCreateExpense).not.toHaveBeenCalled()
+    it("startMonth 이전 달은 생성하지 않는다", async () => {
+        await materializeRecurring(key, "2026-05", [tmpl], [], NOW)
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
+
+    it("startMonth 이상 달은 생성한다", async () => {
+        await materializeRecurring(key, "2026-06", [tmpl], [], NOW)
+        expect(mockCreateExpense).toHaveBeenCalledTimes(1)
+    })
+
+    it("termMonths 무기한(null)이면 현재월까지 계속 생성한다", async () => {
+        await materializeRecurring(key, "2030-01", [tmpl], [], NOW)
+        expect(mockCreateExpense).toHaveBeenCalledTimes(1)
+    })
+
+    it("종료월(startMonth+termMonths-1)까지는 생성한다", async () => {
+        await materializeRecurring(key, "2026-08", [termTmpl], [], NOW) // 6·7·8 → 8월=종료월
+        expect(mockCreateExpense).toHaveBeenCalledTimes(1)
+    })
+
+    it("종료월 다음 달은 생성하지 않는다", async () => {
+        await materializeRecurring(key, "2026-09", [termTmpl], [], NOW) // 9월 = 종료월+1
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
+
+    // 미래 달을 열어보기만 해도 인스턴스가 박히면 저축·투자 누적이 부풀려진다.
+    it("현재 달보다 미래인 달은 열어봐도 생성하지 않는다", async () => {
+        await materializeRecurring(key, "2026-08", [tmpl], [], "2026-07")
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
+
+    it("현재 달은 생성한다(경계 포함)", async () => {
+        await materializeRecurring(key, "2026-07", [tmpl], [], "2026-07")
+        expect(mockCreateExpense).toHaveBeenCalledTimes(1)
+    })
+
+    it("이미 인스턴스가 있는 달은 생성하지 않는다", async () => {
+        await materializeRecurring(
+            key,
+            "2026-07",
+            [tmpl],
+            [{ recurringId: "r1", period: "2026-07" }],
+            NOW,
+        )
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
+
+    // "이번 달만 삭제"한 슬롯은 목록엔 없지만 unique 키를 잡고 있다. 없는 줄 알고 만들면 409 다.
+    it("소프트 삭제된 슬롯도 점유로 보고 재생성하지 않는다", async () => {
+        await materializeRecurring(
+            key,
+            "2026-07",
+            [tmpl],
+            [{ recurringId: "r1", period: "2026-07" }], // removed=true 라 월 목록엔 없다
+            NOW,
+        )
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
 })
 
-it("startMonth 이상 달은 생성한다", async () => {
-    mockCreateExpense.mockResolvedValue({ id: "i" })
-    await materializeRecurring(key, "2026-06", [tmpl], [])
-    expect(mockCreateExpense).toHaveBeenCalledTimes(1)
+// 사용자 재현 경로: 9월을 미리 열어 인스턴스가 생성된 뒤, 8월에서 카테고리를 바꾼다.
+describe("propagateRecurringUpdate", () => {
+    const ref = {
+        id: "r1",
+        dayOfMonth: 10,
+        categoryId: "cat-new" as string | null,
+        startMonth: "2026-06",
+        termMonths: null as number | null,
+    }
+
+    beforeEach(() => {
+        mockUpdateExpense.mockReset()
+        mockDeleteExpense.mockReset()
+        mockListRecurringInstances.mockReset()
+        mockUpdateExpense.mockResolvedValue({ id: "e" })
+        mockDeleteExpense.mockResolvedValue(undefined)
+    })
+
+    it("이미 만들어진 이후 달 인스턴스를 새 내용·카테고리로 갱신한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e9", period: "2026-09" },
+            { id: "e10", period: "2026-10" },
+        ])
+
+        await propagateRecurringUpdate(
+            key,
+            ref,
+            "2026-08",
+            { item: "넷플릭스", amount: 17_000 },
+            "2026-08",
+        )
+
+        expect(mockListRecurringInstances).toHaveBeenCalledWith("r1", "2026-08")
+        expect(mockUpdateExpense).toHaveBeenCalledTimes(2)
+        expect(mockUpdateExpense).toHaveBeenCalledWith("e9", {
+            date: "2026-09-10",
+            categoryId: "cat-new",
+            iv: "AA",
+            ciphertext: "BB",
+            authTag: "CC",
+        })
+        expect(mockUpdateExpense).toHaveBeenCalledWith("e10", {
+            date: "2026-10-10",
+            categoryId: "cat-new",
+            iv: "AA",
+            ciphertext: "BB",
+            authTag: "CC",
+        })
+    })
+
+    // 과거 달을 고칠 때 그 사이 달들의 확정 기록까지 덮어쓰면 안 된다.
+    it("과거 달을 편집하면 현재 달 기준으로만 전파한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([])
+
+        await propagateRecurringUpdate(
+            key,
+            ref,
+            "2026-06", // 과거 달 편집
+            { item: "월세", amount: 550_000 },
+            "2026-09", // 오늘은 9월
+        )
+
+        expect(mockListRecurringInstances).toHaveBeenCalledWith("r1", "2026-09")
+    })
+
+    it("결제일이 그 달 말일을 넘으면 말일로 클램프한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e2", period: "2027-02" },
+        ])
+
+        await propagateRecurringUpdate(
+            key,
+            { ...ref, dayOfMonth: 31, categoryId: null },
+            "2027-01",
+            { item: "월세", amount: 500_000 },
+            "2027-01",
+        )
+
+        expect(mockUpdateExpense).toHaveBeenCalledWith(
+            "e2",
+            expect.objectContaining({ date: "2027-02-28" }),
+        )
+    })
+
+    // 개월 수를 줄이면 기간 밖으로 밀려난 미래 인스턴스는 되살리지 말고 지워야 한다.
+    it("개월 수를 줄이면 종료월 이후 인스턴스를 삭제한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e7", period: "2026-07" },
+            { id: "e8", period: "2026-08" },
+            { id: "e9", period: "2026-09" },
+        ])
+
+        await propagateRecurringUpdate(
+            key,
+            { ...ref, startMonth: "2026-06", termMonths: 2 }, // 6·7월까지
+            "2026-06",
+            { item: "헬스장", amount: 50_000 },
+            "2026-06",
+        )
+
+        expect(mockUpdateExpense).toHaveBeenCalledTimes(1)
+        expect(mockUpdateExpense).toHaveBeenCalledWith(
+            "e7",
+            expect.objectContaining({ date: "2026-07-10" }),
+        )
+        expect(mockDeleteExpense).toHaveBeenCalledTimes(2)
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e8")
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e9")
+    })
+
+    it("이후 달 인스턴스가 없으면 아무 요청도 보내지 않는다", async () => {
+        mockListRecurringInstances.mockResolvedValue([])
+
+        await propagateRecurringUpdate(
+            key,
+            ref,
+            "2026-08",
+            { item: "넷플릭스", amount: 17_000 },
+            "2026-08",
+        )
+
+        expect(mockUpdateExpense).not.toHaveBeenCalled()
+        expect(mockDeleteExpense).not.toHaveBeenCalled()
+    })
 })
 
-it("termMonths 무기한(null)이면 먼 미래도 생성한다", async () => {
-    mockCreateExpense.mockResolvedValue({ id: "i" })
-    await materializeRecurring(key, "2030-01", [tmpl], [])
-    expect(mockCreateExpense).toHaveBeenCalledTimes(1)
-})
+describe("removeRecurringFuture", () => {
+    beforeEach(() => {
+        mockDeleteExpense.mockReset()
+        mockListRecurringInstances.mockReset()
+        mockDeleteExpense.mockResolvedValue(undefined)
+    })
 
-it("종료월(startMonth+termMonths-1)까지는 생성한다", async () => {
-    mockCreateExpense.mockResolvedValue({ id: "i" })
-    await materializeRecurring(key, "2026-08", [termTmpl], []) // 6·7·8 → 8월=종료월
-    expect(mockCreateExpense).toHaveBeenCalledTimes(1)
-})
+    // 고정 해제: 미리 열어봐서 만들어진 미래 달 인스턴스가 남으면 해지한 지출이 계속 잡힌다.
+    it("현재 달 이후 인스턴스를 모두 삭제한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+            { id: "e9", period: "2026-09" },
+        ])
 
-it("종료월 다음 달은 생성하지 않는다", async () => {
-    mockCreateExpense.mockResolvedValue({ id: "i" })
-    await materializeRecurring(key, "2026-09", [termTmpl], []) // 9월 = 종료월+1
-    expect(mockCreateExpense).not.toHaveBeenCalled()
+        await removeRecurringFuture("r1", "2026-07")
+
+        expect(mockListRecurringInstances).toHaveBeenCalledWith("r1", "2026-07")
+        expect(mockDeleteExpense).toHaveBeenCalledTimes(2)
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e8")
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e9")
+    })
+
+    it("미래 인스턴스가 없으면 아무것도 지우지 않는다", async () => {
+        mockListRecurringInstances.mockResolvedValue([])
+
+        await removeRecurringFuture("r1", "2026-07")
+
+        expect(mockDeleteExpense).not.toHaveBeenCalled()
+    })
 })
