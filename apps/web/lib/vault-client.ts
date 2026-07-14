@@ -506,6 +506,8 @@ export async function updateRecurring(
     input: Partial<SealedBlobDto> & {
         dayOfMonth?: number
         active?: boolean
+        // null = 무기한으로 되돌림.
+        termMonths?: number | null
         categoryId?: string
     },
 ): Promise<RecurringView> {

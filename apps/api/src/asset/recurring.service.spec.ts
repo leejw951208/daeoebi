@@ -188,6 +188,42 @@ describe("RecurringService", () => {
         ).toBeNull()
     })
 
+    it("update 는 termMonths 를 갱신하고 null 이면 무기한으로 되돌린다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.update.mockResolvedValue({
+            ...row,
+            termMonths: 6,
+        })
+        await makeService(prisma).update("r1", { termMonths: 6 } as never)
+        expect(prisma.recurringExpense.update.mock.calls[0][0].data).toEqual({
+            termMonths: 6,
+        })
+
+        const prisma2 = makePrisma()
+        prisma2.recurringExpense.update.mockResolvedValue({
+            ...row,
+            termMonths: null,
+        })
+        await makeService(prisma2).update("r1", { termMonths: null } as never)
+        expect(prisma2.recurringExpense.update.mock.calls[0][0].data).toEqual({
+            termMonths: null,
+        })
+    })
+
+    it("update 는 블롭·카테고리·dayOfMonth 를 함께 갱신한다(앞으로만 반영)", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.update.mockResolvedValue(row)
+        await makeService(prisma).update("r1", {
+            dayOfMonth: 10,
+            categoryId: "c2",
+            ...blob,
+        } as never)
+        const data = prisma.recurringExpense.update.mock.calls[0][0].data
+        expect(data.dayOfMonth).toBe(10)
+        expect(data.categoryId).toBe("c2")
+        expect(Buffer.from(data.ciphertext)).toEqual(CT)
+    })
+
     it("remove 는 없으면 404(delete 가 P2025 로 거부), 있으면 삭제", async () => {
         const prisma = makePrisma()
         prisma.recurringExpense.delete.mockRejectedValueOnce({ code: "P2025" })

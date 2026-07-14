@@ -68,6 +68,7 @@ export class RecurringService {
         const data: Record<string, unknown> = {}
         if (dto.dayOfMonth !== undefined) data.dayOfMonth = dto.dayOfMonth
         if (dto.active !== undefined) data.active = dto.active
+        if (dto.termMonths !== undefined) data.termMonths = dto.termMonths
         if (dto.categoryId !== undefined) data.categoryId = dto.categoryId
         if (dto.iv !== undefined) data.iv = prismaBytes(fromBase64url(dto.iv))
         if (dto.ciphertext !== undefined) {

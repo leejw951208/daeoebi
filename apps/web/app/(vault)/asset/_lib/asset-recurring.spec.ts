@@ -19,8 +19,25 @@ jest.mock("./asset-payload", () => ({
         .fn()
         .mockResolvedValue({ iv: "AA", ciphertext: "BB", authTag: "CC" }),
 }))
-import { materializeRecurring } from "./asset-recurring"
+import { materializeRecurring, parseTermMonths } from "./asset-recurring"
 import type { RecurringView } from "@/lib/vault-client"
+
+describe("parseTermMonths", () => {
+    it("빈 문자열은 무기한(null)이다", () => {
+        expect(parseTermMonths("")).toBeNull()
+    })
+
+    it("1 이상 정수는 그대로 개월 수가 된다", () => {
+        expect(parseTermMonths("1")).toBe(1)
+        expect(parseTermMonths("12")).toBe(12)
+    })
+
+    it("0 이하·정수가 아닌 값은 무기한(null)이다", () => {
+        expect(parseTermMonths("0")).toBeNull()
+        expect(parseTermMonths("-3")).toBeNull()
+        expect(parseTermMonths("abc")).toBeNull()
+    })
+})
 
 const tmpl: RecurringView = {
     id: "r1",

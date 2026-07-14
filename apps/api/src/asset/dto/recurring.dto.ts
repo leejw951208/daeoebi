@@ -54,6 +54,12 @@ export class UpdateRecurringDto {
     @IsBoolean()
     active?: boolean
 
+    // 개월 수(기간 제한). null 을 보내면 무기한으로 되돌린다.
+    @IsOptional()
+    @IsInt()
+    @Min(1)
+    termMonths?: number | null
+
     @IsOptional()
     @IsBase64url()
     iv?: string
