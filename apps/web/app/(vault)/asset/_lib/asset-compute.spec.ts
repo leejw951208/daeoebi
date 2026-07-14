@@ -1,8 +1,10 @@
 // asset-compute 집계 순수 함수 테스트.
 import {
+    activeRecurringIds,
     byCategory,
     byDay,
     filterByMonth,
+    isActiveRecurring,
     investmentView,
     savingsByItem,
     planBudgetSave,
@@ -49,6 +51,53 @@ function exp(over: Partial<ComputedExpense>): ComputedExpense {
         ...over,
     }
 }
+
+// "고정" 배지 판정. 고정 해제해도 지출 행의 recurringId 는 남으므로, 그것만 보면 해제한
+// 지출에도 배지가 영원히 붙는다. 활성 템플릿과 대조해야 한다.
+describe("isActiveRecurring", () => {
+    const active = new Set(["r1"])
+
+    it("활성 템플릿에 연결된 지출은 고정이다", () => {
+        expect(isActiveRecurring(exp({ recurringId: "r1" }), active)).toBe(true)
+    })
+
+    it("고정 해제된 템플릿에 연결된 지출은 고정이 아니다", () => {
+        // 해제해도 recurringId 는 남지만, 그 템플릿은 더 이상 활성 목록에 없다.
+        expect(isActiveRecurring(exp({ recurringId: "r-old" }), active)).toBe(
+            false,
+        )
+    })
+
+    it("단건 지출은 고정이 아니다", () => {
+        expect(isActiveRecurring(exp({ recurringId: null }), active)).toBe(
+            false,
+        )
+    })
+
+    it("활성 템플릿이 하나도 없으면 전부 고정이 아니다", () => {
+        expect(isActiveRecurring(exp({ recurringId: "r1" }), new Set())).toBe(
+            false,
+        )
+    })
+})
+
+describe("activeRecurringIds", () => {
+    it("템플릿 id 집합을 만든다", () => {
+        const ids = activeRecurringIds([
+            {
+                id: "r1",
+                item: "월세",
+                amount: 1,
+                dayOfMonth: 1,
+                startMonth: "2026-01",
+                termMonths: null,
+                categoryId: null,
+            },
+        ])
+        expect(ids.has("r1")).toBe(true)
+        expect(ids.size).toBe(1)
+    })
+})
 
 describe("asset-compute", () => {
     it("totalSpent 는 금액 합", () => {

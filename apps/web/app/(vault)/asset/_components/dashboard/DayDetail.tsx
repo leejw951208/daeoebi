@@ -2,7 +2,11 @@
 // 자산 대시보드의 선택일 상세. 그 날 지출 합계와 항목 목록(고정 배지 포함)을 그린다.
 import Link from "next/link"
 import { resolveCategory, formatWon } from "../../_lib/asset-categories"
-import { totalSpent, type ComputedExpense } from "../../_lib/asset-compute"
+import {
+    isActiveRecurring,
+    totalSpent,
+    type ComputedExpense,
+} from "../../_lib/asset-compute"
 import { monthDayLabel } from "../../_lib/asset-dates"
 import type { AssetCategory } from "@/lib/vault-client"
 
@@ -10,9 +14,17 @@ interface Props {
     selectedDay: string
     dayExpenses: ComputedExpense[]
     categories: AssetCategory[]
+    // 활성 고정 지출 템플릿 id. 지출의 recurringId 는 고정 해제 후에도 남으므로,
+    // 이것과 대조해야 "지금 고정인가"를 알 수 있다.
+    activeRecurringIds: ReadonlySet<string>
 }
 
-export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
+export function DayDetail({
+    selectedDay,
+    dayExpenses,
+    categories,
+    activeRecurringIds,
+}: Props) {
     // 디자인 구조: 헤더 / 목록(또는 빈 상태)을 부모 stagger 의 개별 형제로 둔다.
     // 헤더↔첫 카드 간격은 부모 stagger gap(12)이 만들고, 목록 카드끼리는 자체 gap 9.
     return (
@@ -116,7 +128,10 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                         }}
                                     >
                                         {e.item || resolved.name}
-                                        {e.recurringId && (
+                                        {isActiveRecurring(
+                                            e,
+                                            activeRecurringIds,
+                                        ) && (
                                             <span className="recur-badge">
                                                 고정
                                             </span>
