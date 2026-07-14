@@ -32,6 +32,7 @@ import {
     formatTerm,
     materializeRecurring,
     parseTermMonths,
+    projectRecurring,
     propagateRecurringUpdate,
     propagationPivot,
     recurringInMonth,
@@ -132,6 +133,59 @@ describe("recurringInMonth", () => {
             "월세",
             "예정",
         ])
+    })
+})
+
+// 미래 달은 인스턴스를 만들지 않는다(누적 집계 부풀림 방지). 대신 화면에서만 합성해 보여준다.
+describe("projectRecurring", () => {
+    const rows = [
+        row({
+            item: "월세",
+            amount: 500_000,
+            dayOfMonth: 25,
+            startMonth: "2026-01",
+            categoryId: "c1",
+        }),
+        row({
+            item: "할부",
+            amount: 100_000,
+            dayOfMonth: 5,
+            startMonth: "2026-01",
+            termMonths: 3, // 1·2·3월
+        }),
+    ]
+
+    it("현재·과거 달은 합성하지 않는다(진짜 인스턴스가 있다)", () => {
+        expect(projectRecurring(rows, "2026-07", "2026-07")).toEqual([])
+        expect(projectRecurring(rows, "2026-06", "2026-07")).toEqual([])
+    })
+
+    it("미래 달은 템플릿에서 예정 지출을 합성한다", () => {
+        const out = projectRecurring(rows, "2026-09", "2026-07")
+
+        expect(out).toHaveLength(1) // 할부는 3월에 끝났다
+        expect(out[0]).toMatchObject({
+            date: "2026-09-25",
+            item: "월세",
+            amount: 500_000,
+            categoryId: "c1",
+            recurringId: "월세",
+            projected: true,
+        })
+    })
+
+    it("합성 행은 DB id 와 겹치지 않는 id 를 쓴다", () => {
+        const out = projectRecurring(rows, "2026-09", "2026-07")
+        expect(out[0].id).toBe("projected:월세:2026-09")
+    })
+
+    it("결제일이 말일을 넘으면 클램프한다", () => {
+        const out = projectRecurring(
+            [row({ item: "카드", dayOfMonth: 31, startMonth: "2026-01" })],
+            "2027-02",
+            "2026-07",
+        )
+        expect(out[0].date).toBe("2027-02-28")
     })
 })
 

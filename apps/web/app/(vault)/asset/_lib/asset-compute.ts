@@ -15,6 +15,10 @@ export interface ComputedExpense {
     item: string
     amount: number
     categoryId: string | null
+    // 미래 달의 "예정" 고정 지출. DB 에 없는 합성 행이라 수정·삭제할 수 없다.
+    // 미래 달을 열었다고 인스턴스를 만들어버리면 누적 집계(저축·투자)가 부풀려지므로,
+    // 실제로 그 달이 오기 전까지는 화면에서만 보여준다.
+    projected?: boolean
 }
 
 // 복호화된 고정 지출 템플릿 1건(메타 + 본문). 고정 지출 탭이 이 모델로 목록을 그린다.

@@ -12,7 +12,7 @@ import {
 import { isApiError } from "@/lib/api-error"
 import { openExpense, sealExpense, type ExpensePayload } from "./asset-payload"
 import { addMonth, clampedDate } from "./asset-dates"
-import type { ComputedRecurring } from "./asset-compute"
+import type { ComputedExpense, ComputedRecurring } from "./asset-compute"
 
 // 템플릿에서 인스턴스를 만들거나 되돌릴 때 필요한 최소 정보.
 export interface RecurringTemplateRef {
@@ -58,6 +58,28 @@ export function recurringInMonth(
         const end = endMonthOf(r.startMonth, r.termMonths)
         return end === null || month <= end
     })
+}
+
+// 미래 달의 "예정" 고정 지출을 템플릿에서 합성한다. DB 에는 쓰지 않는다.
+//
+// 미래 달을 열었다고 인스턴스를 만들면 전 기간 누적 집계(저축·투자)가 그만큼 부풀려진다.
+// 그렇다고 안 보여주면 다음 달에 뭐가 나갈지 알 수가 없다. 그래서 화면에서만 합성해 보여주고,
+// 그 달이 실제로 오면 materializeRecurring 이 진짜 인스턴스를 만든다.
+export function projectRecurring(
+    rows: readonly ComputedRecurring[],
+    month: string,
+    nowMonth: string,
+): ComputedExpense[] {
+    if (month <= nowMonth) return [] // 현재·과거 달은 진짜 인스턴스가 있다.
+    return recurringInMonth(rows, month).map((r) => ({
+        id: `projected:${r.id}:${month}`,
+        date: clampedDate(month, r.dayOfMonth),
+        recurringId: r.id,
+        item: r.item,
+        amount: r.amount,
+        categoryId: r.categoryId,
+        projected: true,
+    }))
 }
 
 // 매달 나가는 고정 지출 합계.

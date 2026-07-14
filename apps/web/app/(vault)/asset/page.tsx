@@ -58,7 +58,7 @@ import {
     SAVINGS_CODE,
     INVESTMENT_CODE,
 } from "./_lib/asset-categories"
-import { materializeRecurring } from "./_lib/asset-recurring"
+import { materializeRecurring, projectRecurring } from "./_lib/asset-recurring"
 import {
     addMonth,
     currentMonth,
@@ -396,6 +396,14 @@ export default function AssetPage() {
             // 고정 지출 탭용 템플릿 복호화(실패분 스킵). 위에서 이미 받아둔 templates 를 재사용한다.
             const recurrings = await resolveRecurrings(vaultKey, templates)
 
+            // 미래 달은 인스턴스를 만들지 않는 대신, 템플릿에서 "예정"으로 합성해 보여준다.
+            // DB 에 없는 행이라 수정·삭제할 수 없고, 서버가 집계하는 누적(저축·투자)에도 안 들어간다.
+            const projected = projectRecurring(
+                recurrings,
+                month,
+                currentMonth(),
+            )
+
             // 읽지 못한 행은 합계에서 조용히 빠진다. 틀린 금액을 아무 표시 없이 보여주지 않도록 건수를 넘긴다.
             const unreadable =
                 budgetSettled.length -
@@ -409,7 +417,7 @@ export default function AssetPage() {
                 data: {
                     budgetAmount,
                     budgetRows,
-                    expenses,
+                    expenses: [...expenses, ...projected],
                     recurrings,
                     categories,
                     unreadable,

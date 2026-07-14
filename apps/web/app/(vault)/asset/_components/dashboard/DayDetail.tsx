@@ -63,10 +63,15 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                             e.categoryId,
                             categories,
                         )
+                        // 예정 항목은 DB 에 없는 합성 행이라 수정 화면이 없다. 링크로 만들지 않는다.
+                        const Row = e.projected ? "div" : Link
+                        const rowProps = e.projected
+                            ? {}
+                            : { href: `/asset/${e.id}` }
                         return (
-                            <Link
+                            <Row
                                 key={e.id}
-                                href={`/asset/${e.id}`}
+                                {...(rowProps as { href: string })}
                                 className="entry-card"
                                 style={{
                                     display: "flex",
@@ -74,6 +79,9 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                     gap: 13,
                                     padding: "13px 14px",
                                     borderRadius: 16,
+                                    ...(e.projected
+                                        ? { opacity: 0.62, cursor: "default" }
+                                        : {}),
                                 }}
                             >
                                 <span
@@ -113,6 +121,11 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                                 고정
                                             </span>
                                         )}
+                                        {e.projected && (
+                                            <span className="recur-badge">
+                                                예정
+                                            </span>
+                                        )}
                                     </span>
                                     <span
                                         style={{
@@ -135,7 +148,7 @@ export function DayDetail({ selectedDay, dayExpenses, categories }: Props) {
                                 >
                                     -{formatWon(e.amount)}
                                 </span>
-                            </Link>
+                            </Row>
                         )
                     })}
                 </div>
