@@ -76,6 +76,35 @@ export class ExpenseService {
         return rows.map(toView)
     }
 
+    // 템플릿 수정 전파용: 해당 템플릿의 fromPeriod 초과(=미래) 인스턴스를 반환한다.
+    // 클라가 새 내용으로 재봉인해 갱신한다(서버는 블롭을 못 읽으므로 여기서 못 한다).
+    // @@unique([recurringId, period]) 인덱스를 그대로 타서 추가 인덱스가 필요 없다.
+    async listInstancesAfter(recurringId: string, fromPeriod: string) {
+        // Prisma 는 undefined 필터를 통째로 무시하므로, 빈 recurringId 를 넘기면
+        // 조건이 사라져 다른 템플릿의 인스턴스까지 전부 나온다. 반드시 먼저 막는다.
+        if (!recurringId) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_RECURRING_ID,
+                message: "recurringId 는 필수입니다.",
+            })
+        }
+        if (!MONTH_RE.test(fromPeriod)) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_MONTH,
+                message: "fromPeriod 는 YYYY-MM 형식이어야 합니다.",
+            })
+        }
+        const rows = await this.prisma.expense.findMany({
+            where: {
+                recurringId,
+                period: { gt: fromPeriod },
+                removed: false, // 이번 달만 삭제된 슬롯은 어떤 조회에도 안 나오므로 갱신 대상이 아니다.
+            },
+            orderBy: { period: "asc" },
+        })
+        return rows.map(toView)
+    }
+
     async detail(id: string) {
         const row = await this.prisma.expense.findUnique({ where: { id } })
         if (!row) throw this.notFound()

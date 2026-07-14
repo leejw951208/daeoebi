@@ -31,6 +31,16 @@ export class ExpenseController {
         return this.service.listContributions(ids)
     }
 
+    // 고정 지출 템플릿 수정을 이후 달에 전파할 때, 이미 만들어진 미래 인스턴스를 찾는다.
+    // ":id" 보다 먼저 선언해야 리터럴 경로로 매칭된다.
+    @Get("instances")
+    instancesAfter(
+        @Query("recurringId") recurringId: string,
+        @Query("fromPeriod") fromPeriod: string,
+    ) {
+        return this.service.listInstancesAfter(recurringId, fromPeriod)
+    }
+
     @Get(":id")
     detail(@Param("id") id: string) {
         return this.service.detail(id)

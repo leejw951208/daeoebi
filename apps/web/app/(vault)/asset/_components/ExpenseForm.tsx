@@ -1,7 +1,7 @@
 "use client"
 // 지출 추가/수정 폼(디자인 화면 12). 금액·항목·카테고리·결제방법을 VK 로 봉인해 저장한다.
 // 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만들고 당월 인스턴스를 함께 생성한다(이후 달 자동 생성).
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useVault } from "../../_lib/vault-context"
 import { isApiError } from "@/lib/api-error"
 import {
@@ -17,15 +17,25 @@ import { Button } from "@/components/Button"
 import { toast } from "@/components/toast"
 import { formatAmount } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
-import { parseTermMonths } from "../_lib/asset-recurring"
-import { monthOf, todayISO } from "../_lib/asset-dates"
+import {
+    parseTermMonths,
+    propagateRecurringUpdate,
+    removeRecurringFuture,
+} from "../_lib/asset-recurring"
+import { currentMonth, monthOf, todayISO } from "../_lib/asset-dates"
 
 export interface ExpenseFormInitial {
     id: string
     date: string
     recurringId: string | null
+    // 이 지출이 속한 달("YYYY-MM"). 고정 인스턴스의 멱등 키라 날짜를 다른 달로 옮길 수 없다.
+    period: string | null
     // 이 지출에 연결된 활성 템플릿. 단건이거나 고정 해제된 지출이면 null.
-    template: { id: string; termMonths: number | null } | null
+    template: {
+        id: string
+        startMonth: string
+        termMonths: number | null
+    } | null
     payload: ExpensePayload
     categoryId: string | null
 }
@@ -65,6 +75,9 @@ export function ExpenseForm({
     )
     const [busy, setBusy] = useState(false)
     const [deleteMenu, setDeleteMenu] = useState(false)
+    // 저장이 중간에 실패해도 만들어진 템플릿은 서버에 남는다. 재시도 때 또 만들면 고정 지출이
+    // 매달 두 건씩 생기므로, 한 번 만든 템플릿 id 를 붙들고 재사용한다.
+    const createdTemplateId = useRef<string | null>(null)
 
     // 신규 폼에서 카테고리 목록이 비동기로 도착했을 때 첫 항목을 자동 선택한다.
     // categoryId 가 이미 설정된 경우(수정 모드 또는 사용자가 직접 선택)에는 동작하지 않는다.
@@ -81,9 +94,34 @@ export function ExpenseForm({
         setAmount(v.replace(/[^\d]/g, "").slice(0, 12))
     }
 
+    // 템플릿 생성은 한 번만. 저장이 뒤에서 실패해 사용자가 재시도해도 같은 템플릿을 재사용한다.
+    async function ensureTemplate(
+        input: Parameters<typeof createRecurring>[0],
+    ): Promise<string> {
+        if (createdTemplateId.current !== null) return createdTemplateId.current
+        const tmpl = await createRecurring(input)
+        createdTemplateId.current = tmpl.id
+        return tmpl.id
+    }
+
     async function handleSave() {
         if (amountNum <= 0) {
             toast("금액을 입력하세요.")
+            return
+        }
+        if (categoryId === null) {
+            // 카테고리 목록이 아직 안 왔는데 저장하면 영구 "미분류"로 박힌다.
+            toast("카테고리를 선택하세요.")
+            return
+        }
+        // 고정 인스턴스는 (recurringId, period) 가 멱등 키다. 날짜만 다른 달로 옮기면 period 와
+        // 어긋나 원래 달에서 사라지고 옮긴 달엔 중복이 생긴다. 달을 넘는 이동 자체를 막는다.
+        if (
+            isEdit &&
+            initial.period !== null &&
+            monthOf(date) !== initial.period
+        ) {
+            toast("고정 지출의 날짜는 같은 달 안에서만 바꿀 수 있습니다.")
             return
         }
         setBusy(true)
@@ -93,52 +131,70 @@ export function ExpenseForm({
                 amount: amountNum,
             }
             const term = parseTermMonths(termMonths)
+            const dayOfMonth = Number(date.slice(8, 10))
+            const nowMonth = currentMonth()
             if (isEdit) {
                 const blob = await sealExpense(vaultKey, payload)
                 if (!wasRecurring && recurring) {
                     // 단건 → 고정 전환: 템플릿을 만들고 이 지출을 연결한다.
                     const tmplBlob = await sealExpense(vaultKey, payload)
-                    const tmpl = await createRecurring({
-                        dayOfMonth: Number(date.slice(8, 10)),
+                    const templateId = await ensureTemplate({
+                        dayOfMonth,
                         startMonth: monthOf(date),
-                        categoryId: categoryId ?? undefined,
+                        categoryId,
                         ...(term !== null ? { termMonths: term } : {}),
                         ...tmplBlob,
                     })
                     await updateExpense(initial.id, {
                         date,
-                        categoryId: categoryId ?? undefined,
-                        recurringId: tmpl.id,
+                        categoryId,
+                        recurringId: templateId,
                         period: monthOf(date),
                         ...blob,
                     })
                 } else {
                     await updateExpense(initial.id, {
                         date,
-                        categoryId: categoryId ?? undefined,
+                        categoryId,
                         ...blob,
                     })
                     if (template !== null && !recurring) {
-                        // 고정 해제: 이후 자동 생성만 중단(과거·이번 달 인스턴스는 유지).
+                        // 고정 해제: 이후 자동 생성을 중단하고, 미리 열어봐서 이미 만들어진
+                        // 미래 달 인스턴스도 함께 지운다(과거·이번 달 기록은 실제 지출이라 유지).
                         await updateRecurring(template.id, { active: false })
+                        await removeRecurringFuture(template.id, nowMonth)
                     } else if (template !== null) {
-                        // 고정 수정: 템플릿도 함께 갱신해 다음 달부터 새 내용으로 생성되게 한다.
+                        // 고정 수정: 템플릿을 갱신해 아직 안 만들어진 달이 새 내용으로 생성되게 하고,
+                        // 미리 열어봐서 이미 만들어져 있는 이후 달 인스턴스는 재봉인해 함께 밀어준다.
                         // 지난 달 인스턴스는 그대로 둔다(앞으로만 반영).
                         const tmplBlob = await sealExpense(vaultKey, payload)
                         await updateRecurring(template.id, {
-                            dayOfMonth: Number(date.slice(8, 10)),
-                            categoryId: categoryId ?? undefined,
+                            dayOfMonth,
+                            categoryId,
                             termMonths: term,
                             ...tmplBlob,
                         })
+                        await propagateRecurringUpdate(
+                            vaultKey,
+                            {
+                                id: template.id,
+                                dayOfMonth,
+                                categoryId,
+                                startMonth: template.startMonth,
+                                termMonths: term,
+                            },
+                            monthOf(initial.date),
+                            payload,
+                            nowMonth,
+                        )
                     }
                 }
             } else if (recurring) {
                 const tmplBlob = await sealExpense(vaultKey, payload)
-                const tmpl = await createRecurring({
-                    dayOfMonth: Number(date.slice(8, 10)),
+                const templateId = await ensureTemplate({
+                    dayOfMonth,
                     startMonth: monthOf(date),
-                    categoryId: categoryId ?? undefined,
+                    categoryId,
                     // 1 이상 정수면 기간 제한, 비었거나 0 이면 무기한(미전송).
                     ...(term !== null ? { termMonths: term } : {}),
                     ...tmplBlob,
@@ -146,16 +202,16 @@ export function ExpenseForm({
                 const instBlob = await sealExpense(vaultKey, payload)
                 await createExpense({
                     date,
-                    recurringId: tmpl.id,
+                    recurringId: templateId,
                     period: monthOf(date),
-                    categoryId: categoryId ?? undefined,
+                    categoryId,
                     ...instBlob,
                 })
             } else {
                 const blob = await sealExpense(vaultKey, payload)
                 await createExpense({
                     date,
-                    categoryId: categoryId ?? undefined,
+                    categoryId,
                     ...blob,
                 })
             }
@@ -170,11 +226,13 @@ export function ExpenseForm({
         }
     }
 
+    // 활성 템플릿일 때만 부른다. 고정 해제된 지출에 이걸 걸면 이미 남남인 옛 템플릿을 지우면서
+    // Cascade 로 과거 모든 달의 실제 지출 기록까지 날아간다.
     async function handleDeleteAll() {
-        if (!initial?.recurringId) return
+        if (template === null) return
         setBusy(true)
         try {
-            await deleteRecurring(initial.recurringId) // FK Cascade 로 인스턴스까지 삭제
+            await deleteRecurring(template.id) // FK Cascade 로 인스턴스까지 삭제
             onDeleted()
         } catch (e) {
             setBusy(false)
@@ -541,7 +599,8 @@ export function ExpenseForm({
                             type="button"
                             className="press-98"
                             onClick={
-                                initial?.recurringId
+                                // 활성 고정만 "전체/이번 달" 선택지를 준다. 해제된 지출은 이미 단건이다.
+                                template !== null
                                     ? () => setDeleteMenu(true)
                                     : handleDeleteThisMonth
                             }

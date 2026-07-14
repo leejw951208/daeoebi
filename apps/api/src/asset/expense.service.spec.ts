@@ -231,3 +231,51 @@ describe("ExpenseService.remove", () => {
         })
     })
 })
+
+describe("ExpenseService.listInstancesAfter", () => {
+    it("잘못된 fromPeriod 형식은 INVALID_MONTH", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).listInstancesAfter("r1", "2026-6"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_MONTH },
+        })
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
+    })
+
+    it("해당 템플릿의 fromPeriod 초과(미래) 인스턴스만 조회한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findMany.mockResolvedValueOnce([
+            row({ id: "e9", recurringId: "r1", period: "2026-09" }),
+        ])
+
+        const out = await makeService(prisma).listInstancesAfter(
+            "r1",
+            "2026-08",
+        )
+
+        expect(prisma.expense.findMany).toHaveBeenCalledWith({
+            where: {
+                recurringId: "r1",
+                period: { gt: "2026-08" },
+                removed: false,
+            },
+            orderBy: { period: "asc" },
+        })
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ id: "e9", period: "2026-09" })
+    })
+})
+
+describe("ExpenseService.listInstancesAfter 안전 가드", () => {
+    // recurringId 가 undefined 면 Prisma 는 그 필터를 무시한다 → 남의 지출까지 전부 긁어온다.
+    it("recurringId 가 비면 조회하지 않고 INVALID_RECURRING_ID", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).listInstancesAfter("", "2026-08"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_RECURRING_ID },
+        })
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
+    })
+})

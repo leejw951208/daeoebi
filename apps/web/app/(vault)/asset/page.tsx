@@ -5,6 +5,7 @@ import {
     useCallback,
     useEffect,
     useMemo,
+    useRef,
     useState,
     type CSSProperties,
     type PointerEvent,
@@ -150,6 +151,7 @@ async function resolveRecurrings(
                 item: p.item,
                 amount: p.amount,
                 dayOfMonth: v.dayOfMonth,
+                startMonth: v.startMonth,
                 termMonths: v.termMonths,
                 categoryId: v.categoryId,
             }
@@ -284,8 +286,14 @@ export default function AssetPage() {
     const [editingAccount, setEditingAccount] = useState<EditingAccount | null>(
         null,
     )
+    // 월을 빠르게 넘기면 이전 달 응답이 늦게 도착해 최신 화면을 덮어쓴다.
+    // 로드마다 번호를 매겨, 가장 마지막에 시작한 로드의 결과만 반영한다.
+    const loadSeq = useRef(0)
 
     const load = useCallback(async () => {
+        const seq = loadSeq.current + 1
+        loadSeq.current = seq
+        const isStale = () => loadSeq.current !== seq
         setState({ status: "loading" })
         try {
             // 지출은 지출일(date) 기준으로 그 달 것만 집계한다. 해당 월 한 달치를 가져온다.
@@ -315,12 +323,16 @@ export default function AssetPage() {
                 }
             }
 
-            // 고정 지출 머티리얼라이즈(멱등). 해당 월 분만 생성한다.
+            // 월을 넘기는 중이면 여기서 멈춘다. 스쳐 지나간 달에 인스턴스를 쓰지 않는다.
+            if (isStale()) return
+
+            // 고정 지출 머티리얼라이즈(멱등). 해당 월 분만, 현재 달까지만 생성한다.
             const createdM = await materializeRecurring(
                 vaultKey,
                 month,
                 templates,
                 freshExpM,
+                currentMonth(),
             )
             const allViews: ExpenseView[] = [...freshExpM, ...createdM]
 
@@ -371,6 +383,14 @@ export default function AssetPage() {
             // 고정 지출 탭용 템플릿 복호화(실패분 스킵). 위에서 이미 받아둔 templates 를 재사용한다.
             const recurrings = await resolveRecurrings(vaultKey, templates)
 
+            // 읽지 못한 행은 합계에서 조용히 빠진다. 틀린 금액을 아무 표시 없이 보여주지 않도록 건수를 넘긴다.
+            const unreadable =
+                budgetSettled.length -
+                budgetRows.length +
+                (settled.length - expenses.length) +
+                (templates.length - recurrings.length)
+
+            if (isStale()) return
             setState({
                 status: "ready",
                 data: {
@@ -379,9 +399,11 @@ export default function AssetPage() {
                     expenses,
                     recurrings,
                     categories,
+                    unreadable,
                 },
             })
         } catch (e) {
+            if (isStale()) return
             setState({
                 status: "error",
                 message: isApiError(e) ? e.message : "불러오지 못했습니다.",

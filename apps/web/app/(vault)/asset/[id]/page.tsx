@@ -53,11 +53,13 @@ export default function EditExpensePage() {
                         id: view.id,
                         date: view.date,
                         recurringId: view.recurringId,
+                        period: view.period,
                         template:
                             linked === null
                                 ? null
                                 : {
                                       id: linked.id,
+                                      startMonth: linked.startMonth,
                                       termMonths: linked.termMonths,
                                   },
                         categoryId: view.categoryId,

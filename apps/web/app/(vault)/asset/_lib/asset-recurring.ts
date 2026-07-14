@@ -2,13 +2,25 @@
 // 활성 템플릿 중 해당 월 인스턴스가 없는 것을 복호화→재봉인→생성한다. 서버 @@unique 로 멱등(409 무시).
 import {
     createExpense,
+    deleteExpense,
+    listRecurringInstances,
+    updateExpense,
     type ExpenseView,
     type RecurringView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
-import { openExpense, sealExpense } from "./asset-payload"
+import { openExpense, sealExpense, type ExpensePayload } from "./asset-payload"
 import { addMonth, clampedDate } from "./asset-dates"
 import type { ComputedRecurring } from "./asset-compute"
+
+// 템플릿에서 인스턴스를 만들거나 되돌릴 때 필요한 최소 정보.
+export interface RecurringTemplateRef {
+    id: string
+    dayOfMonth: number
+    categoryId: string | null
+    startMonth: string
+    termMonths: number | null
+}
 
 // 개월 수 입력값(문자열)을 템플릿의 termMonths 로 바꾼다. 비었거나 1 미만·정수 아님 = 무기한(null).
 export function parseTermMonths(input: string): number | null {
@@ -26,6 +38,27 @@ export function formatTerm(termMonths: number | null): string {
     return termMonths === null ? "무기한" : `${termMonths}개월`
 }
 
+// 종료월(포함). 무기한이면 null. 3개월 = 시작월 포함 3개라 startMonth+2 가 종료월이다.
+export function endMonthOf(
+    startMonth: string,
+    termMonths: number | null,
+): string | null {
+    return termMonths === null ? null : addMonth(startMonth, termMonths - 1)
+}
+
+// 그 달에 실제로 나가는 고정 지출만 남긴다. 시작 전·기간 종료 후 템플릿을 제외한다.
+// 템플릿은 만료돼도 active 로 남으므로(서버가 끄지 않는다) 표시 시점에 걸러야 한다.
+export function recurringInMonth(
+    rows: readonly ComputedRecurring[],
+    month: string,
+): ComputedRecurring[] {
+    return rows.filter((r) => {
+        if (month < r.startMonth) return false
+        const end = endMonthOf(r.startMonth, r.termMonths)
+        return end === null || month <= end
+    })
+}
+
 // 매달 나가는 고정 지출 합계.
 export function totalRecurring(rows: readonly ComputedRecurring[]): number {
     return rows.reduce((sum, r) => sum + r.amount, 0)
@@ -41,6 +74,15 @@ export function sortRecurring(
     )
 }
 
+// 템플릿 수정을 이후 달에 전파할 기준월. 편집한 달과 현재 달 중 나중 것이다.
+// 과거 달을 고칠 때 그 사이 달들의 확정된 기록까지 덮어쓰지 않게 막는다(앞으로만 반영).
+export function propagationPivot(
+    editedMonth: string,
+    nowMonth: string,
+): string {
+    return editedMonth > nowMonth ? editedMonth : nowMonth
+}
+
 // month 의 미생성 고정 지출을 만들어 생성된 인스턴스 배열을 반환한다(없으면 빈 배열).
 // 생성 대상을 먼저 필터링한 뒤 Promise.all 로 병렬 실행해 K 직렬 요청을 제거한다.
 export async function materializeRecurring(
@@ -48,7 +90,10 @@ export async function materializeRecurring(
     month: string,
     templates: RecurringView[],
     monthExpenses: ExpenseView[],
+    nowMonth: string,
 ): Promise<ExpenseView[]> {
+    // 미래 달은 들여다보기만 해도 인스턴스가 박혀 누적 집계(저축·투자)를 부풀린다. 현재 달까지만 만든다.
+    if (month > nowMonth) return []
     const present = new Set(
         monthExpenses
             .filter((e) => e.recurringId)
@@ -56,11 +101,8 @@ export async function materializeRecurring(
     )
     const targets = templates.filter((t) => {
         if (month < t.startMonth) return false // 시작월 이전 달엔 생성하지 않는다.
-        if (
-            t.termMonths != null &&
-            month > addMonth(t.startMonth, t.termMonths - 1)
-        )
-            return false // 기간(개월 수) 종료 후엔 생성하지 않는다.
+        const end = endMonthOf(t.startMonth, t.termMonths)
+        if (end !== null && month > end) return false // 기간(개월 수) 종료 후엔 생성하지 않는다.
         return !present.has(`${t.id}|${month}`)
     })
     const results = await Promise.all(
@@ -83,4 +125,46 @@ export async function materializeRecurring(
         }),
     )
     return results.filter((r): r is ExpenseView => r !== null)
+}
+
+// 템플릿을 고칠 때, 이미 만들어져 있는 이후 달 인스턴스를 새 내용으로 재봉인해 갱신한다.
+// 미리 열어본 달은 인스턴스가 이미 존재해 materializeRecurring 이 건너뛰므로, 여기서 따로 밀어줘야 한다.
+//
+// 기준월은 propagationPivot 이 정한다 — 과거 달을 고쳐도 지나간 달의 확정 기록은 건드리지 않는다.
+// 개월 수를 줄여 기간이 끝난 뒤로 밀려난 인스턴스는 갱신이 아니라 삭제한다(되살리면 안 된다).
+export async function propagateRecurringUpdate(
+    vaultKey: CryptoKey,
+    template: RecurringTemplateRef,
+    editedMonth: string,
+    payload: ExpensePayload,
+    nowMonth: string,
+): Promise<void> {
+    const pivot = propagationPivot(editedMonth, nowMonth)
+    const endMonth = endMonthOf(template.startMonth, template.termMonths)
+    const future = await listRecurringInstances(template.id, pivot)
+    await Promise.all(
+        future.map(async (e) => {
+            const period = e.period ?? pivot
+            if (endMonth !== null && period > endMonth) {
+                await deleteExpense(e.id)
+                return
+            }
+            const blob = await sealExpense(vaultKey, payload)
+            await updateExpense(e.id, {
+                date: clampedDate(period, template.dayOfMonth),
+                categoryId: template.categoryId ?? undefined,
+                ...blob,
+            })
+        }),
+    )
+}
+
+// 고정 해제·전체 삭제 시, 미리 열어봐서 이미 만들어져 있는 미래 달 인스턴스를 지운다.
+// 현재 달과 과거 달의 기록은 실제로 나간 돈이므로 그대로 둔다.
+export async function removeRecurringFuture(
+    templateId: string,
+    nowMonth: string,
+): Promise<void> {
+    const future = await listRecurringInstances(templateId, nowMonth)
+    await Promise.all(future.map((e) => deleteExpense(e.id)))
 }

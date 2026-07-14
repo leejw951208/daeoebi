@@ -448,6 +448,18 @@ export async function getExpense(id: string): Promise<ExpenseView> {
     return data
 }
 
+// 템플릿 수정 전파용: 해당 고정 지출의 fromPeriod 이후 달에 이미 만들어진 인스턴스들.
+export async function listRecurringInstances(
+    recurringId: string,
+    fromPeriod: string,
+): Promise<ExpenseView[]> {
+    const { data } = await vaultClient.get<ExpenseView[]>(
+        "/expenses/instances",
+        { params: { recurringId, fromPeriod } },
+    )
+    return data
+}
+
 export interface CreateExpenseInput extends SealedBlobDto {
     date: string
     recurringId?: string

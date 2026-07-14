@@ -24,6 +24,7 @@ export interface ComputedRecurring {
     item: string
     amount: number
     dayOfMonth: number
+    startMonth: string // "YYYY-MM". 시작 전 달에는 나가지 않는다.
     termMonths: number | null // null = 무기한
     categoryId: string | null
 }
