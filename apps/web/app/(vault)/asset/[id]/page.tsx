@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import {
     getExpense,
     listAssetCategories,
+    listRecurring,
     type AssetCategory,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
@@ -38,10 +39,13 @@ export default function EditExpensePage() {
     useEffect(() => {
         let cancelled = false
         const id = params.id
-        Promise.all([getExpense(id), listAssetCategories()])
-            .then(async ([view, categories]) => {
+        Promise.all([getExpense(id), listAssetCategories(), listRecurring()])
+            .then(async ([view, categories, templates]) => {
                 const payload = await openExpense(vaultKey, view)
                 if (cancelled) return
+                // 연결된 활성 템플릿(개월 수 표시·앞으로만 반영에 필요). 해제됐으면 목록에 없다.
+                const linked =
+                    templates.find((t) => t.id === view.recurringId) ?? null
                 setState({
                     status: "ready",
                     categories,
@@ -49,6 +53,13 @@ export default function EditExpensePage() {
                         id: view.id,
                         date: view.date,
                         recurringId: view.recurringId,
+                        template:
+                            linked === null
+                                ? null
+                                : {
+                                      id: linked.id,
+                                      termMonths: linked.termMonths,
+                                  },
                         categoryId: view.categoryId,
                         payload,
                     },

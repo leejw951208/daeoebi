@@ -9,6 +9,12 @@ import { isApiError } from "@/lib/api-error"
 import { openExpense, sealExpense } from "./asset-payload"
 import { addMonth, clampedDate } from "./asset-dates"
 
+// 개월 수 입력값(문자열)을 템플릿의 termMonths 로 바꾼다. 비었거나 1 미만·정수 아님 = 무기한(null).
+export function parseTermMonths(input: string): number | null {
+    const n = Number(input)
+    return Number.isInteger(n) && n >= 1 ? n : null
+}
+
 // month 의 미생성 고정 지출을 만들어 생성된 인스턴스 배열을 반환한다(없으면 빈 배열).
 // 생성 대상을 먼저 필터링한 뒤 Promise.all 로 병렬 실행해 K 직렬 요청을 제거한다.
 export async function materializeRecurring(

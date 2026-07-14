@@ -17,12 +17,15 @@ import { Button } from "@/components/Button"
 import { toast } from "@/components/toast"
 import { formatAmount } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
+import { parseTermMonths } from "../_lib/asset-recurring"
 import { monthOf, todayISO } from "../_lib/asset-dates"
 
 export interface ExpenseFormInitial {
     id: string
     date: string
     recurringId: string | null
+    // 이 지출에 연결된 활성 템플릿. 단건이거나 고정 해제된 지출이면 null.
+    template: { id: string; termMonths: number | null } | null
     payload: ExpensePayload
     categoryId: string | null
 }
@@ -44,8 +47,9 @@ export function ExpenseForm({
 }: Props) {
     const { vaultKey, resetIdle } = useVault()
     const isEdit = initial !== null
-    // 이 지출이 현재 고정(템플릿 연결)인지. 토글 초기값·전환 판단에 쓴다.
-    const wasRecurring = initial?.recurringId != null
+    // 이 지출이 현재 고정(활성 템플릿 연결)인지. 토글 초기값·전환 판단에 쓴다.
+    const template = initial?.template ?? null
+    const wasRecurring = template !== null
 
     const [amount, setAmount] = useState(
         initial ? String(initial.payload.amount) : "",
@@ -55,8 +59,10 @@ export function ExpenseForm({
         initial?.categoryId ?? categories[0]?.id ?? null,
     )
     const [date, setDate] = useState(initial?.date ?? todayISO())
-    const [recurring, setRecurring] = useState(initial?.recurringId != null)
-    const [termMonths, setTermMonths] = useState("")
+    const [recurring, setRecurring] = useState(wasRecurring)
+    const [termMonths, setTermMonths] = useState(
+        template?.termMonths != null ? String(template.termMonths) : "",
+    )
     const [busy, setBusy] = useState(false)
     const [deleteMenu, setDeleteMenu] = useState(false)
 
@@ -86,19 +92,17 @@ export function ExpenseForm({
                 item: item.trim(),
                 amount: amountNum,
             }
+            const term = parseTermMonths(termMonths)
             if (isEdit) {
                 const blob = await sealExpense(vaultKey, payload)
                 if (!wasRecurring && recurring) {
                     // 단건 → 고정 전환: 템플릿을 만들고 이 지출을 연결한다.
                     const tmplBlob = await sealExpense(vaultKey, payload)
-                    const term = Number(termMonths)
                     const tmpl = await createRecurring({
                         dayOfMonth: Number(date.slice(8, 10)),
                         startMonth: monthOf(date),
                         categoryId: categoryId ?? undefined,
-                        ...(Number.isInteger(term) && term >= 1
-                            ? { termMonths: term }
-                            : {}),
+                        ...(term !== null ? { termMonths: term } : {}),
                         ...tmplBlob,
                     })
                     await updateExpense(initial.id, {
@@ -114,23 +118,29 @@ export function ExpenseForm({
                         categoryId: categoryId ?? undefined,
                         ...blob,
                     })
-                    const linkedId = initial.recurringId
-                    if (wasRecurring && !recurring && linkedId) {
+                    if (template !== null && !recurring) {
                         // 고정 해제: 이후 자동 생성만 중단(과거·이번 달 인스턴스는 유지).
-                        await updateRecurring(linkedId, { active: false })
+                        await updateRecurring(template.id, { active: false })
+                    } else if (template !== null) {
+                        // 고정 수정: 템플릿도 함께 갱신해 다음 달부터 새 내용으로 생성되게 한다.
+                        // 지난 달 인스턴스는 그대로 둔다(앞으로만 반영).
+                        const tmplBlob = await sealExpense(vaultKey, payload)
+                        await updateRecurring(template.id, {
+                            dayOfMonth: Number(date.slice(8, 10)),
+                            categoryId: categoryId ?? undefined,
+                            termMonths: term,
+                            ...tmplBlob,
+                        })
                     }
                 }
             } else if (recurring) {
                 const tmplBlob = await sealExpense(vaultKey, payload)
-                const term = Number(termMonths)
                 const tmpl = await createRecurring({
                     dayOfMonth: Number(date.slice(8, 10)),
                     startMonth: monthOf(date),
                     categoryId: categoryId ?? undefined,
                     // 1 이상 정수면 기간 제한, 비었거나 0 이면 무기한(미전송).
-                    ...(Number.isInteger(term) && term >= 1
-                        ? { termMonths: term }
-                        : {}),
+                    ...(term !== null ? { termMonths: term } : {}),
                     ...tmplBlob,
                 })
                 const instBlob = await sealExpense(vaultKey, payload)
