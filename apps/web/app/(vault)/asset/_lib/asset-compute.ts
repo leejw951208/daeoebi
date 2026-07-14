@@ -37,6 +37,28 @@ export function totalSpent(items: ComputedExpense[]): number {
     return items.reduce((sum, e) => sum + e.amount, 0)
 }
 
+// 지금도 고정 지출인지("고정" 배지 표시 기준).
+//
+// 지출 행의 recurringId 는 어느 템플릿에서 생성됐는지를 가리키는 연결이고, 고정 해제해도
+// 지워지지 않는다(해제는 템플릿의 active 만 끈다). 그래서 recurringId 만 보면 해제한 지출에도
+// 배지가 영원히 붙는다. 활성 템플릿과 대조해야 "지금 고정인가"를 알 수 있다.
+export function isActiveRecurring(
+    expense: { recurringId: string | null },
+    activeTemplateIds: ReadonlySet<string>,
+): boolean {
+    return (
+        expense.recurringId !== null &&
+        activeTemplateIds.has(expense.recurringId)
+    )
+}
+
+// 활성 고정 지출 템플릿 id 집합. listRecurring() 은 active=true 만 반환하므로 그대로 쓰면 된다.
+export function activeRecurringIds(
+    rows: readonly ComputedRecurring[],
+): Set<string> {
+    return new Set(rows.map((r) => r.id))
+}
+
 export interface CategoryBreakdown {
     key: string
     name: string

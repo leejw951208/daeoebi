@@ -41,7 +41,9 @@ import {
 } from "./_lib/asset-payload"
 import { migrateExpenseCategories } from "./_lib/asset-migrate-categories"
 import {
+    activeRecurringIds,
     byDay,
+    isActiveRecurring,
     totalIncome,
     savingsSummary,
     savingsAccountsView,
@@ -606,7 +608,7 @@ export default function AssetPage() {
                 ? { status: "error", message: savingsState.message }
                 : { status: "loading" }
         }
-        const { categories } = state.data
+        const { categories, recurrings } = state.data
         const {
             contribAll,
             accounts,
@@ -615,6 +617,8 @@ export default function AssetPage() {
         } = savingsState
         const boxBalance = savingsBoxBalance(boxTxns)
         const allSummary = savingsSummary(contribAll, categories)
+        // "고정" 배지 판정용. 지출의 recurringId 는 고정 해제 후에도 남으므로 활성 템플릿과 대조한다.
+        const activeIds = activeRecurringIds(recurrings)
         // 최근 적립 내역: 전체 기간을 최근 순으로. 몇 건까지 보여줄지는 SavingsTab 이 정한다.
         const contributions: Contribution[] = sortContributionsByDateDesc(
             contribAll,
@@ -627,7 +631,7 @@ export default function AssetPage() {
                 categoryName: name,
                 date: c.date,
                 color,
-                recurring: c.recurringId !== null,
+                recurring: isActiveRecurring(c, activeIds),
             }
         })
         const { rows, savedTotal, savedContributed } = savingsAccountsView(

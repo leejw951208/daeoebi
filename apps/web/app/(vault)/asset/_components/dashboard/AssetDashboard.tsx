@@ -2,6 +2,7 @@
 // 자산 대시보드 본문 조립. 복호화된 월 데이터를 집계해 hero·예산/지출·카테고리별·달력·선택일 상세를 배치한다.
 // 상단 세그먼트(지출/고정 지출/저축·투자)로 예산 본문·RecurringTab·SavingsTab 을 전환한다.
 import {
+    activeRecurringIds,
     byCategory,
     remaining,
     spentPct,
@@ -89,6 +90,8 @@ export function AssetDashboard({
     const left = remaining(data.budgetAmount, spent)
     const pct = spentPct(data.budgetAmount, spent)
     const cats = byCategory(data.expenses, data.categories)
+    // "고정" 배지 판정용. recurrings 는 활성 템플릿만 담고 있다.
+    const activeIds = activeRecurringIds(data.recurrings)
     const dayExpenses = selectedDay
         ? data.expenses
               .filter((e) => e.date === selectedDay)
@@ -141,6 +144,7 @@ export function AssetDashboard({
                             selectedDay={selectedDay}
                             dayExpenses={dayExpenses}
                             categories={data.categories}
+                            activeRecurringIds={activeIds}
                         />
                     )}
                 </>
