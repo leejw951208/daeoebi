@@ -26,8 +26,10 @@ interface Props {
 }
 
 // 출처 세그먼트의 선택된 버튼 스타일(쌈짓돈 accent #e9b949 톤).
+// 기본 스타일이 축약형 border 를 쓰므로 여기서도 축약형으로 덮어쓴다. borderColor 만 얹으면
+// 선택이 풀릴 때 React 가 축약형·개별 속성이 섞였다고 경고하고, 스타일이 어긋날 수 있다.
 const SOURCE_ACTIVE_STYLE = {
-    borderColor: "#171717",
+    border: "1.5px solid #171717",
     background: "#f5f5f5",
     color: "#171717",
 } as const
