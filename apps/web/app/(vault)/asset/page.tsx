@@ -6,6 +6,7 @@ import {
     useEffect,
     useMemo,
     useState,
+    type CSSProperties,
     type PointerEvent,
 } from "react"
 import Link from "next/link"
@@ -20,6 +21,7 @@ import {
     listSavingsBox,
     type ExpenseView,
     type IncomeView,
+    type RecurringView,
     type SavingsAccountView as SavingsAccountApiView,
     type InvestmentView as InvestmentApiView,
     type SavingsBoxTxnView,
@@ -46,6 +48,7 @@ import {
     savingsBoxBalance,
     type ComputedExpense,
     type ComputedIncome,
+    type ComputedRecurring,
 } from "./_lib/asset-compute"
 import {
     resolveCategory,
@@ -134,6 +137,32 @@ async function resolveAccounts(
         .map((r) => r.value)
 }
 
+// 고정 지출 템플릿 블롭 복호화(실패분 스킵). dayOfMonth·termMonths·categoryId 는 서버 평문 메타다.
+async function resolveRecurrings(
+    vaultKey: CryptoKey,
+    views: RecurringView[],
+): Promise<ComputedRecurring[]> {
+    const settled = await Promise.allSettled(
+        views.map(async (v): Promise<ComputedRecurring> => {
+            const p = await openExpense(vaultKey, v)
+            return {
+                id: v.id,
+                item: p.item,
+                amount: p.amount,
+                dayOfMonth: v.dayOfMonth,
+                termMonths: v.termMonths,
+                categoryId: v.categoryId,
+            }
+        }),
+    )
+    return settled
+        .filter(
+            (r): r is PromiseFulfilledResult<ComputedRecurring> =>
+                r.status === "fulfilled",
+        )
+        .map((r) => r.value)
+}
+
 // 투자 포지션 블롭 복호화. 없으면 null, 복호화 실패 시(손상된 블롭) 미설정으로 취급한다.
 async function resolveInvestment(
     vaultKey: CryptoKey,
@@ -178,6 +207,35 @@ type State =
     | { status: "loading" }
     | { status: "error"; message: string }
     | { status: "ready"; data: Loaded }
+
+// 상단 세그먼트 탭. 순서가 곧 화면 순서다.
+const ASSET_TABS: { key: AssetTab; label: string }[] = [
+    { key: "budget", label: "지출" },
+    { key: "recurring", label: "고정 지출" },
+    { key: "savings", label: "저축·투자" },
+]
+
+// 세그먼트 버튼 스타일. 선택된 것만 흰 배경 + 그림자로 띄운다.
+function segmentStyle(selected: boolean): CSSProperties {
+    return {
+        flex: 1,
+        height: 34,
+        border: "none",
+        borderRadius: 9,
+        font: "inherit",
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: "pointer",
+        transition: "transform .12s",
+        ...(selected
+            ? {
+                  background: "#fff",
+                  color: "#171717",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
+              }
+            : { background: "transparent", color: "#9a9a9a" }),
+    }
+}
 
 // 누름(active) 시 축소 스케일. 디자인 style-active 를 인라인 포인터 이벤트로 재현한다.
 function pressScale(scale: number) {
@@ -310,9 +368,18 @@ export default function AssetPage() {
                 )
                 .map((r) => r.value)
 
+            // 고정 지출 탭용 템플릿 복호화(실패분 스킵). 위에서 이미 받아둔 templates 를 재사용한다.
+            const recurrings = await resolveRecurrings(vaultKey, templates)
+
             setState({
                 status: "ready",
-                data: { budgetAmount, budgetRows, expenses, categories },
+                data: {
+                    budgetAmount,
+                    budgetRows,
+                    expenses,
+                    recurrings,
+                    categories,
+                },
             })
         } catch (e) {
             setState({
@@ -608,64 +675,18 @@ export default function AssetPage() {
                         borderRadius: 12,
                     }}
                 >
-                    <button
-                        type="button"
-                        aria-pressed={assetTab === "budget"}
-                        style={{
-                            flex: 1,
-                            height: 34,
-                            border: "none",
-                            borderRadius: 9,
-                            font: "inherit",
-                            fontSize: 13,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "transform .12s",
-                            ...(assetTab === "budget"
-                                ? {
-                                      background: "#fff",
-                                      color: "#171717",
-                                      boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
-                                  }
-                                : {
-                                      background: "transparent",
-                                      color: "#9a9a9a",
-                                  }),
-                        }}
-                        onClick={() => handleAssetTab("budget")}
-                        {...pressScale(0.98)}
-                    >
-                        이번 달
-                    </button>
-                    <button
-                        type="button"
-                        aria-pressed={assetTab === "savings"}
-                        style={{
-                            flex: 1,
-                            height: 34,
-                            border: "none",
-                            borderRadius: 9,
-                            font: "inherit",
-                            fontSize: 13,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "transform .12s",
-                            ...(assetTab === "savings"
-                                ? {
-                                      background: "#fff",
-                                      color: "#171717",
-                                      boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
-                                  }
-                                : {
-                                      background: "transparent",
-                                      color: "#9a9a9a",
-                                  }),
-                        }}
-                        onClick={() => handleAssetTab("savings")}
-                        {...pressScale(0.98)}
-                    >
-                        저축·투자
-                    </button>
+                    {ASSET_TABS.map(({ key, label }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            aria-pressed={assetTab === key}
+                            style={segmentStyle(assetTab === key)}
+                            onClick={() => handleAssetTab(key)}
+                            {...pressScale(0.98)}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
                 {assetTab === "budget" && (
                     <div

@@ -1,6 +1,6 @@
 "use client"
 // 자산 대시보드 본문 조립. 복호화된 월 데이터를 집계해 hero·예산/지출·카테고리별·달력·선택일 상세를 배치한다.
-// 상단 세그먼트(이번 달/저축·투자)로 기존 예산 본문과 SavingsTab 을 전환한다.
+// 상단 세그먼트(지출/고정 지출/저축·투자)로 예산 본문·RecurringTab·SavingsTab 을 전환한다.
 import {
     byCategory,
     remaining,
@@ -8,6 +8,7 @@ import {
     totalSpent,
     type ComputedExpense,
     type ComputedIncome,
+    type ComputedRecurring,
     type InvestmentView,
     type SavingsAccountView,
 } from "../../_lib/asset-compute"
@@ -18,6 +19,7 @@ import { BudgetExpenseCards } from "./BudgetExpenseCards"
 import { CategoryBreakdown } from "./CategoryBreakdown"
 import { ExpenseCalendar } from "./ExpenseCalendar"
 import { DayDetail } from "./DayDetail"
+import { RecurringTab } from "./RecurringTab"
 import {
     SavingsTab,
     type Contribution,
@@ -30,10 +32,12 @@ export interface Loaded {
     budgetAmount: number
     budgetRows: ComputedIncome[] // 서버 Income 행. 예산 시트가 단건 수렴에 사용한다.
     expenses: ComputedExpense[]
+    // 활성 고정 지출 템플릿(복호화). 고정 지출 탭이 쓴다 — 월과 무관하다.
+    recurrings: ComputedRecurring[]
     categories: AssetCategory[]
 }
 
-export type AssetTab = "budget" | "savings"
+export type AssetTab = "budget" | "recurring" | "savings"
 
 // 저축·투자 탭 로드 상태. page.tsx 의 지연 로드 결과를 그대로 전달한다(기존 State 패턴과 동일한 모양).
 export type SavingsView =
@@ -131,6 +135,13 @@ export function AssetDashboard({
                         />
                     )}
                 </>
+            )}
+
+            {assetTab === "recurring" && (
+                <RecurringTab
+                    recurrings={data.recurrings}
+                    categories={data.categories}
+                />
             )}
 
             {assetTab === "savings" && (

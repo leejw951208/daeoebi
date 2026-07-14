@@ -72,6 +72,8 @@ export function DemoAssetScreen() {
         budgetAmount: DEMO_BUDGET_AMOUNT,
         budgetRows: DEMO_BUDGET_ROWS,
         expenses,
+        // 데모엔 고정 지출 템플릿이 없다. 탭에 들어가면 빈 상태 문구가 나온다.
+        recurrings: [],
         categories,
     }
 

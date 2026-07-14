@@ -177,6 +177,33 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         ).toHaveCount(0)
     })
 
+    // 고정 지출 탭: 등록해 둔 템플릿을 한 곳에 모아 보여준다(읽기 전용).
+    // 합계는 볼트당 누적값(이전 실행의 템플릿이 계속 쌓임)이라 총액 대신 행 내용을 검증한다.
+    test("고정 지출 탭에 지출명·결제일·개월 수·금액이 보인다", async ({
+        page,
+    }) => {
+        test.setTimeout(120_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        const item = `QA탭-${Date.now()}`
+        await createRecurringExpense(page, {
+            item,
+            category: CATEGORY_BEFORE,
+            term: "6",
+        })
+
+        await page.getByRole("button", { name: "고정 지출" }).click()
+        await expect(
+            page.getByText("매달 나가는 고정 지출", { exact: true }),
+        ).toBeVisible({ timeout: 20_000 })
+
+        // 방금 만든 템플릿 행에 4개 항목이 모두 보인다.
+        const row = page.locator(".entry-card").filter({ hasText: item })
+        await expect(row).toBeVisible({ timeout: 10_000 })
+        await expect(row).toContainText(`매월 ${DAY}일 · 6개월`)
+        await expect(row).toContainText(`-₩${AMOUNT.toLocaleString("ko-KR")}`)
+    })
+
     // 회귀 C: PATCH /recurring 이 termMonths 를 받지 않아 개월 수를 고칠 수 없던 버그.
     test("개월 수를 고치면 템플릿에 저장된다", async ({ page }) => {
         test.setTimeout(180_000)

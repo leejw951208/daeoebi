@@ -17,6 +17,17 @@ export interface ComputedExpense {
     categoryId: string | null
 }
 
+// 복호화된 고정 지출 템플릿 1건(메타 + 본문). 고정 지출 탭이 이 모델로 목록을 그린다.
+// 인스턴스(ComputedExpense)와 달리 날짜가 아니라 "매월 며칠"과 기간(개월 수)을 가진다.
+export interface ComputedRecurring {
+    id: string
+    item: string
+    amount: number
+    dayOfMonth: number
+    termMonths: number | null // null = 무기한
+    categoryId: string | null
+}
+
 export function totalSpent(items: ComputedExpense[]): number {
     return items.reduce((sum, e) => sum + e.amount, 0)
 }
