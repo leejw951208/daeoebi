@@ -41,11 +41,11 @@ import {
     byDay,
     totalIncome,
     savingsSummary,
-    filterByMonth,
     savingsAccountsView,
     savingsByItem,
     investmentView,
     savingsBoxBalance,
+    sortContributionsByDateDesc,
     type ComputedExpense,
     type ComputedIncome,
     type ComputedRecurring,
@@ -533,11 +533,11 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
-    // SavingsTab 에 넘길 뷰 모델. 저축 합계는 계좌 모델(savingsAccountsView) 기준이고,
-    // 순자산(netWorth) = 그 저축 합계 + 투자 평가금액이다.
+    // SavingsTab 에 넘길 뷰 모델. 값은 전부 전체 기간 누적이라 보고 있는 달과 무관하다
+    // (저축 총액·투자 원금·적립 내역 모두 contribAll 에서 파생한다).
     //
-    // 저축 총액·투자 원금은 전체 기간 적립(contribAll)에서 파생한다 — 보고 있는 달을 바꿔도
-    // 지난 달 적립분이 유지된다. 이번 달 적립분(savedMonth·investMonth)은 배지 표시용으로만 쓴다.
+    // 순자산 = 저축(쌈짓돈으로 이체한 만큼 차감) + 투자 평가금액 + 쌈짓돈 잔액.
+    // 저축→쌈짓돈 이체는 순자산을 바꾸지 않고, 현금 입금은 늘리고, 출금은 줄인다.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
             return savingsState.status === "error"
@@ -552,10 +552,11 @@ export default function AssetPage() {
             boxTxns,
         } = savingsState
         const boxBalance = savingsBoxBalance(boxTxns)
-        const monthContribs = filterByMonth(contribAll, month)
         const allSummary = savingsSummary(contribAll, categories)
-        const monthSummary = savingsSummary(monthContribs, categories)
-        const contributions: Contribution[] = monthContribs.map((c) => {
+        // 최근 적립 내역: 전체 기간을 최근 순으로. 몇 건까지 보여줄지는 SavingsTab 이 정한다.
+        const contributions: Contribution[] = sortContributionsByDateDesc(
+            contribAll,
+        ).map((c) => {
             const { name, color } = resolveCategory(c.categoryId, categories)
             return {
                 id: c.id,
@@ -567,10 +568,9 @@ export default function AssetPage() {
                 recurring: c.recurringId !== null,
             }
         })
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+        const { rows, savedTotal, savedContributed } = savingsAccountsView(
             accounts,
             savingsByItem(contribAll, categories),
-            savingsByItem(monthContribs, categories),
         )
         // 투자 원금 = 초기 원금(base) + 전체 기간 투자 적립.
         const investment = investmentView(
@@ -578,12 +578,14 @@ export default function AssetPage() {
             investmentState?.returnRate ?? "",
             allSummary.investTotal,
         )
+        // 저축에서 쌈짓돈으로 옮긴 금액은 저축에서 빼고 쌈짓돈 잔액으로 잡는다(중복 집계 방지).
+        const displayedSaved = Math.max(0, savedTotal - boxBalance.fromSavings)
         return {
             status: "ready",
-            netWorth: savedTotal + investment.value,
+            netWorth: displayedSaved + investment.value + boxBalance.balance,
             savedTotal,
-            savedMonth,
-            investMonth: monthSummary.investTotal,
+            savedContributed,
+            investContributed: allSummary.investTotal,
             contributions,
             accounts: rows,
             onAddAccount: () => {
@@ -601,7 +603,7 @@ export default function AssetPage() {
                     color: raw.color,
                     base: raw.base,
                     goal: raw.goal,
-                    month: row?.month ?? 0,
+                    contributed: row?.contributed ?? 0,
                 })
             },
             investment,
@@ -627,7 +629,7 @@ export default function AssetPage() {
                 setBoxDetailOpen(true)
             },
         }
-    }, [savingsState, state, month, resetIdle])
+    }, [savingsState, state, resetIdle])
 
     const savingsAccounts =
         savingsState.status === "ready" ? savingsState.accounts : []

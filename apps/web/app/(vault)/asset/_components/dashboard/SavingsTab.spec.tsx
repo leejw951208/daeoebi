@@ -4,11 +4,10 @@ import { SavingsTab } from "./SavingsTab"
 import type { SavingsAccountView } from "../../_lib/asset-compute"
 
 const baseProps = {
-    month: "2026-07",
     netWorth: 0,
     savedTotal: 0,
-    savedMonth: 0,
-    investMonth: 0,
+    savedContributed: 0,
+    investContributed: 0,
     contributions: [],
     investment: { principal: 0, rate: null, value: 0, pnl: 0 },
     onEditReturn: () => {},
@@ -26,7 +25,7 @@ function makeAccount(
         color: "#178a8a",
         base: 100_000,
         goal: 0,
-        month: 0,
+        contributed: 0,
         total: 100_000,
         goalPct: 0,
         remain: 0,
@@ -83,11 +82,13 @@ describe("SavingsTab", () => {
         ).not.toBeNull()
     })
 
-    it("이번 달 적립이 있으면 +금액 배지를 보여준다", () => {
+    it("누적 적립이 있으면 +금액 배지를 보여준다", () => {
         render(
             <SavingsTab
                 {...baseProps}
-                accounts={[makeAccount({ month: 50_000, total: 150_000 })]}
+                accounts={[
+                    makeAccount({ contributed: 50_000, total: 150_000 }),
+                ]}
                 onAddAccount={() => {}}
                 onEditAccountGoal={() => {}}
             />,
@@ -147,7 +148,7 @@ describe("SavingsTab", () => {
             />,
         )
         expect(screen.getByText("쌈짓돈")).not.toBeNull()
-        expect(screen.getByText("₩50,000")).not.toBeNull()
+        expect(screen.queryByText("세이빙 박스")).toBeNull()
         expect(screen.getByText("3건 기록")).not.toBeNull()
 
         fireEvent.click(screen.getByText("입금"))
@@ -158,27 +159,30 @@ describe("SavingsTab", () => {
         expect(onBoxDetail).toHaveBeenCalledTimes(1)
     })
 
-    it("이번 달 적립 배지에 보고 있는 달을 함께 표시한다(누적 총액과 구분)", () => {
+    it("적립 배지를 누적 기준으로 표시한다(월 표기 없음)", () => {
         render(
             <SavingsTab
                 {...baseProps}
-                month="2026-06"
                 savedTotal={300_000}
-                savedMonth={100_000}
-                investMonth={0}
+                savedContributed={100_000}
+                investContributed={20_000}
                 accounts={[]}
                 onAddAccount={() => {}}
                 onEditAccountGoal={() => {}}
             />,
         )
-        // 저축 카드 값은 누적 총액(300,000), 배지는 보고 있는 달(6월)의 적립분(100,000).
         expect(screen.getByText("₩300,000")).not.toBeNull()
-        expect(screen.getAllByText("6월 +₩100,000").length).toBeGreaterThan(0)
-        // "누적" 이라는 말로 이번 달 값을 가리키지 않는다.
-        expect(screen.queryByText("누적 ₩100,000")).toBeNull()
+        // 저축 카드 배지
+        expect(screen.getByText("누적 +₩100,000")).not.toBeNull()
+        // 투자 카드 배지
+        expect(screen.getByText("누적 +₩20,000")).not.toBeNull()
+        // 순자산 hero = 저축 100,000 + 투자 20,000 누적 적립
+        expect(screen.getByText("누적 +₩120,000 적립")).not.toBeNull()
+        // 월 표기는 남아 있지 않다.
+        expect(screen.queryByText(/\d+월 \+/)).toBeNull()
     })
 
-    it("박스로 이체된 저축분(fromSavings)을 저축 표시에서 뺀다", () => {
+    it("쌈짓돈으로 이체된 저축분(fromSavings)을 저축 표시에서 뺀다", () => {
         render(
             <SavingsTab
                 {...baseProps}
@@ -189,7 +193,31 @@ describe("SavingsTab", () => {
                 box={{ balance: 30_000, fromSavings: 30_000, count: 1 }}
             />,
         )
-        // 저축 카드 = 계좌 기반 저축 합계 100,000 - 박스로 이체분 30,000 = 70,000
+        // 저축 카드 = 계좌 기반 저축 합계 100,000 - 쌈짓돈으로 이체분 30,000 = 70,000
         expect(screen.getByText("₩70,000")).not.toBeNull()
+    })
+
+    it("적립 내역은 부모가 넘긴 순서대로 최대 5건까지만 렌더한다", () => {
+        const contributions = Array.from({ length: 7 }, (_, i) => ({
+            id: `c${i}`,
+            item: `적립${i}`,
+            amount: 10_000,
+            categoryName: "저축",
+            date: `2026-07-0${i + 1}`,
+        }))
+        render(
+            <SavingsTab
+                {...baseProps}
+                contributions={contributions}
+                accounts={[]}
+                onAddAccount={() => {}}
+                onEditAccountGoal={() => {}}
+            />,
+        )
+        // 헤더 건수는 전체(7건), 목록은 앞 5건만.
+        expect(screen.getByText("지출 연동 · 7건")).not.toBeNull()
+        expect(screen.getByText("적립0")).not.toBeNull()
+        expect(screen.getByText("적립4")).not.toBeNull()
+        expect(screen.queryByText("적립5")).toBeNull()
     })
 })

@@ -42,8 +42,8 @@ export function DemoAssetScreen() {
         status: "ready",
         netWorth: 0,
         savedTotal: 0,
-        savedMonth: 0,
-        investMonth: 0,
+        savedContributed: 0,
+        investContributed: 0,
         contributions: [],
         accounts: [],
         onAddAccount: () => {

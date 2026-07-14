@@ -17,14 +17,15 @@ const MAX_AMOUNT_DIGITS = 12
 const ACCENT = "#20a4a4"
 
 // 목표 시트가 다루는 계좌 정보. base 는 그대로 유지, goal 만 수정 대상이다.
-// month 는 "현재 모았어요" 안내 문구 표시용(수정 대상 아님, total=base+month).
+// contributed 는 전체 기간 적립분으로 "현재 모았어요" 안내 문구 표시용이다
+// (수정 대상 아님, total = base + contributed).
 export interface EditingAccount {
     id: string
     name: string
     color: string
     base: number
     goal: number
-    month: number
+    contributed: number
 }
 
 interface Props {
@@ -46,7 +47,7 @@ export function SavingsAccountGoalSheet({
     const [deleting, setDeleting] = useState(false)
     const [focused, setFocused] = useState(false)
     const goalValue = Number(goal || "0")
-    const currentTotal = account.base + account.month
+    const currentTotal = account.base + account.contributed
 
     async function save() {
         if (saving || goalValue <= 0) return

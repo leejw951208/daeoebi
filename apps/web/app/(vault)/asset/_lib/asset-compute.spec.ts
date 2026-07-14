@@ -10,6 +10,7 @@ import {
     savingsAccountsView,
     savingsBoxBalance,
     savingsSummary,
+    sortContributionsByDateDesc,
     spentPct,
     totalIncome,
     totalSpent,
@@ -237,11 +238,10 @@ describe("savingsByItem", () => {
 })
 
 describe("savingsAccountsView", () => {
-    it("total 은 base + 전체 기간 적립, month 는 이번 달 적립이다", () => {
-        // 청년적금: 6월 100,000 + 7월 200,000 = 전체 300,000, 이번 달(7월) 200,000
-        const totalByItem = new Map([["청년적금", 300000]])
-        const monthByItem = new Map([["청년적금", 200000]])
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+    it("total 은 base + 누적 적립이고 contributed 는 누적 적립이다", () => {
+        // 청년적금: 6월 100,000 + 7월 200,000 = 누적 300,000
+        const contribByItem = new Map([["청년적금", 300000]])
+        const { rows, savedTotal, savedContributed } = savingsAccountsView(
             [
                 {
                     name: "청년적금",
@@ -250,30 +250,25 @@ describe("savingsAccountsView", () => {
                     goal: 1000000,
                 },
             ],
-            totalByItem,
-            monthByItem,
+            contribByItem,
         )
         expect(rows[0]).toMatchObject({
             base: 0,
-            month: 200000,
-            total: 300000, // 지난 달 적립분이 유지된다
+            contributed: 300000,
+            total: 300000,
             goalPct: 30,
             remain: 700000,
         })
         expect(savedTotal).toBe(300000)
-        expect(savedMonth).toBe(200000)
+        expect(savedContributed).toBe(300000)
     })
 
     it("목표가 있으면 진행률·잔여를 계산하고 total 내림차순 정렬한다", () => {
-        const totalByItem = new Map([
+        const contribByItem = new Map([
             ["청년적금", 100000],
             ["내집마련", 0],
         ])
-        const monthByItem = new Map([
-            ["청년적금", 100000],
-            ["내집마련", 0],
-        ])
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+        const { rows, savedTotal, savedContributed } = savingsAccountsView(
             [
                 {
                     name: "청년적금",
@@ -288,8 +283,7 @@ describe("savingsAccountsView", () => {
                     goal: 1000000,
                 },
             ],
-            totalByItem,
-            monthByItem,
+            contribByItem,
         )
         // 청년적금: total = 600000, 내집마련: total = 2000000 → 내집마련이 먼저
         expect(rows.map((r) => r.name)).toEqual(["내집마련", "청년적금"])
@@ -297,7 +291,7 @@ describe("savingsAccountsView", () => {
             name: "내집마련",
             base: 2000000,
             goal: 1000000,
-            month: 0,
+            contributed: 0,
             total: 2000000,
             goalPct: 100, // 클램프
             remain: 0,
@@ -306,47 +300,65 @@ describe("savingsAccountsView", () => {
             name: "청년적금",
             base: 500000,
             goal: 1000000,
-            month: 100000,
+            contributed: 100000,
             total: 600000,
             goalPct: 60,
             remain: 400000,
         })
         expect(savedTotal).toBe(2600000)
-        expect(savedMonth).toBe(100000)
+        expect(savedContributed).toBe(100000)
     })
 
-    it("목표가 없으면(0) goalPct=0, remain=0 이고 매칭 없는 계좌는 total=base, month=0", () => {
+    it("목표가 없으면(0) goalPct=0, remain=0 이고 매칭 없는 계좌는 total=base, contributed=0", () => {
         const { rows } = savingsAccountsView(
             [
                 { name: "비상금", color: "#e9b949", base: 100000, goal: 0 },
                 { name: "미매칭", color: "#20a4a4", base: 50000, goal: 0 },
             ],
             new Map([["비상금", 20000]]),
-            new Map([["비상금", 20000]]),
         )
         expect(rows[0]).toMatchObject({
             name: "비상금",
-            month: 20000,
+            contributed: 20000,
             total: 120000,
             goalPct: 0,
             remain: 0,
         })
         expect(rows[1]).toMatchObject({
             name: "미매칭",
-            month: 0,
+            contributed: 0,
             total: 50000,
         })
     })
 
     it("계좌가 없으면 빈 rows·합계 0", () => {
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+        const { rows, savedTotal, savedContributed } = savingsAccountsView(
             [],
-            new Map(),
             new Map(),
         )
         expect(rows).toEqual([])
         expect(savedTotal).toBe(0)
-        expect(savedMonth).toBe(0)
+        expect(savedContributed).toBe(0)
+    })
+})
+
+describe("sortContributionsByDateDesc", () => {
+    it("날짜 내림차순으로 정렬한다(최근 적립이 먼저)", () => {
+        const sorted = sortContributionsByDateDesc([
+            exp({ id: "a", date: "2026-06-15" }),
+            exp({ id: "c", date: "2026-07-20" }),
+            exp({ id: "b", date: "2026-07-01" }),
+        ])
+        expect(sorted.map((r) => r.id)).toEqual(["c", "b", "a"])
+    })
+
+    it("입력 배열을 변형하지 않는다", () => {
+        const input = [
+            exp({ id: "a", date: "2026-06-15" }),
+            exp({ id: "b", date: "2026-07-20" }),
+        ]
+        sortContributionsByDateDesc(input)
+        expect(input.map((r) => r.id)).toEqual(["a", "b"])
     })
 })
 
@@ -493,34 +505,35 @@ describe("월 경계 누적 (저축·투자 회귀)", () => {
         { name: "청년적금", color: "#20a4a4", base: 0, goal: 1_000_000 },
     ]
 
-    it("7월을 보고 있어도 저축 총액에 6월 적립분이 포함된다", () => {
-        const monthContribs = filterByMonth(contribAll, "2026-07")
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+    it("저축 총액·누적 적립은 전체 기간을 합산한다", () => {
+        const { rows, savedTotal, savedContributed } = savingsAccountsView(
             accounts,
             savingsByItem(contribAll, cats),
-            savingsByItem(monthContribs, cats),
         )
         expect(rows[0].total).toBe(300_000) // 6월 100,000 + 7월 200,000
-        expect(rows[0].month).toBe(200_000) // 배지는 이번 달만
+        expect(rows[0].contributed).toBe(300_000)
         expect(savedTotal).toBe(300_000)
-        expect(savedMonth).toBe(200_000)
+        expect(savedContributed).toBe(300_000)
     })
 
-    it("7월을 보고 있어도 투자 원금에 6월 적립분이 포함된다", () => {
+    it("투자 원금도 전체 기간 적립을 합산한다", () => {
         const allSummary = savingsSummary(contribAll, cats)
         const v = investmentView(0, "", allSummary.investTotal)
         expect(v.principal).toBe(700_000) // 6월 300,000 + 7월 400,000
     })
 
-    it("6월을 보고 있어도 총액은 같고 이번 달 배지만 6월분으로 바뀐다", () => {
-        const monthContribs = filterByMonth(contribAll, "2026-06")
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+    it("보고 있는 달이 바뀌어도 저축·투자 값은 달라지지 않는다", () => {
+        const june = savingsAccountsView(
+            accounts,
+            savingsByItem(filterByMonth(contribAll, "2026-06"), cats),
+        )
+        const all = savingsAccountsView(
             accounts,
             savingsByItem(contribAll, cats),
-            savingsByItem(monthContribs, cats),
         )
-        expect(rows[0].total).toBe(300_000) // 보고 있는 달과 무관하다
-        expect(savedTotal).toBe(300_000)
-        expect(savedMonth).toBe(100_000) // 6월 적립분
+        // 화면은 항상 전체 기간(contribAll)을 넘기므로 달을 바꿔도 all 과 같은 값을 본다.
+        expect(all.savedTotal).toBe(300_000)
+        // 한 달치만 넘기면 그 달 합계가 되지만, 이제 화면에선 그렇게 쓰지 않는다.
+        expect(june.savedTotal).toBe(100_000)
     })
 })

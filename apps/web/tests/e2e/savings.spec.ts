@@ -313,9 +313,9 @@ test.describe.serial("저축·투자 탭", () => {
         )
         // 목표 진행률도 누적 기준 (300,000 / 1,000,000 = 30%).
         await expect(card).toContainText("30%")
-        // "+금액" 배지는 이번 달 적립분만 보여준다(총액과 구분되는 값).
+        // "+금액" 배지도 누적 적립분이다(base=0 이라 총액과 같은 값).
         await expect(card).toContainText(
-            `+₩${CURR_SAVE.toLocaleString("ko-KR")}`,
+            `+₩${CARRY_TOTAL.toLocaleString("ko-KR")}`,
         )
     })
 })

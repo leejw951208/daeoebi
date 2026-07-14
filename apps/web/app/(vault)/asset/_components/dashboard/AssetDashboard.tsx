@@ -45,11 +45,11 @@ export type SavingsView =
     | { status: "error"; message: string }
     | {
           status: "ready"
-          // 저축·투자 순자산(hero) = 계좌 기반 저축 합계 + 투자 평가금액.
+          // 저축·투자 순자산(hero) = 저축(쌈짓돈 이체분 차감) + 투자 평가금액 + 쌈짓돈 잔액.
           netWorth: number
           savedTotal: number
-          savedMonth: number
-          investMonth: number
+          savedContributed: number
+          investContributed: number
           contributions: Contribution[]
           accounts: SavingsAccountView[]
           onAddAccount: () => void
@@ -157,11 +157,10 @@ export function AssetDashboard({
                     )}
                     {savings.status === "ready" && (
                         <SavingsTab
-                            month={month}
                             netWorth={savings.netWorth}
                             savedTotal={savings.savedTotal}
-                            savedMonth={savings.savedMonth}
-                            investMonth={savings.investMonth}
+                            savedContributed={savings.savedContributed}
+                            investContributed={savings.investContributed}
                             contributions={savings.contributions}
                             accounts={savings.accounts}
                             onAddAccount={savings.onAddAccount}
