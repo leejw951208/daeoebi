@@ -15,7 +15,7 @@ import {
 } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
 import { toast } from "@/components/toast"
-import { formatAmount } from "../_lib/asset-categories"
+import { formatAmount, SAVINGS_CODE } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
 import {
     parseTermMonths,
@@ -42,6 +42,8 @@ export interface ExpenseFormInitial {
 
 interface Props {
     categories: AssetCategory[]
+    // 등록된 적금 계좌 이름. 저축 카테고리 지출은 항목이 곧 계좌명이라 여기서 골라야 한다.
+    savingsAccounts: string[]
     initial: ExpenseFormInitial | null
     onSaved: () => void
     onCancel: () => void
@@ -50,6 +52,7 @@ interface Props {
 
 export function ExpenseForm({
     categories,
+    savingsAccounts,
     initial,
     onSaved,
     onCancel,
@@ -89,6 +92,14 @@ export function ExpenseForm({
 
     const amountNum = Number(amount || "0")
 
+    // 저축 지출은 항목(item)이 곧 적금 계좌명이다. 집계가 계좌명과 문자열 완전 일치로 붙기 때문에,
+    // 자유 텍스트로 두면 "청년적금" vs "청년 적금" 한 칸 차이로 금액이 총액에서 조용히 증발한다.
+    // 그래서 저축 카테고리일 때는 등록된 계좌 중에서 고르게 한다.
+    const isSavings =
+        categories.find((c) => c.id === categoryId)?.code === SAVINGS_CODE
+    const needsAccount = isSavings && savingsAccounts.length > 0
+    const noAccountYet = isSavings && savingsAccounts.length === 0
+
     function onAmountInput(v: string) {
         resetIdle()
         setAmount(v.replace(/[^\d]/g, "").slice(0, 12))
@@ -112,6 +123,15 @@ export function ExpenseForm({
         if (categoryId === null) {
             // 카테고리 목록이 아직 안 왔는데 저장하면 영구 "미분류"로 박힌다.
             toast("카테고리를 선택하세요.")
+            return
+        }
+        if (noAccountYet) {
+            toast("저축 지출을 기록하려면 적금 계좌를 먼저 추가하세요.")
+            return
+        }
+        if (needsAccount && !savingsAccounts.includes(item)) {
+            // 계좌명과 어긋난 항목은 저축 총액에 안 잡힌다(내역엔 보이는데 합계엔 빠진다).
+            toast("적금 계좌를 선택하세요.")
             return
         }
         // 고정 인스턴스는 (recurringId, period) 가 멱등 키다. 날짜만 다른 달로 옮기면 period 와
@@ -347,22 +367,73 @@ export function ExpenseForm({
                     </div>
                 </div>
 
-                {/* 항목 */}
+                {/* 항목. 저축 카테고리면 자유 입력 대신 적금 계좌를 고른다(계좌명 = 집계 앵커). */}
                 <div>
                     <div className="field-label" style={{ color: "#a0a0a0" }}>
-                        항목
+                        {isSavings ? "적금 계좌" : "항목"}
                     </div>
-                    <input
-                        value={item}
-                        onChange={(e) => {
-                            resetIdle()
-                            setItem(e.target.value)
-                        }}
-                        placeholder="예: 점심 김밥천국"
-                        aria-label="항목"
-                        className="field-control"
-                        style={{ fontWeight: 600 }}
-                    />
+                    {!isSavings && (
+                        <input
+                            value={item}
+                            onChange={(e) => {
+                                resetIdle()
+                                setItem(e.target.value)
+                            }}
+                            placeholder="예: 점심 김밥천국"
+                            aria-label="항목"
+                            className="field-control"
+                            style={{ fontWeight: 600 }}
+                        />
+                    )}
+                    {noAccountYet && (
+                        <div
+                            role="alert"
+                            style={{
+                                fontSize: 12.5,
+                                fontWeight: 600,
+                                color: "#e5484d",
+                                lineHeight: 1.5,
+                            }}
+                        >
+                            적금 계좌가 없어요. 저축·투자 탭에서 계좌를 먼저
+                            추가하세요.
+                        </div>
+                    )}
+                    {needsAccount && (
+                        <>
+                            <select
+                                value={
+                                    savingsAccounts.includes(item) ? item : ""
+                                }
+                                onChange={(e) => {
+                                    resetIdle()
+                                    setItem(e.target.value)
+                                }}
+                                aria-label="적금 계좌"
+                                className="field-control"
+                                style={{ fontWeight: 600 }}
+                            >
+                                <option value="" disabled>
+                                    계좌를 선택하세요
+                                </option>
+                                {savingsAccounts.map((name) => (
+                                    <option key={name} value={name}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div
+                                style={{
+                                    fontSize: 12,
+                                    color: "#9a9a9a",
+                                    marginTop: 7,
+                                    lineHeight: 1.5,
+                                }}
+                            >
+                                고른 계좌의 적립액으로 잡혀요.
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* 카테고리 */}
