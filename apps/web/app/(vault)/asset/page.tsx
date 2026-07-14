@@ -29,6 +29,7 @@ import {
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { SkeletonCard } from "@/components/Skeleton"
+import { toast } from "@/components/toast"
 import { useVault } from "../_lib/vault-context"
 import {
     openExpense,
@@ -109,7 +110,8 @@ type SavingsState =
           status: "ready"
           contribAll: ComputedExpense[]
           accounts: Account[]
-          investment: Investment | null
+          // "corrupt" = 블롭이 손상돼 원금을 읽지 못했다. 0 으로 덮어쓰지 않도록 수정을 막는다.
+          investment: Investment | null | "corrupt"
           boxTxns: BoxTxnRow[]
       }
 
@@ -165,17 +167,21 @@ async function resolveRecurrings(
         .map((r) => r.value)
 }
 
-// 투자 포지션 블롭 복호화. 없으면 null, 복호화 실패 시(손상된 블롭) 미설정으로 취급한다.
+// 투자 포지션 블롭 복호화. 포지션이 없으면 null.
+//
+// 복호화 실패(손상된 블롭)를 "미설정"과 같게 다루면 안 된다. 원금이 0 으로 보이고, 그 상태에서
+// 수익률만 바꿔 저장하면 0 이 재봉인돼 서버의 원금이 영구히 날아간다. "corrupt" 로 구분해
+// 수정 자체를 막는다.
 async function resolveInvestment(
     vaultKey: CryptoKey,
     view: InvestmentApiView | null,
-): Promise<Investment | null> {
+): Promise<Investment | null | "corrupt"> {
     if (!view) return null
     try {
         const { base } = await openInvestment(vaultKey, view)
         return { base, returnRate: view.returnRate }
     } catch {
-        return null
+        return "corrupt"
     }
 }
 
@@ -253,6 +259,10 @@ function pressScale(scale: number) {
         onPointerCancel: reset,
     }
 }
+
+// 저장은 됐는데 재조회가 실패하면 화면만 옛날 값으로 남는다. 조용히 삼키면 사용자는
+// "저장이 안 됐구나" 하고 같은 금액을 또 입력한다(이중 기록). 반드시 알린다.
+const STALE_MESSAGE = "저장됐지만 화면 갱신에 실패했습니다. 새로고침하세요."
 
 // localStorage 래퍼: SSR/서버 환경에서 안전하게 동작한다.
 function getMigrationGuard(month: string): boolean {
@@ -501,17 +511,36 @@ export default function AssetPage() {
         [vaultKey],
     )
 
-    // 세그먼트 전환. savings 로 처음 전환할 때만 지연 로드한다.
+    // 세그먼트 전환. 실패했던 저축·투자 탭에 다시 들어오면 idle 로 되돌려 재시도한다
+    // (재시도 수단이 없으면 새로고침 말고는 방법이 없다).
     const handleAssetTab = useCallback(
         (tab: AssetTab) => {
             resetIdle()
             setAssetTab(tab)
-            if (tab === "savings" && savingsState.status === "idle") {
-                void loadSavings(savingsCategoryIds)
+            if (tab === "savings") {
+                setSavingsState((prev) =>
+                    prev.status === "error" ? { status: "idle" } : prev,
+                )
             }
         },
-        [resetIdle, savingsState.status, loadSavings, savingsCategoryIds],
+        [resetIdle],
     )
+
+    // 저축·투자 지연 로드는 카테고리 목록이 도착한 뒤에만 시작한다.
+    // 로딩 중에 탭을 누르면 빈 categoryIds 로 조회돼 "적립 0원"이 ready 로 굳고,
+    // idle 이 아니라서 다시는 로드되지 않는다(새로고침 전까지 복구 불가).
+    useEffect(() => {
+        if (assetTab !== "savings") return
+        if (state.status !== "ready") return
+        if (savingsState.status !== "idle") return
+        void loadSavings(savingsCategoryIds)
+    }, [
+        assetTab,
+        state.status,
+        savingsState.status,
+        savingsCategoryIds,
+        loadSavings,
+    ])
 
     // 계좌 추가/목표 시트 저장·삭제 후: 계좌 목록만 재조회한다(적립 내역·투자는 그대로 둔다).
     const reloadAccounts = useCallback(async () => {
@@ -522,7 +551,7 @@ export default function AssetPage() {
                 prev.status === "ready" ? { ...prev, accounts } : prev,
             )
         } catch {
-            // no-op: 다음 로드에서 재시도됨
+            toast(STALE_MESSAGE)
         }
     }, [vaultKey])
 
@@ -538,7 +567,7 @@ export default function AssetPage() {
                 prev.status === "ready" ? { ...prev, investment } : prev,
             )
         } catch {
-            // no-op: 다음 로드에서 재시도됨
+            toast(STALE_MESSAGE)
         }
     }, [vaultKey])
 
@@ -551,7 +580,7 @@ export default function AssetPage() {
                 prev.status === "ready" ? { ...prev, boxTxns } : prev,
             )
         } catch {
-            // no-op: 다음 로드에서 재시도됨
+            toast(STALE_MESSAGE)
         }
     }, [vaultKey])
 
@@ -595,13 +624,18 @@ export default function AssetPage() {
             savingsByItem(contribAll, categories),
         )
         // 투자 원금 = 초기 원금(base) + 전체 기간 투자 적립.
+        // 블롭이 손상됐으면 base 를 모른다. 0 으로 가정하고 보여주되, 수정은 막는다(아래 onEditReturn).
+        const investCorrupt = investmentState === "corrupt"
+        const investPosition = investCorrupt ? null : investmentState
         const investment = investmentView(
-            investmentState?.base ?? 0,
-            investmentState?.returnRate ?? "",
+            investPosition?.base ?? 0,
+            investPosition?.returnRate ?? "",
             allSummary.investTotal,
         )
         // 저축에서 쌈짓돈으로 옮긴 금액은 저축에서 빼고 쌈짓돈 잔액으로 잡는다(중복 집계 방지).
-        const displayedSaved = Math.max(0, savedTotal - boxBalance.fromSavings)
+        // 0 으로 클램프하면 이체가 저축 잔액을 넘었을 때 초과분이 사라져 순자산이 부풀려진다.
+        // 초과 이체는 시트에서 막으므로(SavingsBoxSheet), 여기선 공식을 그대로 지킨다.
+        const displayedSaved = savedTotal - boxBalance.fromSavings
         return {
             status: "ready",
             netWorth: displayedSaved + investment.value + boxBalance.balance,
@@ -631,6 +665,13 @@ export default function AssetPage() {
             investment,
             onEditReturn: () => {
                 resetIdle()
+                // 원금을 못 읽은 상태로 저장하면 0 이 재봉인돼 원금이 영구히 날아간다.
+                if (investCorrupt) {
+                    toast(
+                        "투자 정보를 읽지 못했습니다. 원금이 지워질 수 있어 수정할 수 없습니다.",
+                    )
+                    return
+                }
                 setReturnSheetOpen(true)
             },
             box: {
@@ -655,8 +696,11 @@ export default function AssetPage() {
 
     const savingsAccounts =
         savingsState.status === "ready" ? savingsState.accounts : []
+    // 손상된 블롭("corrupt")은 시트에 넘기지 않는다 — 시트를 열 수 없게 막아뒀다(onEditReturn).
     const currentInvestment =
-        savingsState.status === "ready" ? savingsState.investment : null
+        savingsState.status === "ready" && savingsState.investment !== "corrupt"
+            ? savingsState.investment
+            : null
     const boxTxns = savingsState.status === "ready" ? savingsState.boxTxns : []
     // 쌈짓돈 시트에 넘길 "저축 가용 잔액"(쌈짓돈으로 이체된 만큼 이미 뺀 값). savingsView 가
     // ready 일 때만 정확하므로, 그 전엔 0(시트를 열 수 있는 상태 자체가 아니라 문제 없음).
@@ -731,7 +775,12 @@ export default function AssetPage() {
                             <button
                                 type="button"
                                 aria-label="이전 달"
-                                onClick={() => setMonth((m) => addMonth(m, -1))}
+                                onClick={() => {
+                                    // 화살표로 달을 훑는 것도 사용 중이다. idle 타이머를 되돌리지
+                                    // 않으면 클릭하는 중에 금고가 잠긴다.
+                                    resetIdle()
+                                    setMonth((m) => addMonth(m, -1))
+                                }}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.color = "#171717"
                                 }}
@@ -780,7 +829,10 @@ export default function AssetPage() {
                             <button
                                 type="button"
                                 aria-label="다음 달"
-                                onClick={() => setMonth((m) => addMonth(m, 1))}
+                                onClick={() => {
+                                    resetIdle()
+                                    setMonth((m) => addMonth(m, 1))
+                                }}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.color = "#171717"
                                 }}

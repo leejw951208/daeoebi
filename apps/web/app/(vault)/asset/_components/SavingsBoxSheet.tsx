@@ -17,7 +17,7 @@ type BoxSource = "cash" | "savings"
 
 interface Props {
     mode: "in" | "out"
-    // 저축 가용 잔액(표시용). 출처=저축 선택 시 안내 문구에만 쓰인다(계좌 자체를 차감하지 않는다).
+    // 저축 가용 잔액. 출처=저축 이체의 상한이다(계좌 자체를 차감하진 않는다).
     savedAvailable: number
     // 새 거래에 쓸 날짜("YYYY-MM-DD"). 오늘 날짜(asset-dates 의 todayISO)를 그대로 받는다.
     date: string
@@ -55,8 +55,17 @@ export function SavingsBoxSheet({
     const memoPlaceholder = isIn ? "예: 6월 남은 생활비" : "예: 경조사비"
     const amountValue = Number(amount || "0")
 
+    // 저축에서 옮길 수 있는 돈은 저축 가용 잔액까지다. 넘겨서 이체하면 저축이 음수가 되고,
+    // 순자산이 그만큼 부풀려진다(옮긴 돈은 쌈짓돈 잔액으로 그대로 잡히므로).
+    const overSavings =
+        isIn && source === "savings" && amountValue > savedAvailable
+
     async function save() {
         if (saving || amountValue <= 0) return
+        if (overSavings) {
+            toast(`저축 잔액(${formatWon(savedAvailable)})을 넘을 수 없어요.`)
+            return
+        }
         setSaving(true)
         try {
             const blob = await sealBoxTxn(vaultKey, {
@@ -181,16 +190,18 @@ export function SavingsBoxSheet({
                         </div>
                         {source === "savings" && (
                             <div
+                                role={overSavings ? "alert" : undefined}
                                 style={{
                                     fontSize: 12,
-                                    color: "#20a4a4",
+                                    color: overSavings ? "#e5484d" : "#20a4a4",
                                     fontWeight: 700,
                                     margin: "-8px 0 16px",
                                     lineHeight: 1.5,
                                 }}
                             >
-                                저축 잔액 {formatWon(savedAvailable)} · 이체하면
-                                저축에서 차감돼요
+                                {overSavings
+                                    ? `저축 잔액 ${formatWon(savedAvailable)} 을 넘을 수 없어요`
+                                    : `저축 잔액 ${formatWon(savedAvailable)} · 이체하면 저축에서 차감돼요`}
                             </div>
                         )}
                     </>
@@ -274,7 +285,7 @@ export function SavingsBoxSheet({
                         void save()
                     }}
                     loading={saving}
-                    disabled={amountValue <= 0}
+                    disabled={amountValue <= 0 || overSavings}
                 >
                     {isIn ? "입금 기록" : "출금 기록"}
                 </Button>
