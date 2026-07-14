@@ -1,5 +1,5 @@
 "use client"
-// 세이빙 박스 입출금 바텀시트. 입금 시 출처(직접 입금/저축에서 이체)를 고르고 금액·메모를 입력해
+// 쌈짓돈 입출금 바텀시트. 입금 시 출처(직접 입금/저축에서 이체)를 고르고 금액·메모를 입력해
 // createSavingsBoxTxn 으로 저장한다. 출금은 출처 선택 없이 금액·메모만 받는다(source 는 "cash" 고정).
 import { useState } from "react"
 import { Button } from "@/components/Button"
@@ -25,7 +25,7 @@ interface Props {
     onClose: () => void
 }
 
-// 출처 세그먼트의 선택된 버튼 스타일(세이빙 박스 accent #e9b949 톤).
+// 출처 세그먼트의 선택된 버튼 스타일(쌈짓돈 accent #e9b949 톤).
 const SOURCE_ACTIVE_STYLE = {
     borderColor: "#171717",
     background: "#f5f5f5",
@@ -50,8 +50,8 @@ export function SavingsBoxSheet({
     const isIn = mode === "in"
     const title = isIn ? "입금" : "출금"
     const desc = isIn
-        ? "저축·투자·지출하고 남은 돈을 박스에 넣어두세요."
-        : "박스에서 돈을 꺼내 쓴 내역을 기록해요."
+        ? "저축·투자·지출하고 남은 돈을 쌈짓돈에 넣어두세요."
+        : "쌈짓돈에서 돈을 꺼내 쓴 내역을 기록해요."
     const memoPlaceholder = isIn ? "예: 6월 남은 생활비" : "예: 경조사비"
     const amountValue = Number(amount || "0")
 
@@ -78,7 +78,7 @@ export function SavingsBoxSheet({
             className="dialog-backdrop"
             role="dialog"
             aria-modal="true"
-            aria-label={`세이빙 박스 ${title}`}
+            aria-label={`쌈짓돈 ${title}`}
             onClick={(e) => {
                 if (e.target === e.currentTarget && !saving) onClose()
             }}
@@ -93,7 +93,7 @@ export function SavingsBoxSheet({
                         letterSpacing: "-0.02em",
                     }}
                 >
-                    세이빙 박스 {title}
+                    쌈짓돈 {title}
                 </div>
                 <p
                     className="muted"

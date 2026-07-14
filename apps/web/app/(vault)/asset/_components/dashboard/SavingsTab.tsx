@@ -26,12 +26,7 @@ function formatMonthDay(iso: string): string {
     return `${m}월 ${d}일`
 }
 
-// "YYYY-MM" → "M월".
-function formatShortMonth(month: string): string {
-    return `${Number(month.slice(5, 7))}월`
-}
-
-// 세이빙 박스 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
+// 쌈짓돈 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
 // count 는 전체 거래 건수(내역 배지 "{n}건 기록"에 쓴다).
 export interface SavingsBoxSummary {
     balance: number
@@ -39,16 +34,19 @@ export interface SavingsBoxSummary {
     count: number
 }
 
+// 적립 내역에 보여줄 최대 건수. 전체 기간에서 최근 것부터 이만큼만 노출한다.
+const RECENT_CONTRIBUTION_LIMIT = 5
+
 interface SavingsTabProps {
-    // 보고 있는 달("YYYY-MM"). 이번 달 적립 배지에 어느 달 값인지 함께 표시한다
-    // (이 탭엔 월 이동 버튼이 없어 지출 탭에서 고른 달을 그대로 따라가기 때문).
-    month: string
-    // 저축·투자 순자산(hero) = 계좌 기반 저축 합계 + 투자 평가금액. 부모가 미리 더해 넘긴다.
+    // 저축·투자 순자산(hero) = 저축(쌈짓돈 이체분 차감) + 투자 평가금액 + 쌈짓돈 잔액.
+    // 부모가 미리 더해 넘긴다.
     netWorth: number
-    // 저축 합계는 전체 기간 누적(base + 전기간 적립), savedMonth·investMonth 는 보고 있는 달의 적립분.
+    // 모두 전체 기간 누적이다. savedTotal 은 base + 누적 적립,
+    // savedContributed·investContributed 는 누적 적립분(배지 표시용).
     savedTotal: number
-    savedMonth: number
-    investMonth: number
+    savedContributed: number
+    investContributed: number
+    // 전체 기간 적립을 최근 순으로 정렬해 넘긴다(부모가 정렬한다).
     contributions: Contribution[]
     // 적금 계좌 목록(계산된 뷰). 목표가 없는 계좌의 진행바는 계좌들 중 최대 total 대비 상대값으로 채운다.
     accounts: SavingsAccountView[]
@@ -58,8 +56,8 @@ interface SavingsTabProps {
     // 투자 원금·평가금액·손익(수익률 적용 결과). 탭하면 onEditReturn 으로 수익률 수정 시트를 연다.
     investment: InvestmentView
     onEditReturn: () => void
-    // 세이빙 박스 잔액·건수. 저축에서 박스로 이체한 금액(fromSavings)은 "저축" 표시에서 뺀다
-    // (같은 돈이 저축·박스 두 곳에 동시에 잡히지 않도록).
+    // 쌈짓돈 잔액·건수. 저축에서 쌈짓돈으로 이체한 금액(fromSavings)은 "저축" 표시에서 뺀다
+    // (같은 돈이 저축·쌈짓돈 두 곳에 동시에 잡히지 않도록).
     box: SavingsBoxSummary
     onBoxIn: () => void
     onBoxOut: () => void
@@ -84,11 +82,10 @@ function formatPnl(pnl: number): string {
 }
 
 export function SavingsTab({
-    month,
     netWorth,
     savedTotal,
-    savedMonth,
-    investMonth,
+    savedContributed,
+    investContributed,
     contributions,
     accounts,
     onAddAccount,
@@ -100,10 +97,9 @@ export function SavingsTab({
     onBoxOut,
     onBoxDetail,
 }: SavingsTabProps) {
-    // 세이빙 박스로 이체한 저축분은 "저축" 표시에서 뺀다(박스 카드 잔액과 중복 집계 방지).
+    // 쌈짓돈으로 이체한 저축분은 "저축" 표시에서 뺀다(쌈짓돈 카드 잔액과 중복 집계 방지).
     const displayedSaved = Math.max(0, savedTotal - box.fromSavings)
-    const monthContrib = savedMonth + investMonth
-    const shortMonth = formatShortMonth(month)
+    const totalContrib = savedContributed + investContributed
     // 목표 미설정 계좌의 진행바 상대 채움 기준(0 나눔 방지를 위해 최소 1).
     const maxAccountTotal = Math.max(1, ...accounts.map((a) => a.total))
     const investPnlColor = pnlColor(investment.pnl)
@@ -151,7 +147,7 @@ export function SavingsTab({
                             color: "#171717",
                         }}
                     >
-                        {shortMonth} +{formatWon(monthContrib)} 적립
+                        누적 +{formatWon(totalContrib)} 적립
                     </span>
                     <span
                         style={{
@@ -205,7 +201,7 @@ export function SavingsTab({
                             marginTop: 5,
                         }}
                     >
-                        {shortMonth} +{formatWon(savedMonth)}
+                        누적 +{formatWon(savedContributed)}
                     </div>
                 </div>
                 <div className="asset-card" style={{ flex: 1, padding: 16 }}>
@@ -246,12 +242,12 @@ export function SavingsTab({
                             marginTop: 5,
                         }}
                     >
-                        {shortMonth} +{formatWon(investMonth)}
+                        누적 +{formatWon(investContributed)}
                     </div>
                 </div>
             </div>
 
-            {/* 세이빙 박스 */}
+            {/* 쌈짓돈 */}
             <div className="asset-card" style={{ padding: "20px 18px 16px" }}>
                 <div
                     style={{
@@ -261,9 +257,7 @@ export function SavingsTab({
                         marginBottom: 13,
                     }}
                 >
-                    <div style={{ fontSize: 13, fontWeight: 800 }}>
-                        세이빙 박스
-                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 800 }}>쌈짓돈</div>
                     <span
                         style={{
                             flexShrink: 0,
@@ -490,7 +484,7 @@ export function SavingsTab({
                                         >
                                             {a.name}
                                         </span>
-                                        {a.month > 0 && (
+                                        {a.contributed > 0 && (
                                             <span
                                                 style={{
                                                     flexShrink: 0,
@@ -502,7 +496,7 @@ export function SavingsTab({
                                                     borderRadius: 6,
                                                 }}
                                             >
-                                                +{formatWon(a.month)}
+                                                +{formatWon(a.contributed)}
                                             </span>
                                         )}
                                     </div>
@@ -823,85 +817,91 @@ export function SavingsTab({
                             gap: 9,
                         }}
                     >
-                        {contributions.slice(0, 5).map((c) => {
-                            const accent = c.color ?? "#20a4a4"
-                            return (
-                                <Link
-                                    key={c.id}
-                                    href={`/asset/${c.id}`}
-                                    className="entry-card"
-                                    style={{ gap: 13, padding: "13px 14px" }}
-                                >
-                                    <span
-                                        aria-hidden="true"
+                        {contributions
+                            .slice(0, RECENT_CONTRIBUTION_LIMIT)
+                            .map((c) => {
+                                const accent = c.color ?? "#20a4a4"
+                                return (
+                                    <Link
+                                        key={c.id}
+                                        href={`/asset/${c.id}`}
+                                        className="entry-card"
                                         style={{
-                                            flexShrink: 0,
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: 12,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            fontSize: 15,
-                                            fontWeight: 800,
-                                            background: `${accent}1f`,
-                                            color: accent,
+                                            gap: 13,
+                                            padding: "13px 14px",
                                         }}
                                     >
-                                        {c.item.trim().charAt(0) || "저"}
-                                    </span>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div
+                                        <span
+                                            aria-hidden="true"
                                             style={{
+                                                flexShrink: 0,
+                                                width: 40,
+                                                height: 40,
+                                                borderRadius: 12,
                                                 display: "flex",
                                                 alignItems: "center",
-                                                gap: 6,
+                                                justifyContent: "center",
                                                 fontSize: 15,
-                                                fontWeight: 700,
-                                                letterSpacing: "-0.01em",
-                                                color: "#1c1c1c",
-                                                minWidth: 0,
+                                                fontWeight: 800,
+                                                background: `${accent}1f`,
+                                                color: accent,
                                             }}
                                         >
-                                            <span
+                                            {c.item.trim().charAt(0) || "저"}
+                                        </span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div
                                                 style={{
-                                                    whiteSpace: "nowrap",
-                                                    overflow: "hidden",
-                                                    textOverflow: "ellipsis",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 6,
+                                                    fontSize: 15,
+                                                    fontWeight: 700,
+                                                    letterSpacing: "-0.01em",
+                                                    color: "#1c1c1c",
+                                                    minWidth: 0,
                                                 }}
                                             >
-                                                {c.item}
-                                            </span>
-                                            {c.recurring && (
-                                                <span className="recur-badge">
-                                                    고정
+                                                <span
+                                                    style={{
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow:
+                                                            "ellipsis",
+                                                    }}
+                                                >
+                                                    {c.item}
                                                 </span>
-                                            )}
+                                                {c.recurring && (
+                                                    <span className="recur-badge">
+                                                        고정
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 12,
+                                                    color: "#a3a3a3",
+                                                    fontWeight: 500,
+                                                }}
+                                            >
+                                                {`${c.categoryName} · ${formatMonthDay(c.date)}`}
+                                            </div>
                                         </div>
-                                        <div
+                                        <span
                                             style={{
-                                                fontSize: 12,
-                                                color: "#a3a3a3",
-                                                fontWeight: 500,
+                                                flexShrink: 0,
+                                                fontSize: 15,
+                                                fontWeight: 800,
+                                                letterSpacing: "-0.02em",
+                                                color: c.color ?? "#171717",
                                             }}
                                         >
-                                            {`${c.categoryName} · ${formatMonthDay(c.date)}`}
-                                        </div>
-                                    </div>
-                                    <span
-                                        style={{
-                                            flexShrink: 0,
-                                            fontSize: 15,
-                                            fontWeight: 800,
-                                            letterSpacing: "-0.02em",
-                                            color: c.color ?? "#171717",
-                                        }}
-                                    >
-                                        {"+" + formatWon(c.amount)}
-                                    </span>
-                                </Link>
-                            )
-                        })}
+                                            {"+" + formatWon(c.amount)}
+                                        </span>
+                                    </Link>
+                                )
+                            })}
                     </div>
                 )}
             </div>

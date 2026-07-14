@@ -6,6 +6,7 @@ import {
     useEffect,
     useMemo,
     useState,
+    type CSSProperties,
     type PointerEvent,
 } from "react"
 import Link from "next/link"
@@ -20,6 +21,7 @@ import {
     listSavingsBox,
     type ExpenseView,
     type IncomeView,
+    type RecurringView,
     type SavingsAccountView as SavingsAccountApiView,
     type InvestmentView as InvestmentApiView,
     type SavingsBoxTxnView,
@@ -39,13 +41,14 @@ import {
     byDay,
     totalIncome,
     savingsSummary,
-    filterByMonth,
     savingsAccountsView,
     savingsByItem,
     investmentView,
     savingsBoxBalance,
+    sortContributionsByDateDesc,
     type ComputedExpense,
     type ComputedIncome,
+    type ComputedRecurring,
 } from "./_lib/asset-compute"
 import {
     resolveCategory,
@@ -134,6 +137,32 @@ async function resolveAccounts(
         .map((r) => r.value)
 }
 
+// 고정 지출 템플릿 블롭 복호화(실패분 스킵). dayOfMonth·termMonths·categoryId 는 서버 평문 메타다.
+async function resolveRecurrings(
+    vaultKey: CryptoKey,
+    views: RecurringView[],
+): Promise<ComputedRecurring[]> {
+    const settled = await Promise.allSettled(
+        views.map(async (v): Promise<ComputedRecurring> => {
+            const p = await openExpense(vaultKey, v)
+            return {
+                id: v.id,
+                item: p.item,
+                amount: p.amount,
+                dayOfMonth: v.dayOfMonth,
+                termMonths: v.termMonths,
+                categoryId: v.categoryId,
+            }
+        }),
+    )
+    return settled
+        .filter(
+            (r): r is PromiseFulfilledResult<ComputedRecurring> =>
+                r.status === "fulfilled",
+        )
+        .map((r) => r.value)
+}
+
 // 투자 포지션 블롭 복호화. 없으면 null, 복호화 실패 시(손상된 블롭) 미설정으로 취급한다.
 async function resolveInvestment(
     vaultKey: CryptoKey,
@@ -148,7 +177,7 @@ async function resolveInvestment(
     }
 }
 
-// 세이빙 박스 거래 블롭 복호화(실패분 스킵). type/source/date 는 서버 평문 메타 그대로 쓴다.
+// 쌈짓돈 거래 블롭 복호화(실패분 스킵). type/source/date 는 서버 평문 메타 그대로 쓴다.
 async function resolveBoxTxns(
     vaultKey: CryptoKey,
     views: SavingsBoxTxnView[],
@@ -178,6 +207,35 @@ type State =
     | { status: "loading" }
     | { status: "error"; message: string }
     | { status: "ready"; data: Loaded }
+
+// 상단 세그먼트 탭. 순서가 곧 화면 순서다.
+const ASSET_TABS: { key: AssetTab; label: string }[] = [
+    { key: "budget", label: "지출" },
+    { key: "recurring", label: "고정 지출" },
+    { key: "savings", label: "저축·투자" },
+]
+
+// 세그먼트 버튼 스타일. 선택된 것만 흰 배경 + 그림자로 띄운다.
+function segmentStyle(selected: boolean): CSSProperties {
+    return {
+        flex: 1,
+        height: 34,
+        border: "none",
+        borderRadius: 9,
+        font: "inherit",
+        fontSize: 13,
+        fontWeight: 700,
+        cursor: "pointer",
+        transition: "transform .12s",
+        ...(selected
+            ? {
+                  background: "#fff",
+                  color: "#171717",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
+              }
+            : { background: "transparent", color: "#9a9a9a" }),
+    }
+}
 
 // 누름(active) 시 축소 스케일. 디자인 style-active 를 인라인 포인터 이벤트로 재현한다.
 function pressScale(scale: number) {
@@ -310,9 +368,18 @@ export default function AssetPage() {
                 )
                 .map((r) => r.value)
 
+            // 고정 지출 탭용 템플릿 복호화(실패분 스킵). 위에서 이미 받아둔 templates 를 재사용한다.
+            const recurrings = await resolveRecurrings(vaultKey, templates)
+
             setState({
                 status: "ready",
-                data: { budgetAmount, budgetRows, expenses, categories },
+                data: {
+                    budgetAmount,
+                    budgetRows,
+                    expenses,
+                    recurrings,
+                    categories,
+                },
             })
         } catch (e) {
             setState({
@@ -453,7 +520,7 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
-    // 세이빙 박스 입출금/삭제 후: 박스 거래만 재조회한다(적립 내역·목표·계좌·투자는 그대로 둔다).
+    // 쌈짓돈 입출금/삭제 후: 쌈짓돈 거래만 재조회한다(적립 내역·목표·계좌·투자는 그대로 둔다).
     const reloadBox = useCallback(async () => {
         try {
             const boxViews = await listSavingsBox()
@@ -466,11 +533,11 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
-    // SavingsTab 에 넘길 뷰 모델. 저축 합계는 계좌 모델(savingsAccountsView) 기준이고,
-    // 순자산(netWorth) = 그 저축 합계 + 투자 평가금액이다.
+    // SavingsTab 에 넘길 뷰 모델. 값은 전부 전체 기간 누적이라 보고 있는 달과 무관하다
+    // (저축 총액·투자 원금·적립 내역 모두 contribAll 에서 파생한다).
     //
-    // 저축 총액·투자 원금은 전체 기간 적립(contribAll)에서 파생한다 — 보고 있는 달을 바꿔도
-    // 지난 달 적립분이 유지된다. 이번 달 적립분(savedMonth·investMonth)은 배지 표시용으로만 쓴다.
+    // 순자산 = 저축(쌈짓돈으로 이체한 만큼 차감) + 투자 평가금액 + 쌈짓돈 잔액.
+    // 저축→쌈짓돈 이체는 순자산을 바꾸지 않고, 현금 입금은 늘리고, 출금은 줄인다.
     const savingsView: SavingsView = useMemo((): SavingsView => {
         if (savingsState.status !== "ready" || state.status !== "ready") {
             return savingsState.status === "error"
@@ -485,10 +552,11 @@ export default function AssetPage() {
             boxTxns,
         } = savingsState
         const boxBalance = savingsBoxBalance(boxTxns)
-        const monthContribs = filterByMonth(contribAll, month)
         const allSummary = savingsSummary(contribAll, categories)
-        const monthSummary = savingsSummary(monthContribs, categories)
-        const contributions: Contribution[] = monthContribs.map((c) => {
+        // 최근 적립 내역: 전체 기간을 최근 순으로. 몇 건까지 보여줄지는 SavingsTab 이 정한다.
+        const contributions: Contribution[] = sortContributionsByDateDesc(
+            contribAll,
+        ).map((c) => {
             const { name, color } = resolveCategory(c.categoryId, categories)
             return {
                 id: c.id,
@@ -500,10 +568,9 @@ export default function AssetPage() {
                 recurring: c.recurringId !== null,
             }
         })
-        const { rows, savedTotal, savedMonth } = savingsAccountsView(
+        const { rows, savedTotal, savedContributed } = savingsAccountsView(
             accounts,
             savingsByItem(contribAll, categories),
-            savingsByItem(monthContribs, categories),
         )
         // 투자 원금 = 초기 원금(base) + 전체 기간 투자 적립.
         const investment = investmentView(
@@ -511,12 +578,14 @@ export default function AssetPage() {
             investmentState?.returnRate ?? "",
             allSummary.investTotal,
         )
+        // 저축에서 쌈짓돈으로 옮긴 금액은 저축에서 빼고 쌈짓돈 잔액으로 잡는다(중복 집계 방지).
+        const displayedSaved = Math.max(0, savedTotal - boxBalance.fromSavings)
         return {
             status: "ready",
-            netWorth: savedTotal + investment.value,
+            netWorth: displayedSaved + investment.value + boxBalance.balance,
             savedTotal,
-            savedMonth,
-            investMonth: monthSummary.investTotal,
+            savedContributed,
+            investContributed: allSummary.investTotal,
             contributions,
             accounts: rows,
             onAddAccount: () => {
@@ -534,7 +603,7 @@ export default function AssetPage() {
                     color: raw.color,
                     base: raw.base,
                     goal: raw.goal,
-                    month: row?.month ?? 0,
+                    contributed: row?.contributed ?? 0,
                 })
             },
             investment,
@@ -560,14 +629,14 @@ export default function AssetPage() {
                 setBoxDetailOpen(true)
             },
         }
-    }, [savingsState, state, month, resetIdle])
+    }, [savingsState, state, resetIdle])
 
     const savingsAccounts =
         savingsState.status === "ready" ? savingsState.accounts : []
     const currentInvestment =
         savingsState.status === "ready" ? savingsState.investment : null
     const boxTxns = savingsState.status === "ready" ? savingsState.boxTxns : []
-    // 세이빙 박스 시트에 넘길 "저축 가용 잔액"(박스로 이체된 만큼 이미 뺀 값). savingsView 가
+    // 쌈짓돈 시트에 넘길 "저축 가용 잔액"(쌈짓돈으로 이체된 만큼 이미 뺀 값). savingsView 가
     // ready 일 때만 정확하므로, 그 전엔 0(시트를 열 수 있는 상태 자체가 아니라 문제 없음).
     const displayedSavedTotal =
         savingsView.status === "ready"
@@ -608,64 +677,18 @@ export default function AssetPage() {
                         borderRadius: 12,
                     }}
                 >
-                    <button
-                        type="button"
-                        aria-pressed={assetTab === "budget"}
-                        style={{
-                            flex: 1,
-                            height: 34,
-                            border: "none",
-                            borderRadius: 9,
-                            font: "inherit",
-                            fontSize: 13,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "transform .12s",
-                            ...(assetTab === "budget"
-                                ? {
-                                      background: "#fff",
-                                      color: "#171717",
-                                      boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
-                                  }
-                                : {
-                                      background: "transparent",
-                                      color: "#9a9a9a",
-                                  }),
-                        }}
-                        onClick={() => handleAssetTab("budget")}
-                        {...pressScale(0.98)}
-                    >
-                        이번 달
-                    </button>
-                    <button
-                        type="button"
-                        aria-pressed={assetTab === "savings"}
-                        style={{
-                            flex: 1,
-                            height: 34,
-                            border: "none",
-                            borderRadius: 9,
-                            font: "inherit",
-                            fontSize: 13,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "transform .12s",
-                            ...(assetTab === "savings"
-                                ? {
-                                      background: "#fff",
-                                      color: "#171717",
-                                      boxShadow: "0 1px 3px rgba(0,0,0,0.09)",
-                                  }
-                                : {
-                                      background: "transparent",
-                                      color: "#9a9a9a",
-                                  }),
-                        }}
-                        onClick={() => handleAssetTab("savings")}
-                        {...pressScale(0.98)}
-                    >
-                        저축·투자
-                    </button>
+                    {ASSET_TABS.map(({ key, label }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            aria-pressed={assetTab === key}
+                            style={segmentStyle(assetTab === key)}
+                            onClick={() => handleAssetTab(key)}
+                            {...pressScale(0.98)}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
                 {assetTab === "budget" && (
                     <div

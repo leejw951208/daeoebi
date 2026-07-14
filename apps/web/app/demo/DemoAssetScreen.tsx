@@ -42,8 +42,8 @@ export function DemoAssetScreen() {
         status: "ready",
         netWorth: 0,
         savedTotal: 0,
-        savedMonth: 0,
-        investMonth: 0,
+        savedContributed: 0,
+        investContributed: 0,
         contributions: [],
         accounts: [],
         onAddAccount: () => {
@@ -58,13 +58,13 @@ export function DemoAssetScreen() {
         },
         box: { balance: 0, fromSavings: 0, count: 0 },
         onBoxIn: () => {
-            /* 데모: 세이빙 박스 입금 미지원 */
+            /* 데모: 쌈짓돈 입금 미지원 */
         },
         onBoxOut: () => {
-            /* 데모: 세이빙 박스 출금 미지원 */
+            /* 데모: 쌈짓돈 출금 미지원 */
         },
         onBoxDetail: () => {
-            /* 데모: 세이빙 박스 내역 미지원 */
+            /* 데모: 쌈짓돈 내역 미지원 */
         },
     }
 
@@ -72,6 +72,8 @@ export function DemoAssetScreen() {
         budgetAmount: DEMO_BUDGET_AMOUNT,
         budgetRows: DEMO_BUDGET_ROWS,
         expenses,
+        // 데모엔 고정 지출 템플릿이 없다. 탭에 들어가면 빈 상태 문구가 나온다.
+        recurrings: [],
         categories,
     }
 

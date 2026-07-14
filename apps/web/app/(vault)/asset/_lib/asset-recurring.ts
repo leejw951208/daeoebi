@@ -8,11 +8,37 @@ import {
 import { isApiError } from "@/lib/api-error"
 import { openExpense, sealExpense } from "./asset-payload"
 import { addMonth, clampedDate } from "./asset-dates"
+import type { ComputedRecurring } from "./asset-compute"
 
 // 개월 수 입력값(문자열)을 템플릿의 termMonths 로 바꾼다. 비었거나 1 미만·정수 아님 = 무기한(null).
 export function parseTermMonths(input: string): number | null {
     const n = Number(input)
     return Number.isInteger(n) && n >= 1 ? n : null
+}
+
+// 결제일 표기. 템플릿은 특정 날짜가 아니라 "매월 며칠"을 가진다.
+export function formatDayOfMonth(dayOfMonth: number): string {
+    return `매월 ${dayOfMonth}일`
+}
+
+// 기간 표기. termMonths 가 null 이면 끝나지 않는 고정 지출이다.
+export function formatTerm(termMonths: number | null): string {
+    return termMonths === null ? "무기한" : `${termMonths}개월`
+}
+
+// 매달 나가는 고정 지출 합계.
+export function totalRecurring(rows: readonly ComputedRecurring[]): number {
+    return rows.reduce((sum, r) => sum + r.amount, 0)
+}
+
+// 결제일 오름차순(동률이면 지출명 사전순). 새 배열을 반환한다.
+export function sortRecurring(
+    rows: readonly ComputedRecurring[],
+): ComputedRecurring[] {
+    return [...rows].sort(
+        (a, b) =>
+            a.dayOfMonth - b.dayOfMonth || a.item.localeCompare(b.item, "ko"),
+    )
 }
 
 // month 의 미생성 고정 지출을 만들어 생성된 인스턴스 배열을 반환한다(없으면 빈 배열).

@@ -522,7 +522,7 @@ export async function deleteRecurring(id: string): Promise<void> {
     await vaultClient.delete(`/recurring/${id}`)
 }
 
-// 세이빙 박스 거래(/savings-box) — type·source·date 는 평문 메타, 본문(amount/memo)은 암호문 블롭.
+// 쌈짓돈 거래(/savings-box) — type·source·date 는 평문 메타, 본문(amount/memo)은 암호문 블롭.
 export interface SavingsBoxTxnView extends SealedBlobDto {
     id: string
     type: "in" | "out"

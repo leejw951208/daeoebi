@@ -17,6 +17,17 @@ export interface ComputedExpense {
     categoryId: string | null
 }
 
+// 복호화된 고정 지출 템플릿 1건(메타 + 본문). 고정 지출 탭이 이 모델로 목록을 그린다.
+// 인스턴스(ComputedExpense)와 달리 날짜가 아니라 "매월 며칠"과 기간(개월 수)을 가진다.
+export interface ComputedRecurring {
+    id: string
+    item: string
+    amount: number
+    dayOfMonth: number
+    termMonths: number | null // null = 무기한
+    categoryId: string | null
+}
+
 export function totalSpent(items: ComputedExpense[]): number {
     return items.reduce((sum, e) => sum + e.amount, 0)
 }
@@ -161,8 +172,8 @@ export interface SavingsAccountView {
     color: string
     base: number
     goal: number
-    month: number
-    total: number
+    contributed: number // 전체 기간 적립(지출 연동분)
+    total: number // base + contributed
     goalPct: number
     remain: number
 }
@@ -170,9 +181,8 @@ export interface SavingsAccountView {
 // 적금 계좌별 진행률·합계. goalPct 는 0~100 클램프, remain 은 음수 방지.
 // rows 는 total 내림차순 정렬.
 //
-// total = base + 전체 기간 적립(totalByItem)이다. 보고 있는 달과 무관하게 지난 달 적립분이
-// 계속 쌓인다(base 는 앱을 쓰기 전부터 있던 초기 잔액). month 는 이번 달 적립분으로,
-// 계좌 카드의 "+₩X" 배지에만 쓴다.
+// contribByItem 은 전체 기간 적립을 계좌명(item)별로 합산한 것이다(savingsByItem).
+// total = base + contributed 라 보고 있는 달과 무관하다(base 는 앱을 쓰기 전부터 있던 초기 잔액).
 export function savingsAccountsView(
     accounts: readonly {
         name: string
@@ -180,13 +190,16 @@ export function savingsAccountsView(
         base: number
         goal: number
     }[],
-    totalByItem: ReadonlyMap<string, number>,
-    monthByItem: ReadonlyMap<string, number>,
-): { rows: SavingsAccountView[]; savedTotal: number; savedMonth: number } {
+    contribByItem: ReadonlyMap<string, number>,
+): {
+    rows: SavingsAccountView[]
+    savedTotal: number
+    savedContributed: number
+} {
     const rows = accounts
         .map((a) => {
-            const month = monthByItem.get(a.name) ?? 0
-            const total = a.base + (totalByItem.get(a.name) ?? 0)
+            const contributed = contribByItem.get(a.name) ?? 0
+            const total = a.base + contributed
             const goalPct =
                 a.goal > 0
                     ? Math.min(
@@ -200,7 +213,7 @@ export function savingsAccountsView(
                 color: a.color,
                 base: a.base,
                 goal: a.goal,
-                month,
+                contributed,
                 total,
                 goalPct,
                 remain,
@@ -208,8 +221,16 @@ export function savingsAccountsView(
         })
         .sort((a, b) => b.total - a.total)
     const savedTotal = rows.reduce((sum, r) => sum + r.total, 0)
-    const savedMonth = rows.reduce((sum, r) => sum + r.month, 0)
-    return { rows, savedTotal, savedMonth }
+    const savedContributed = rows.reduce((sum, r) => sum + r.contributed, 0)
+    return { rows, savedTotal, savedContributed }
+}
+
+// 적립 내역을 최근 순으로. "최근 적립 내역"이 전체 기간에서 상위 N건을 뽑을 때 쓴다.
+// 새 배열을 반환한다.
+export function sortContributionsByDateDesc<T extends { date: string }>(
+    rows: readonly T[],
+): T[] {
+    return [...rows].sort((a, b) => b.date.localeCompare(a.date))
 }
 
 export interface InvestmentView {
@@ -243,7 +264,7 @@ export interface SavingsBoxBalance {
     fromSavings: number
 }
 
-// 세이빙 박스 잔액. balance = inTotal - outTotal.
+// 쌈짓돈 잔액. balance = inTotal - outTotal.
 // fromSavings 는 저축 계좌에서 박스로 넣은(type="in" && source="savings") 금액만 합산한다.
 export function savingsBoxBalance(
     txns: readonly {
