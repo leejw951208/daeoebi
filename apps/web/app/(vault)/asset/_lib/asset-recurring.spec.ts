@@ -265,6 +265,29 @@ describe("materializeRecurring", () => {
         await materializeRecurring(key, "2026-07", [tmpl], [], "2026-07")
         expect(mockCreateExpense).toHaveBeenCalledTimes(1)
     })
+
+    it("이미 인스턴스가 있는 달은 생성하지 않는다", async () => {
+        await materializeRecurring(
+            key,
+            "2026-07",
+            [tmpl],
+            [{ recurringId: "r1", period: "2026-07" }],
+            NOW,
+        )
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
+
+    // "이번 달만 삭제"한 슬롯은 목록엔 없지만 unique 키를 잡고 있다. 없는 줄 알고 만들면 409 다.
+    it("소프트 삭제된 슬롯도 점유로 보고 재생성하지 않는다", async () => {
+        await materializeRecurring(
+            key,
+            "2026-07",
+            [tmpl],
+            [{ recurringId: "r1", period: "2026-07" }], // removed=true 라 월 목록엔 없다
+            NOW,
+        )
+        expect(mockCreateExpense).not.toHaveBeenCalled()
+    })
 })
 
 // 사용자 재현 경로: 9월을 미리 열어 인스턴스가 생성된 뒤, 8월에서 카테고리를 바꾼다.

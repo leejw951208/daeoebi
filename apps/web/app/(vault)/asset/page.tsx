@@ -17,6 +17,7 @@ import {
     listRecurring,
     listAssetCategories,
     listContributions,
+    listMonthSlots,
     listSavingsAccounts,
     getInvestment,
     listSavingsBox,
@@ -307,12 +308,14 @@ export default function AssetPage() {
         setState({ status: "loading" })
         try {
             // 지출은 지출일(date) 기준으로 그 달 것만 집계한다. 해당 월 한 달치를 가져온다.
-            const [budgetViews, expM, templates, categories] =
+            // slots 는 소프트 삭제분까지 포함한 점유 슬롯이라 머티리얼라이즈가 헛방을 안 친다.
+            const [budgetViews, expM, templates, categories, slots] =
                 await Promise.all([
                     listIncomes(month),
                     listExpenses(month),
                     listRecurring(),
                     listAssetCategories(),
+                    listMonthSlots(month),
                 ])
             // 기존 지출 카테고리 마이그레이션(이름→categoryId, 월별 1회). 멱등.
             // localStorage 가드로 이미 처리한 달은 건너뛰고, 새로운 달만 실행한다.
@@ -341,7 +344,7 @@ export default function AssetPage() {
                 vaultKey,
                 month,
                 templates,
-                freshExpM,
+                slots,
                 currentMonth(),
             )
             const allViews: ExpenseView[] = [...freshExpM, ...createdM]

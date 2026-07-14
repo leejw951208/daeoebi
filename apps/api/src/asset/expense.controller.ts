@@ -31,6 +31,12 @@ export class ExpenseController {
         return this.service.listContributions(ids)
     }
 
+    // 그 달에 이미 점유된 고정 인스턴스 슬롯(소프트 삭제분 포함). 재생성 시도를 막는다.
+    @Get("slots")
+    slots(@Query("month") month: string) {
+        return this.service.listMonthSlots(month)
+    }
+
     // 고정 지출 템플릿 수정을 이후 달에 전파할 때, 이미 만들어진 미래 인스턴스를 찾는다.
     // ":id" 보다 먼저 선언해야 리터럴 경로로 매칭된다.
     @Get("instances")

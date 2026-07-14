@@ -6,6 +6,7 @@ import {
     listRecurringInstances,
     updateExpense,
     type ExpenseView,
+    type RecurringSlot,
     type RecurringView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
@@ -85,19 +86,22 @@ export function propagationPivot(
 
 // month 의 미생성 고정 지출을 만들어 생성된 인스턴스 배열을 반환한다(없으면 빈 배열).
 // 생성 대상을 먼저 필터링한 뒤 Promise.all 로 병렬 실행해 K 직렬 요청을 제거한다.
+//
+// occupiedSlots 는 그 달에 이미 점유된 (recurringId, period) 다. 소프트 삭제된 슬롯까지 포함해야
+// 한다 — 월 목록에는 안 나오지만 unique 키는 잡고 있어서, 없는 줄 알고 만들면 매 로드마다 409 다.
 export async function materializeRecurring(
     vaultKey: CryptoKey,
     month: string,
     templates: RecurringView[],
-    monthExpenses: ExpenseView[],
+    occupiedSlots: readonly RecurringSlot[],
     nowMonth: string,
 ): Promise<ExpenseView[]> {
     // 미래 달은 들여다보기만 해도 인스턴스가 박혀 누적 집계(저축·투자)를 부풀린다. 현재 달까지만 만든다.
     if (month > nowMonth) return []
     const present = new Set(
-        monthExpenses
-            .filter((e) => e.recurringId)
-            .map((e) => `${e.recurringId}|${e.period}`),
+        occupiedSlots
+            .filter((s) => s.recurringId)
+            .map((s) => `${s.recurringId}|${s.period}`),
     )
     const targets = templates.filter((t) => {
         if (month < t.startMonth) return false // 시작월 이전 달엔 생성하지 않는다.

@@ -76,6 +76,25 @@ export class ExpenseService {
         return rows.map(toView)
     }
 
+    // 그 달에 이미 점유된 고정 인스턴스 슬롯 (recurringId, period).
+    //
+    // removed=true 인 슬롯("이번 달만 삭제")도 포함한다. 월 목록에는 안 나오지만 unique 키는
+    // 그대로 잡고 있어서, 클라가 없는 줄 알고 재생성하면 매 로드마다 409 를 맞는다. 그 실패
+    // 요청이 진짜 이상 409 까지 가린다.
+    async listMonthSlots(month: string) {
+        if (!MONTH_RE.test(month)) {
+            throw new BadRequestException({
+                code: ASSET_ERRORS.INVALID_MONTH,
+                message: "month 는 YYYY-MM 형식이어야 합니다.",
+            })
+        }
+        const rows = await this.prisma.expense.findMany({
+            where: { period: month, recurringId: { not: null } },
+            select: { recurringId: true, period: true },
+        })
+        return rows
+    }
+
     // 템플릿 수정 전파용: 해당 템플릿의 fromPeriod 초과(=미래) 인스턴스를 반환한다.
     // 클라가 새 내용으로 재봉인해 갱신한다(서버는 블롭을 못 읽으므로 여기서 못 한다).
     // @@unique([recurringId, period]) 인덱스를 그대로 타서 추가 인덱스가 필요 없다.

@@ -155,7 +155,28 @@ export function ExpenseForm({
             const nowMonth = currentMonth()
             if (isEdit) {
                 const blob = await sealExpense(vaultKey, payload)
-                if (!wasRecurring && recurring) {
+                if (
+                    !wasRecurring &&
+                    recurring &&
+                    initial.recurringId !== null
+                ) {
+                    // 고정 해제했던 지출을 다시 고정으로: 옛 템플릿을 되살린다.
+                    // 새 템플릿을 만들면 이 지출은 새 템플릿에 붙지만, 남아 있는 다른 달
+                    // 인스턴스는 옛 템플릿을 가리킨 채라 멱등 키가 갈라져 같은 달에 두 건이 생긴다.
+                    const tmplBlob = await sealExpense(vaultKey, payload)
+                    await updateRecurring(initial.recurringId, {
+                        active: true,
+                        dayOfMonth,
+                        categoryId,
+                        termMonths: term,
+                        ...tmplBlob,
+                    })
+                    await updateExpense(initial.id, {
+                        date,
+                        categoryId,
+                        ...blob,
+                    })
+                } else if (!wasRecurring && recurring) {
                     // 단건 → 고정 전환: 템플릿을 만들고 이 지출을 연결한다.
                     const tmplBlob = await sealExpense(vaultKey, payload)
                     const templateId = await ensureTemplate({

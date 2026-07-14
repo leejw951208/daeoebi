@@ -308,6 +308,35 @@ describe("ExpenseService.remove", () => {
     })
 })
 
+// 소프트 삭제된 슬롯은 월 목록에 안 나오지만 unique 키를 잡고 있다. 슬롯 조회는 removed 를
+// 거르지 않아야, 클라가 없는 줄 알고 재생성해 매 로드마다 409 를 맞는 일이 없다.
+describe("ExpenseService.listMonthSlots", () => {
+    it("잘못된 month 형식은 INVALID_MONTH", async () => {
+        const prisma = makePrisma()
+        await expect(
+            makeService(prisma).listMonthSlots("2026-6"),
+        ).rejects.toMatchObject({
+            response: { code: ASSET_ERRORS.INVALID_MONTH },
+        })
+        expect(prisma.expense.findMany).not.toHaveBeenCalled()
+    })
+
+    it("그 달의 고정 슬롯을 removed 필터 없이 조회한다", async () => {
+        const prisma = makePrisma()
+        prisma.expense.findMany.mockResolvedValue([
+            { recurringId: "r1", period: "2026-07" },
+        ])
+
+        const out = await makeService(prisma).listMonthSlots("2026-07")
+
+        expect(prisma.expense.findMany).toHaveBeenCalledWith({
+            where: { period: "2026-07", recurringId: { not: null } },
+            select: { recurringId: true, period: true },
+        })
+        expect(out).toEqual([{ recurringId: "r1", period: "2026-07" }])
+    })
+})
+
 describe("ExpenseService.listInstancesAfter", () => {
     it("잘못된 fromPeriod 형식은 INVALID_MONTH", async () => {
         const prisma = makePrisma()

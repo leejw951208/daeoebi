@@ -460,6 +460,20 @@ export async function listRecurringInstances(
     return data
 }
 
+// 그 달에 이미 점유된 고정 인스턴스 슬롯. 소프트 삭제("이번 달만 삭제")된 것도 포함한다 —
+// 월 목록엔 안 나오지만 unique 키는 잡고 있어서, 없는 줄 알고 재생성하면 매번 409 를 맞는다.
+export interface RecurringSlot {
+    recurringId: string | null
+    period: string | null
+}
+
+export async function listMonthSlots(month: string): Promise<RecurringSlot[]> {
+    const { data } = await vaultClient.get<RecurringSlot[]>("/expenses/slots", {
+        params: { month },
+    })
+    return data
+}
+
 export interface CreateExpenseInput extends SealedBlobDto {
     date: string
     recurringId?: string
