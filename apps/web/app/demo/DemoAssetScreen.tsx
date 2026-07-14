@@ -58,13 +58,13 @@ export function DemoAssetScreen() {
         },
         box: { balance: 0, fromSavings: 0, count: 0 },
         onBoxIn: () => {
-            /* 데모: 세이빙 박스 입금 미지원 */
+            /* 데모: 쌈짓돈 입금 미지원 */
         },
         onBoxOut: () => {
-            /* 데모: 세이빙 박스 출금 미지원 */
+            /* 데모: 쌈짓돈 출금 미지원 */
         },
         onBoxDetail: () => {
-            /* 데모: 세이빙 박스 내역 미지원 */
+            /* 데모: 쌈짓돈 내역 미지원 */
         },
     }
 

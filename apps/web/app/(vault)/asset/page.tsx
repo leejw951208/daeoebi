@@ -177,7 +177,7 @@ async function resolveInvestment(
     }
 }
 
-// 세이빙 박스 거래 블롭 복호화(실패분 스킵). type/source/date 는 서버 평문 메타 그대로 쓴다.
+// 쌈짓돈 거래 블롭 복호화(실패분 스킵). type/source/date 는 서버 평문 메타 그대로 쓴다.
 async function resolveBoxTxns(
     vaultKey: CryptoKey,
     views: SavingsBoxTxnView[],
@@ -520,7 +520,7 @@ export default function AssetPage() {
         }
     }, [vaultKey])
 
-    // 세이빙 박스 입출금/삭제 후: 박스 거래만 재조회한다(적립 내역·목표·계좌·투자는 그대로 둔다).
+    // 쌈짓돈 입출금/삭제 후: 쌈짓돈 거래만 재조회한다(적립 내역·목표·계좌·투자는 그대로 둔다).
     const reloadBox = useCallback(async () => {
         try {
             const boxViews = await listSavingsBox()
@@ -634,7 +634,7 @@ export default function AssetPage() {
     const currentInvestment =
         savingsState.status === "ready" ? savingsState.investment : null
     const boxTxns = savingsState.status === "ready" ? savingsState.boxTxns : []
-    // 세이빙 박스 시트에 넘길 "저축 가용 잔액"(박스로 이체된 만큼 이미 뺀 값). savingsView 가
+    // 쌈짓돈 시트에 넘길 "저축 가용 잔액"(쌈짓돈으로 이체된 만큼 이미 뺀 값). savingsView 가
     // ready 일 때만 정확하므로, 그 전엔 0(시트를 열 수 있는 상태 자체가 아니라 문제 없음).
     const displayedSavedTotal =
         savingsView.status === "ready"

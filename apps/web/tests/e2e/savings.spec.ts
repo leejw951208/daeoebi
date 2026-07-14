@@ -1,7 +1,7 @@
 /**
  * E2E QA: 저축·투자 탭
  * 세그먼트 전환 → 저축·투자 순자산 노출 → 저축 목표 설정 → 진행률/목표 반영.
- * 세이빙 박스 입금 → 입출금 내역 반영.
+ * 쌈짓돈 입금 → 입출금 내역 반영.
  *
  * Auth bypass: dev 환경에서 "패스키로 잠금해제" 클릭 → devUnlock() 호출.
  * `category-crud.spec.ts` 의 enterVaultAt·waitForAssetDashboard·tall viewport
@@ -12,7 +12,7 @@
  * "목표 ₩<금액>" 텍스트로 정확히 검증할 수 있다(누적 저축액은 이전 테스트
  * 실행에 따라 달라질 수 있어 진행률 % 값 자체는 정확한 수치 대신 존재만 검증한다).
  *
- * 세이빙 박스 잔액도 볼트당 누적값(이전 실행 입출금이 계속 쌓임)이라 총액을
+ * 쌈짓돈 잔액도 볼트당 누적값(이전 실행 입출금이 계속 쌓임)이라 총액을
  * 정확히 검증할 수 없다. 대신 이번 실행에서만 쓰는 고유 메모를 부여해
  * "입출금 내역" 목록에서 해당 건이 금액과 함께 나타나는지로 검증한다.
  */
@@ -30,7 +30,7 @@ const ACCOUNT_GOAL_FORMATTED = `₩${ACCOUNT_GOAL.toLocaleString("ko-KR")}`
 const RETURN_RATE = "7.3"
 const RETURN_RATE_FORMATTED = `+${RETURN_RATE}%`
 
-// 세이빙 박스 잔액은 볼트당 누적값(이전 실행 입출금이 누적)이라 정확한 총액을 검증할 수 없다.
+// 쌈짓돈 잔액은 볼트당 누적값(이전 실행 입출금이 누적)이라 정확한 총액을 검증할 수 없다.
 // 대신 이번 실행에서만 쓰는 고유 메모를 "입출금 내역"에서 찾아 입금이 반영됐는지 확인한다.
 const BOX_DEPOSIT_MEMO = `QA박스입금-${Date.now()}`
 const BOX_DEPOSIT_AMOUNT = 55_000
@@ -125,10 +125,10 @@ test.describe.serial("저축·투자 탭", () => {
         await expect(
             page.getByText("저축·투자 순자산", { exact: true }),
         ).toBeVisible({ timeout: 20_000 })
-        // 세이빙 박스 카드도 함께 렌더된다(저축·투자 뷰 구성 확인).
-        await expect(
-            page.getByText("세이빙 박스", { exact: true }),
-        ).toBeVisible({ timeout: 10_000 })
+        // 쌈짓돈 카드도 함께 렌더된다(저축·투자 뷰 구성 확인).
+        await expect(page.getByText("쌈짓돈", { exact: true })).toBeVisible({
+            timeout: 10_000,
+        })
     })
 
     test("적금 계좌 추가 → 적금 목록에 이름·목표 진행률 반영", async ({
@@ -206,7 +206,7 @@ test.describe.serial("저축·투자 탭", () => {
         ).toBeVisible({ timeout: 10_000 })
     })
 
-    test("세이빙 박스 입금 → 입출금 내역에 반영", async ({ page }) => {
+    test("쌈짓돈 입금 → 입출금 내역에 반영", async ({ page }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
@@ -219,10 +219,10 @@ test.describe.serial("저축·투자 탭", () => {
             page.getByText("저축·투자 순자산", { exact: true }),
         ).toBeVisible({ timeout: 20_000 })
 
-        // ── 세이빙 박스 카드의 "입금" 버튼으로 시트 열기 ──
+        // ── 쌈짓돈 카드의 "입금" 버튼으로 시트 열기 ──
         await page.getByRole("button", { name: "입금", exact: true }).click()
 
-        const sheet = page.getByRole("dialog", { name: "세이빙 박스 입금" })
+        const sheet = page.getByRole("dialog", { name: "쌈짓돈 입금" })
         await expect(sheet).toBeVisible({ timeout: 10_000 })
 
         // ── 금액·메모 입력 후 저장 ──
@@ -238,7 +238,7 @@ test.describe.serial("저축·투자 탭", () => {
         await page.getByRole("button", { name: "입출금 내역 보기" }).click()
 
         const detailSheet = page.getByRole("dialog", {
-            name: "세이빙 박스 내역",
+            name: "쌈짓돈 내역",
         })
         await expect(detailSheet).toBeVisible({ timeout: 10_000 })
 

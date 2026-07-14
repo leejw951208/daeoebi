@@ -254,7 +254,7 @@ export interface SavingsBoxBalance {
     fromSavings: number
 }
 
-// 세이빙 박스 잔액. balance = inTotal - outTotal.
+// 쌈짓돈 잔액. balance = inTotal - outTotal.
 // fromSavings 는 저축 계좌에서 박스로 넣은(type="in" && source="savings") 금액만 합산한다.
 export function savingsBoxBalance(
     txns: readonly {

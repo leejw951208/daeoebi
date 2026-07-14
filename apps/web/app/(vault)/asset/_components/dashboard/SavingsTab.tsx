@@ -1,6 +1,6 @@
 "use client"
 // 저축·투자 탭. 저축/투자 순자산·이번 달 적립·적립 내역을 보여준다.
-// 데이터(계좌·투자·박스)는 부모(asset/page)가 복호화해 props 로 넘긴다.
+// 데이터(계좌·투자·쌈짓돈)는 부모(asset/page)가 복호화해 props 로 넘긴다.
 // 저축 합계는 적금 계좌 모델(savingsAccountsView) 기준이다 — 지출 파생 단일 목표 모델은 쓰지 않는다.
 import Link from "next/link"
 import type {
@@ -31,7 +31,7 @@ function formatShortMonth(month: string): string {
     return `${Number(month.slice(5, 7))}월`
 }
 
-// 세이빙 박스 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
+// 쌈짓돈 카드 표시용 요약. balance/fromSavings 는 asset-compute 의 savingsBoxBalance 결과,
 // count 는 전체 거래 건수(내역 배지 "{n}건 기록"에 쓴다).
 export interface SavingsBoxSummary {
     balance: number
@@ -58,8 +58,8 @@ interface SavingsTabProps {
     // 투자 원금·평가금액·손익(수익률 적용 결과). 탭하면 onEditReturn 으로 수익률 수정 시트를 연다.
     investment: InvestmentView
     onEditReturn: () => void
-    // 세이빙 박스 잔액·건수. 저축에서 박스로 이체한 금액(fromSavings)은 "저축" 표시에서 뺀다
-    // (같은 돈이 저축·박스 두 곳에 동시에 잡히지 않도록).
+    // 쌈짓돈 잔액·건수. 저축에서 쌈짓돈으로 이체한 금액(fromSavings)은 "저축" 표시에서 뺀다
+    // (같은 돈이 저축·쌈짓돈 두 곳에 동시에 잡히지 않도록).
     box: SavingsBoxSummary
     onBoxIn: () => void
     onBoxOut: () => void
@@ -100,7 +100,7 @@ export function SavingsTab({
     onBoxOut,
     onBoxDetail,
 }: SavingsTabProps) {
-    // 세이빙 박스로 이체한 저축분은 "저축" 표시에서 뺀다(박스 카드 잔액과 중복 집계 방지).
+    // 쌈짓돈으로 이체한 저축분은 "저축" 표시에서 뺀다(쌈짓돈 카드 잔액과 중복 집계 방지).
     const displayedSaved = Math.max(0, savedTotal - box.fromSavings)
     const monthContrib = savedMonth + investMonth
     const shortMonth = formatShortMonth(month)
@@ -251,7 +251,7 @@ export function SavingsTab({
                 </div>
             </div>
 
-            {/* 세이빙 박스 */}
+            {/* 쌈짓돈 */}
             <div className="asset-card" style={{ padding: "20px 18px 16px" }}>
                 <div
                     style={{
@@ -261,9 +261,7 @@ export function SavingsTab({
                         marginBottom: 13,
                     }}
                 >
-                    <div style={{ fontSize: 13, fontWeight: 800 }}>
-                        세이빙 박스
-                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 800 }}>쌈짓돈</div>
                     <span
                         style={{
                             flexShrink: 0,

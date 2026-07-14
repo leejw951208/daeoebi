@@ -1,5 +1,5 @@
 "use client"
-// 세이빙 박스 입출금 내역 바텀시트. 복호화된 거래를 날짜 내림차순으로 보여주고
+// 쌈짓돈 입출금 내역 바텀시트. 복호화된 거래를 날짜 내림차순으로 보여주고
 // 개별 삭제·더보기 페이지네이션을 지원한다. 목록은 page 가 복호화해 props 로 넘긴다.
 import { useState } from "react"
 import { toast } from "@/components/toast"
@@ -7,7 +7,7 @@ import { useVault } from "../../_lib/vault-context"
 import { deleteSavingsBoxTxn } from "@/lib/vault-client"
 import { formatWon } from "../_lib/asset-categories"
 
-// 복호화된 세이빙 박스 거래 1건(메타 + 본문).
+// 복호화된 쌈짓돈 거래 1건(메타 + 본문).
 export interface BoxTxnRow {
     id: string
     type: "in" | "out"
@@ -69,7 +69,7 @@ export function SavingsBoxDetailSheet({
             className="dialog-backdrop dim"
             role="dialog"
             aria-modal="true"
-            aria-label="세이빙 박스 내역"
+            aria-label="쌈짓돈 내역"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose()
             }}
@@ -112,7 +112,7 @@ export function SavingsBoxDetailSheet({
                                 letterSpacing: "-0.02em",
                             }}
                         >
-                            세이빙 박스 내역
+                            쌈짓돈 내역
                         </div>
                         <button
                             type="button"

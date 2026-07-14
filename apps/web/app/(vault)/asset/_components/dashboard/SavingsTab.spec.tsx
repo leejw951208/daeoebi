@@ -130,7 +130,7 @@ describe("SavingsTab", () => {
         expect(onAddAccount).toHaveBeenCalledTimes(1)
     })
 
-    it("세이빙 박스 카드에 잔액·건수를 표시하고 버튼이 콜백을 호출한다", () => {
+    it("쌈짓돈 카드에 잔액·건수를 표시하고 버튼이 콜백을 호출한다", () => {
         const onBoxIn = jest.fn()
         const onBoxOut = jest.fn()
         const onBoxDetail = jest.fn()
@@ -146,7 +146,7 @@ describe("SavingsTab", () => {
                 onBoxDetail={onBoxDetail}
             />,
         )
-        expect(screen.getByText("세이빙 박스")).not.toBeNull()
+        expect(screen.getByText("쌈짓돈")).not.toBeNull()
         expect(screen.getByText("₩50,000")).not.toBeNull()
         expect(screen.getByText("3건 기록")).not.toBeNull()
 

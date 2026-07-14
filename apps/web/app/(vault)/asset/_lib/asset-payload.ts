@@ -128,7 +128,7 @@ export async function openInvestment(
     }
 }
 
-// 세이빙 박스 거래 1건의 평문 본문. type/source/date 메타는 서버 컬럼이라 여기 포함하지 않는다.
+// 쌈짓돈 거래 1건의 평문 본문. type/source/date 메타는 서버 컬럼이라 여기 포함하지 않는다.
 export interface BoxTxnPayload {
     amount: number
     memo: string
