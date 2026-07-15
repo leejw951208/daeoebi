@@ -91,6 +91,11 @@ export function ExpenseForm({
     }, [categories, categoryId, initial])
 
     const amountNum = Number(amount || "0")
+    // 표시 문자열(콤마 포함)에 맞춰 입력 폭·글자 크기를 정한다. 최대 12자리라 콤마까지
+    // 15자가 될 수 있어, 폭을 내용에 맞추고 길어지면 글자를 줄여야 잘리지 않는다.
+    const amountShown = amount ? formatAmount(amountNum) : ""
+    const amountLen = amountShown.length
+    const amountFontSize = amountLen <= 7 ? 40 : amountLen <= 11 ? 32 : 24
 
     // 저축 지출은 항목(item)이 곧 적금 계좌명이다. 집계가 계좌명과 문자열 완전 일치로 붙기 때문에,
     // 자유 텍스트로 두면 "청년적금" vs "청년 적금" 한 칸 차이로 금액이 총액에서 조용히 증발한다.
@@ -366,18 +371,18 @@ export function ExpenseForm({
                         </span>
                         <input
                             inputMode="numeric"
-                            size={6}
-                            value={amount ? formatAmount(amountNum) : ""}
+                            size={Math.max(1, amountLen)}
+                            value={amountShown}
                             onChange={(e) => onAmountInput(e.target.value)}
                             placeholder="0"
                             aria-label="금액"
                             style={{
                                 width: "auto",
                                 minWidth: 60,
-                                maxWidth: 230,
+                                maxWidth: "100%",
                                 border: "none",
                                 background: "none",
-                                fontSize: 40,
+                                fontSize: amountFontSize,
                                 fontWeight: 800,
                                 letterSpacing: "-0.03em",
                                 textAlign: "center",
