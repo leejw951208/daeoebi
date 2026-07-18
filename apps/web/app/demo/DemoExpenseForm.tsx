@@ -4,6 +4,7 @@ import { useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"
 import type { ComputedExpense } from "../(vault)/asset/_lib/asset-compute"
 import { Button } from "@/components/Button"
+import { formatAmount } from "../(vault)/asset/_lib/asset-categories"
 import { DEMO_MONTH } from "./demo-asset-data"
 
 interface DemoExpenseFormProps {
@@ -27,6 +28,10 @@ export function DemoExpenseForm({
     const [date, setDate] = useState(`${DEMO_MONTH}-15`)
 
     const amountNum = Number(amount || "0")
+    // 실제 ExpenseForm 과 동일: 콤마 포함 표시 길이에 맞춰 입력 폭·글자 크기를 정한다.
+    const amountShown = amount ? formatAmount(amountNum) : ""
+    const amountLen = amountShown.length
+    const amountFontSize = amountLen <= 7 ? 40 : amountLen <= 11 ? 32 : 24
 
     function save() {
         if (amountNum <= 0) return
@@ -80,28 +85,58 @@ export function DemoExpenseForm({
             >
                 {/* 금액 */}
                 <div style={{ textAlign: "center", padding: "14px 0 4px" }}>
-                    <div className="field-label" style={{ marginBottom: 10 }}>
+                    <div
+                        className="field-label"
+                        style={{ marginBottom: 10, color: "#a0a0a0" }}
+                    >
                         금액
                     </div>
-                    <input
-                        inputMode="numeric"
-                        aria-label="금액"
-                        value={amount}
-                        onChange={(e) =>
-                            setAmount(
-                                e.target.value
-                                    .replace(/[^\d]/g, "")
-                                    .slice(0, 12),
-                            )
-                        }
-                        placeholder="0"
-                        className="field-control"
+                    <div
                         style={{
-                            textAlign: "center",
-                            fontSize: 22,
-                            fontWeight: 800,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 5,
                         }}
-                    />
+                    >
+                        <span
+                            style={{
+                                fontSize: 30,
+                                fontWeight: 800,
+                                color: "#cfcfcf",
+                            }}
+                            aria-hidden="true"
+                        >
+                            ₩
+                        </span>
+                        <input
+                            inputMode="numeric"
+                            size={Math.max(1, amountLen)}
+                            aria-label="금액"
+                            value={amountShown}
+                            onChange={(e) =>
+                                setAmount(
+                                    e.target.value
+                                        .replace(/[^\d]/g, "")
+                                        .slice(0, 12),
+                                )
+                            }
+                            placeholder="0"
+                            style={{
+                                width: "auto",
+                                minWidth: 60,
+                                maxWidth: "100%",
+                                border: "none",
+                                background: "none",
+                                fontSize: amountFontSize,
+                                fontWeight: 800,
+                                letterSpacing: "-0.03em",
+                                textAlign: "center",
+                                outline: "none",
+                                color: "#171717",
+                            }}
+                        />
+                    </div>
                 </div>
 
                 {/* 항목 */}
