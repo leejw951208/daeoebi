@@ -11,7 +11,7 @@ import {
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { openExpense, sealExpense, type ExpensePayload } from "./asset-payload"
-import { addMonth, clampedDate } from "./asset-dates"
+import { addMonth, clampedDate, monthLabel } from "./asset-dates"
 import type { ComputedExpense, ComputedRecurring } from "./asset-compute"
 
 // 템플릿에서 인스턴스를 만들거나 되돌릴 때 필요한 최소 정보.
@@ -37,6 +37,17 @@ export function formatDayOfMonth(dayOfMonth: number): string {
 // 기간 표기. termMonths 가 null 이면 끝나지 않는 고정 지출이다.
 export function formatTerm(termMonths: number | null): string {
     return termMonths === null ? "무기한" : `${termMonths}개월`
+}
+
+// 만료 표기(B안). 기간이 있으면 "종료월까지 · N개월", 무기한이면 "무기한".
+export function formatExpiry(
+    startMonth: string,
+    termMonths: number | null,
+): string {
+    const end = endMonthOf(startMonth, termMonths)
+    return end === null
+        ? formatTerm(termMonths)
+        : `${monthLabel(end)}까지 · ${termMonths}개월`
 }
 
 // 종료월(포함). 무기한이면 null. 3개월 = 시작월 포함 3개라 startMonth+2 가 종료월이다.

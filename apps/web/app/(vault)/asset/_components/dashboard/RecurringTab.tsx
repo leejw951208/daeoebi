@@ -7,7 +7,7 @@ import type { ComputedRecurring } from "../../_lib/asset-compute"
 import { formatWon, resolveCategory } from "../../_lib/asset-categories"
 import {
     formatDayOfMonth,
-    formatTerm,
+    formatExpiry,
     recurringInMonth,
     sortRecurring,
     totalRecurring,
@@ -168,7 +168,7 @@ export function RecurringTab({
                                             fontWeight: 500,
                                         }}
                                     >
-                                        {`${formatDayOfMonth(r.dayOfMonth)} · ${formatTerm(r.termMonths)}`}
+                                        {`${formatDayOfMonth(r.dayOfMonth)} · ${formatExpiry(r.startMonth, r.termMonths)}`}
                                     </div>
                                 </div>
                                 <span
