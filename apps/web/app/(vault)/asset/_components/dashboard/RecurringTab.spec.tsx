@@ -1,4 +1,4 @@
-// RecurringTab 테스트(RTL). 요약 카드(합계·건수)·행 표기(매월 N일 · 개월 수)·빈 상태·기간 필터를 검증한다.
+// RecurringTab 테스트(RTL). 요약 카드(합계·건수)·행 표기(매월 N일 · 종료월까지 · 개월 수)·빈 상태·기간 필터를 검증한다.
 import { render, screen } from "@testing-library/react"
 import { RecurringTab } from "./RecurringTab"
 import type { ComputedRecurring } from "../../_lib/asset-compute"
@@ -66,7 +66,7 @@ describe("RecurringTab", () => {
         expect(screen.getByText("2건")).not.toBeNull()
     })
 
-    it("행에 지출명·결제일·개월 수·금액을 표시한다", () => {
+    it("행에 지출명·결제일·만료(종료월까지 · 개월 수)·금액을 표시한다", () => {
         render(
             <RecurringTab
                 month={MONTH}
@@ -75,7 +75,9 @@ describe("RecurringTab", () => {
             />,
         )
         expect(screen.getByText("넷플릭스")).not.toBeNull()
-        expect(screen.getByText("매월 15일 · 6개월")).not.toBeNull()
+        expect(
+            screen.getByText("매월 15일 · 2026년 11월까지 · 6개월"),
+        ).not.toBeNull()
         expect(screen.getByText("-₩17,000")).not.toBeNull()
     })
 

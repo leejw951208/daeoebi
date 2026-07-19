@@ -29,6 +29,7 @@ jest.mock("./asset-payload", () => ({
 import {
     endMonthOf,
     formatDayOfMonth,
+    formatExpiry,
     formatTerm,
     materializeRecurring,
     parseTermMonths,
@@ -73,6 +74,21 @@ describe("formatTerm", () => {
 
     it("개월 수가 없으면(null) '무기한' 으로 표기한다", () => {
         expect(formatTerm(null)).toBe("무기한")
+    })
+})
+
+describe("formatExpiry", () => {
+    it("기간이 있으면 '종료월까지 · N개월' 로 표기한다", () => {
+        expect(formatExpiry("2026-09", 3)).toBe("2026년 11월까지 · 3개월")
+        expect(formatExpiry("2026-06", 1)).toBe("2026년 6월까지 · 1개월")
+    })
+
+    it("해를 넘기는 종료월도 정확하다", () => {
+        expect(formatExpiry("2026-11", 4)).toBe("2027년 2월까지 · 4개월")
+    })
+
+    it("무기한(null)은 '무기한' 으로 표기한다", () => {
+        expect(formatExpiry("2026-06", null)).toBe("무기한")
     })
 })
 
