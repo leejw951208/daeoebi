@@ -249,6 +249,53 @@ describe("RecurringService", () => {
         expect(Buffer.from(data.ciphertext)).toEqual(CT)
     })
 
+    it("create 는 method 를 저장하고(없으면 null) 뷰에 포함한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.create.mockResolvedValue({
+            ...row,
+            method: "삼성카드",
+        })
+        const out = await makeService(prisma).create({
+            dayOfMonth: 25,
+            startMonth: "2026-06",
+            method: "삼성카드",
+            ...blob,
+        } as never)
+        expect(
+            prisma.recurringExpense.create.mock.calls[0][0].data.method,
+        ).toBe("삼성카드")
+        expect(out).toMatchObject({ method: "삼성카드" })
+
+        const prisma2 = makePrisma()
+        prisma2.recurringExpense.create.mockResolvedValue({
+            ...row,
+            method: null,
+        })
+        await makeService(prisma2).create({
+            dayOfMonth: 1,
+            startMonth: "2026-06",
+            ...blob,
+        } as never)
+        expect(
+            prisma2.recurringExpense.create.mock.calls[0][0].data.method,
+        ).toBeNull()
+    })
+
+    it("update 는 method 만 부분 갱신한다(블롭·타 컬럼 무변경)", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.update.mockResolvedValue({
+            ...row,
+            method: "현금",
+        })
+        const out = await makeService(prisma).update("r1", {
+            method: "현금",
+        } as never)
+        expect(prisma.recurringExpense.update.mock.calls[0][0].data).toEqual({
+            method: "현금",
+        })
+        expect(out).toMatchObject({ method: "현금" })
+    })
+
     it("remove 는 없으면 404(delete 가 P2025 로 거부), 있으면 삭제", async () => {
         const prisma = makePrisma()
         prisma.recurringExpense.delete.mockRejectedValueOnce({ code: "P2025" })

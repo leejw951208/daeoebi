@@ -1,5 +1,5 @@
-// 고정 지출 템플릿(RecurringExpense) DTO. dayOfMonth·active 는 평문 스케줄 메타,
-// 본문은 클라이언트 E2E 암호문 블롭({item,amount,category,method}).
+// 고정 지출 템플릿(RecurringExpense) DTO. dayOfMonth·active·method 는 평문 메타,
+// 본문(금액·항목)은 클라이언트 E2E 암호문 블롭({item,amount}).
 import { IsBase64url } from "../../common/base64url"
 import {
     IsBoolean,
@@ -8,6 +8,7 @@ import {
     IsString,
     Matches,
     Max,
+    MaxLength,
     Min,
     MinLength,
 } from "class-validator"
@@ -32,6 +33,11 @@ export class CreateRecurringDto {
     @IsString()
     @MinLength(1)
     categoryId?: string
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(50)
+    method?: string
 
     @IsBase64url()
     iv!: string
@@ -76,4 +82,9 @@ export class UpdateRecurringDto {
     @IsString()
     @MinLength(1)
     categoryId?: string
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(50)
+    method?: string
 }
