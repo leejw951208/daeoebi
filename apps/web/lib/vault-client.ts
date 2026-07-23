@@ -404,6 +404,7 @@ export interface RecurringView extends SealedBlobDto {
     termMonths: number | null
     active: boolean
     categoryId: string | null
+    method: string | null
 }
 
 export async function listIncomes(month: string): Promise<IncomeView[]> {
@@ -521,6 +522,7 @@ export async function createRecurring(
         startMonth: string
         termMonths?: number
         categoryId?: string
+        method?: string
     },
 ): Promise<RecurringView> {
     const { data } = await vaultClient.post<RecurringView>("/recurring", input)
@@ -535,6 +537,7 @@ export async function updateRecurring(
         // null = 무기한으로 되돌림.
         termMonths?: number | null
         categoryId?: string
+        method?: string
     },
 ): Promise<RecurringView> {
     const { data } = await vaultClient.patch<RecurringView>(

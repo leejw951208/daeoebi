@@ -27,6 +27,7 @@ function makeRecurring(
         startMonth: "2026-06",
         termMonths: 6,
         categoryId: "c1",
+        method: null,
         ...over,
     }
 }

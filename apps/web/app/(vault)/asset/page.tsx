@@ -159,6 +159,7 @@ async function resolveRecurrings(
                 startMonth: v.startMonth,
                 termMonths: v.termMonths,
                 categoryId: v.categoryId,
+                method: v.method,
             }
         }),
     )

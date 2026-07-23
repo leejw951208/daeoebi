@@ -16,6 +16,7 @@ import {
     spentPct,
     totalIncome,
     totalSpent,
+    withRecurringMethod,
     type ComputedExpense,
     type ComputedIncome,
 } from "./asset-compute"
@@ -92,10 +93,39 @@ describe("activeRecurringIds", () => {
                 startMonth: "2026-01",
                 termMonths: null,
                 categoryId: null,
+                method: null,
             },
         ])
         expect(ids.has("r1")).toBe(true)
         expect(ids.size).toBe(1)
+    })
+})
+
+describe("withRecurringMethod", () => {
+    const base = {
+        id: "r1",
+        item: "월세",
+        amount: 1,
+        dayOfMonth: 1,
+        startMonth: "2026-01",
+        termMonths: null,
+        categoryId: null,
+        method: null,
+    }
+
+    it("해당 id 의 방식만 바꾼 새 배열을 반환한다(원본 불변)", () => {
+        const rows = [base, { ...base, id: "r2", method: "현금" }]
+        const out = withRecurringMethod(rows, "r1", "삼성카드")
+        expect(out[0].method).toBe("삼성카드")
+        expect(out[1].method).toBe("현금")
+        expect(rows[0].method).toBeNull() // 원본 불변
+        expect(out).not.toBe(rows)
+    })
+
+    it("일치하는 id 가 없으면 원소 값은 그대로다", () => {
+        const rows = [base]
+        const out = withRecurringMethod(rows, "none", "카카오페이")
+        expect(out[0].method).toBeNull()
     })
 })
 
