@@ -74,6 +74,7 @@ interface Props {
     onOpenBudget: () => void
     assetTab: AssetTab
     savings: SavingsView
+    onSaveMethod: (id: string, method: string) => Promise<void>
 }
 
 export function AssetDashboard({
@@ -85,6 +86,7 @@ export function AssetDashboard({
     onOpenBudget,
     assetTab,
     savings,
+    onSaveMethod,
 }: Props) {
     const spent = totalSpent(data.expenses)
     const left = remaining(data.budgetAmount, spent)
@@ -155,6 +157,7 @@ export function AssetDashboard({
                     month={month}
                     recurrings={data.recurrings}
                     categories={data.categories}
+                    onSaveMethod={onSaveMethod}
                 />
             )}
 

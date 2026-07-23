@@ -1,5 +1,5 @@
 // RecurringTab 테스트(RTL). 요약 카드(합계·건수)·행 표기(매월 N일 · 종료월까지 · 개월 수)·빈 상태·기간 필터를 검증한다.
-import { render, screen } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { RecurringTab } from "./RecurringTab"
 import type { ComputedRecurring } from "../../_lib/asset-compute"
 import type { AssetCategory } from "@/lib/vault-client"
@@ -41,6 +41,7 @@ describe("RecurringTab", () => {
                 month={MONTH}
                 recurrings={[]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         expect(screen.getByText("아직 고정 지출이 없어요")).not.toBeNull()
@@ -60,6 +61,7 @@ describe("RecurringTab", () => {
                     }),
                 ]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         expect(screen.getByText("매달 나가는 고정 지출")).not.toBeNull()
@@ -73,6 +75,7 @@ describe("RecurringTab", () => {
                 month={MONTH}
                 recurrings={[makeRecurring()]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         expect(screen.getByText("넷플릭스")).not.toBeNull()
@@ -88,6 +91,7 @@ describe("RecurringTab", () => {
                 month={MONTH}
                 recurrings={[makeRecurring({ termMonths: null })]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         expect(screen.getByText("매월 15일 · 무기한")).not.toBeNull()
@@ -106,6 +110,7 @@ describe("RecurringTab", () => {
                     }),
                 ]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         const items = screen
@@ -129,6 +134,7 @@ describe("RecurringTab", () => {
                     }),
                 ]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         expect(screen.getByText("아직 고정 지출이 없어요")).not.toBeNull()
@@ -149,8 +155,48 @@ describe("RecurringTab", () => {
                     }),
                 ]}
                 categories={categories}
+                onSaveMethod={() => Promise.resolve()}
             />,
         )
         expect(screen.queryByText("내년 구독")).toBeNull()
+    })
+
+    it("방식이 없으면 '방식 추가' placeholder 를, 있으면 방식 텍스트를 보여준다", () => {
+        render(
+            <RecurringTab
+                month={MONTH}
+                recurrings={[
+                    makeRecurring({ id: "r1", method: null }),
+                    makeRecurring({
+                        id: "r2",
+                        item: "월세",
+                        method: "삼성카드",
+                    }),
+                ]}
+                categories={categories}
+                onSaveMethod={() => Promise.resolve()}
+            />,
+        )
+        expect(screen.getByText("방식 추가")).not.toBeNull()
+        expect(screen.getByText("삼성카드")).not.toBeNull()
+    })
+
+    it("방식을 입력해 저장하면 onSaveMethod 가 id·방식으로 호출된다", async () => {
+        const onSaveMethod = jest.fn().mockResolvedValue(undefined)
+        render(
+            <RecurringTab
+                month={MONTH}
+                recurrings={[makeRecurring({ id: "r1", method: null })]}
+                categories={categories}
+                onSaveMethod={onSaveMethod}
+            />,
+        )
+        fireEvent.click(screen.getByRole("button", { name: "지출 방식 편집" }))
+        const input = screen.getByRole("textbox", { name: "지출 방식" })
+        fireEvent.change(input, { target: { value: "카카오페이" } })
+        fireEvent.keyDown(input, { key: "Enter" })
+        await waitFor(() =>
+            expect(onSaveMethod).toHaveBeenCalledWith("r1", "카카오페이"),
+        )
     })
 })

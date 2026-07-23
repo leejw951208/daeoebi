@@ -15,6 +15,7 @@ import {
     listIncomes,
     listExpenses,
     listRecurring,
+    updateRecurring,
     listAssetCategories,
     listContributions,
     listMonthSlots,
@@ -51,6 +52,7 @@ import {
     investmentView,
     savingsBoxBalance,
     sortContributionsByDateDesc,
+    withRecurringMethod,
     type ComputedExpense,
     type ComputedIncome,
     type ComputedRecurring,
@@ -434,6 +436,39 @@ export default function AssetPage() {
             })
         }
     }, [month, vaultKey])
+
+    // 고정 지출 탭에서 방식만 단독 PATCH → 성공 시 전체 재조회 없이 상태를 부분 갱신한다.
+    // 방식은 봉인 블롭·전파와 무관해 updateRecurring(method) 만으로 안전하다.
+    const saveRecurringMethod = useCallback(
+        async (id: string, method: string) => {
+            try {
+                await updateRecurring(id, { method })
+                setState((prev) =>
+                    prev.status === "ready"
+                        ? {
+                              ...prev,
+                              data: {
+                                  ...prev.data,
+                                  recurrings: withRecurringMethod(
+                                      prev.data.recurrings,
+                                      id,
+                                      method,
+                                  ),
+                              },
+                          }
+                        : prev,
+                )
+            } catch (e) {
+                toast(
+                    isApiError(e)
+                        ? e.message
+                        : "지출 방식을 저장하지 못했어요.",
+                )
+                throw e
+            }
+        },
+        [],
+    )
 
     useEffect(() => {
         void load()
@@ -953,6 +988,7 @@ export default function AssetPage() {
                     }}
                     assetTab={assetTab}
                     savings={savingsView}
+                    onSaveMethod={saveRecurringMethod}
                 />
             )}
 

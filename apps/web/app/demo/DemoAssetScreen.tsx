@@ -170,6 +170,10 @@ export function DemoAssetScreen() {
                 }}
                 assetTab={assetTab}
                 savings={demoSavings}
+                onSaveMethod={() => {
+                    /* 데모: 고정 지출 방식 편집 미지원 */
+                    return Promise.resolve()
+                }}
             />
 
             <button
