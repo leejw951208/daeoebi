@@ -236,4 +236,40 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
             timeout: 20_000,
         })
     })
+
+    // 지출 방식: 고정 지출 탭에서 직접 등록하고, 재진입 후에도 유지되는지(서버 저장) 검증한다.
+    test("고정 지출 탭에서 지출 방식을 등록하면 유지된다", async ({ page }) => {
+        test.setTimeout(120_000)
+        await page.setViewportSize(TALL_VIEWPORT)
+
+        const item = `QA방식-${Date.now()}`
+        const method = "삼성카드"
+        await createRecurringExpense(page, {
+            item,
+            category: CATEGORY_BEFORE,
+            term: "6",
+        })
+
+        // 고정 지출 탭으로 이동해 방금 만든 행의 방식을 편집한다.
+        await page.getByRole("button", { name: "고정 지출" }).click()
+        const row = page.locator(".entry-card").filter({ hasText: item })
+        await expect(row).toBeVisible({ timeout: 20_000 })
+        await row.getByRole("button", { name: "지출 방식 편집" }).click()
+        const input = row.getByRole("textbox", { name: "지출 방식" })
+        await input.fill(method)
+        await input.press("Enter")
+
+        // 저장 후 방식 텍스트가 보인다.
+        await expect(row.getByText(method)).toBeVisible({ timeout: 15_000 })
+
+        // 볼트를 다시 열어(전체 리로드 → 재잠금해제 → 서버 재조회) 방식이 유지되는지 확인한다.
+        // 전체 리로드는 메모리의 볼트 키를 잃으므로 잠금해제 화면을 거친다.
+        await enterVaultAt(page, "/asset")
+        await waitForAssetDashboard(page)
+        await page.getByRole("button", { name: "고정 지출" }).click()
+        const rowAgain = page.locator(".entry-card").filter({ hasText: item })
+        await expect(rowAgain.getByText(method)).toBeVisible({
+            timeout: 20_000,
+        })
+    })
 })

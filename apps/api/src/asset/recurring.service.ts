@@ -1,5 +1,5 @@
 // 고정 지출 템플릿(RecurringExpense) CRUD. 본문은 클라이언트 E2E 암호문 패스스루.
-// dayOfMonth·active 만 평문이며, 매월 인스턴스 자동 생성은 클라이언트가 수행한다.
+// dayOfMonth·active·categoryId·method 는 평문이며, 매월 인스턴스 자동 생성은 클라이언트가 수행한다.
 import {
     BadRequestException,
     Injectable,
@@ -20,6 +20,7 @@ interface RecurringRow {
     startMonth: string
     termMonths: number | null
     categoryId: string | null
+    method: string | null
     active: boolean
     iv: Uint8Array
     ciphertext: Uint8Array
@@ -33,6 +34,7 @@ function toView(row: RecurringRow) {
         startMonth: row.startMonth,
         termMonths: row.termMonths,
         categoryId: row.categoryId,
+        method: row.method,
         active: row.active,
         iv: toBase64url(row.iv),
         ciphertext: toBase64url(row.ciphertext),
@@ -60,6 +62,7 @@ export class RecurringService {
                 startMonth: dto.startMonth,
                 termMonths: dto.termMonths ?? null,
                 categoryId: dto.categoryId ?? null,
+                method: dto.method ?? null,
                 iv: prismaBytes(fromBase64url(dto.iv)),
                 ciphertext: prismaBytes(fromBase64url(dto.ciphertext)),
                 authTag: prismaBytes(fromBase64url(dto.authTag)),
@@ -74,6 +77,7 @@ export class RecurringService {
         if (dto.active !== undefined) data.active = dto.active
         if (dto.termMonths !== undefined) data.termMonths = dto.termMonths
         if (dto.categoryId !== undefined) data.categoryId = dto.categoryId
+        if (dto.method !== undefined) data.method = dto.method
 
         // 암호문은 전부 아니면 전무다. 일부만 갈아끼우면 AES-GCM 인증이 영원히 깨져
         // 서버도 클라도 못 여는 블롭이 된다(복구 경로 없음).

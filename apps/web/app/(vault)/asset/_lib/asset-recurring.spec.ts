@@ -55,6 +55,7 @@ function row(
         startMonth: "2026-01",
         termMonths: null,
         categoryId: null,
+        method: null,
         ...over,
     }
 }
@@ -279,6 +280,7 @@ const tmpl: RecurringView = {
     ciphertext: "BB",
     authTag: "CC",
     categoryId: null,
+    method: null,
 }
 const termTmpl: RecurringView = {
     id: "r2",
@@ -290,6 +292,7 @@ const termTmpl: RecurringView = {
     ciphertext: "BB",
     authTag: "CC",
     categoryId: null,
+    method: null,
 }
 const key = {} as CryptoKey
 const NOW = "2030-12" // 대부분의 테스트는 현재월 상한에 걸리지 않게 충분히 미래로 둔다.

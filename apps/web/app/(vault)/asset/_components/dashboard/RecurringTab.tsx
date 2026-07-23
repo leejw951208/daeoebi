@@ -1,7 +1,8 @@
 "use client"
 // 고정 지출 탭. 등록해 둔 활성 템플릿(RecurringExpense)을 결제일 순으로 모아 보여준다.
-// 읽기 전용이다 — 수정은 이번 달 지출 항목을 통해 한다(템플릿 수정은 "앞으로만 반영").
+// 금액·항목·개월수는 읽기 전용(수정은 이번 달 지출 항목을 통해)이지만, "지출 방식"만 이 탭에서 직접 편집한다.
 // 데이터(복호화된 템플릿)는 부모(asset/page)가 넘긴다.
+import { useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"
 import type { ComputedRecurring } from "../../_lib/asset-compute"
 import { formatWon, resolveCategory } from "../../_lib/asset-categories"
@@ -13,17 +14,44 @@ import {
     totalRecurring,
 } from "../../_lib/asset-recurring"
 
+const MAX_METHOD_LEN = 50
+
 interface RecurringTabProps {
     month: string
     recurrings: ComputedRecurring[]
     categories: AssetCategory[]
+    onSaveMethod: (id: string, method: string) => Promise<void>
 }
 
 export function RecurringTab({
     month,
     recurrings,
     categories,
+    onSaveMethod,
 }: RecurringTabProps) {
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [draft, setDraft] = useState("")
+    const [saving, setSaving] = useState(false)
+
+    function startEdit(r: ComputedRecurring) {
+        setEditingId(r.id)
+        setDraft(r.method ?? "")
+    }
+
+    async function commitEdit(id: string) {
+        if (saving) return
+        setSaving(true)
+        try {
+            await onSaveMethod(id, draft.trim())
+            setEditingId(null)
+        } catch {
+            // page.tsx(saveRecurringMethod)에서 이미 에러 토스트를 띄운다.
+            // 여기서는 편집기를 닫지 않고 입력값을 유지해 재시도할 수 있게 한다.
+        } finally {
+            setSaving(false)
+        }
+    }
+
     // 템플릿은 기간이 끝나도 active 로 남는다. 보고 있는 달에 실제로 나가는 것만 세운다.
     const active = recurringInMonth(recurrings, month)
     const rows = sortRecurring(active)
@@ -170,6 +198,57 @@ export function RecurringTab({
                                     >
                                         {`${formatDayOfMonth(r.dayOfMonth)} · ${formatExpiry(r.startMonth, r.termMonths)}`}
                                     </div>
+                                    {editingId === r.id ? (
+                                        <input
+                                            aria-label="지출 방식"
+                                            autoFocus
+                                            value={draft}
+                                            maxLength={MAX_METHOD_LEN}
+                                            disabled={saving}
+                                            onChange={(e) =>
+                                                setDraft(e.target.value)
+                                            }
+                                            onBlur={() => commitEdit(r.id)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault()
+                                                    void commitEdit(r.id)
+                                                } else if (e.key === "Escape") {
+                                                    setEditingId(null)
+                                                }
+                                            }}
+                                            style={{
+                                                marginTop: 4,
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                                padding: "3px 8px",
+                                                borderRadius: 8,
+                                                border: "1px solid #d8d8d8",
+                                                width: "100%",
+                                                maxWidth: 160,
+                                            }}
+                                        />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            aria-label="지출 방식 편집"
+                                            onClick={() => startEdit(r)}
+                                            style={{
+                                                marginTop: 4,
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                                color: r.method
+                                                    ? "#6b6b6b"
+                                                    : "#b8b8b8",
+                                                background: "none",
+                                                border: "none",
+                                                padding: 0,
+                                                cursor: "pointer",
+                                            }}
+                                        >
+                                            {r.method || "방식 추가"}
+                                        </button>
+                                    )}
                                 </div>
                                 <span
                                     style={{

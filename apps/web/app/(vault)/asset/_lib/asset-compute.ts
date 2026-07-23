@@ -31,6 +31,7 @@ export interface ComputedRecurring {
     startMonth: string // "YYYY-MM". 시작 전 달에는 나가지 않는다.
     termMonths: number | null // null = 무기한
     categoryId: string | null
+    method: string | null // 지출 방식(자유 입력, 평문). 고정 지출 탭에서만 쓴다.
 }
 
 export function totalSpent(items: ComputedExpense[]): number {
@@ -57,6 +58,16 @@ export function activeRecurringIds(
     rows: readonly ComputedRecurring[],
 ): Set<string> {
     return new Set(rows.map((r) => r.id))
+}
+
+// 고정 지출 목록에서 한 항목의 지출 방식만 바꿔 새 배열을 반환한다(원본 불변).
+// 방식 저장 후 전체 재조회 없이 부모 상태를 부분 갱신할 때 쓴다.
+export function withRecurringMethod(
+    rows: readonly ComputedRecurring[],
+    id: string,
+    method: string,
+): ComputedRecurring[] {
+    return rows.map((r) => (r.id === id ? { ...r, method } : r))
 }
 
 export interface CategoryBreakdown {

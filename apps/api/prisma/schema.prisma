@@ -132,8 +132,8 @@ model SavingsAccount {
   updatedAt  DateTime @updatedAt
 }
 
-// 고정 지출 템플릿. 매월 자동 생성의 원본이다. dayOfMonth·active 는 스케줄용 평문,
-// 금액·항목·카테고리·결제방법은 암호문 블롭({item,amount,category,method})이다.
+// 고정 지출 템플릿. 매월 자동 생성의 원본이다. dayOfMonth·active·categoryId·method 는 스케줄/표시용 평문,
+// 금액·항목만 암호문 블롭({item,amount})이다.
 model RecurringExpense {
   id         String    @id @default(cuid())
   dayOfMonth Int // 1-31. 말일 초과 시 클라가 해당 월 말일로 클램프한다.
@@ -142,6 +142,7 @@ model RecurringExpense {
   active     Boolean   @default(true)
   categoryId String?
   category   AssetCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  method     String? // 지출 방식(자유 입력, 평문). 고정 지출 탭 전용 — 인스턴스로 전파되지 않는다.
   iv         Bytes
   ciphertext Bytes
   authTag    Bytes
