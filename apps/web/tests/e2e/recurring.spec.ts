@@ -262,8 +262,9 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         // 저장 후 방식 텍스트가 보인다.
         await expect(row.getByText(method)).toBeVisible({ timeout: 15_000 })
 
-        // 대시보드를 다시 열어(재조회) 방식이 유지되는지 확인한다.
-        await page.goto("/asset")
+        // 볼트를 다시 열어(전체 리로드 → 재잠금해제 → 서버 재조회) 방식이 유지되는지 확인한다.
+        // 전체 리로드는 메모리의 볼트 키를 잃으므로 잠금해제 화면을 거친다.
+        await enterVaultAt(page, "/asset")
         await waitForAssetDashboard(page)
         await page.getByRole("button", { name: "고정 지출" }).click()
         const rowAgain = page.locator(".entry-card").filter({ hasText: item })
