@@ -6,7 +6,6 @@ import { useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"
 import type { ComputedRecurring } from "../../_lib/asset-compute"
 import { formatWon, resolveCategory } from "../../_lib/asset-categories"
-import { toast } from "@/components/toast"
 import {
     formatDayOfMonth,
     formatExpiry,
@@ -46,7 +45,8 @@ export function RecurringTab({
             await onSaveMethod(id, draft.trim())
             setEditingId(null)
         } catch {
-            toast("지출 방식을 저장하지 못했어요.")
+            // page.tsx(saveRecurringMethod)에서 이미 에러 토스트를 띄운다.
+            // 여기서는 편집기를 닫지 않고 입력값을 유지해 재시도할 수 있게 한다.
         } finally {
             setSaving(false)
         }

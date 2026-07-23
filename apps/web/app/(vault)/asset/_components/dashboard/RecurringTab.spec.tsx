@@ -199,4 +199,25 @@ describe("RecurringTab", () => {
             expect(onSaveMethod).toHaveBeenCalledWith("r1", "카카오페이"),
         )
     })
+
+    it("저장이 실패하면 편집 입력이 열린 채로 남는다", async () => {
+        const onSaveMethod = jest.fn().mockRejectedValue(new Error("boom"))
+        render(
+            <RecurringTab
+                month={MONTH}
+                recurrings={[makeRecurring({ id: "r1", method: null })]}
+                categories={categories}
+                onSaveMethod={onSaveMethod}
+            />,
+        )
+        fireEvent.click(screen.getByRole("button", { name: "지출 방식 편집" }))
+        const input = screen.getByRole("textbox", { name: "지출 방식" })
+        fireEvent.change(input, { target: { value: "카카오페이" } })
+        fireEvent.keyDown(input, { key: "Enter" })
+        await waitFor(() => expect(onSaveMethod).toHaveBeenCalled())
+        // 실패 후에도 입력이 사라지지 않는다(사용자가 재시도 가능).
+        expect(
+            screen.getByRole("textbox", { name: "지출 방식" }),
+        ).not.toBeNull()
+    })
 })
