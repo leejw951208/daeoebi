@@ -1,5 +1,5 @@
 // 고정 지출 템플릿(RecurringExpense) CRUD. 본문은 클라이언트 E2E 암호문 패스스루.
-// dayOfMonth·active 만 평문이며, 매월 인스턴스 자동 생성은 클라이언트가 수행한다.
+// dayOfMonth·active·categoryId·method 는 평문이며, 매월 인스턴스 자동 생성은 클라이언트가 수행한다.
 import {
     BadRequestException,
     Injectable,
