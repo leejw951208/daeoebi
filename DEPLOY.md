@@ -10,6 +10,17 @@
 - `https://DOMAIN/api/*` → api (NestJS, `API_GLOBAL_PREFIX=api`)
 - `ssh://ssh.DOMAIN` → 호스트 SSH(22), Cloudflare Access 게이트
 
+## 구성 요소
+
+| 서비스      | 역할                                 | 포트(내부) |
+| ----------- | ------------------------------------ | ---------- |
+| postgres    | 암호화된 비밀번호·가계부 데이터 저장 | 5432       |
+| api         | NestJS. 인증·암호문 패스스루·CRUD    | 4000       |
+| web         | Next.js. UI(모바일 우선 PWA)         | 3000       |
+| cloudflared | Cloudflare Tunnel(별도 compose)      | -          |
+
+> 복구 주의. passkey 기기와 복구코드를 모두 잃으면 본문(비밀번호·가계부)은 복구 불가다. 등록 시 복구코드 저장을 강제하고, setup 직후 백업을 권장한다.
+
 ---
 
 ## 0. 사전 준비
