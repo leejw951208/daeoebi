@@ -203,7 +203,7 @@
 - `cloudflared` Tunnel이 바깥으로 연결을 열어 포트 개방·고정 IP 없이 외부 접속을 가능하게 한다(공개 인바운드 0). Tunnel은 앱과 분리된 별도 compose로 돌려 재배포가 SSH·터널을 끊지 않게 한다.
 - Cloudflare Access를 도메인에 적용해 앱 도달 전에 신원을 차단한다. **Access 설정 누락은 배포 차단 사유**다.
 - CI(GitHub Actions)가 이미지를 GHCR에 빌드·푸시하고 서버는 pull만 한다(1코어 VPS 빌드 부하 0). DB 백업은 R2로 cron. 매니지드 서비스(매니지드 Postgres·PaaS)는 쓰지 않는다.
-- 상세 절차는 루트 `DEPLOY.md` 참조.
+- 상세 절차는 `docs/DEPLOY.md` 참조.
 
 ### 7.6 가정
 
