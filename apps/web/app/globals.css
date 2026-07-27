@@ -809,6 +809,18 @@ input[type="date"].field-control {
     font-weight: 500;
 }
 
+/* 예산 초과 경고 배너. 지출액 등에 이미 과하게 쓰이는 danger(빨강)와 구분되도록 warning(앰버)을 쓴다. */
+.warn-box {
+    border: 1px solid var(--color-warning-border);
+    background: var(--color-warning-bg);
+    color: var(--color-warning-fg);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    margin: var(--space-3) 0;
+    font-size: var(--font-sm);
+    font-weight: 500;
+}
+
 .empty {
     border: 1px dashed var(--color-border-strong);
     border-radius: var(--radius-card);

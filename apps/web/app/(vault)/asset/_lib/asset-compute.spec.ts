@@ -5,6 +5,7 @@ import {
     byDay,
     filterByMonth,
     isActiveRecurring,
+    isOverBudget,
     investmentView,
     savingsByItem,
     planBudgetSave,
@@ -192,6 +193,14 @@ describe("asset-compute", () => {
         expect(spentPct(1000, 250)).toBe(25)
         expect(spentPct(0, 100)).toBe(100)
         expect(spentPct(1000, 5000)).toBe(100) // 클램프
+    })
+
+    it("isOverBudget", () => {
+        expect(isOverBudget(1000, 1200)).toBe(true) // 초과
+        expect(isOverBudget(1000, 1000)).toBe(false) // 정확히 같음은 초과 아님
+        expect(isOverBudget(1000, 800)).toBe(false) // 미만
+        expect(isOverBudget(0, 0)).toBe(false) // 예산 미설정
+        expect(isOverBudget(0, 500)).toBe(false) // 예산 미설정 + 지출
     })
 
     it("planBudgetSave 는 기존 행이 없으면 생성 계획을 만든다", () => {

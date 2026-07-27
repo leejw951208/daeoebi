@@ -4,6 +4,7 @@
 import {
     activeRecurringIds,
     byCategory,
+    isOverBudget,
     remaining,
     spentPct,
     totalSpent,
@@ -14,6 +15,7 @@ import {
     type SavingsAccountView,
 } from "../../_lib/asset-compute"
 import type { AssetCategory } from "@/lib/vault-client"
+import { formatWon } from "../../_lib/asset-categories"
 import { SkeletonCard } from "@/components/Skeleton"
 import { RemainingHero } from "./RemainingHero"
 import { BudgetExpenseCards } from "./BudgetExpenseCards"
@@ -122,6 +124,12 @@ export function AssetDashboard({
 
             {assetTab === "budget" && (
                 <>
+                    {/* 예산 초과 시 경고. 예산 미설정(0)이면 초과 개념이 없어 뜨지 않는다. */}
+                    {isOverBudget(data.budgetAmount, spent) && (
+                        <div role="alert" className="warn-box">
+                            {`이번 달 예산을 ${formatWon(spent - data.budgetAmount)} 초과했습니다.`}
+                        </div>
+                    )}
                     <RemainingHero
                         left={left}
                         pct={pct}

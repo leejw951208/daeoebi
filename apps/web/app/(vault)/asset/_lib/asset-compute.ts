@@ -134,6 +134,12 @@ export function spentPct(budget: number, spent: number): number {
     return Math.min(100, Math.round((spent / budget) * 100))
 }
 
+// 예산 초과 여부. 예산 미설정(0 이하)이면 '초과' 개념이 없어 false.
+// 정확히 같을 때(spent === budget)는 아직 초과가 아니므로 false.
+export function isOverBudget(budget: number, spent: number): boolean {
+    return budget > 0 && spent > budget
+}
+
 // 복호화된 수입(Income) 1건(메타 + 본문). 예산은 이 모델을 재사용한다(월 1건이 그 달 예산).
 export interface ComputedIncome {
     id: string
