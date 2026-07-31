@@ -1,6 +1,7 @@
 "use client"
 // 지출 추가/수정 폼(디자인 화면 12). 금액·항목·카테고리·결제방법을 VK 로 봉인해 저장한다.
-// 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만들고 당월 인스턴스를 함께 생성한다(이후 달 자동 생성).
+// 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만든다. 인스턴스는 현재 달까지만 함께 만들고,
+// 미래 달은 템플릿만 남긴다(그 달이 오면 materializeRecurring 이 생성).
 import { useState, useEffect, useRef } from "react"
 import { useVault } from "../../_lib/vault-context"
 import { isApiError } from "@/lib/api-error"
@@ -245,14 +246,19 @@ export function ExpenseForm({
                     ...(term !== null ? { termMonths: term } : {}),
                     ...tmplBlob,
                 })
-                const instBlob = await sealExpense(vaultKey, payload)
-                await createExpense({
-                    date,
-                    recurringId: templateId,
-                    period: monthOf(date),
-                    categoryId,
-                    ...instBlob,
-                })
+                // 미래 달은 인스턴스를 만들지 않는다. 그 달 화면은 템플릿에서 "예정" 행을 합성해
+                // 보여주므로(projectRecurring), 여기서 실제 행까지 만들면 같은 지출이 두 건으로 보이고
+                // 전 기간 누적(저축·투자)도 미리 부풀려진다. 그 달이 오면 materializeRecurring 이 만든다.
+                if (monthOf(date) <= nowMonth) {
+                    const instBlob = await sealExpense(vaultKey, payload)
+                    await createExpense({
+                        date,
+                        recurringId: templateId,
+                        period: monthOf(date),
+                        categoryId,
+                        ...instBlob,
+                    })
+                }
             } else {
                 const blob = await sealExpense(vaultKey, payload)
                 await createExpense({
