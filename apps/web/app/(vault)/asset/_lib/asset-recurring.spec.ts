@@ -173,12 +173,12 @@ describe("projectRecurring", () => {
     ]
 
     it("현재·과거 달은 합성하지 않는다(진짜 인스턴스가 있다)", () => {
-        expect(projectRecurring(rows, "2026-07", "2026-07")).toEqual([])
-        expect(projectRecurring(rows, "2026-06", "2026-07")).toEqual([])
+        expect(projectRecurring(rows, "2026-07", "2026-07", [])).toEqual([])
+        expect(projectRecurring(rows, "2026-06", "2026-07", [])).toEqual([])
     })
 
     it("미래 달은 템플릿에서 예정 지출을 합성한다", () => {
-        const out = projectRecurring(rows, "2026-09", "2026-07")
+        const out = projectRecurring(rows, "2026-09", "2026-07", [])
 
         expect(out).toHaveLength(1) // 할부는 3월에 끝났다
         expect(out[0]).toMatchObject({
@@ -192,7 +192,7 @@ describe("projectRecurring", () => {
     })
 
     it("합성 행은 DB id 와 겹치지 않는 id 를 쓴다", () => {
-        const out = projectRecurring(rows, "2026-09", "2026-07")
+        const out = projectRecurring(rows, "2026-09", "2026-07", [])
         expect(out[0].id).toBe("projected:월세:2026-09")
     })
 
@@ -201,8 +201,30 @@ describe("projectRecurring", () => {
             [row({ item: "카드", dayOfMonth: 31, startMonth: "2026-01" })],
             "2027-02",
             "2026-07",
+            [],
         )
         expect(out[0].date).toBe("2027-02-28")
+    })
+
+    // 미래 달에 실제 인스턴스가 남아 있을 수 있다(단건 → 고정 전환, 옛 데이터).
+    // 그 위에 예정 행까지 얹으면 같은 지출이 두 건으로 보인다.
+    it("실제 인스턴스가 이미 있는 템플릿은 합성하지 않는다", () => {
+        const out = projectRecurring(rows, "2026-09", "2026-07", [
+            { recurringId: "월세", period: "2026-09" },
+        ])
+
+        expect(out).toEqual([])
+    })
+
+    // "이번 달만 삭제"(소프트 삭제) 슬롯도 점유로 친다. 지운 달에 예정 행이 되살아나면
+    // 사용자는 그 행을 영영 지울 수 없다(합성 행이라 삭제 대상이 아니다).
+    it("다른 달 슬롯은 이 달 합성을 막지 않는다", () => {
+        const out = projectRecurring(rows, "2026-09", "2026-07", [
+            { recurringId: "월세", period: "2026-10" },
+        ])
+
+        expect(out).toHaveLength(1)
+        expect(out[0].recurringId).toBe("월세")
     })
 })
 

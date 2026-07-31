@@ -403,10 +403,12 @@ export default function AssetPage() {
 
             // 미래 달은 인스턴스를 만들지 않는 대신, 템플릿에서 "예정"으로 합성해 보여준다.
             // DB 에 없는 행이라 수정·삭제할 수 없고, 서버가 집계하는 누적(저축·투자)에도 안 들어간다.
+            // 이미 실제 인스턴스가 있는 슬롯은 합성에서 뺀다(실제 행 + 예정 행 중복 방지).
             const projected = projectRecurring(
                 recurrings,
                 month,
                 currentMonth(),
+                slots,
             )
 
             // 읽지 못한 행은 합계에서 조용히 빠진다. 틀린 금액을 아무 표시 없이 보여주지 않도록 건수를 넘긴다.

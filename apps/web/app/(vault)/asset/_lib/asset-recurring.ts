@@ -23,6 +23,21 @@ export interface RecurringTemplateRef {
     termMonths: number | null
 }
 
+// 고정 인스턴스의 멱등 키. 서버 @@unique([recurringId, period]) 와 같은 단위다.
+function slotKey(recurringId: string, period: string): string {
+    return `${recurringId}|${period}`
+}
+
+// 점유 슬롯 조회용 Set. 생성(materialize)과 합성(project) 이 같은 판정을 써야
+// 한쪽만 슬롯을 놓쳐 중복이 생기는 일이 없다.
+function occupiedSlotKeys(slots: readonly RecurringSlot[]): Set<string> {
+    return new Set(
+        slots
+            .filter((s) => s.recurringId !== null && s.period !== null)
+            .map((s) => slotKey(s.recurringId as string, s.period as string)),
+    )
+}
+
 // 개월 수 입력값(문자열)을 템플릿의 termMonths 로 바꾼다. 비었거나 1 미만·정수 아님 = 무기한(null).
 export function parseTermMonths(input: string): number | null {
     const n = Number(input)
@@ -76,21 +91,30 @@ export function recurringInMonth(
 // 미래 달을 열었다고 인스턴스를 만들면 전 기간 누적 집계(저축·투자)가 그만큼 부풀려진다.
 // 그렇다고 안 보여주면 다음 달에 뭐가 나갈지 알 수가 없다. 그래서 화면에서만 합성해 보여주고,
 // 그 달이 실제로 오면 materializeRecurring 이 진짜 인스턴스를 만든다.
+//
+// occupiedSlots 는 그 달에 이미 점유된 (recurringId, period) 다. 미래 달에도 실제 인스턴스가
+// 남아 있을 수 있어(단건 → 고정 전환, 옛 데이터) 그 위에 예정 행을 얹으면 두 건으로 보인다.
+// 소프트 삭제된 슬롯까지 포함해야 한다 — "이번 달만 삭제"한 달에 예정 행이 되살아나면
+// 합성 행이라 삭제 대상이 아니라서 사용자가 영영 지울 수 없다.
 export function projectRecurring(
     rows: readonly ComputedRecurring[],
     month: string,
     nowMonth: string,
+    occupiedSlots: readonly RecurringSlot[],
 ): ComputedExpense[] {
     if (month <= nowMonth) return [] // 현재·과거 달은 진짜 인스턴스가 있다.
-    return recurringInMonth(rows, month).map((r) => ({
-        id: `projected:${r.id}:${month}`,
-        date: clampedDate(month, r.dayOfMonth),
-        recurringId: r.id,
-        item: r.item,
-        amount: r.amount,
-        categoryId: r.categoryId,
-        projected: true,
-    }))
+    const present = occupiedSlotKeys(occupiedSlots)
+    return recurringInMonth(rows, month)
+        .filter((r) => !present.has(slotKey(r.id, month)))
+        .map((r) => ({
+            id: `projected:${r.id}:${month}`,
+            date: clampedDate(month, r.dayOfMonth),
+            recurringId: r.id,
+            item: r.item,
+            amount: r.amount,
+            categoryId: r.categoryId,
+            projected: true,
+        }))
 }
 
 // 매달 나가는 고정 지출 합계.
@@ -131,16 +155,12 @@ export async function materializeRecurring(
 ): Promise<ExpenseView[]> {
     // 미래 달은 들여다보기만 해도 인스턴스가 박혀 누적 집계(저축·투자)를 부풀린다. 현재 달까지만 만든다.
     if (month > nowMonth) return []
-    const present = new Set(
-        occupiedSlots
-            .filter((s) => s.recurringId)
-            .map((s) => `${s.recurringId}|${s.period}`),
-    )
+    const present = occupiedSlotKeys(occupiedSlots)
     const targets = templates.filter((t) => {
         if (month < t.startMonth) return false // 시작월 이전 달엔 생성하지 않는다.
         const end = endMonthOf(t.startMonth, t.termMonths)
         if (end !== null && month > end) return false // 기간(개월 수) 종료 후엔 생성하지 않는다.
-        return !present.has(`${t.id}|${month}`)
+        return !present.has(slotKey(t.id, month))
     })
     const results = await Promise.all(
         targets.map(async (t): Promise<ExpenseView | null> => {
