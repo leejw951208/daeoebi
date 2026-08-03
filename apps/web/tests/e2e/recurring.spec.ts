@@ -2,9 +2,9 @@
  * E2E QA: 고정 지출(RecurringExpense) 수정 — "앞으로만 반영"
  *
  * 회귀 대상(수정 경로가 템플릿을 갱신하지 않아 생긴 3가지 증상):
- *   A. 수정 화면에 "개월 수"가 항상 비어 보임(템플릿 값을 안 읽음)
+ *   A. 수정 화면에 "종료월"이 항상 비어 보임(템플릿 값을 안 읽음)
  *   B. 제목·카테고리를 고쳐도 다음 달엔 옛 내용으로 다시 생성됨(템플릿을 안 고침)
- *   C. 개월 수를 고쳐도 저장되지 않음(PATCH DTO 가 받지 않음)
+ *   C. 종료월을 고쳐도 저장되지 않음(PATCH DTO 가 받지 않음)
  *
  * 세 증상이 각각 독립적으로 잡히도록 테스트마다 자기 고정 지출을 새로 만든다.
  * (한 테스트에 몰면 첫 단언에서 멈춰 나머지 회귀를 검증하지 못한다.)
@@ -25,6 +25,13 @@ const CATEGORY_AFTER = "교통"
 const DAY = 15
 
 const TALL_VIEWPORT = { width: 1280, height: 2000 }
+
+/** 이번 달 기준 N개월짜리 고정 지출의 종료월("YYYY-MM"). 시작월 포함이라 N-1 을 더한다. */
+function endMonthFromNow(months: number): string {
+    const now = new Date()
+    const d = new Date(now.getFullYear(), now.getMonth() + months - 1, 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+}
 
 /**
  * 잠금 해제 화면(등록된 패스키 있음)이면 "패스키로 잠금해제",
@@ -87,10 +94,10 @@ async function selectDay(page: Page, day: number): Promise<void> {
         .click()
 }
 
-/** 이번 달 15일에 고정 지출 1건(개월 수 지정)을 만들고 대시보드로 돌아온다. */
+/** 이번 달 15일에 고정 지출 1건(종료월 지정)을 만들고 대시보드로 돌아온다. */
 async function createRecurringExpense(
     page: Page,
-    opts: { item: string; category: string; term: string },
+    opts: { item: string; category: string; endMonth: string },
 ): Promise<void> {
     await enterVaultAt(page, "/asset")
     await waitForAssetDashboard(page)
@@ -103,9 +110,9 @@ async function createRecurringExpense(
     await pickCategory(page, opts.category)
 
     await page.getByRole("switch", { name: "고정 지출" }).click()
-    const termInput = page.getByLabel("개월 수")
-    await expect(termInput).toBeVisible({ timeout: 10_000 })
-    await termInput.fill(opts.term)
+    const endMonthSelect = page.getByLabel("종료월")
+    await expect(endMonthSelect).toBeVisible({ timeout: 10_000 })
+    await endMonthSelect.selectOption(opts.endMonth)
 
     await page.getByRole("button", { name: "저장" }).click()
     await page.waitForURL("**/asset", { timeout: 20_000 })
@@ -120,22 +127,23 @@ async function openExpenseOfThisMonth(page: Page, item: string): Promise<void> {
 }
 
 test.describe("고정 지출 수정 — 앞으로만 반영", () => {
-    // 회귀 A: 수정 화면이 템플릿의 termMonths 를 읽지 않아 개월 수가 늘 비어 보이던 버그.
-    test("수정 화면에 템플릿의 개월 수가 채워져 보인다", async ({ page }) => {
+    // 회귀 A: 수정 화면이 템플릿의 종료월(termMonths)을 읽지 않아 종료월이 늘 비어 보이던 버그.
+    test("수정 화면에 템플릿의 종료월이 채워져 보인다", async ({ page }) => {
         test.setTimeout(120_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
-        const item = `QA개월수-${Date.now()}`
+        const item = `QA종료월-${Date.now()}`
         await createRecurringExpense(page, {
             item,
             category: CATEGORY_BEFORE,
-            term: "6",
+            endMonth: endMonthFromNow(6),
         })
 
         await openExpenseOfThisMonth(page, item)
-        await expect(page.getByLabel("개월 수")).toHaveValue("6", {
-            timeout: 20_000,
-        })
+        await expect(page.getByLabel("종료월")).toHaveValue(
+            endMonthFromNow(6),
+            { timeout: 20_000 },
+        )
     })
 
     // 회귀 B: 수정이 이번 달 인스턴스만 고치고 템플릿은 그대로 둬서
@@ -155,10 +163,10 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         await createRecurringExpense(page, {
             item: itemBefore,
             category: CATEGORY_BEFORE,
-            term: "6",
+            endMonth: endMonthFromNow(6),
         })
 
-        // 제목·카테고리만 고쳐 저장(개월 수는 건드리지 않는다).
+        // 제목·카테고리만 고쳐 저장(종료월은 건드리지 않는다).
         await openExpenseOfThisMonth(page, itemBefore)
         await page.getByLabel("항목").fill(itemAfter)
         await pickCategory(page, CATEGORY_AFTER)
@@ -188,7 +196,7 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
 
     // 고정 지출 탭: 등록해 둔 템플릿을 한 곳에 모아 보여준다(읽기 전용).
     // 합계는 볼트당 누적값(이전 실행의 템플릿이 계속 쌓임)이라 총액 대신 행 내용을 검증한다.
-    test("고정 지출 탭에 지출명·결제일·개월 수·금액이 보인다", async ({
+    test("고정 지출 탭에 지출명·결제일·종료월·금액이 보인다", async ({
         page,
     }) => {
         test.setTimeout(120_000)
@@ -198,7 +206,7 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         await createRecurringExpense(page, {
             item,
             category: CATEGORY_BEFORE,
-            term: "6",
+            endMonth: endMonthFromNow(6),
         })
 
         await page.getByRole("button", { name: "고정 지출" }).click()
@@ -209,32 +217,36 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         // 방금 만든 템플릿 행에 4개 항목이 모두 보인다.
         const row = page.locator(".entry-card").filter({ hasText: item })
         await expect(row).toBeVisible({ timeout: 10_000 })
-        await expect(row).toContainText(`매월 ${DAY}일 · 6개월`)
+        const [endY, endM] = endMonthFromNow(6).split("-").map(Number)
+        await expect(row).toContainText(
+            `매월 ${DAY}일 · ${endY}년 ${endM}월까지`,
+        )
         await expect(row).toContainText(`-₩${AMOUNT.toLocaleString("ko-KR")}`)
     })
 
-    // 회귀 C: PATCH /recurring 이 termMonths 를 받지 않아 개월 수를 고칠 수 없던 버그.
-    test("개월 수를 고치면 템플릿에 저장된다", async ({ page }) => {
+    // 회귀 C: PATCH /recurring 이 termMonths 를 받지 않아 종료월을 고칠 수 없던 버그.
+    test("종료월을 고치면 템플릿에 저장된다", async ({ page }) => {
         test.setTimeout(180_000)
         await page.setViewportSize(TALL_VIEWPORT)
 
-        const item = `QA개월수변경-${Date.now()}`
+        const item = `QA종료월변경-${Date.now()}`
         await createRecurringExpense(page, {
             item,
             category: CATEGORY_BEFORE,
-            term: "6",
+            endMonth: endMonthFromNow(6),
         })
 
         await openExpenseOfThisMonth(page, item)
-        await page.getByLabel("개월 수").fill("3")
+        await page.getByLabel("종료월").selectOption(endMonthFromNow(3))
         await page.getByRole("button", { name: "저장" }).click()
         await page.waitForURL("**/asset", { timeout: 20_000 })
         await waitForAssetDashboard(page)
 
         await openExpenseOfThisMonth(page, item)
-        await expect(page.getByLabel("개월 수")).toHaveValue("3", {
-            timeout: 20_000,
-        })
+        await expect(page.getByLabel("종료월")).toHaveValue(
+            endMonthFromNow(3),
+            { timeout: 20_000 },
+        )
     })
 
     // 지출 방식: 고정 지출 탭에서 직접 등록하고, 재진입 후에도 유지되는지(서버 저장) 검증한다.
@@ -247,7 +259,7 @@ test.describe("고정 지출 수정 — 앞으로만 반영", () => {
         await createRecurringExpense(page, {
             item,
             category: CATEGORY_BEFORE,
-            term: "6",
+            endMonth: endMonthFromNow(6),
         })
 
         // 고정 지출 탭으로 이동해 방금 만든 행의 방식을 편집한다.
