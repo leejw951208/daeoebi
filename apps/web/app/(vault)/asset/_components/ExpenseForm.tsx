@@ -186,17 +186,13 @@ export function ExpenseForm({
         }
         // 종료월을 앞당기면 그 뒤 인스턴스가 지워진다. 실제로 지워질 게 있을 때만 확인을 받는다.
         // 이 조회는 period > endMonth · removed=false 라 삭제 대상과 정확히 같다.
-        // 이 조건은 performSave 의 "고정 수정"(propagateRecurringUpdate 호출) 분기와만 일치한다.
-        // template 은 recurringId 가 있으면(해제된 템플릿 포함) 항상 채워지고, endMonth 상태는
-        // 고정을 꺼도 초기화되지 않으므로 wasRecurring && recurring 없이는 고정 해제·재고정·
-        // 일반 수정 분기에서도 조회가 도는데, 그 분기들은 endMonth 기준으로 지우지 않는다
-        // (고정 해제는 nowMonth 기준 removeRecurringFuture, 재고정·전환은 삭제 자체가 없다).
-        if (
-            wasRecurring &&
-            recurring &&
-            template !== null &&
-            endMonth !== null
-        ) {
+        // 이 조건은 performSave 에서 propagateRecurringUpdate 를 부르는 두 분기와 정확히
+        // 일치해야 한다 — "고정 수정"(wasRecurring && recurring)과 재고정(!wasRecurring &&
+        // recurring, 옛 템플릿을 되살리는 경우)이다. wasRecurring 을 빼서 두 분기를 모두
+        // 포함한다. template === null(단건 → 고정 전환)은 새 템플릿이라 지울 기존 인스턴스가
+        // 없어 제외되고, recurring === false(고정 해제)는 endMonth 가 아니라 nowMonth 기준
+        // removeRecurringFuture 를 쓰므로 역시 제외된다.
+        if (recurring && template !== null && endMonth !== null) {
             setBusy(true)
             try {
                 const doomed = await listRecurringInstances(
@@ -255,6 +251,24 @@ export function ExpenseForm({
                         categoryId,
                         ...blob,
                     })
+                    if (template !== null) {
+                        // 해제 당시 남아 있던 옛 인스턴스는 그대로다(고정 해제는 nowMonth 기준으로만
+                        // 미래분을 지운다). 여기서 종료월을 앞당겼다면 그 뒤 인스턴스를 함께 정리한다
+                        // — 안 하면 템플릿은 짧아졌는데 인스턴스만 남는 불일치가 생긴다.
+                        await propagateRecurringUpdate(
+                            vaultKey,
+                            {
+                                id: initial.recurringId,
+                                dayOfMonth,
+                                categoryId,
+                                startMonth: template.startMonth,
+                                termMonths: term,
+                            },
+                            monthOf(initial.date),
+                            payload,
+                            nowMonth,
+                        )
+                    }
                 } else if (!wasRecurring && recurring) {
                     // 단건 → 고정 전환: 템플릿을 만들고 이 지출을 연결한다.
                     const tmplBlob = await sealExpense(vaultKey, payload)
