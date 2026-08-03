@@ -186,7 +186,17 @@ export function ExpenseForm({
         }
         // 종료월을 앞당기면 그 뒤 인스턴스가 지워진다. 실제로 지워질 게 있을 때만 확인을 받는다.
         // 이 조회는 period > endMonth · removed=false 라 삭제 대상과 정확히 같다.
-        if (template !== null && endMonth !== null) {
+        // 이 조건은 performSave 의 "고정 수정"(propagateRecurringUpdate 호출) 분기와만 일치한다.
+        // template 은 recurringId 가 있으면(해제된 템플릿 포함) 항상 채워지고, endMonth 상태는
+        // 고정을 꺼도 초기화되지 않으므로 wasRecurring && recurring 없이는 고정 해제·재고정·
+        // 일반 수정 분기에서도 조회가 도는데, 그 분기들은 endMonth 기준으로 지우지 않는다
+        // (고정 해제는 nowMonth 기준 removeRecurringFuture, 재고정·전환은 삭제 자체가 없다).
+        if (
+            wasRecurring &&
+            recurring &&
+            template !== null &&
+            endMonth !== null
+        ) {
             setBusy(true)
             try {
                 const doomed = await listRecurringInstances(

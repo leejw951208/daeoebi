@@ -338,6 +338,7 @@ describe("종료월 선택", () => {
         expect(
             await screen.findByText(/2026년 8월부터의 지출 2건이 삭제됩니다/),
         ).not.toBeNull()
+        expect(mockListRecurringInstances).toHaveBeenCalledWith("r1", "2026-07")
         expect(mockUpdateRecurring).not.toHaveBeenCalled()
 
         // 헤더에도 "취소" 버튼이 있어 이름만으로는 구분되지 않는다. 확인 다이얼로그로 범위를 좁힌다.
@@ -383,6 +384,30 @@ describe("종료월 선택", () => {
         await waitFor(() => {
             expect(mockUpdateRecurring).toHaveBeenCalled()
         })
+        expect(screen.queryByText(/삭제됩니다/)).toBeNull()
+    })
+
+    // 실제로 인스턴스를 지우는 건 "고정 수정"(propagateRecurringUpdate) 분기뿐이다.
+    // 고정 해제는 nowMonth 기준 removeRecurringFuture 를 쓰지, endMonth 로 세지 않는다.
+    // template·endMonth 만 보고 게이트를 걸면 고정 해제 저장에서도 엉뚱하게 확인창이 뜬다
+    // (그리고 확인해도 다이얼로그가 알린 건수만큼 지워지지 않는다).
+    it("종료월을 고른 뒤 고정 해제하고 저장하면 확인 없이 바로 저장된다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+        ])
+        renderEdit(null)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-04" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "고정 해제" }))
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        await waitFor(() => {
+            expect(mockUpdateRecurring).toHaveBeenCalledWith("r1", {
+                active: false,
+            })
+        })
+        expect(mockListRecurringInstances).not.toHaveBeenCalled()
         expect(screen.queryByText(/삭제됩니다/)).toBeNull()
     })
 })
