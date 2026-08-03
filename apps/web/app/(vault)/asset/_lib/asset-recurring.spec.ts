@@ -554,6 +554,49 @@ describe("propagateRecurringUpdate", () => {
         expect(mockUpdateExpense).not.toHaveBeenCalled()
         expect(mockDeleteExpense).not.toHaveBeenCalled()
     })
+
+    // 8월에 "7월까지"로 끊는 경로. 8월 인스턴스는 이미 만들어져 있지만 나가지 않은 돈이다.
+    it("종료월이 현재 달보다 앞서면 현재 달 인스턴스도 삭제한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+            { id: "e9", period: "2026-09" },
+        ])
+
+        await propagateRecurringUpdate(
+            key,
+            { ...ref, startMonth: "2026-06", termMonths: 2 }, // 6·7월까지
+            "2026-08",
+            { item: "헬스장", amount: 50_000 },
+            "2026-08", // 오늘이 8월
+        )
+
+        expect(mockListRecurringInstances).toHaveBeenCalledWith("r1", "2026-07")
+        expect(mockDeleteExpense).toHaveBeenCalledTimes(2)
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e8")
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e9")
+        expect(mockUpdateExpense).not.toHaveBeenCalled()
+    })
+
+    // 몇 달 밀린 뒤 정리하는 경로: 11월에 들어와 7월까지로 끊는다.
+    it("밀린 달을 한꺼번에 정리한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+            { id: "e9", period: "2026-09" },
+            { id: "e10", period: "2026-10" },
+            { id: "e11", period: "2026-11" },
+        ])
+
+        await propagateRecurringUpdate(
+            key,
+            { ...ref, startMonth: "2026-06", termMonths: 2 }, // 6·7월까지
+            "2026-11",
+            { item: "헬스장", amount: 50_000 },
+            "2026-11",
+        )
+
+        expect(mockListRecurringInstances).toHaveBeenCalledWith("r1", "2026-07")
+        expect(mockDeleteExpense).toHaveBeenCalledTimes(4)
+    })
 })
 
 describe("removeRecurringFuture", () => {

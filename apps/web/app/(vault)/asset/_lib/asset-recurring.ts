@@ -223,6 +223,7 @@ export async function materializeRecurring(
 //
 // 기준월은 propagationPivot 이 정한다 — 과거 달을 고쳐도 지나간 달의 확정 기록은 건드리지 않는다.
 // 개월 수를 줄여 기간이 끝난 뒤로 밀려난 인스턴스는 갱신이 아니라 삭제한다(되살리면 안 된다).
+// 이 삭제는 현재 달도 포함한다 — 종료월을 지난 달로 잡았으면 이번 달 건은 나가지 않은 돈이다.
 export async function propagateRecurringUpdate(
     vaultKey: CryptoKey,
     template: RecurringTemplateRef,
@@ -232,7 +233,10 @@ export async function propagateRecurringUpdate(
 ): Promise<void> {
     const pivot = propagationPivot(editedMonth, nowMonth)
     const endMonth = endMonthOf(template.startMonth, template.termMonths)
-    const future = await listRecurringInstances(template.id, pivot)
+    // 갱신은 pivot 이후만(앞으로만 반영), 삭제는 종료월 이후 전부다. 종료월을 앞당기면
+    // 현재 달 인스턴스도 지워야 하므로 둘 중 앞선 달을 조회 기준으로 삼는다.
+    const from = endMonth !== null && endMonth < pivot ? endMonth : pivot
+    const future = await listRecurringInstances(template.id, from)
     await Promise.all(
         future.map(async (e) => {
             const period = e.period ?? pivot
