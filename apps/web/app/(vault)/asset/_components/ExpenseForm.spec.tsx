@@ -5,14 +5,19 @@
 // "청년적금" vs "청년 적금" 한 칸 차이로 금액이 저축 총액에서 조용히 증발한다.
 const mockCreateExpense = jest.fn()
 const mockCreateRecurring = jest.fn()
+const mockUpdateRecurring = jest.fn()
+const mockUpdateExpense = jest.fn()
+const mockListRecurringInstances = jest.fn()
 jest.mock("@/lib/vault-client", () => ({
     __esModule: true,
     createExpense: (...a: unknown[]) => mockCreateExpense(...a),
     createRecurring: (...a: unknown[]) => mockCreateRecurring(...a),
     deleteExpense: jest.fn(),
     deleteRecurring: jest.fn(),
-    updateExpense: jest.fn(),
-    updateRecurring: jest.fn(),
+    updateExpense: (...a: unknown[]) => mockUpdateExpense(...a),
+    updateRecurring: (...a: unknown[]) => mockUpdateRecurring(...a),
+    listRecurringInstances: (...a: unknown[]) =>
+        mockListRecurringInstances(...a),
 }))
 jest.mock("@/lib/api-error", () => ({
     __esModule: true,
@@ -39,6 +44,13 @@ jest.mock("../_lib/asset-dates", () => ({
     ...jest.requireActual("../_lib/asset-dates"),
     todayISO: () => "2026-07-15",
     currentMonth: () => "2026-07",
+}))
+// 이 테스트는 폼이 무엇을 보내는지만 본다. 전파 함수는 별도로 검증된다(asset-recurring.spec.ts).
+jest.mock("../_lib/asset-recurring", () => ({
+    __esModule: true,
+    ...jest.requireActual("../_lib/asset-recurring"),
+    propagateRecurringUpdate: jest.fn().mockResolvedValue(undefined),
+    removeRecurringFuture: jest.fn().mockResolvedValue(undefined),
 }))
 
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
@@ -223,6 +235,86 @@ describe("ExpenseForm — 미래 달 고정 지출", () => {
             date: "2026-07-25",
             recurringId: "r1",
             period: "2026-07",
+        })
+    })
+})
+
+function renderEdit(termMonths: number | null) {
+    render(
+        <ExpenseForm
+            categories={categories}
+            savingsAccounts={[]}
+            initial={{
+                id: "e1",
+                date: "2026-07-10",
+                recurringId: "r1",
+                period: "2026-07",
+                template: {
+                    id: "r1",
+                    startMonth: "2026-01",
+                    termMonths,
+                    active: true,
+                },
+                payload: { item: "월세", amount: 500_000 },
+                categoryId: "c-food",
+            }}
+            onSaved={jest.fn()}
+            onCancel={jest.fn()}
+            onDeleted={jest.fn()}
+        />,
+    )
+}
+
+describe("종료월 선택", () => {
+    beforeEach(() => {
+        mockUpdateRecurring.mockReset()
+        mockUpdateExpense.mockReset()
+        mockListRecurringInstances.mockReset()
+        mockUpdateRecurring.mockResolvedValue({ id: "r1" })
+        mockUpdateExpense.mockResolvedValue({ id: "e1" })
+        mockListRecurringInstances.mockResolvedValue([])
+    })
+
+    // startMonth 2026-01 + 7개월 = 2026-07 이 선택돼 보여야 한다.
+    it("템플릿의 종료월이 선택된 상태로 보인다", () => {
+        renderEdit(7)
+        const select = screen.getByLabelText("종료월") as HTMLSelectElement
+        expect(select.value).toBe("2026-07")
+    })
+
+    it("무기한이면 아무것도 선택되지 않는다", () => {
+        renderEdit(null)
+        const select = screen.getByLabelText("종료월") as HTMLSelectElement
+        expect(select.value).toBe("")
+    })
+
+    it("종료월을 고르면 개월 수로 환산해 저장한다", async () => {
+        renderEdit(null)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-07" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        await waitFor(() => {
+            expect(mockUpdateRecurring).toHaveBeenCalledWith(
+                "r1",
+                expect.objectContaining({ termMonths: 7 }),
+            )
+        })
+    })
+
+    it("무기한으로 되돌리면 termMonths 가 null 로 나간다", async () => {
+        renderEdit(7)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        await waitFor(() => {
+            expect(mockUpdateRecurring).toHaveBeenCalledWith(
+                "r1",
+                expect.objectContaining({ termMonths: null }),
+            )
         })
     })
 })

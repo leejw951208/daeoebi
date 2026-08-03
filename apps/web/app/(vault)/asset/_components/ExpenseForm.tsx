@@ -19,11 +19,18 @@ import { toast } from "@/components/toast"
 import { formatAmount, SAVINGS_CODE } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
 import {
-    parseTermMonths,
+    endMonthOf,
+    endMonthOptions,
     propagateRecurringUpdate,
     removeRecurringFuture,
+    termMonthsFromEnd,
 } from "../_lib/asset-recurring"
-import { currentMonth, monthOf, todayISO } from "../_lib/asset-dates"
+import {
+    currentMonth,
+    monthLabel,
+    monthOf,
+    todayISO,
+} from "../_lib/asset-dates"
 
 export interface ExpenseFormInitial {
     id: string
@@ -75,8 +82,10 @@ export function ExpenseForm({
     )
     const [date, setDate] = useState(initial?.date ?? todayISO())
     const [recurring, setRecurring] = useState(wasRecurring)
-    const [termMonths, setTermMonths] = useState(
-        template?.termMonths != null ? String(template.termMonths) : "",
+    const [endMonth, setEndMonth] = useState<string | null>(
+        template === null
+            ? null
+            : endMonthOf(template.startMonth, template.termMonths),
     )
     const [busy, setBusy] = useState(false)
     const [deleteMenu, setDeleteMenu] = useState(false)
@@ -91,6 +100,24 @@ export function ExpenseForm({
             setCategoryId(categories[0].id)
         }
     }, [categories, categoryId, initial])
+
+    // 종료월 환산·목록의 기준. 기존 템플릿의 시작월은 서버가 바꾸지 않아 고정이고,
+    // 신규·단건은 이 지출의 달이 곧 시작월이라 날짜를 바꾸면 따라 움직인다.
+    const startMonth = template?.startMonth ?? monthOf(date)
+    const endMonthChoices = endMonthOptions(
+        startMonth,
+        currentMonth(),
+        endMonth,
+    )
+
+    // 신규 폼에서 날짜를 앞당기면 시작월이 따라 움직인다. 고른 종료월이 시작월보다 앞서면
+    // 그대로 저장할 수 없으므로 무기한으로 되돌리고 알린다(어긋난 값을 조용히 남기지 않는다).
+    useEffect(() => {
+        if (endMonth !== null && endMonth < startMonth) {
+            setEndMonth(null)
+            toast("시작월이 바뀌어 종료월을 무기한으로 되돌렸습니다.")
+        }
+    }, [endMonth, startMonth])
 
     const amountNum = Number(amount || "0")
     // 표시 문자열(콤마 포함)에 맞춰 입력 폭·글자 크기를 정한다. 최대 12자리라 콤마까지
@@ -157,7 +184,7 @@ export function ExpenseForm({
                 item: item.trim(),
                 amount: amountNum,
             }
-            const term = parseTermMonths(termMonths)
+            const term = termMonthsFromEnd(startMonth, endMonth)
             const dayOfMonth = Number(date.slice(8, 10))
             const nowMonth = currentMonth()
             if (isEdit) {
@@ -611,17 +638,17 @@ export function ExpenseForm({
                     </div>
                 }
 
-                {/* 개월 수(고정 ON 이면 표시, 선택) */}
+                {/* 종료월(고정 ON 이면 표시, 선택) */}
                 {recurring && (
                     <div
                         className="form-row"
                         style={{ margin: 0, marginTop: -12, gap: 0 }}
                     >
                         <label
-                            htmlFor="term-months"
+                            htmlFor="end-month"
                             style={{ color: "#a0a0a0", marginBottom: 7 }}
                         >
-                            개월 수{" "}
+                            종료월{" "}
                             <span
                                 style={{
                                     color: "#cbcbcb",
@@ -631,27 +658,32 @@ export function ExpenseForm({
                                 · 선택
                             </span>
                         </label>
-                        <input
-                            id="term-months"
-                            inputMode="numeric"
+                        <select
+                            id="end-month"
                             className="field-control"
-                            placeholder="비우면 무기한"
                             style={{
                                 fontSize: 15,
                                 fontWeight: 600,
                                 color: "#333",
                             }}
-                            value={termMonths}
+                            value={endMonth ?? ""}
                             onChange={(e) => {
                                 resetIdle()
-                                setTermMonths(
-                                    e.target.value
-                                        .replace(/[^\d]/g, "")
-                                        .slice(0, 3),
+                                setEndMonth(
+                                    e.target.value === ""
+                                        ? null
+                                        : e.target.value,
                                 )
                             }}
-                            aria-label="개월 수"
-                        />
+                            aria-label="종료월"
+                        >
+                            <option value="">설정 안 함(무기한)</option>
+                            {endMonthChoices.map((m) => (
+                                <option key={m} value={m}>
+                                    {monthLabel(m)}
+                                </option>
+                            ))}
+                        </select>
                         <div
                             style={{
                                 fontSize: 12,
@@ -659,8 +691,9 @@ export function ExpenseForm({
                                 marginTop: 7,
                             }}
                         >
-                            설정한 개월 수만큼 매월 자동 반영돼요. 비워두면
-                            무기한 반복됩니다.
+                            {endMonth === null
+                                ? "종료월을 정하지 않으면 무기한 반복됩니다."
+                                : `${monthLabel(endMonth)}까지만 나가고 끝나요.`}
                         </div>
                     </div>
                 )}
