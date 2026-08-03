@@ -21,6 +21,11 @@ export class RecurringController {
         return this.service.listActive()
     }
 
+    @Get(":id")
+    detail(@Param("id") id: string) {
+        return this.service.detail(id)
+    }
+
     @Post()
     @HttpCode(201)
     create(@Body() dto: CreateRecurringDto) {

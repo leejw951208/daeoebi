@@ -55,6 +55,16 @@ export class RecurringService {
         return rows.map(toView)
     }
 
+    // 단건 조회. active 여부와 무관하다 — 고정 해제된 템플릿의 startMonth 를 폼이 읽어야
+    // 종료월을 개월 수로 환산할 수 있다(시작월은 템플릿에만 있다).
+    async detail(id: string) {
+        const row = await this.prisma.recurringExpense.findUnique({
+            where: { id },
+        })
+        if (!row) throw this.notFound()
+        return toView(row)
+    }
+
     async create(dto: CreateRecurringDto) {
         const row = await this.prisma.recurringExpense.create({
             data: {

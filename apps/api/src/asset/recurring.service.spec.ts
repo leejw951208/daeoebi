@@ -46,6 +46,28 @@ describe("RecurringService", () => {
         expect(out[0]).toMatchObject({ id: "r1", dayOfMonth: 25, active: true })
     })
 
+    // 고정 해제된 템플릿의 startMonth 를 폼이 읽어야 하므로 active 로 거르지 않는다.
+    it("detail 은 비활성 템플릿도 반환한다", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.findUnique.mockResolvedValue({
+            ...row,
+            active: false,
+        })
+        const out = await makeService(prisma).detail("r1")
+        expect(prisma.recurringExpense.findUnique).toHaveBeenCalledWith({
+            where: { id: "r1" },
+        })
+        expect(out).toMatchObject({ id: "r1", active: false })
+    })
+
+    it("detail 은 없으면 RECURRING_NOT_FOUND", async () => {
+        const prisma = makePrisma()
+        prisma.recurringExpense.findUnique.mockResolvedValue(null)
+        await expect(makeService(prisma).detail("nope")).rejects.toThrow(
+            NotFoundException,
+        )
+    })
+
     it("create 는 dayOfMonth + 디코드한 블롭으로 생성한다", async () => {
         const prisma = makePrisma()
         prisma.recurringExpense.create.mockResolvedValue(row)
