@@ -7,12 +7,13 @@ const mockCreateExpense = jest.fn()
 const mockCreateRecurring = jest.fn()
 const mockUpdateRecurring = jest.fn()
 const mockUpdateExpense = jest.fn()
+const mockDeleteExpense = jest.fn()
 const mockListRecurringInstances = jest.fn()
 jest.mock("@/lib/vault-client", () => ({
     __esModule: true,
     createExpense: (...a: unknown[]) => mockCreateExpense(...a),
     createRecurring: (...a: unknown[]) => mockCreateRecurring(...a),
-    deleteExpense: jest.fn(),
+    deleteExpense: (...a: unknown[]) => mockDeleteExpense(...a),
     deleteRecurring: jest.fn(),
     updateExpense: (...a: unknown[]) => mockUpdateExpense(...a),
     updateRecurring: (...a: unknown[]) => mockUpdateRecurring(...a),
@@ -61,7 +62,17 @@ import {
     within,
 } from "@testing-library/react"
 import { ExpenseForm } from "./ExpenseForm"
+import { propagateRecurringUpdate } from "../_lib/asset-recurring"
 import type { AssetCategory } from "@/lib/vault-client"
+
+// [I1] "게이트가 알린 건수 = 실제로 지워지는 건수" 계약 검증용. 이 파일의 다른 테스트는 위
+// jest.mock 으로 propagateRecurringUpdate 를 무동작 목으로 바꿔 폼이 "무엇을 보내는지"만
+// 본다. 그 목을 파일 전체에서 걷어내면 다른 테스트들이 깨지므로, 계약 테스트 한 건에서만
+// mockImplementationOnce 로 실제 구현을 1회 주입한다(그 호출이 끝나면 다시 무동작 목으로
+// 돌아온다 — afterEach 정리가 필요 없다).
+const actualPropagateRecurringUpdate = jest.requireActual(
+    "../_lib/asset-recurring",
+).propagateRecurringUpdate
 
 function category(
     over: Partial<AssetCategory> & { id: string },
@@ -275,9 +286,11 @@ describe("종료월 선택", () => {
     beforeEach(() => {
         mockUpdateRecurring.mockReset()
         mockUpdateExpense.mockReset()
+        mockDeleteExpense.mockReset()
         mockListRecurringInstances.mockReset()
         mockUpdateRecurring.mockResolvedValue({ id: "r1" })
         mockUpdateExpense.mockResolvedValue({ id: "e1" })
+        mockDeleteExpense.mockResolvedValue(undefined)
         mockListRecurringInstances.mockResolvedValue([])
     })
 
@@ -373,6 +386,37 @@ describe("종료월 선택", () => {
         })
     })
 
+    // [I1] 계약 테스트: 다이얼로그가 센 건수와 실제로 삭제되는 건수가 같은 집합인지 검증한다.
+    // 이 브랜치에서 그 계약이 두 번 흔들렸다(삭제 범위 수정, 게이트 조건 수정) — 컴포넌트
+    // 목·라이브러리 목이 각자 자기 쪽만 보증해서 아무도 둘의 일치를 보지 않았기 때문이다.
+    // 그래서 여기서는 propagateRecurringUpdate 를 실제 구현으로 돌려 deleteExpense 호출까지 본다.
+    it("확인창이 알린 건수만큼만 정확히 삭제한다(게이트=전파 집합 일치)", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+            { id: "e9", period: "2026-09" },
+        ])
+        ;(propagateRecurringUpdate as jest.Mock).mockImplementationOnce(
+            actualPropagateRecurringUpdate,
+        )
+        renderEdit(null)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-07" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        expect(
+            await screen.findByText(/2026년 8월부터의 지출 2건이 삭제됩니다/),
+        ).not.toBeNull()
+
+        fireEvent.click(await screen.findByRole("button", { name: "계속" }))
+
+        await waitFor(() => {
+            expect(mockDeleteExpense).toHaveBeenCalledTimes(2)
+        })
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e8")
+        expect(mockDeleteExpense).toHaveBeenCalledWith("e9")
+    })
+
     it("삭제될 지출이 없으면 확인 없이 저장한다", async () => {
         mockListRecurringInstances.mockResolvedValue([])
         renderEdit(null)
@@ -387,10 +431,10 @@ describe("종료월 선택", () => {
         expect(screen.queryByText(/삭제됩니다/)).toBeNull()
     })
 
-    // 실제로 인스턴스를 지우는 건 "고정 수정"(propagateRecurringUpdate) 분기뿐이다.
-    // 고정 해제는 nowMonth 기준 removeRecurringFuture 를 쓰지, endMonth 로 세지 않는다.
-    // template·endMonth 만 보고 게이트를 걸면 고정 해제 저장에서도 엉뚱하게 확인창이 뜬다
-    // (그리고 확인해도 다이얼로그가 알린 건수만큼 지워지지 않는다).
+    // 실제로 인스턴스를 지우는 건 propagateRecurringUpdate 를 부르는 두 분기뿐이다
+    // ("고정 수정"과 재고정). 고정 해제는 nowMonth 기준 removeRecurringFuture 를 쓰지,
+    // endMonth 로 세지 않는다. template·endMonth 만 보고 게이트를 걸면 고정 해제 저장에서도
+    // 엉뚱하게 확인창이 뜬다(그리고 확인해도 다이얼로그가 알린 건수만큼 지워지지 않는다).
     it("종료월을 고른 뒤 고정 해제하고 저장하면 확인 없이 바로 저장된다", async () => {
         mockListRecurringInstances.mockResolvedValue([
             { id: "e8", period: "2026-08" },
@@ -409,5 +453,57 @@ describe("종료월 선택", () => {
         })
         expect(mockListRecurringInstances).not.toHaveBeenCalled()
         expect(screen.queryByText(/삭제됩니다/)).toBeNull()
+    })
+
+    // [I2] 재고정(고정 해제됐던 지출을 다시 고정으로 켜는 경우)도 "고정 수정"과 같은 게이트를
+    // 타야 한다. 옛 템플릿엔 해제 당시 남은 인스턴스가 있을 수 있고, 종료월을 앞당기면 그
+    // 인스턴스들이 삭제 대상이 된다 — wasRecurring 만 보던 옛 게이트는 이 경로를 놓쳤다.
+    it("재고정하며 종료월을 앞당기면 확인을 받고, 확인 후 전파를 호출한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+        ])
+        render(
+            <ExpenseForm
+                categories={categories}
+                savingsAccounts={[]}
+                initial={{
+                    id: "e1",
+                    date: "2026-07-10",
+                    recurringId: "r1",
+                    period: "2026-07",
+                    template: {
+                        id: "r1",
+                        startMonth: "2026-01",
+                        termMonths: null,
+                        active: false,
+                    },
+                    payload: { item: "월세", amount: 500_000 },
+                    categoryId: "c-food",
+                }}
+                onSaved={jest.fn()}
+                onCancel={jest.fn()}
+                onDeleted={jest.fn()}
+            />,
+        )
+
+        toggleRecurring()
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-07" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        expect(
+            await screen.findByText(/2026년 8월부터의 지출 1건이 삭제됩니다/),
+        ).not.toBeNull()
+
+        fireEvent.click(await screen.findByRole("button", { name: "계속" }))
+
+        await waitFor(() => {
+            expect(mockUpdateRecurring).toHaveBeenCalledWith(
+                "r1",
+                expect.objectContaining({ active: true, termMonths: 7 }),
+            )
+        })
+        expect(propagateRecurringUpdate as jest.Mock).toHaveBeenCalled()
     })
 })
