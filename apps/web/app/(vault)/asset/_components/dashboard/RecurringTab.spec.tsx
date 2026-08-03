@@ -1,4 +1,4 @@
-// RecurringTab 테스트(RTL). 요약 카드(합계·건수)·행 표기(매월 N일 · 종료월까지 · 개월 수)·빈 상태·기간 필터를 검증한다.
+// RecurringTab 테스트(RTL). 요약 카드(합계·건수)·행 표기(매월 N일 · 종료월까지)·빈 상태·기간 필터를 검증한다.
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { RecurringTab } from "./RecurringTab"
 import type { ComputedRecurring } from "../../_lib/asset-compute"

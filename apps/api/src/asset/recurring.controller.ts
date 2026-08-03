@@ -21,6 +21,8 @@ export class RecurringController {
         return this.service.listActive()
     }
 
+    // 새 리터럴 경로(예: "/recurring/xxx")를 추가할 때는 ":id" 보다 먼저 선언해야 리터럴
+    // 경로로 매칭된다.
     @Get(":id")
     detail(@Param("id") id: string) {
         return this.service.detail(id)

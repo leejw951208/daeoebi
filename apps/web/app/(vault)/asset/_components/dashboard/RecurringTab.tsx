@@ -1,6 +1,6 @@
 "use client"
 // 고정 지출 탭. 등록해 둔 활성 템플릿(RecurringExpense)을 결제일 순으로 모아 보여준다.
-// 금액·항목·개월수는 읽기 전용(수정은 이번 달 지출 항목을 통해)이지만, "지출 방식"만 이 탭에서 직접 편집한다.
+// 금액·항목·종료월은 읽기 전용(수정은 이번 달 지출 항목을 통해)이지만, "지출 방식"만 이 탭에서 직접 편집한다.
 // 데이터(복호화된 템플릿)는 부모(asset/page)가 넘긴다.
 import { useState } from "react"
 import type { AssetCategory } from "@/lib/vault-client"

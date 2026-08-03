@@ -2,7 +2,7 @@
 // 지출 추가/수정 폼(디자인 화면 12). 금액·항목·카테고리·결제방법을 VK 로 봉인해 저장한다.
 // 신규에서 고정 ON 이면 템플릿(RecurringExpense)을 만든다. 인스턴스는 현재 달까지만 함께 만들고,
 // 미래 달은 템플릿만 남긴다(그 달이 오면 materializeRecurring 이 생성).
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useVault } from "../../_lib/vault-context"
 import { isApiError } from "@/lib/api-error"
 import {
@@ -109,10 +109,10 @@ export function ExpenseForm({
     // 종료월 환산·목록의 기준. 기존 템플릿의 시작월은 서버가 바꾸지 않아 고정이고,
     // 신규·단건은 이 지출의 달이 곧 시작월이라 날짜를 바꾸면 따라 움직인다.
     const startMonth = template?.startMonth ?? monthOf(date)
-    const endMonthChoices = endMonthOptions(
-        startMonth,
-        currentMonth(),
-        endMonth,
+    // 금액 등 무관한 입력이 바뀔 때마다 목록이 재생성되지 않도록 startMonth·endMonth 에만 의존한다.
+    const endMonthChoices = useMemo(
+        () => endMonthOptions(startMonth, currentMonth(), endMonth),
+        [startMonth, endMonth],
     )
 
     // 신규 폼에서 날짜를 앞당기면 시작월이 따라 움직인다. 고른 종료월이 시작월보다 앞서면
@@ -366,9 +366,10 @@ export function ExpenseForm({
     }
 
     // 활성 템플릿일 때만 부른다. 고정 해제된 지출에 이걸 걸면 이미 남남인 옛 템플릿을 지우면서
-    // Cascade 로 과거 모든 달의 실제 지출 기록까지 날아간다.
+    // Cascade 로 과거 모든 달의 실제 지출 기록까지 날아간다. template 은 이제 해제된 템플릿도
+    // 담으므로 template !== null 만으로는 활성 여부를 보장하지 못한다 — wasRecurring 도 함께 본다.
     async function handleDeleteAll() {
-        if (template === null) return
+        if (!wasRecurring || template === null) return
         setBusy(true)
         try {
             await deleteRecurring(template.id) // FK Cascade 로 인스턴스까지 삭제
