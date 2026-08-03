@@ -31,9 +31,7 @@ import {
     endMonthOptions,
     formatDayOfMonth,
     formatExpiry,
-    formatTerm,
     materializeRecurring,
-    parseTermMonths,
     projectRecurring,
     propagateRecurringUpdate,
     propagationPivot,
@@ -69,28 +67,17 @@ describe("formatDayOfMonth", () => {
     })
 })
 
-describe("formatTerm", () => {
-    it("개월 수가 있으면 'N개월' 로 표기한다", () => {
-        expect(formatTerm(6)).toBe("6개월")
-        expect(formatTerm(1)).toBe("1개월")
-    })
-
-    it("개월 수가 없으면(null) '무기한' 으로 표기한다", () => {
-        expect(formatTerm(null)).toBe("무기한")
-    })
-})
-
 describe("formatExpiry", () => {
-    it("기간이 있으면 '종료월까지 · N개월' 로 표기한다", () => {
-        expect(formatExpiry("2026-09", 3)).toBe("2026년 11월까지 · 3개월")
-        expect(formatExpiry("2026-06", 1)).toBe("2026년 6월까지 · 1개월")
+    it("기간이 있으면 종료월까지로 표기한다", () => {
+        expect(formatExpiry("2026-09", 3)).toBe("2026년 11월까지")
+        expect(formatExpiry("2026-06", 1)).toBe("2026년 6월까지")
     })
 
-    it("해를 넘기는 종료월도 정확하다", () => {
-        expect(formatExpiry("2026-11", 4)).toBe("2027년 2월까지 · 4개월")
+    it("해를 넘겨도 종료월을 맞게 계산한다", () => {
+        expect(formatExpiry("2026-11", 4)).toBe("2027년 2월까지")
     })
 
-    it("무기한(null)은 '무기한' 으로 표기한다", () => {
+    it("무기한이면 '무기한' 이다", () => {
         expect(formatExpiry("2026-06", null)).toBe("무기한")
     })
 })
@@ -317,23 +304,6 @@ describe("sortRecurring", () => {
         ]
         sortRecurring(input)
         expect(input.map((r) => r.item)).toEqual(["월세", "넷플릭스"])
-    })
-})
-
-describe("parseTermMonths", () => {
-    it("빈 문자열은 무기한(null)이다", () => {
-        expect(parseTermMonths("")).toBeNull()
-    })
-
-    it("1 이상 정수는 그대로 개월 수가 된다", () => {
-        expect(parseTermMonths("1")).toBe(1)
-        expect(parseTermMonths("12")).toBe(12)
-    })
-
-    it("0 이하·정수가 아닌 값은 무기한(null)이다", () => {
-        expect(parseTermMonths("0")).toBeNull()
-        expect(parseTermMonths("-3")).toBeNull()
-        expect(parseTermMonths("abc")).toBeNull()
     })
 })
 

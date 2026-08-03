@@ -44,31 +44,18 @@ function occupiedSlotKeys(slots: readonly RecurringSlot[]): Set<string> {
     )
 }
 
-// 개월 수 입력값(문자열)을 템플릿의 termMonths 로 바꾼다. 비었거나 1 미만·정수 아님 = 무기한(null).
-export function parseTermMonths(input: string): number | null {
-    const n = Number(input)
-    return Number.isInteger(n) && n >= 1 ? n : null
-}
-
 // 결제일 표기. 템플릿은 특정 날짜가 아니라 "매월 며칠"을 가진다.
 export function formatDayOfMonth(dayOfMonth: number): string {
     return `매월 ${dayOfMonth}일`
 }
 
-// 기간 표기. termMonths 가 null 이면 끝나지 않는 고정 지출이다.
-export function formatTerm(termMonths: number | null): string {
-    return termMonths === null ? "무기한" : `${termMonths}개월`
-}
-
-// 만료 표기(B안). 기간이 있으면 "종료월까지 · N개월", 무기한이면 "무기한".
+// 만료 표기. 기간이 있으면 "종료월까지", 무기한이면 "무기한".
 export function formatExpiry(
     startMonth: string,
     termMonths: number | null,
 ): string {
     const end = endMonthOf(startMonth, termMonths)
-    return end === null
-        ? formatTerm(termMonths)
-        : `${monthLabel(end)}까지 · ${termMonths}개월`
+    return end === null ? "무기한" : `${monthLabel(end)}까지`
 }
 
 // 종료월(포함). 무기한이면 null. 3개월 = 시작월 포함 3개라 startMonth+2 가 종료월이다.

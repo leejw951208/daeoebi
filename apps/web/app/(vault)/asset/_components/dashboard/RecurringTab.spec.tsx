@@ -69,7 +69,7 @@ describe("RecurringTab", () => {
         expect(screen.getByText("2건")).not.toBeNull()
     })
 
-    it("행에 지출명·결제일·만료(종료월까지 · 개월 수)·금액을 표시한다", () => {
+    it("행에 지출명·결제일·만료(종료월까지)·금액을 표시한다", () => {
         render(
             <RecurringTab
                 month={MONTH}
@@ -79,9 +79,7 @@ describe("RecurringTab", () => {
             />,
         )
         expect(screen.getByText("넷플릭스")).not.toBeNull()
-        expect(
-            screen.getByText("매월 15일 · 2026년 11월까지 · 6개월"),
-        ).not.toBeNull()
+        expect(screen.getByText("매월 15일 · 2026년 11월까지")).not.toBeNull()
         expect(screen.getByText("-₩17,000")).not.toBeNull()
     })
 
