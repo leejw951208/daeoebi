@@ -9,6 +9,7 @@ import {
     listRecurring,
     listSavingsAccounts,
     type AssetCategory,
+    type RecurringView,
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { useVault } from "../../_lib/vault-context"
@@ -52,11 +53,31 @@ export default function EditExpensePage() {
                 const payload = await openExpense(vaultKey, view)
                 // 연결된 템플릿. 고정 해제된 템플릿은 listRecurring() 에 없어 단건으로 더 읽는다 —
                 // 종료월 ↔ 개월 수 환산에 startMonth 가 필요한데 그 값은 템플릿에만 있다.
-                const linked =
-                    view.recurringId === null
-                        ? null
-                        : (templates.find((t) => t.id === view.recurringId) ??
-                          (await getRecurring(view.recurringId)))
+                // 이 조회만 따로 감싼다. 실패를 바깥 .catch 로 흘리면 서버의 일반 문구
+                // "고정 지출을 찾을 수 없습니다"가 떠서, 지출을 열려던 사용자에게 원인을
+                // 오도한다. template: null 로 조용히 넘기지도 않는다 — 그러면 startMonth 가
+                // monthOf(date) 로 대체돼 잘못된 termMonths 가 저장된다.
+                let linked: RecurringView | null = null
+                if (view.recurringId !== null) {
+                    const found = templates.find(
+                        (t) => t.id === view.recurringId,
+                    )
+                    if (found !== undefined) {
+                        linked = found
+                    } else {
+                        try {
+                            linked = await getRecurring(view.recurringId)
+                        } catch {
+                            if (cancelled) return
+                            setState({
+                                status: "error",
+                                message:
+                                    "이 지출의 고정 정보를 불러오지 못했습니다. 다시 시도해 주세요.",
+                            })
+                            return
+                        }
+                    }
+                }
                 if (cancelled) return
                 setState({
                     status: "ready",
