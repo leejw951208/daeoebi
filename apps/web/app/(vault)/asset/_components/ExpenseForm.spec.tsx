@@ -53,7 +53,13 @@ jest.mock("../_lib/asset-recurring", () => ({
     removeRecurringFuture: jest.fn().mockResolvedValue(undefined),
 }))
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import {
+    render,
+    screen,
+    fireEvent,
+    waitFor,
+    within,
+} from "@testing-library/react"
 import { ExpenseForm } from "./ExpenseForm"
 import type { AssetCategory } from "@/lib/vault-client"
 
@@ -316,5 +322,67 @@ describe("종료월 선택", () => {
                 expect.objectContaining({ termMonths: null }),
             )
         })
+    })
+
+    it("종료월 이후 지출이 있으면 확인을 받고, 취소하면 아무것도 저장하지 않는다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+            { id: "e9", period: "2026-09" },
+        ])
+        renderEdit(null)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-07" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        expect(
+            await screen.findByText(/2026년 8월부터의 지출 2건이 삭제됩니다/),
+        ).not.toBeNull()
+        expect(mockUpdateRecurring).not.toHaveBeenCalled()
+
+        // 헤더에도 "취소" 버튼이 있어 이름만으로는 구분되지 않는다. 확인 다이얼로그로 범위를 좁힌다.
+        const confirmDialog = screen.getByRole("dialog", { name: "기록 삭제" })
+        fireEvent.click(
+            within(confirmDialog).getByRole("button", { name: "취소" }),
+        )
+
+        await waitFor(() => {
+            expect(screen.queryByText(/2건이 삭제됩니다/)).toBeNull()
+        })
+        expect(mockUpdateRecurring).not.toHaveBeenCalled()
+        expect(mockUpdateExpense).not.toHaveBeenCalled()
+    })
+
+    it("확인하면 저장이 진행된다", async () => {
+        mockListRecurringInstances.mockResolvedValue([
+            { id: "e8", period: "2026-08" },
+        ])
+        renderEdit(null)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-07" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+        fireEvent.click(await screen.findByRole("button", { name: "계속" }))
+
+        await waitFor(() => {
+            expect(mockUpdateRecurring).toHaveBeenCalledWith(
+                "r1",
+                expect.objectContaining({ termMonths: 7 }),
+            )
+        })
+    })
+
+    it("삭제될 지출이 없으면 확인 없이 저장한다", async () => {
+        mockListRecurringInstances.mockResolvedValue([])
+        renderEdit(null)
+        fireEvent.change(screen.getByLabelText("종료월"), {
+            target: { value: "2026-07" },
+        })
+        fireEvent.click(screen.getByRole("button", { name: "저장" }))
+
+        await waitFor(() => {
+            expect(mockUpdateRecurring).toHaveBeenCalled()
+        })
+        expect(screen.queryByText(/삭제됩니다/)).toBeNull()
     })
 })

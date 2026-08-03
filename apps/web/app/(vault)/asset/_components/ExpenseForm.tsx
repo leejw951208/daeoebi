@@ -10,11 +10,13 @@ import {
     createRecurring,
     deleteExpense,
     deleteRecurring,
+    listRecurringInstances,
     updateExpense,
     updateRecurring,
     type AssetCategory,
 } from "@/lib/vault-client"
 import { Button } from "@/components/Button"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { toast } from "@/components/toast"
 import { formatAmount, SAVINGS_CODE } from "../_lib/asset-categories"
 import { sealExpense, type ExpensePayload } from "../_lib/asset-payload"
@@ -26,6 +28,7 @@ import {
     termMonthsFromEnd,
 } from "../_lib/asset-recurring"
 import {
+    addMonth,
     currentMonth,
     monthLabel,
     monthOf,
@@ -89,6 +92,8 @@ export function ExpenseForm({
     )
     const [busy, setBusy] = useState(false)
     const [deleteMenu, setDeleteMenu] = useState(false)
+    // 종료월 앞당김으로 지워질 인스턴스 수. null 이면 확인 다이얼로그를 닫아둔다.
+    const [doomedCount, setDoomedCount] = useState<number | null>(null)
     // 저장이 중간에 실패해도 만들어진 템플릿은 서버에 남는다. 재시도 때 또 만들면 고정 지출이
     // 매달 두 건씩 생기므로, 한 번 만든 템플릿 id 를 붙들고 재사용한다.
     const createdTemplateId = useRef<string | null>(null)
@@ -149,6 +154,7 @@ export function ExpenseForm({
         return tmpl.id
     }
 
+    // 검증 → (필요하면) 삭제 확인 → 저장. 확인이 필요하면 여기서 멈추고 다이얼로그에 넘긴다.
     async function handleSave() {
         if (amountNum <= 0) {
             toast("금액을 입력하세요.")
@@ -178,6 +184,35 @@ export function ExpenseForm({
             toast("고정 지출의 날짜는 같은 달 안에서만 바꿀 수 있습니다.")
             return
         }
+        // 종료월을 앞당기면 그 뒤 인스턴스가 지워진다. 실제로 지워질 게 있을 때만 확인을 받는다.
+        // 이 조회는 period > endMonth · removed=false 라 삭제 대상과 정확히 같다.
+        if (template !== null && endMonth !== null) {
+            setBusy(true)
+            try {
+                const doomed = await listRecurringInstances(
+                    template.id,
+                    endMonth,
+                )
+                if (doomed.length > 0) {
+                    setDoomedCount(doomed.length)
+                    return
+                }
+            } catch (e) {
+                toast(
+                    isApiError(e)
+                        ? e.message
+                        : "삭제될 지출을 확인하지 못했습니다.",
+                )
+                return
+            } finally {
+                setBusy(false)
+            }
+        }
+        await performSave()
+    }
+
+    async function performSave() {
+        if (categoryId === null) return
         setBusy(true)
         try {
             const payload: ExpensePayload = {
@@ -861,6 +896,22 @@ export function ExpenseForm({
                         </button>
                     </div>
                 </div>
+            )}
+
+            {doomedCount !== null && endMonth !== null && (
+                <ConfirmDialog
+                    open
+                    title="기록 삭제"
+                    message={`${monthLabel(addMonth(endMonth, 1))}부터의 지출 ${doomedCount}건이 삭제됩니다. 계속할까요?`}
+                    confirmLabel="계속"
+                    destructive
+                    confirmLoading={busy}
+                    onConfirm={() => {
+                        setDoomedCount(null)
+                        void performSave()
+                    }}
+                    onCancel={() => setDoomedCount(null)}
+                />
             )}
         </section>
     )
