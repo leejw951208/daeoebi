@@ -1,5 +1,11 @@
 // asset-dates 순수 함수 테스트.
-import { addMonth, clampedDate, monthOf } from "./asset-dates"
+import {
+    addMonth,
+    clampedDate,
+    monthOf,
+    monthsBetween,
+    monthRange,
+} from "./asset-dates"
 
 describe("monthOf", () => {
     it("YYYY-MM-DD 에서 YYYY-MM 만 취한다", () => {
@@ -32,5 +38,37 @@ describe("clampedDate", () => {
 
     it("1 미만은 1일로 클램프", () => {
         expect(clampedDate("2026-06", 0)).toBe("2026-06-01")
+    })
+})
+
+describe("monthsBetween", () => {
+    it("같은 달이면 0 이다", () => {
+        expect(monthsBetween("2026-06", "2026-06")).toBe(0)
+    })
+
+    it("해를 넘겨도 개월 수를 센다", () => {
+        expect(monthsBetween("2026-11", "2027-02")).toBe(3)
+    })
+
+    it("to 가 from 보다 앞이면 음수다", () => {
+        expect(monthsBetween("2026-06", "2026-03")).toBe(-3)
+    })
+})
+
+describe("monthRange", () => {
+    it("양끝을 포함한 월 목록을 만든다", () => {
+        expect(monthRange("2026-11", "2027-01")).toEqual([
+            "2026-11",
+            "2026-12",
+            "2027-01",
+        ])
+    })
+
+    it("같은 달이면 한 개다", () => {
+        expect(monthRange("2026-06", "2026-06")).toEqual(["2026-06"])
+    })
+
+    it("to 가 from 보다 앞이면 빈 배열이다", () => {
+        expect(monthRange("2026-06", "2026-03")).toEqual([])
     })
 })

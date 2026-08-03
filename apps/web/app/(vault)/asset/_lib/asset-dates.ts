@@ -29,6 +29,20 @@ export function addMonth(month: string, delta: number): string {
     return `${base.getFullYear()}-${pad2(base.getMonth() + 1)}`
 }
 
+// "YYYY-MM" 사이의 개월 차. to 가 from 보다 앞이면 음수다.
+export function monthsBetween(from: string, to: string): number {
+    const [y1, m1] = from.split("-").map(Number)
+    const [y2, m2] = to.split("-").map(Number)
+    return (y2 - y1) * 12 + (m2 - m1)
+}
+
+// from~to(양끝 포함) 월 목록. to 가 from 보다 앞이면 빈 배열이다.
+export function monthRange(from: string, to: string): string[] {
+    const span = monthsBetween(from, to)
+    if (span < 0) return []
+    return Array.from({ length: span + 1 }, (_, i) => addMonth(from, i))
+}
+
 // "2026년 6월".
 export function monthLabel(month: string): string {
     const [y, m] = month.split("-").map(Number)
