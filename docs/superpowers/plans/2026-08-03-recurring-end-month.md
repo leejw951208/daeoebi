@@ -1166,8 +1166,8 @@ function endMonthFromNow(months: number): string {
 고정 지출 탭 라벨 단언을 Task 8의 표기에 맞춘다. 기존 `` `매월 ${DAY}일 · 6개월` `` → 종료월 표기로.
 
 ```ts
-        await expect(row).toContainText(`매월 ${DAY}일`)
-        await expect(row).toContainText("까지")
+        const [endY, endM] = endMonthFromNow(6).split("-").map(Number)
+        await expect(row).toContainText(`매월 ${DAY}일 · ${endY}년 ${endM}월까지`)
 ```
 
 - [ ] **Step 3: 실행**
