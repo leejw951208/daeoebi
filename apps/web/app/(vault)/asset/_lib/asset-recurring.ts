@@ -11,7 +11,13 @@ import {
 } from "@/lib/vault-client"
 import { isApiError } from "@/lib/api-error"
 import { openExpense, sealExpense, type ExpensePayload } from "./asset-payload"
-import { addMonth, clampedDate, monthLabel } from "./asset-dates"
+import {
+    addMonth,
+    clampedDate,
+    monthLabel,
+    monthRange,
+    monthsBetween,
+} from "./asset-dates"
 import type { ComputedExpense, ComputedRecurring } from "./asset-compute"
 
 // 템플릿에서 인스턴스를 만들거나 되돌릴 때 필요한 최소 정보.
@@ -71,6 +77,34 @@ export function endMonthOf(
     termMonths: number | null,
 ): string | null {
     return termMonths === null ? null : addMonth(startMonth, termMonths - 1)
+}
+
+// 종료월(포함) → termMonths. endMonthOf 의 역방향이다.
+// 종료월이 시작월보다 앞서면 1개월로 클램프한다 — 0·음수는 저장되면 무기한과 구분이 안 된다.
+export function termMonthsFromEnd(
+    startMonth: string,
+    endMonth: string | null,
+): number | null {
+    if (endMonth === null) return null
+    return Math.max(1, monthsBetween(startMonth, endMonth) + 1)
+}
+
+// 종료월 드롭다운에 올릴 월 목록의 상한 여유(개월).
+export const END_MONTH_LOOKAHEAD = 24
+
+// 종료월 후보. 하한은 시작월이라 시작월보다 앞선 종료월은 고를 수 없다.
+// currentEnd 가 상한보다 뒤면 거기까지 늘린다 — 선택된 값이 목록에 없으면
+// 사용자가 손대지 않아도 select 가 첫 옵션으로 튀어 종료월이 조용히 바뀐다.
+export function endMonthOptions(
+    startMonth: string,
+    nowMonth: string,
+    currentEnd: string | null,
+): string[] {
+    const base = startMonth > nowMonth ? startMonth : nowMonth
+    const horizon = addMonth(base, END_MONTH_LOOKAHEAD)
+    const last =
+        currentEnd !== null && currentEnd > horizon ? currentEnd : horizon
+    return monthRange(startMonth, last)
 }
 
 // 그 달에 실제로 나가는 고정 지출만 남긴다. 시작 전·기간 종료 후 템플릿을 제외한다.

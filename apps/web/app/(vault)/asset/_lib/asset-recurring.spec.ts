@@ -28,6 +28,7 @@ jest.mock("./asset-payload", () => ({
 }))
 import {
     endMonthOf,
+    endMonthOptions,
     formatDayOfMonth,
     formatExpiry,
     formatTerm,
@@ -39,6 +40,7 @@ import {
     recurringInMonth,
     removeRecurringFuture,
     sortRecurring,
+    termMonthsFromEnd,
     totalRecurring,
 } from "./asset-recurring"
 import type { RecurringView } from "@/lib/vault-client"
@@ -90,6 +92,49 @@ describe("formatExpiry", () => {
 
     it("무기한(null)은 '무기한' 으로 표기한다", () => {
         expect(formatExpiry("2026-06", null)).toBe("무기한")
+    })
+})
+
+describe("termMonthsFromEnd", () => {
+    it("무기한(null)은 null 이다", () => {
+        expect(termMonthsFromEnd("2026-06", null)).toBeNull()
+    })
+
+    it("시작월과 같은 달이면 1개월이다", () => {
+        expect(termMonthsFromEnd("2026-06", "2026-06")).toBe(1)
+    })
+
+    it("해를 넘겨도 개월 수를 센다", () => {
+        expect(termMonthsFromEnd("2026-11", "2027-02")).toBe(4)
+    })
+
+    it("endMonthOf 의 역함수다", () => {
+        const term = termMonthsFromEnd("2026-06", "2027-03")
+        expect(endMonthOf("2026-06", term)).toBe("2027-03")
+    })
+
+    it("종료월이 시작월보다 앞서면 1개월로 클램프한다", () => {
+        expect(termMonthsFromEnd("2026-06", "2026-03")).toBe(1)
+    })
+})
+
+describe("endMonthOptions", () => {
+    it("시작월부터 현재 달 + 24개월까지 만든다", () => {
+        const out = endMonthOptions("2026-01", "2026-07", null)
+        expect(out[0]).toBe("2026-01")
+        expect(out[out.length - 1]).toBe("2028-07")
+    })
+
+    it("시작월이 현재 달보다 미래면 시작월 기준으로 24개월을 확보한다", () => {
+        const out = endMonthOptions("2027-03", "2026-07", null)
+        expect(out[0]).toBe("2027-03")
+        expect(out[out.length - 1]).toBe("2029-03")
+    })
+
+    // 목록에 없는 값이 select 에 선택돼 있으면 손대지 않아도 첫 옵션으로 튄다.
+    it("기존 종료월이 상한보다 뒤면 그 달까지 늘린다", () => {
+        const out = endMonthOptions("2026-01", "2026-07", "2030-05")
+        expect(out[out.length - 1]).toBe("2030-05")
     })
 })
 
