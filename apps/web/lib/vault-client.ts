@@ -516,6 +516,12 @@ export async function listRecurring(): Promise<RecurringView[]> {
     return data
 }
 
+// 단건 조회. listRecurring() 과 달리 고정 해제된(active=false) 템플릿도 반환한다.
+export async function getRecurring(id: string): Promise<RecurringView> {
+    const { data } = await vaultClient.get<RecurringView>(`/recurring/${id}`)
+    return data
+}
+
 export async function createRecurring(
     input: SealedBlobDto & {
         dayOfMonth: number

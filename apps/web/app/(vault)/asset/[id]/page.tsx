@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
     getExpense,
+    getRecurring,
     listAssetCategories,
     listRecurring,
     listSavingsAccounts,
@@ -49,10 +50,14 @@ export default function EditExpensePage() {
         ])
             .then(async ([view, categories, templates, accounts]) => {
                 const payload = await openExpense(vaultKey, view)
-                if (cancelled) return
-                // 연결된 활성 템플릿(개월 수 표시·앞으로만 반영에 필요). 해제됐으면 목록에 없다.
+                // 연결된 템플릿. 고정 해제된 템플릿은 listRecurring() 에 없어 단건으로 더 읽는다 —
+                // 종료월 ↔ 개월 수 환산에 startMonth 가 필요한데 그 값은 템플릿에만 있다.
                 const linked =
-                    templates.find((t) => t.id === view.recurringId) ?? null
+                    view.recurringId === null
+                        ? null
+                        : (templates.find((t) => t.id === view.recurringId) ??
+                          (await getRecurring(view.recurringId)))
+                if (cancelled) return
                 setState({
                     status: "ready",
                     categories,
@@ -69,6 +74,7 @@ export default function EditExpensePage() {
                                       id: linked.id,
                                       startMonth: linked.startMonth,
                                       termMonths: linked.termMonths,
+                                      active: linked.active,
                                   },
                         categoryId: view.categoryId,
                         payload,

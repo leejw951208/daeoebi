@@ -31,11 +31,12 @@ export interface ExpenseFormInitial {
     recurringId: string | null
     // 이 지출이 속한 달("YYYY-MM"). 고정 인스턴스의 멱등 키라 날짜를 다른 달로 옮길 수 없다.
     period: string | null
-    // 이 지출에 연결된 활성 템플릿. 단건이거나 고정 해제된 지출이면 null.
+    // 이 지출에 연결된 템플릿. 고정 해제된 템플릿도 담기므로 활성 여부는 active 로 판단한다.
     template: {
         id: string
         startMonth: string
         termMonths: number | null
+        active: boolean
     } | null
     payload: ExpensePayload
     categoryId: string | null
@@ -61,9 +62,9 @@ export function ExpenseForm({
 }: Props) {
     const { vaultKey, resetIdle } = useVault()
     const isEdit = initial !== null
-    // 이 지출이 현재 고정(활성 템플릿 연결)인지. 토글 초기값·전환 판단에 쓴다.
+    // 이 지출이 현재 고정(활성 템플릿 연결)인지. 해제된 템플릿도 template 에 담기므로 active 를 본다.
     const template = initial?.template ?? null
-    const wasRecurring = template !== null
+    const wasRecurring = template?.active === true
 
     const [amount, setAmount] = useState(
         initial ? String(initial.payload.amount) : "",
@@ -205,12 +206,12 @@ export function ExpenseForm({
                         categoryId,
                         ...blob,
                     })
-                    if (template !== null && !recurring) {
+                    if (wasRecurring && template !== null && !recurring) {
                         // 고정 해제: 이후 자동 생성을 중단하고, 미리 열어봐서 이미 만들어진
                         // 미래 달 인스턴스도 함께 지운다(과거·이번 달 기록은 실제 지출이라 유지).
                         await updateRecurring(template.id, { active: false })
                         await removeRecurringFuture(template.id, nowMonth)
-                    } else if (template !== null) {
+                    } else if (wasRecurring && template !== null) {
                         // 고정 수정: 템플릿을 갱신해 아직 안 만들어진 달이 새 내용으로 생성되게 하고,
                         // 미리 열어봐서 이미 만들어져 있는 이후 달 인스턴스는 재봉인해 함께 밀어준다.
                         // 지난 달 인스턴스는 그대로 둔다(앞으로만 반영).
@@ -703,7 +704,7 @@ export function ExpenseForm({
                             className="press-98"
                             onClick={
                                 // 활성 고정만 "전체/이번 달" 선택지를 준다. 해제된 지출은 이미 단건이다.
-                                template !== null
+                                wasRecurring
                                     ? () => setDeleteMenu(true)
                                     : handleDeleteThisMonth
                             }
